@@ -38,6 +38,14 @@ interface DiagramCanvasProps {
   isPlaying?: boolean;
   onStartWalkthrough?: () => void;
   onResetWalkthrough?: () => void;
+  onTogglePlay?: () => void;
+  onStepForward?: () => void;
+  onStepBackward?: () => void;
+  canStepBackward?: boolean;
+  canStepForward?: boolean;
+  playbackSpeed?: number;
+  onSpeedChange?: (speed: number) => void;
+  showLegend?: boolean;
 }
 
 export function DiagramCanvas({
@@ -56,7 +64,15 @@ export function DiagramCanvas({
   cinematicPhase = null,
   isPlaying = false,
   onStartWalkthrough,
-  onResetWalkthrough }: DiagramCanvasProps) {
+  onResetWalkthrough,
+  onTogglePlay,
+  onStepForward,
+  onStepBackward,
+  canStepBackward = false,
+  canStepForward = true,
+  playbackSpeed = 0.5,
+  onSpeedChange,
+  showLegend = true }: DiagramCanvasProps) {
   return (
     <motion.div
       layout
@@ -82,6 +98,14 @@ export function DiagramCanvas({
           isPlaying={isPlaying}
           onStartWalkthrough={onStartWalkthrough}
           onResetWalkthrough={onResetWalkthrough}
+          onTogglePlay={onTogglePlay}
+          onStepForward={onStepForward}
+          onStepBackward={onStepBackward}
+          canStepBackward={canStepBackward}
+          canStepForward={canStepForward}
+          playbackSpeed={playbackSpeed}
+          onSpeedChange={onSpeedChange}
+          showLegend={showLegend}
         />
       )}
 

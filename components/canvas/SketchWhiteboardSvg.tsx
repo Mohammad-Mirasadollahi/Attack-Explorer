@@ -19,6 +19,7 @@ interface SketchWhiteboardSvgProps {
   sketchFlows: WhiteboardSketchFlow[];
   selectedTelemetryId: string | null;
   onSelectTelemetry: (event: TelemetryEvent) => void;
+  onSelectZone?: (zoneId: NetworkZoneColumn['id']) => void;
   activeEnvironment?: ActiveEnvironmentId;
   tacticalMode?: boolean;
 }
@@ -29,6 +30,7 @@ export function SketchWhiteboardSvg({
   sketchFlows,
   selectedTelemetryId,
   onSelectTelemetry,
+  onSelectZone,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   tacticalMode = false }: SketchWhiteboardSvgProps) {
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
@@ -55,7 +57,7 @@ export function SketchWhiteboardSvg({
           />
         </pattern>
 
-        {/* Crisp Minimal Arrowhead Markers (Forward & Return) */}
+        {/* Crisp Bidirectional Arrowhead Markers (Start & End for Forward & Return) */}
         <marker
           id="sketch-arrow-crimson"
           viewBox="0 0 10 10"
@@ -161,8 +163,17 @@ export function SketchWhiteboardSvg({
               strokeDasharray="8 5"
             />
 
-            {/* Clean Zone Header Bar Along Top of Zone */}
-            <g transform={`translate(${zone.xStart + 12}, ${yTop + 8})`}>
+            {/* Clean Clickable Zone Header Bar Along Top of Zone */}
+            <g
+              transform={`translate(${zone.xStart + 12}, ${yTop + 8})`}
+              onClick={(e) => {
+                if (onSelectZone) {
+                  e.stopPropagation();
+                  onSelectZone(zone.id);
+                }
+              }}
+              className={onSelectZone ? 'cursor-pointer' : undefined}
+            >
               <rect
                 x={0}
                 y={0}
@@ -375,6 +386,11 @@ export function SketchWhiteboardSvg({
                     duration: 0.55,
                     ease: 'easeOut',
                     delay: idx * 0.05 }}
+                  markerStart={
+                    isHighlighted
+                      ? 'url(#sketch-arrow-crimson)'
+                      : 'url(#sketch-arrow-ink)'
+                  }
                   markerEnd={
                     isHighlighted
                       ? 'url(#sketch-arrow-crimson)'

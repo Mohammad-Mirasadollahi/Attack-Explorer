@@ -22,24 +22,20 @@ import { SketchNodeIcon } from './SketchNodeIcons';
 import { SketchWhiteboardSvg } from './canvas/SketchWhiteboardSvg';
 import { ResponsiveMobileZonesView } from './canvas/ResponsiveMobileZonesView';
 import { TacticalGridOverlay } from './canvas/TacticalGridOverlay';
+import { NodeHoverTooltip } from './NodeHoverTooltip';
+import { DiagramLegendPanel } from './DiagramLegendPanel';
+import { PlaybackControlBar } from './PlaybackControlBar';
 import {
   ArrowLeft,
   ArrowRightLeft,
-  Camera,
   CheckCircle2,
   Cloud,
-  Cpu,
-  Crosshair,
   Laptop,
   Maximize2,
   Minimize2,
-  Play,
   RotateCcw,
   Server,
-  Sparkles,
-  Zap,
-  ZoomIn,
-  ZoomOut } from 'lucide-react';
+  Sparkles } from 'lucide-react';
 
 export interface AttackVisualizerProps {
   scenario: AttackScenario;
@@ -51,12 +47,20 @@ export interface AttackVisualizerProps {
   onSelectStage?: (stageIndex: number) => void;
   cinematicPhase?: CinematicPhase | null;
   isPlaying?: boolean;
+  onTogglePlay?: () => void;
+  onStepForward?: () => void;
+  onStepBackward?: () => void;
+  canStepBackward?: boolean;
+  canStepForward?: boolean;
+  playbackSpeed?: number;
+  onSpeedChange?: (speed: number) => void;
   onStartWalkthrough?: () => void;
   onResetWalkthrough?: () => void;
   activeEnvironment?: ActiveEnvironmentId;
   onSelectEnvironment?: (env: ActiveEnvironmentId) => void;
   tacticalMode?: boolean;
   onToggleTacticalMode?: () => void;
+  showLegend?: boolean;
 }
 
 interface PortalAnimationState {
@@ -77,11 +81,18 @@ export function AttackVisualizer({
   onSelectStage,
   cinematicPhase = null,
   isPlaying = false,
+  onTogglePlay,
+  onStepForward,
+  onStepBackward,
+  canStepBackward = false,
+  canStepForward = true,
+  playbackSpeed = 0.5,
+  onSpeedChange,
   onStartWalkthrough,
   onResetWalkthrough,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   tacticalMode = false,
-  onToggleTacticalMode,
+  showLegend = true,
 }: AttackVisualizerProps) {
   const { currentStage } = stageView;
   const activeStageIndex = currentStage ? currentStage.index : 0;
@@ -94,6 +105,7 @@ export function AttackVisualizer({
   const [selectedInternalSubNodeId, setSelectedInternalSubNodeId] = useState<
     string | null
   >(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [portalOrigin, setPortalOrigin] = useState<{
     xPct: number;
     yPct: number;
@@ -104,8 +116,6 @@ export function AttackVisualizer({
   const [lastReturnedNodeId, setLastReturnedNodeId] = useState<string | null>(
     null
   );
-  const [walkthroughBtnHovered, setWalkthroughBtnHovered] =
-    useState<boolean>(false);
 
   const {
     zones: scenarioZones,
@@ -247,13 +257,10 @@ export function AttackVisualizer({
       ? `expanded-subboard-${selectedSketchNode.id}-${activeEnvironment}`
       : `main-topology-${scenario.id}-${activeEnvironment}`;
 
-  const hostNodeOnBoard =
-    sketchNodes.find((n) => n.id === stageLocationContext.activeHostNodeId) ||
-    sketchNodes[2];
-  const processNodeOnBoard =
-    sketchNodes.find(
-      (n) => n.id === stageLocationContext.activeProcessNodeId
-    ) || sketchNodes[3];
+  const hoveredNode = useMemo(
+    () => activeNodes.find((n) => n.id === hoveredNodeId) || null,
+    [activeNodes, hoveredNodeId]
+  );
 
   const envBadgeColorClass =
     activeEnvironment === 'SERVER'
@@ -279,7 +286,7 @@ export function AttackVisualizer({
       data-tactical-mode={tacticalMode ? 'true' : 'false'}
       dir="ltr"
     >
-      {/* Persistent Environment & Host-Process Context Bar (Main Topology vs. Expanded Sub-Board) */}
+      {/* Persistent Environment & Expandable Zone Sub-View Context Bar */}
       <AnimatePresence mode="wait" initial={false}>
         {internalSubBoard && selectedSketchNode ? (
           <motion.div
@@ -303,12 +310,12 @@ export function AttackVisualizer({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-[11px] font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back to Network</span>
+                  <span>Back to Parent View</span>
                 </motion.button>
 
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-semibold shrink-0">
                   <Maximize2 className="w-3 h-3" />
-                  <span>NODE #{selectedSketchNode.chainOrder}</span>
+                  <span>EXPANDED ZONE · NODE #{selectedSketchNode.chainOrder}</span>
                 </span>
 
                 <span className="font-semibold text-xs text-zinc-900 dark:text-white truncate">
@@ -331,8 +338,8 @@ export function AttackVisualizer({
                     <ArrowRightLeft className="w-3 h-3 shrink-0" />
                     <span>
                       {internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
-                        ? `View Host System: ${companionSketchNode.label}`
-                        : `Inspect Malware Process on Host: ${companionSketchNode.label}`}
+                        ? `Host: ${companionSketchNode.label}`
+                        : `Process: ${companionSketchNode.label}`}
                     </span>
                   </button>
                 )}
@@ -387,41 +394,13 @@ export function AttackVisualizer({
                   : `TOPOLOGY (${scenario.stages.length} STEPS)`}
               </span>
 
-              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate max-w-[460px]">
+              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate max-w-[560px]">
                 {stageLocationContext.whereWeAreSummary}
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {hostNodeOnBoard && (
-                <button
-                  type="button"
-                  data-testid="context-bar-host-btn"
-                  onClick={() => handleNodeClick(hostNodeOnBoard)}
-                  title={hostNodeOnBoard.activitySummary}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800/80 text-[10.5px] font-medium transition-colors cursor-pointer"
-                >
-                  <Laptop className="w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" />
-                  <span className="truncate max-w-[210px]">
-                    {stageLocationContext.currentSystemLabel}
-                  </span>
-                </button>
-              )}
-
-              {processNodeOnBoard && (
-                <button
-                  type="button"
-                  data-testid="context-bar-process-btn"
-                  onClick={() => handleNodeClick(processNodeOnBoard)}
-                  title={processNodeOnBoard.activitySummary}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800/80 text-[10.5px] font-medium transition-colors cursor-pointer"
-                >
-                  <Cpu className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
-                  <span className="truncate max-w-[230px]">
-                    {stageLocationContext.currentProcessOrComponentLabel}
-                  </span>
-                </button>
-              )}
+            <div className="hidden md:flex items-center gap-1.5 text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0">
+              <span>Click any node or zone to expand internal sub-view</span>
             </div>
           </motion.div>
         )}
@@ -696,9 +675,32 @@ export function AttackVisualizer({
                   sketchFlows={activeFlows}
                   selectedTelemetryId={selectedTelemetryId}
                   onSelectTelemetry={onSelectTelemetry}
+                  onSelectZone={
+                    !internalSubBoard
+                      ? (zoneId) => {
+                          const targetNode = sketchNodes.find(
+                            (n) => n.zoneId === zoneId
+                          );
+                          if (targetNode) {
+                            handleNodeClick(targetNode);
+                          }
+                        }
+                      : undefined
+                  }
                   activeEnvironment={activeEnvironment}
                   tacticalMode={tacticalMode}
                 />
+
+                {/* Hover-Based Technical Summary Tooltip for Network Nodes */}
+                <AnimatePresence>
+                  {hoveredNode && (
+                    <NodeHoverTooltip
+                      key={`hover-tooltip-${hoveredNode.id}`}
+                      node={hoveredNode}
+                      isSubBoard={Boolean(internalSubBoard)}
+                    />
+                  )}
+                </AnimatePresence>
 
                 {/* Floating Speech-Bubble Callout */}
                 <AnimatePresence mode="wait">
@@ -789,8 +791,21 @@ export function AttackVisualizer({
                           activeStageIndex === 0 && director.phase === 'OVERVIEW'
                             ? nIdx * 0.04
                             : 0 }}
+                      onMouseEnter={() => setHoveredNodeId(node.id)}
+                      onMouseLeave={() =>
+                        setHoveredNodeId((prev) =>
+                          prev === node.id ? null : prev
+                        )
+                      }
+                      onFocus={() => setHoveredNodeId(node.id)}
+                      onBlur={() =>
+                        setHoveredNodeId((prev) =>
+                          prev === node.id ? null : prev
+                        )
+                      }
                       onClick={(e) => {
                         e.stopPropagation();
+                        setHoveredNodeId(null);
                         if (internalSubBoard) {
                           setSelectedInternalSubNodeId(node.id);
                           const relatedFlow = internalSubBoard.subFlows.find(
@@ -938,108 +953,17 @@ export function AttackVisualizer({
             </motion.div>
           </AnimatePresence>
 
-          {/* Bottom-Left Live Camera Status & Cyber-Anime Guided Walkthrough Trigger */}
+          {/* Bottom-Left: Persistent Visual Semantics Legend Panel + Camera Status */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="hidden sm:flex items-center gap-1.5 absolute bottom-3 left-3 z-30"
+            className="hidden sm:flex flex-col items-start gap-2 absolute bottom-3 left-3 z-30"
           >
-            {activeStageIndex === 0 &&
-              director.phase === 'OVERVIEW' &&
-              onStartWalkthrough && (
-                <motion.button
-                  type="button"
-                  layout
-                  data-testid="canvas-start-walkthrough-btn"
-                  data-anime-style="cyber-mecha"
-                  data-expanded={walkthroughBtnHovered ? 'true' : 'false'}
-                  aria-label="Start Guided Walkthrough"
-                  onMouseEnter={() => setWalkthroughBtnHovered(true)}
-                  onMouseLeave={() => setWalkthroughBtnHovered(false)}
-                  onFocus={() => setWalkthroughBtnHovered(true)}
-                  onBlur={() => setWalkthroughBtnHovered(false)}
-                  onClick={onStartWalkthrough}
-                  animate={{
-                    skewX: walkthroughBtnHovered ? -10 : 0,
-                    rotate: walkthroughBtnHovered ? -2 : 0,
-                    scale: walkthroughBtnHovered ? 1.04 : 1 }}
-                  whileTap={{ scale: 0.94 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                  className="group/walk relative h-10 px-2.5 rounded-xl bg-[#0A0E1A] text-white shadow-[0_6px_24px_rgba(225,29,72,0.55)] border-2 border-rose-500 hover:border-amber-400 inline-flex items-center gap-0 overflow-hidden cursor-pointer focus:outline-none"
-                >
-                  {/* Anime Diagonal Katana Slash Shimmer */}
-                  <motion.span
-                    initial={false}
-                    animate={{
-                      x: walkthroughBtnHovered ? ['-130%', '220%'] : '-130%' }}
-                    transition={{
-                      duration: 0.75,
-                      ease: 'easeInOut' }}
-                    className="pointer-events-none absolute inset-y-0 w-10 bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12"
-                  />
-
-                  {/* Top & Bottom Neon Mecha Corner Accents */}
-                  <span className="pointer-events-none absolute top-0 left-0 w-3 h-0.5 bg-cyan-400" />
-                  <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-0.5 bg-amber-400" />
-
-                  {/* Anime Shuriken / Energy Emblem Icon */}
-                  <span className="relative flex items-center justify-center w-6 h-6 shrink-0">
-                    <motion.span
-                      animate={{
-                        scale: walkthroughBtnHovered ? 1.45 : 1.55,
-                        opacity: walkthroughBtnHovered ? 0 : 0.55 }}
-                      transition={{
-                        duration: 1.2,
-                        repeat: Infinity,
-                        ease: 'easeOut' }}
-                      className="pointer-events-none absolute inset-0 rounded-lg border border-rose-400/90"
-                    />
-                    <motion.svg
-                      viewBox="0 0 24 24"
-                      animate={{
-                        rotate: walkthroughBtnHovered ? 180 : 0,
-                        scale: walkthroughBtnHovered ? 1.18 : 1 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 340,
-                        damping: 18 }}
-                      className="w-5 h-5 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.85)]"
-                    >
-                      {/* 4-Pointed Japanese Anime Shuriken Star */}
-                      <path
-                        d="M12 1 L14.8 9.2 L23 12 L14.8 14.8 L12 23 L9.2 14.8 L1 12 L9.2 9.2 Z"
-                        fill="currentColor"
-                        stroke="#FDE047"
-                        strokeWidth="1.2"
-                      />
-                      <circle cx="12" cy="12" r="2.6" fill="#0A0E1A" />
-                    </motion.svg>
-                    <Play className="w-2.5 h-2.5 fill-amber-300 text-amber-300 absolute" />
-                    <Zap className="w-2.5 h-2.5 text-cyan-300 fill-cyan-300 absolute -top-1 -right-1" />
-                  </span>
-
-                  {/* Expanding Anime Mecha Title & Katakana Sub-Tag on Hover */}
-                  <motion.span
-                    initial={false}
-                    animate={{
-                      maxWidth: walkthroughBtnHovered ? 275 : 0,
-                      opacity: walkthroughBtnHovered ? 1 : 0,
-                      marginLeft: walkthroughBtnHovered ? 9 : 0,
-                      paddingRight: walkthroughBtnHovered ? 5 : 0 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 380,
-                      damping: 28 }}
-                    className="overflow-hidden whitespace-nowrap flex flex-col items-start leading-none"
-                  >
-                    <span className="text-[8px] font-mono font-bold tracking-widest text-cyan-300 uppercase">
-                      ANIME CINE-MODE // 0.5×
-                    </span>
-                    <span className="text-[11.5px] font-black tracking-wider uppercase bg-gradient-to-r from-white via-amber-200 to-rose-300 bg-clip-text text-transparent">
-                      Guided Walkthrough
-                    </span>
-                  </motion.span>
-                </motion.button>
-              )}
+            {showLegend && (
+              <DiagramLegendPanel
+                tacticalMode={tacticalMode}
+                defaultExpanded={false}
+              />
+            )}
 
             {(activeStageIndex > 0 || director.phase !== 'OVERVIEW') && (
               <div
@@ -1056,92 +980,41 @@ export function AttackVisualizer({
                 <span className="font-semibold truncate max-w-[260px]">
                   {director.camera.frameTitle}
                 </span>
-                {activeStageIndex > 0 && onSelectStage && (
-                  <button
-                    type="button"
-                    data-testid="hud-overview-reset-btn"
-                    onClick={() =>
-                      onResetWalkthrough
-                        ? onResetWalkthrough()
-                        : onSelectStage(0)
-                    }
-                    className="ml-1 px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[9.5px] font-sans font-semibold transition-colors cursor-pointer"
-                  >
-                    Overview
-                  </button>
-                )}
               </div>
             )}
           </div>
 
-          {/* Floating Bottom-Right HUD: Tactical Mode + Auto-Camera + Zoom Pill */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="hidden sm:flex items-center absolute bottom-3 right-3 z-30 border border-zinc-200/90 dark:border-zinc-800 rounded-lg bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xs shadow-2xs overflow-hidden"
-          >
-            {onToggleTacticalMode && (
-              <button
-                type="button"
-                data-testid="canvas-tactical-mode-btn"
-                aria-pressed={tacticalMode}
-                onClick={onToggleTacticalMode}
-                title="Toggle Tactical Grid Overlay"
-                className={`px-2 py-1.5 flex items-center gap-1 text-[10px] font-mono font-bold border-r border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer ${
-                  tacticalMode
-                    ? 'bg-emerald-950 text-emerald-300'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                }`}
-              >
-                <Crosshair className="w-3 h-3" />
-                <span>{tacticalMode ? 'Tactical ON' : 'Tactical OFF'}</span>
-              </button>
-            )}
-            <button
-              type="button"
-              data-testid="toggle-auto-camera-btn"
-              onClick={() => setAutoCameraEnabled((v) => !v)}
-              title={
-                autoCameraEnabled
-                  ? 'Auto-Zoom Camera Enabled (Click to disable)'
-                  : 'Auto-Zoom Camera Disabled (Click to enable)'
+          {/* Bottom-Right: Play/Pause Sequence Control Bar with Framer Motion Camera Zoom & Focus */}
+          <div className="absolute bottom-3 right-3 z-30">
+            <PlaybackControlBar
+              isPlaying={isPlaying}
+              onTogglePlay={
+                onTogglePlay ||
+                (() => {
+                  if (onStartWalkthrough) onStartWalkthrough();
+                })
               }
-              className={`px-2 py-1.5 flex items-center gap-1 text-[10px] font-mono font-semibold border-r border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer ${
-                autoCameraEnabled
-                  ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <Camera className="w-3 h-3" />
-              <span>{autoCameraEnabled ? 'AutoCam ON' : 'AutoCam OFF'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() =>
+              onStepBackward={onStepBackward}
+              onStepForward={onStepForward}
+              onReset={onResetWalkthrough}
+              canStepBackward={canStepBackward}
+              canStepForward={canStepForward}
+              activeStageIndex={activeStageIndex}
+              totalStages={scenario.stages.length}
+              playbackSpeed={playbackSpeed}
+              onSpeedChange={onSpeedChange}
+              autoCameraEnabled={autoCameraEnabled}
+              onToggleAutoCamera={() => setAutoCameraEnabled((v) => !v)}
+              effectiveScale={effectiveScale}
+              frameTitle={director.camera.frameTitle}
+              onZoomOut={() =>
                 setManualZoom((z) => Math.max(0.75, +(z - 0.1).toFixed(2)))
               }
-              title="Zoom Out"
-              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 cursor-pointer"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setManualZoom(1)}
-              title="Reset Zoom"
-              className="px-2 text-[10px] font-mono font-medium text-zinc-600 dark:text-zinc-300 border-x border-zinc-200 dark:border-zinc-800 cursor-pointer tabular-nums"
-            >
-              {Math.round(effectiveScale * 100)}%
-            </button>
-            <button
-              type="button"
-              onClick={() =>
+              onZoomIn={() =>
                 setManualZoom((z) => Math.min(1.25, +(z + 0.1).toFixed(2)))
               }
-              title="Zoom In"
-              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 cursor-pointer"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
+              onResetZoom={() => setManualZoom(1)}
+            />
           </div>
         </div>
       </div>

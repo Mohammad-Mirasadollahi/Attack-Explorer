@@ -30,13 +30,15 @@ import {
   TelemetryFlowPanel } from './TelemetryFlowPanel';
 import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
+import { AttackStepProgressBar } from './AttackStepProgressBar';
 
 export function AttackExplorerWorkbench() {
   // Strictly English-only interface
   const [isDark, setIsDark] = useState<boolean>(false);
 
-  // Tactical Mode Grid Overlay State
+  // Tactical Mode Grid Overlay & Diagram Legend State
   const [tacticalMode, setTacticalMode] = useState<boolean>(false);
+  const [showLegend, setShowLegend] = useState<boolean>(true);
 
   // Current Active Environment State ('WORKSTATION' | 'SERVER' | 'CLOUD')
   const [activeEnvironment, setActiveEnvironment] =
@@ -286,7 +288,7 @@ export function AttackExplorerWorkbench() {
         dir="ltr"
         className="min-h-screen h-screen flex flex-col bg-[#F4F4F5]/60 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 overflow-hidden"
       >
-        {/* Single Unified 48px Top Bar with Active Environment Badge/Dropdown, Tactical Mode Toggle & Sources */}
+        {/* Persistent Navigation Bar with Animated Logo, Navigation Links & Slide-Out Settings Drawer */}
         <AttackHeader
           scenario={activeScenario}
           stageView={stageView}
@@ -294,6 +296,8 @@ export function AttackExplorerWorkbench() {
           onSelectEnvironment={setActiveEnvironment}
           tacticalMode={tacticalMode}
           onToggleTacticalMode={() => setTacticalMode((prev) => !prev)}
+          showLegend={showLegend}
+          onToggleLegend={() => setShowLegend((prev) => !prev)}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onSelectStage={handleSelectStage}
@@ -317,6 +321,14 @@ export function AttackExplorerWorkbench() {
           onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
           onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
           onOpenSourcesModal={() => setSourcesModalOpen(true)}
+        />
+
+        {/* Visual Step-Indicator Progress Bar Synchronized with Animation State */}
+        <AttackStepProgressBar
+          scenario={activeScenario}
+          activeStageIndex={activeStageIndex}
+          isPlaying={isPlaying}
+          onSelectStage={handleSelectStage}
         />
 
         <main className="relative flex-1 flex min-h-0 overflow-hidden">
@@ -374,6 +386,14 @@ export function AttackExplorerWorkbench() {
                 isPlaying={isPlaying}
                 onStartWalkthrough={handleStartGuidedWalkthrough}
                 onResetWalkthrough={handleReset}
+                onTogglePlay={handleTogglePlay}
+                onStepForward={handleStepForward}
+                onStepBackward={handleStepBackward}
+                canStepBackward={activeStageIndex > 0}
+                canStepForward={activeStageIndex < activeScenario.stages.length}
+                playbackSpeed={playbackSpeed}
+                onSpeedChange={setPlaybackSpeed}
+                showLegend={showLegend}
               />
 
               {/* Right Collapsible & Resizable Story, SIEM & Sources Inspector Panel */}

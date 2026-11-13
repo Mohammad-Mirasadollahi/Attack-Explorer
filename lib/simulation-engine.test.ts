@@ -685,6 +685,32 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       );
     }
   });
+
+  it('computeMitreTacticFrequency and getCuratedThreatIntel compute MITRE tactic bar chart metrics and threat intelligence for all scenarios', async () => {
+    const { computeMitreTacticFrequency, getCuratedThreatIntel } = await import(
+      './threat-intel-service'
+    );
+
+    for (const scenario of ATTACK_SCENARIOS) {
+      const stats = computeMitreTacticFrequency(scenario);
+      assert.equal(stats.length, 7, 'Should return 7 MITRE tactic buckets');
+      const totalStagesCounted = stats.reduce(
+        (acc, s) => acc + s.scenarioStageCount,
+        0
+      );
+      assert.equal(
+        totalStagesCounted,
+        scenario.stages.length,
+        `Total stage count across MITRE tactics should match stages length for ${scenario.id}`
+      );
+
+      const intel = getCuratedThreatIntel(scenario);
+      assert.equal(intel.scenarioId, scenario.id);
+      assert.ok(intel.cves.length >= 1, `Should provide CVEs/advisories for ${scenario.id}`);
+      assert.ok(intel.actorGroups.length >= 2, `Should provide actor groups for ${scenario.id}`);
+      assert.ok(intel.groundedSources.length >= 2, `Should provide grounding citation links for ${scenario.id}`);
+    }
+  });
 });
 
 

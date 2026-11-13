@@ -20,17 +20,17 @@ import {
   FileTerminal,
   GripVertical,
   Layers,
-  Play,
   Scale,
-  ShieldCheck,
-  Zap } from 'lucide-react';
+  ShieldCheck } from 'lucide-react';
 import { LogInspector } from './LogInspector';
 import { SelectedTelemetryDetail } from './SelectedTelemetryDetail';
 import { SourcesAndLegalContent } from './SourcesAndLegalModal';
+import { MitreStats } from './MitreStats';
+import { ThreatIntelCard } from './ThreatIntelCard';
 
 export const MIN_INSPECTOR_WIDTH = 240;
 export const MAX_INSPECTOR_WIDTH = 560;
-export const DEFAULT_INSPECTOR_WIDTH = 310;
+export const DEFAULT_INSPECTOR_WIDTH = 330;
 
 interface InspectorPanelProps {
   scenario: AttackScenario;
@@ -52,7 +52,6 @@ export function InspectorPanel({
   selectedTelemetry,
   onSelectTelemetry,
   onSelectStage,
-  onStartWalkthrough,
   onClearTelemetrySelection,
   onOpenSourcesModal,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
@@ -62,7 +61,6 @@ export function InspectorPanel({
     'STORY_AND_SPECS' | 'FULL_LOGS' | 'SOURCES_AND_LEGAL'
   >('STORY_AND_SPECS');
   const [isDragging, setIsDragging] = useState(false);
-  const [walkthroughHovered, setWalkthroughHovered] = useState(false);
 
   const activeStageIndex = currentStage ? currentStage.index : 0;
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
@@ -341,71 +339,6 @@ export function InspectorPanel({
                   <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-1">
                     {scenario.overview}
                   </p>
-                  {onStartWalkthrough && (
-                    <div className="mt-2.5 flex items-center">
-                      <motion.button
-                        type="button"
-                        layout
-                        data-testid="inspector-start-walkthrough-btn"
-                        data-anime-style="cyber-mecha"
-                        data-expanded={walkthroughHovered ? 'true' : 'false'}
-                        aria-label={`Start Guided Walkthrough (${scenario.stages.length} Steps)`}
-                        onMouseEnter={() => setWalkthroughHovered(true)}
-                        onMouseLeave={() => setWalkthroughHovered(false)}
-                        onFocus={() => setWalkthroughHovered(true)}
-                        onBlur={() => setWalkthroughHovered(false)}
-                        onClick={onStartWalkthrough}
-                        animate={{
-                          skewX: walkthroughHovered ? -10 : 0,
-                          rotate: walkthroughHovered ? -2 : 0 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 400,
-                          damping: 26 }}
-                        className="relative h-9 px-2.5 rounded-xl bg-[#0A0E1A] text-white text-xs font-bold inline-flex items-center gap-0 shadow-[0_4px_16px_rgba(225,29,72,0.4)] border-2 border-rose-500 hover:border-amber-400 overflow-hidden cursor-pointer focus:outline-none"
-                      >
-                        <span className="relative flex items-center justify-center w-5 h-5 shrink-0">
-                          <motion.svg
-                            viewBox="0 0 24 24"
-                            animate={{
-                              rotate: walkthroughHovered ? 180 : 0,
-                              scale: walkthroughHovered ? 1.15 : 1 }}
-                            transition={{
-                              type: 'spring',
-                              stiffness: 360,
-                              damping: 18 }}
-                            className="w-4 h-4 text-rose-500"
-                          >
-                            <path
-                              d="M12 1 L14.8 9.2 L23 12 L14.8 14.8 L12 23 L9.2 14.8 L1 12 L9.2 9.2 Z"
-                              fill="currentColor"
-                              stroke="#FDE047"
-                              strokeWidth="1.2"
-                            />
-                          </motion.svg>
-                          <Play className="w-2 h-2 fill-amber-300 text-amber-300 absolute" />
-                          <Zap className="w-2.5 h-2.5 text-cyan-300 fill-cyan-300 absolute -top-1 -right-1" />
-                        </span>
-
-                        <motion.span
-                          initial={false}
-                          animate={{
-                            maxWidth: walkthroughHovered ? 245 : 0,
-                            opacity: walkthroughHovered ? 1 : 0,
-                            marginLeft: walkthroughHovered ? 8 : 0,
-                            paddingRight: walkthroughHovered ? 4 : 0 }}
-                          transition={{
-                            type: 'spring',
-                            stiffness: 380,
-                            damping: 28 }}
-                          className="overflow-hidden whitespace-nowrap text-[11px] font-black uppercase tracking-wider text-amber-200"
-                        >
-                          {`Guided Walkthrough (${scenario.stages.length} Steps)`}
-                        </motion.span>
-                      </motion.button>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -445,6 +378,18 @@ export function InspectorPanel({
                 </div>
               </motion.div>
             )}
+
+            <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/80" />
+
+            {/* MITRE ATT&CK Coverage Bar Chart (Recharts) */}
+            <MitreStats
+              scenario={scenario}
+              activeStageIndex={activeStageIndex}
+              onSelectStage={onSelectStage}
+            />
+
+            {/* Real-World Threat Intelligence with Gemini Search Grounding */}
+            <ThreatIntelCard scenario={scenario} />
 
             <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/80" />
 
