@@ -1074,20 +1074,20 @@ export function AttackVisualizer({
 
   const handleNodeClick = useCallback(
     (node: WhiteboardSketchNode) => {
-      const xPct = Math.round(((node.wx / 1480) * 100) * 10) / 10;
-      const yPct = Math.round(((node.wy / 650) * 100) * 10) / 10;
-      setPortalOrigin({ xPct, yPct });
-      setPortalAnim({
-        mode: 'EXPAND',
-        xPct,
-        yPct,
-        nodeLabel: node.label,
+    const xPct = Math.round(((node.wx / 1480) * 100) * 10) / 10;
+    const yPct = Math.round(((node.wy / 650) * 100) * 10) / 10;
+    setPortalOrigin({ xPct, yPct });
+    setPortalAnim({
+      mode: 'EXPAND',
+      xPct,
+      yPct,
+      nodeLabel: node.label,
         seqKey: Date.now(),
       });
-      setLastReturnedNodeId(null);
-      setActiveSketchNodeId(node.id);
-      onSelectNode(node.id);
-      setSelectedInternalSubNodeId(null);
+    setLastReturnedNodeId(null);
+    setActiveSketchNodeId(node.id);
+    onSelectNode(node.id);
+    setSelectedInternalSubNodeId(null);
       setMultiSelectedNodeIds([]);
     },
     [onSelectNode]
@@ -1621,7 +1621,7 @@ export function AttackVisualizer({
         </button>
       </WorkbenchIconTooltip>
     </div>
-  );
+    );
 
   return (
     <div
@@ -1641,29 +1641,29 @@ export function AttackVisualizer({
       <AnimatePresence mode="wait" initial={false}>
         {!topBarHidden &&
           (internalSubBoard && selectedSketchNode ? (
-            <motion.div
-              key={`subboard-header-${selectedSketchNode.id}`}
-              initial={{ opacity: 0, y: -12, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.99 }}
-              transition={{ type: 'spring', stiffness: 340, damping: 26 }}
-              onClick={(e) => e.stopPropagation()}
-              data-testid="expanded-node-subboard-header"
+          <motion.div
+            key={`subboard-header-${selectedSketchNode.id}`}
+            initial={{ opacity: 0, y: -12, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.99 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 26 }}
+            onClick={(e) => e.stopPropagation()}
+            data-testid="expanded-node-subboard-header"
               className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">
-                  <motion.button
-                    type="button"
-                    whileHover={{ x: -2, scale: 1.02 }}
-                    whileTap={{ scale: 0.96 }}
-                    data-testid="back-to-main-topology-btn"
-                    onClick={handleBackToMainTopology}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-[11px] font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
+                <motion.button
+                  type="button"
+                  whileHover={{ x: -2, scale: 1.02 }}
+                  whileTap={{ scale: 0.96 }}
+                  data-testid="back-to-main-topology-btn"
+                  onClick={handleBackToMainTopology}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-[11px] font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back to Parent View</span>
-                  </motion.button>
+                </motion.button>
 
                   <WorkbenchIconTooltip
                     label={internalSubBoard.title}
@@ -1677,11 +1677,11 @@ export function AttackVisualizer({
                       <span>
                         Node #{selectedSketchNode.chainOrder} ·{' '}
                         {selectedSketchNode.label}
-                      </span>
-                    </span>
+                </span>
+                </span>
                   </WorkbenchIconTooltip>
 
-                  {companionSketchNode && (
+                {companionSketchNode && (
                     <WorkbenchIconTooltip
                       label={
                         internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
@@ -1692,58 +1692,58 @@ export function AttackVisualizer({
                       detail={companionSketchNode.internalSummary}
                       side="bottom"
                     >
-                      <button
-                        type="button"
-                        data-testid="switch-companion-host-process-btn"
-                        onClick={() => handleNodeClick(companionSketchNode)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                  <button
+                    type="button"
+                    data-testid="switch-companion-host-process-btn"
+                    onClick={() => handleNodeClick(companionSketchNode)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                           internalSubBoard.currentScopeType ===
                           'MALWARE_ON_HOST'
-                            ? 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800'
-                            : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
-                        }`}
-                      >
-                        <ArrowRightLeft className="w-3 h-3 shrink-0" />
-                        <span>
+                        ? 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800'
+                        : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+                    }`}
+                  >
+                    <ArrowRightLeft className="w-3 h-3 shrink-0" />
+                    <span>
                           {internalSubBoard.currentScopeType ===
                           'MALWARE_ON_HOST'
                             ? `Host: ${companionSketchNode.label}`
                             : `Process: ${companionSketchNode.label}`}
-                        </span>
-                      </button>
+                    </span>
+                  </button>
                     </WorkbenchIconTooltip>
                   )}
                 </div>
 
                 {interactionToolbarNode}
-              </div>
+            </div>
 
-              <div
-                data-testid="expanded-node-environment-breadcrumb"
+            <div
+              data-testid="expanded-node-environment-breadcrumb"
                 className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border leading-snug break-words ${
-                  internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
-                    ? 'bg-rose-50/80 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200 border-rose-200/80 dark:border-rose-800/70'
+                internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
+                  ? 'bg-rose-50/80 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200 border-rose-200/80 dark:border-rose-800/70'
                     : internalSubBoard.currentScopeType ===
                       'HOST_OS_ENVIRONMENT'
-                    ? 'bg-sky-50/80 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 border-sky-200/80 dark:border-sky-800/70'
-                    : 'bg-zinc-50 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-700'
-                }`}
-              >
-                {internalSubBoard.environmentBreadcrumb}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key={`main-context-bar-${scenario.id}-${activeStageIndex}-${activeEnvironment}`}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18 }}
-              onClick={(e) => e.stopPropagation()}
-              data-testid="current-environment-context-bar"
-              className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-wrap items-center justify-between gap-2"
+                  ? 'bg-sky-50/80 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 border-sky-200/80 dark:border-sky-800/70'
+                  : 'bg-zinc-50 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-700'
+              }`}
             >
-              <div className="flex flex-wrap items-center gap-2 min-w-0">
+              {internalSubBoard.environmentBreadcrumb}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key={`main-context-bar-${scenario.id}-${activeStageIndex}-${activeEnvironment}`}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            onClick={(e) => e.stopPropagation()}
+            data-testid="current-environment-context-bar"
+            className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-wrap items-center justify-between gap-2"
+          >
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
 
                 <WorkbenchIconTooltip
@@ -1753,16 +1753,16 @@ export function AttackVisualizer({
                   side="bottom"
                   align="left"
                 >
-                  <span
-                    data-testid="canvas-active-environment-pill"
-                    data-environment-id={activeEnvironment}
+              <span
+                data-testid="canvas-active-environment-pill"
+                data-environment-id={activeEnvironment}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border font-mono text-[10px] font-bold whitespace-nowrap cursor-default ${envBadgeColorClass}`}
-                  >
-                    {envIconNode}
-                    <span>{envProfile.badgeLabel}</span>
+              >
+                {envIconNode}
+                <span>{envProfile.badgeLabel}</span>
                     <span className="hidden xl:inline opacity-75">
                       · {envProfile.environmentTag}
-                    </span>
+              </span>
                   </span>
                 </WorkbenchIconTooltip>
 
@@ -1777,15 +1777,15 @@ export function AttackVisualizer({
                   side="bottom"
                 >
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold whitespace-nowrap cursor-default">
-                    {activeStageIndex > 0
-                      ? `STAGE #${activeStageIndex} FOCUS`
-                      : `TOPOLOGY (${scenario.stages.length} STEPS)`}
-                  </span>
+                {activeStageIndex > 0
+                  ? `STAGE #${activeStageIndex} FOCUS`
+                  : `TOPOLOGY (${scenario.stages.length} STEPS)`}
+              </span>
                 </WorkbenchIconTooltip>
-              </div>
+            </div>
 
               {interactionToolbarNode}
-            </motion.div>
+          </motion.div>
           ))}
       </AnimatePresence>
 
@@ -2116,93 +2116,93 @@ export function AttackVisualizer({
             }}
           >
             <AnimatePresence mode="wait">
-              <motion.div
-                key={boardMotionKey}
-                style={{
+            <motion.div
+              key={boardMotionKey}
+              style={{
                   transformOrigin: `${portalOrigin.xPct}% ${portalOrigin.yPct}%`,
                 }}
-                initial={
-                  portalAnim
-                    ? internalSubBoard
-                      ? { opacity: 0, scale: 0.74, filter: 'blur(6px)' }
-                      : { opacity: 0, scale: 1.32, filter: 'blur(5px)' }
+              initial={
+                portalAnim
+                  ? internalSubBoard
+                    ? { opacity: 0, scale: 0.74, filter: 'blur(6px)' }
+                    : { opacity: 0, scale: 1.32, filter: 'blur(5px)' }
                     : { opacity: 0.92, scale: 0.995, filter: 'blur(0px)' }
-                }
-                animate={{
-                  opacity: 1,
-                  scale: 1,
+              }
+              animate={{
+                opacity: 1,
+                scale: 1,
                   filter: 'blur(0px)',
                 }}
-                exit={
-                  portalAnim
-                    ? internalSubBoard
-                      ? { opacity: 0, scale: 0.7, filter: 'blur(5px)' }
-                      : { opacity: 0, scale: 1.42, filter: 'blur(6px)' }
+              exit={
+                portalAnim
+                  ? internalSubBoard
+                    ? { opacity: 0, scale: 0.7, filter: 'blur(5px)' }
+                    : { opacity: 0, scale: 1.42, filter: 'blur(6px)' }
                     : { opacity: 0.85, scale: 0.99, filter: 'blur(0px)' }
-                }
-                transition={{
-                  type: 'spring',
-                  stiffness: 320,
-                  damping: 26,
+              }
+              transition={{
+                type: 'spring',
+                stiffness: 320,
+                damping: 26,
                   mass: 0.8,
                 }}
                 className="relative w-full h-full overflow-visible z-20"
-              >
-                {/* Mobile (< 640px) */}
-                <div className="sm:hidden w-full h-full">
-                  <ResponsiveMobileZonesView
-                    zones={activeZones}
-                    sketchNodes={activeNodes}
-                    sketchFlows={activeFlows}
-                    selectedSketchNode={
-                      internalSubBoard
-                        ? activeInternalSubNode
-                        : selectedSketchNode
+            >
+              {/* Mobile (< 640px) */}
+              <div className="sm:hidden w-full h-full">
+                <ResponsiveMobileZonesView
+                  zones={activeZones}
+                  sketchNodes={activeNodes}
+                  sketchFlows={activeFlows}
+                  selectedSketchNode={
+                    internalSubBoard
+                      ? activeInternalSubNode
+                      : selectedSketchNode
+                  }
+                  onSelectNode={(node) => {
+                    if (internalSubBoard) {
+                      setSelectedInternalSubNodeId(node.id);
+                    } else {
+                      handleNodeClick(node);
                     }
-                    onSelectNode={(node) => {
-                      if (internalSubBoard) {
-                        setSelectedInternalSubNodeId(node.id);
-                      } else {
-                        handleNodeClick(node);
-                      }
-                    }}
-                    selectedTelemetryId={selectedTelemetryId}
-                    onSelectTelemetry={onSelectTelemetry}
-                  />
-                </div>
+                  }}
+                  selectedTelemetryId={selectedTelemetryId}
+                  onSelectTelemetry={onSelectTelemetry}
+                />
+              </div>
 
-                {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig */}
-                <motion.div
+              {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig */}
+              <motion.div
                   ref={cameraRigRef}
-                  data-testid="cinematic-camera-rig"
-                  data-camera-frame={director.camera.frameCode}
-                  data-camera-scale={effectiveScale}
-                  animate={{
-                    x: `${effectiveTxPct}%`,
-                    y: `${effectiveTyPct}%`,
+                data-testid="cinematic-camera-rig"
+                data-camera-frame={director.camera.frameCode}
+                data-camera-scale={effectiveScale}
+                animate={{
+                  x: `${effectiveTxPct}%`,
+                  y: `${effectiveTyPct}%`,
                     scale: autoCameraEnabled ? director.camera.scale : 1,
                   }}
                   transition={
                     isPanningCanvas
                       ? { duration: 0 }
                       : {
-                          type: 'spring',
+                  type: 'spring',
                           stiffness: 210,
-                          damping: 26,
+                  damping: 26,
                           mass: 0.8,
                         }
                   }
-                  style={{
+                style={{
                     transformOrigin: '50% 50%',
                   }}
                   className="hidden sm:block relative w-full h-full overflow-visible"
-                >
-                  <SketchWhiteboardSvg
-                    zones={activeZones}
-                    backboneLinks={activeBackboneLinks}
-                    sketchFlows={activeFlows}
-                    selectedTelemetryId={selectedTelemetryId}
-                    onSelectTelemetry={onSelectTelemetry}
+              >
+                <SketchWhiteboardSvg
+                  zones={activeZones}
+                  backboneLinks={activeBackboneLinks}
+                  sketchFlows={activeFlows}
+                  selectedTelemetryId={selectedTelemetryId}
+                  onSelectTelemetry={onSelectTelemetry}
                     onStartZoneDrag={handleStartZoneDrag}
                     onSelectZone={
                       !internalSubBoard
@@ -2220,8 +2220,8 @@ export function AttackVisualizer({
                           }
                         : undefined
                     }
-                    activeEnvironment={activeEnvironment}
-                    tacticalMode={tacticalMode}
+                  activeEnvironment={activeEnvironment}
+                  tacticalMode={tacticalMode}
                     isInteracting={isCanvasInteracting}
                   />
 
@@ -2266,30 +2266,30 @@ export function AttackVisualizer({
                     )}
                   </AnimatePresence>
 
-                  {/* Floating Speech-Bubble Callout */}
-                  <AnimatePresence mode="wait">
-                    {director.activeCallout && (
-                      <motion.div
-                        key={`callout-${director.phase}-${director.activeCallout.nodeId}-${activeStageIndex}`}
-                        data-testid="cinematic-node-callout"
-                        initial={{ opacity: 0, scale: 0.65, y: 8 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.75, y: 6 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 380,
+                {/* Floating Speech-Bubble Callout */}
+                <AnimatePresence mode="wait">
+                  {director.activeCallout && (
+                    <motion.div
+                      key={`callout-${director.phase}-${director.activeCallout.nodeId}-${activeStageIndex}`}
+                      data-testid="cinematic-node-callout"
+                      initial={{ opacity: 0, scale: 0.65, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.75, y: 6 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 380,
                           damping: 24,
                         }}
-                        style={{
-                          left: `${(director.activeCallout.wx / 1480) * 100}%`,
+                      style={{
+                        left: `${(director.activeCallout.wx / 1480) * 100}%`,
                           top: `${(director.activeCallout.wy / 650) * 100}%`,
                         }}
                         className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 min-w-[240px] max-w-[300px] rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
-                          director.activeCallout.placement === 'TOP'
-                            ? '-translate-y-[calc(100%+58px)]'
-                            : 'translate-y-[58px]'
-                        }`}
-                      >
+                        director.activeCallout.placement === 'TOP'
+                          ? '-translate-y-[calc(100%+58px)]'
+                          : 'translate-y-[58px]'
+                      }`}
+                    >
                         <div className="flex items-center justify-between gap-1.5 min-w-0 text-[9.5px] font-mono">
                           <span
                             title={director.activeCallout.stepBadge}
@@ -2299,61 +2299,61 @@ export function AttackVisualizer({
                             <span className="leading-snug break-words">
                               {director.activeCallout.stepBadge}
                             </span>
-                          </span>
-                        </div>
+                        </span>
+                      </div>
                         <div
                           title={director.activeCallout.headline}
                           className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words"
                         >
-                          {director.activeCallout.headline}
-                        </div>
+                        {director.activeCallout.headline}
+                      </div>
                         <div
                           title={director.activeCallout.detail}
                           className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words"
                         >
-                          {director.activeCallout.detail}
-                        </div>
+                        {director.activeCallout.detail}
+                      </div>
                         <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 min-w-0 text-[9px] font-mono">
                           <span
                             title={director.activeCallout.forwardTag}
                             className="text-rose-400 font-bold leading-snug break-words"
                           >
-                            {director.activeCallout.forwardTag}
-                          </span>
+                          {director.activeCallout.forwardTag}
+                        </span>
                           <span
                             title={director.activeCallout.returnTag}
                             className="text-emerald-400 font-bold leading-snug break-words"
                           >
-                            {director.activeCallout.returnTag}
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                          {director.activeCallout.returnTag}
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                   {/* Draggable & Multi-Selectable Schematic Nodes (framer-motion useDragControls + Shift+Click Group Selection) */}
-                  {activeNodes.map((node, nIdx) => {
-                    const isSelected = internalSubBoard
-                      ? activeInternalSubNode?.id === node.id
-                      : selectedSketchNode?.id === node.id;
+                {activeNodes.map((node, nIdx) => {
+                  const isSelected = internalSubBoard
+                    ? activeInternalSubNode?.id === node.id
+                    : selectedSketchNode?.id === node.id;
                     const isMultiSelected = multiSelectedNodeIds.includes(
                       node.id
                     );
-                    const isRecentlyReturned =
-                      !internalSubBoard && lastReturnedNodeId === node.id;
+                  const isRecentlyReturned =
+                    !internalSubBoard && lastReturnedNodeId === node.id;
 
-                    const cState = director.nodeStates[node.id] || {
-                      opacity: 1,
-                      scale: 1,
-                      yOffset: 0,
-                      showPulseRing: false,
-                      pulseColor: '#6366F1',
+                  const cState = director.nodeStates[node.id] || {
+                    opacity: 1,
+                    scale: 1,
+                    yOffset: 0,
+                    showPulseRing: false,
+                    pulseColor: '#6366F1',
                       role: 'OVERVIEW',
                     };
 
-                     return (
+                  return (
                       <DraggableDiagramNode
-                        key={node.id}
+                      key={node.id}
                         node={node}
                         nodeIndex={nIdx}
                         isSubBoard={Boolean(internalSubBoard)}
@@ -2378,17 +2378,17 @@ export function AttackVisualizer({
                         onHoverChange={setHoveredNodeId}
                         onNodeClick={handleDiagramNodeClick}
                       />
-                    );
-                  })}
-                </motion.div>
+                  );
+                })}
               </motion.div>
-            </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
           </CanvasController>
 
           {/* Bottom-Center Floating "Show Details" Pill when Inside SubBoard and Bottom Dock is Hidden */}
           {internalSubBoard && activeInternalSubNode && bottomDockHidden && (
-            <div
-              onClick={(e) => e.stopPropagation()}
+          <div
+            onClick={(e) => e.stopPropagation()}
               className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30"
             >
               <WorkbenchIconTooltip
@@ -2420,7 +2420,7 @@ export function AttackVisualizer({
                 tacticalMode={tacticalMode}
                 defaultExpanded={false}
               />
-            )}
+              )}
 
             {(activeStageIndex > 0 || director.phase !== 'OVERVIEW') && (
               <div
@@ -2555,7 +2555,7 @@ export function AttackVisualizer({
                   <span className="font-mono font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
                     {activeInternalSubNode.actionBadge.split('·')[0]?.trim() ||
                       activeInternalSubNode.actionBadge}
-                  </span>
+                </span>
                 </WorkbenchIconTooltip>
                 <span aria-hidden="true">·</span>
                 <WorkbenchIconTooltip
@@ -2564,8 +2564,8 @@ export function AttackVisualizer({
                   placement="top"
                 >
                   <span className="font-semibold text-zinc-900 dark:text-white whitespace-nowrap">
-                    {activeInternalSubNode.label}
-                  </span>
+                  {activeInternalSubNode.label}
+                </span>
                 </WorkbenchIconTooltip>
                 <span aria-hidden="true">·</span>
                 <WorkbenchIconTooltip
@@ -2576,7 +2576,7 @@ export function AttackVisualizer({
                   <span className="font-mono text-[11px] whitespace-nowrap">
                     {activeInternalSubNode.sublabel.split('·')[0]?.trim() ||
                       activeInternalSubNode.sublabel}
-                  </span>
+                </span>
                 </WorkbenchIconTooltip>
                 {activeInternalSubNode.hostContext && (
                   <WorkbenchIconTooltip
@@ -2584,53 +2584,53 @@ export function AttackVisualizer({
                     detail={activeInternalSubNode.hostContext}
                     placement="top"
                   >
-                    <span
-                      data-testid="internal-dock-host-context"
+                  <span
+                    data-testid="internal-dock-host-context"
                       className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10.5px] font-medium border border-indigo-200/80 dark:border-indigo-800/70 whitespace-nowrap"
-                    >
-                      {activeInternalSubNode.hostContext}
-                    </span>
+                  >
+                    {activeInternalSubNode.hostContext}
+                  </span>
                   </WorkbenchIconTooltip>
                 )}
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                <div
+              <div
                   className="flex flex-wrap items-center gap-1 min-w-0"
-                  role="group"
-                  aria-label="Internal Communication Links"
-                >
-                  {internalSubBoard.subFlows.map((fl) => {
-                    const isFlowSelected = selectedTelemetryId === fl.id;
+                role="group"
+                aria-label="Internal Communication Links"
+              >
+                {internalSubBoard.subFlows.map((fl) => {
+                  const isFlowSelected = selectedTelemetryId === fl.id;
                     const conciseFlowPill = formatConciseInternalFlowPill(fl);
-                    return (
+                  return (
                       <WorkbenchIconTooltip
-                        key={fl.id}
+                      key={fl.id}
                         label={conciseFlowPill.tooltipTitle}
                         detail={conciseFlowPill.tooltipDetail}
                         placement="top"
                       >
                         <button
-                          type="button"
-                          data-testid={`internal-link-pill-${fl.stepNo}`}
-                          onClick={() => {
-                            setSelectedInternalSubNodeId(fl.toNodeId);
-                            onSelectTelemetry(fl.telemetryEvent);
-                          }}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono border transition-colors cursor-pointer whitespace-nowrap ${
-                            isFlowSelected
-                              ? 'bg-rose-600 text-white border-rose-600 font-semibold'
-                              : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                          }`}
-                        >
+                      type="button"
+                      data-testid={`internal-link-pill-${fl.stepNo}`}
+                      onClick={() => {
+                        setSelectedInternalSubNodeId(fl.toNodeId);
+                        onSelectTelemetry(fl.telemetryEvent);
+                      }}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono border transition-colors cursor-pointer whitespace-nowrap ${
+                        isFlowSelected
+                          ? 'bg-rose-600 text-white border-rose-600 font-semibold'
+                          : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
                           <span className="font-bold shrink-0">
                             {conciseFlowPill.codeBadge}
-                          </span>
+                      </span>
                           <span>{conciseFlowPill.shortRoute}</span>
-                        </button>
+                    </button>
                       </WorkbenchIconTooltip>
-                    );
-                  })}
+                  );
+                })}
                 </div>
 
                 {/* Hide Bottom Dock Button so user can maximize diagram space */}
