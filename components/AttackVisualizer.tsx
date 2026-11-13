@@ -727,20 +727,16 @@ export function AttackVisualizer({
 
       const startWb = fastClientToWb(startClientX, startClientY);
 
-      // Honor the toolbar SELECT tool on left/touch drag (needed on phones with no right-click).
-      const holdResolution =
-        interactionMode === 'SELECT' && e.button === 0
-          ? {
-              mode: 'SELECT' as const,
-              useMarqueeSelection: true,
-              useCanvasPan: false,
-            }
-          : resolveCanvasHoldInteractionMode({
-              button: e.button,
-              shiftKey: e.shiftKey,
-              ctrlKey: e.ctrlKey,
-              metaKey: e.metaKey,
-            });
+      // Mouse left-hold always pans (even after a sticky toolbar SELECT from
+      // right-click). Touch/pen may still use toolbar SELECT for marquee.
+      const holdResolution = resolveCanvasHoldInteractionMode({
+        button: e.button,
+        shiftKey: e.shiftKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        pointerType: e.pointerType,
+        toolbarMode: interactionMode,
+      });
 
       const useMarqueeMode = holdResolution.useMarqueeSelection;
       let hasMoved = false;

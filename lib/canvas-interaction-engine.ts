@@ -41,14 +41,36 @@ export interface CanvasHoldInteractionResult {
  * - Right-click & hold (`button === 2`) -> switches to `'SELECT'` (Box Select / Marquee mode)
  * - Left-click & hold (`button === 0` without modifier keys) -> switches to `'PAN'` (Pan Page mode)
  * - Left-click & hold with Shift/Ctrl/Meta modifier -> `'SELECT'` (Box Select / Marquee mode)
+ *
+ * Mouse left-drag always pans (Windows-style), even if the toolbar still shows
+ * SELECT after a previous right-click. Touch/pen may honor toolbar SELECT
+ * because phones have no right-click.
  */
 export function resolveCanvasHoldInteractionMode(params: {
   button: number;
   shiftKey?: boolean;
   ctrlKey?: boolean;
   metaKey?: boolean;
+  pointerType?: string;
+  toolbarMode?: 'SELECT' | 'PAN';
 }): CanvasHoldInteractionResult {
-  const { button, shiftKey = false, ctrlKey = false, metaKey = false } = params;
+  const {
+    button,
+    shiftKey = false,
+    ctrlKey = false,
+    metaKey = false,
+    pointerType = 'mouse',
+    toolbarMode = 'PAN',
+  } = params;
+
+  const isTouchLike = pointerType === 'touch' || pointerType === 'pen';
+  if (isTouchLike && toolbarMode === 'SELECT' && button === 0) {
+    return {
+      mode: 'SELECT',
+      useMarqueeSelection: true,
+      useCanvasPan: false,
+    };
+  }
 
   if (button === 2 || shiftKey || ctrlKey || metaKey) {
     return {

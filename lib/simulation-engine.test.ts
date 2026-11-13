@@ -830,6 +830,26 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(leftHold.useMarqueeSelection, false);
     assert.equal(leftHold.useCanvasPan, true);
 
+    // Sticky toolbar SELECT must not trap mouse left-drag into marquee.
+    const leftWhileToolbarSelect = resolveCanvasHoldInteractionMode({
+      button: 0,
+      toolbarMode: 'SELECT',
+      pointerType: 'mouse',
+    });
+    assert.equal(leftWhileToolbarSelect.mode, 'PAN');
+    assert.equal(leftWhileToolbarSelect.useMarqueeSelection, false);
+    assert.equal(leftWhileToolbarSelect.useCanvasPan, true);
+
+    // Touch with toolbar SELECT still marquees (no right-click on phones).
+    const touchSelect = resolveCanvasHoldInteractionMode({
+      button: 0,
+      toolbarMode: 'SELECT',
+      pointerType: 'touch',
+    });
+    assert.equal(touchSelect.mode, 'SELECT');
+    assert.equal(touchSelect.useMarqueeSelection, true);
+    assert.equal(touchSelect.useCanvasPan, false);
+
     const shiftLeftHold = resolveCanvasHoldInteractionMode({
       button: 0,
       shiftKey: true,
