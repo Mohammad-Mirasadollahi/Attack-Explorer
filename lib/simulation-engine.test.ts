@@ -711,6 +711,81 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       assert.ok(intel.groundedSources.length >= 2, `Should provide grounding citation links for ${scenario.id}`);
     }
   });
+
+  it('canvas-interaction-engine computes scroll zoom, Windows-style marquee multi-selection, single/group node dragging, and live Bezier flow geometry recalculation', async () => {
+    const {
+      computeScrollWheelZoom,
+      applyNodePositionOffsets,
+      applyZonePositionOffsets,
+      moveSelectedNodesByDelta,
+      computeMarqueeSelectedNodeIds,
+      recomputeGeometryForMovedBoard,
+      MIN_CANVAS_ZOOM,
+      MAX_CANVAS_ZOOM,
+    } = await import('./canvas-interaction-engine');
+
+    // 1. Scroll wheel zoom in/out and clamping
+    const zoomedIn = computeScrollWheelZoom(1.0, -120);
+    assert.ok(zoomedIn > 1.0, 'Scrolling up (negative deltaY) should zoom in');
+    const zoomedOut = computeScrollWheelZoom(1.0, 120);
+    assert.ok(zoomedOut < 1.0, 'Scrolling down (positive deltaY) should zoom out');
+    assert.equal(computeScrollWheelZoom(2.48, -500), MAX_CANVAS_ZOOM);
+    assert.equal(computeScrollWheelZoom(0.46, 500), MIN_CANVAS_ZOOM);
+
+    // 2. Windows-style marquee box multi-selection
+    const scenario = ATTACK_SCENARIOS[0];
+    const schematic = buildWhiteboardSchematic(scenario, 1);
+    const marqueeHitIds = computeMarqueeSelectedNodeIds(schematic.nodes, {
+      startWx: 100,
+      startWy: 120,
+      currentWx: 1050,
+      currentWy: 580,
+    });
+    assert.ok(
+      marqueeHitIds.length >= 3,
+      'Marquee rectangle across left/center board should select multiple nodes'
+    );
+
+    // 3. Moving multiple selected nodes together in unison & recomputing flows
+    const offsetsAfterDrag = moveSelectedNodesByDelta(
+      marqueeHitIds.slice(0, 2),
+      {},
+      65,
+      -40
+    );
+    const movedNodes = applyNodePositionOffsets(
+      schematic.nodes,
+      offsetsAfterDrag
+    );
+    const firstMovedId = marqueeHitIds[0];
+    const origNode = schematic.nodes.find((n) => n.id === firstMovedId)!;
+    const movedNode = movedNodes.find((n) => n.id === firstMovedId)!;
+    assert.equal(movedNode.wx, origNode.wx + 65);
+    assert.equal(movedNode.wy, origNode.wy - 40);
+
+    const recomputed = recomputeGeometryForMovedBoard(
+      schematic.nodes,
+      movedNodes,
+      schematic.flows,
+      schematic.backboneLinks
+    );
+    assert.notEqual(
+      recomputed.flows[0].pathD,
+      schematic.flows[0].pathD,
+      'Connected flow Bezier pathD must dynamically update when nodes move'
+    );
+    assert.notEqual(
+      recomputed.backboneLinks[0].x1,
+      schematic.backboneLinks[0].x1,
+      'Connected backbone link endpoint must dynamically update when nodes move'
+    );
+
+    // 4. Moving network zone containers
+    const movedZones = applyZonePositionOffsets(schematic.zones, {
+      [schematic.zones[0].id]: { dx: 30, dy: 20 },
+    });
+    assert.equal(movedZones[0].xStart, schematic.zones[0].xStart + 30);
+  });
 });
 
 

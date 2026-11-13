@@ -1,23 +1,43 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   AttackScenario,
-  TelemetryEvent } from '@/lib/attack-scenarios';
+  TelemetryEvent,
+} from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
   ComputedStageView,
   DEFAULT_ACTIVE_ENVIRONMENT,
-  getActiveEnvironmentProfile } from '@/lib/simulation-engine';
+  getActiveEnvironmentProfile,
+} from '@/lib/simulation-engine';
 import {
   buildInternalNodeSubBoard,
   buildWhiteboardSchematic,
   getStageLocationContext,
-  WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
+  NetworkZoneColumn,
+  WhiteboardSketchNode,
+} from '@/lib/sketch-zones-and-drilldown';
 import {
   CinematicPhase,
-  computeCinematicDirectorState } from '@/lib/cinematic-camera-director';
+  computeCinematicDirectorState,
+} from '@/lib/cinematic-camera-director';
+import {
+  applyNodePositionOffsets,
+  applyZonePositionOffsets,
+  computeMarqueeSelectedNodeIds,
+  computeScrollWheelZoom,
+  MarqueeBoxCoords,
+  MAX_CANVAS_ZOOM,
+  MIN_CANVAS_ZOOM,
+  moveSelectedNodesByDelta,
+  NodeOffsetDelta,
+  Point2D,
+  recomputeGeometryForMovedBoard,
+  WHITEBOARD_HEIGHT,
+  WHITEBOARD_WIDTH,
+} from '@/lib/canvas-interaction-engine';
 import { SketchNodeIcon } from './SketchNodeIcons';
 import { SketchWhiteboardSvg } from './canvas/SketchWhiteboardSvg';
 import { ResponsiveMobileZonesView } from './canvas/ResponsiveMobileZonesView';
@@ -28,14 +48,20 @@ import { PlaybackControlBar } from './PlaybackControlBar';
 import {
   ArrowLeft,
   ArrowRightLeft,
+  Check,
   CheckCircle2,
+  CheckSquare,
   Cloud,
+  Hand,
   Laptop,
   Maximize2,
   Minimize2,
+  MousePointer,
+  Move,
   RotateCcw,
   Server,
-  Sparkles } from 'lucide-react';
+  Sparkles,
+} from 'lucide-react';
 
 export interface AttackVisualizerProps {
   scenario: AttackScenario;
@@ -71,6 +97,8 @@ interface PortalAnimationState {
   seqKey: number;
 }
 
+export type CanvasInteractionMode = 'SELECT' | 'PAN';
+
 export function AttackVisualizer({
   scenario,
   stageView,
@@ -78,7 +106,6 @@ export function AttackVisualizer({
   onSelectTelemetry,
   selectedNodeId,
   onSelectNode,
-  onSelectStage,
   cinematicPhase = null,
   isPlaying = false,
   onTogglePlay,
@@ -97,7 +124,27 @@ export function AttackVisualizer({
   const { currentStage } = stageView;
   const activeStageIndex = currentStage ? currentStage.index : 0;
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
+
+  // Zoom, Pan, Marquee Selection & Object Dragging State
   const [manualZoom, setManualZoom] = useState<number>(1);
+  const [panOffset, setPanOffset] = useState<Point2D>({ x: 0, y: 0 });
+  const [interactionMode, setInteractionMode] =
+    useState<CanvasInteractionMode>('SELECT');
+  const [isPanningCanvas, setIsPanningCanvas] = useState<boolean>(false);
+  const [isDraggingNodes, setIsDraggingNodes] = useState<boolean>(false);
+  const [marqueeBox, setMarqueeBox] = useState<MarqueeBoxCoords | null>(null);
+  const [multiSelectedNodeIds, setMultiSelectedNodeIds] = useState<string[]>(
+    []
+  );
+
+  // User-dragged position offsets for main topology nodes, sub-board nodes, and zones
+  const [nodeOffsetsByScenario, setNodeOffsetsByScenario] = useState<
+    Record<string, Record<string, NodeOffsetDelta>>
+  >({});
+  const [zoneOffsetsByScenario, setZoneOffsetsByScenario] = useState<
+    Record<string, Record<string, NodeOffsetDelta>>
+  >({});
+
   const [autoCameraEnabled, setAutoCameraEnabled] = useState<boolean>(true);
   const [activeSketchNodeId, setActiveSketchNodeId] = useState<string | null>(
     null
@@ -117,14 +164,79 @@ export function AttackVisualizer({
     null
   );
 
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const cameraRigRef = useRef<HTMLDivElement>(null);
+  const didDragObjectRef = useRef<boolean>(false);
+  const spacePressedRef = useRef<boolean>(false);
+
+  // Track Spacebar for quick pan anywhere
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && document.activeElement?.tagName !== 'INPUT') {
+        spacePressedRef.current = true;
+      } else if (e.key === 'Escape') {
+        setMultiSelectedNodeIds([]);
+        setMarqueeBox(null);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        spacePressedRef.current = false;
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
+
   const {
     zones: scenarioZones,
     backboneLinks: scenarioBackboneLinks,
-    nodes: sketchNodes,
-    flows: sketchFlows } = useMemo(
+    nodes: rawSketchNodes,
+    flows: rawSketchFlows,
+  } = useMemo(
     () =>
       buildWhiteboardSchematic(scenario, activeStageIndex, activeEnvironment),
     [scenario, activeStageIndex, activeEnvironment]
+  );
+
+  const boardScopeKey = `${scenario.id}-${activeEnvironment}-${
+    activeSketchNodeId || 'MAIN'
+  }`;
+
+  const currentBoardNodeOffsets = useMemo(
+    () => nodeOffsetsByScenario[boardScopeKey] || {},
+    [nodeOffsetsByScenario, boardScopeKey]
+  );
+
+  const currentBoardZoneOffsets = useMemo(
+    () => zoneOffsetsByScenario[boardScopeKey] || {},
+    [zoneOffsetsByScenario, boardScopeKey]
+  );
+
+  // Apply offsets to main topology nodes & recompute main flows
+  const mainBoardNodeOffsets = useMemo(
+    () => nodeOffsetsByScenario[`${scenario.id}-${activeEnvironment}-MAIN`] || {},
+    [nodeOffsetsByScenario, scenario.id, activeEnvironment]
+  );
+
+  const sketchNodes = useMemo(
+    () => applyNodePositionOffsets(rawSketchNodes, mainBoardNodeOffsets),
+    [rawSketchNodes, mainBoardNodeOffsets]
+  );
+
+  const { flows: sketchFlows, backboneLinks: movedMainBackboneLinks } = useMemo(
+    () =>
+      recomputeGeometryForMovedBoard(
+        rawSketchNodes,
+        sketchNodes,
+        rawSketchFlows,
+        scenarioBackboneLinks
+      ),
+    [rawSketchNodes, sketchNodes, rawSketchFlows, scenarioBackboneLinks]
   );
 
   const stageLocationContext = useMemo(
@@ -156,7 +268,7 @@ export function AttackVisualizer({
     );
   }, [selectedSketchNode, sketchNodes]);
 
-  const internalSubBoard = useMemo(() => {
+  const rawInternalSubBoard = useMemo(() => {
     if (!selectedSketchNode) return null;
     return buildInternalNodeSubBoard(
       scenario,
@@ -165,6 +277,37 @@ export function AttackVisualizer({
       activeStageIndex
     );
   }, [scenario, selectedSketchNode, sketchFlows, activeStageIndex]);
+
+  // Apply user-dragged offsets to internal sub-board if active
+  const internalSubBoard = useMemo(() => {
+    if (!rawInternalSubBoard) return null;
+    const movedSubNodes = applyNodePositionOffsets(
+      rawInternalSubBoard.subNodes,
+      currentBoardNodeOffsets
+    );
+    const movedSubZones = applyZonePositionOffsets(
+      rawInternalSubBoard.zones,
+      currentBoardZoneOffsets
+    );
+    const { flows: movedSubFlows, backboneLinks: movedSubBackbone } =
+      recomputeGeometryForMovedBoard(
+        rawInternalSubBoard.subNodes,
+        movedSubNodes,
+        rawInternalSubBoard.subFlows,
+        rawInternalSubBoard.backboneLinks
+      );
+    return {
+      ...rawInternalSubBoard,
+      zones: movedSubZones,
+      subNodes: movedSubNodes,
+      subFlows: movedSubFlows,
+      backboneLinks: movedSubBackbone,
+    };
+  }, [
+    rawInternalSubBoard,
+    currentBoardNodeOffsets,
+    currentBoardZoneOffsets,
+  ]);
 
   const activeInternalSubNode = useMemo(() => {
     if (!internalSubBoard) return null;
@@ -175,10 +318,17 @@ export function AttackVisualizer({
     );
   }, [internalSubBoard, selectedInternalSubNodeId]);
 
-  const activeZones = internalSubBoard ? internalSubBoard.zones : scenarioZones;
+  const activeZones = useMemo(
+    () =>
+      internalSubBoard
+        ? internalSubBoard.zones
+        : applyZonePositionOffsets(scenarioZones, currentBoardZoneOffsets),
+    [internalSubBoard, scenarioZones, currentBoardZoneOffsets]
+  );
+
   const activeBackboneLinks = internalSubBoard
     ? internalSubBoard.backboneLinks
-    : scenarioBackboneLinks;
+    : movedMainBackboneLinks;
   const activeNodes = internalSubBoard
     ? internalSubBoard.subNodes
     : sketchNodes;
@@ -207,10 +357,367 @@ export function AttackVisualizer({
   );
 
   const effectiveScale = Number(
-    (director.camera.scale * manualZoom).toFixed(2)
+    Math.max(
+      MIN_CANVAS_ZOOM,
+      Math.min(MAX_CANVAS_ZOOM, director.camera.scale * manualZoom)
+    ).toFixed(2)
   );
   const effectiveTxPct = autoCameraEnabled ? director.camera.txPct : 0;
   const effectiveTyPct = autoCameraEnabled ? director.camera.tyPct : 0;
+
+  const hasCustomLayoutOrView =
+    manualZoom !== 1 ||
+    panOffset.x !== 0 ||
+    panOffset.y !== 0 ||
+    Object.keys(currentBoardNodeOffsets).length > 0 ||
+    Object.keys(currentBoardZoneOffsets).length > 0;
+
+  const handleResetCanvasLayout = useCallback(() => {
+    setManualZoom(1);
+    setPanOffset({ x: 0, y: 0 });
+    setMultiSelectedNodeIds([]);
+    setMarqueeBox(null);
+    setNodeOffsetsByScenario((prev) => {
+      const next = { ...prev };
+      delete next[boardScopeKey];
+      return next;
+    });
+    setZoneOffsetsByScenario((prev) => {
+      const next = { ...prev };
+      delete next[boardScopeKey];
+      return next;
+    });
+  }, [boardScopeKey]);
+
+  // Convert client (mouse) coordinates into 1480x650 whiteboard coordinates
+  const clientToWhiteboardCoords = useCallback(
+    (clientX: number, clientY: number): { wx: number; wy: number } => {
+      const rigEl = cameraRigRef.current || boardContainerRef.current;
+      if (!rigEl) return { wx: 740, wy: 325 };
+      const rect = rigEl.getBoundingClientRect();
+      const width = rect.width || 1;
+      const height = rect.height || 1;
+      const wx = Math.max(
+        0,
+        Math.min(
+          WHITEBOARD_WIDTH,
+          ((clientX - rect.left) / width) * WHITEBOARD_WIDTH
+        )
+      );
+      const wy = Math.max(
+        0,
+        Math.min(
+          WHITEBOARD_HEIGHT,
+          ((clientY - rect.top) / height) * WHITEBOARD_HEIGHT
+        )
+      );
+      return {
+        wx: Math.round(wx * 10) / 10,
+        wy: Math.round(wy * 10) / 10,
+      };
+    },
+    []
+  );
+
+  // Mouse Wheel / Trackpad Scroll Zoom Handler (native non-passive listener to allow preventDefault without console error)
+  useEffect(() => {
+    const boardEl = boardContainerRef.current;
+    if (!boardEl) return;
+    const onNativeWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setManualZoom((prev) => computeScrollWheelZoom(prev, e.deltaY));
+    };
+    boardEl.addEventListener('wheel', onNativeWheel, { passive: false });
+    return () => {
+      boardEl.removeEventListener('wheel', onNativeWheel);
+    };
+  }, [internalSubBoard]);
+
+  // Canvas Background Pointer Down: Supports both Windows-style Marquee Box Selection AND Hold/Drag Page Panning
+  const handleBoardPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      // Ignore if clicking inside floating HUD buttons or controls
+      const targetEl = e.target as HTMLElement;
+      if (
+        targetEl.closest('button') ||
+        targetEl.closest('[data-testid="diagram-legend-panel"]') ||
+        targetEl.closest('[data-testid="playback-control-bar"]')
+      ) {
+        return;
+      }
+
+      const startClientX = e.clientX;
+      const startClientY = e.clientY;
+      const startPanX = panOffset.x;
+      const startPanY = panOffset.y;
+      const startWb = clientToWhiteboardCoords(startClientX, startClientY);
+
+      const forcePanImmediate =
+        interactionMode === 'PAN' ||
+        e.button === 1 ||
+        e.button === 2 ||
+        e.altKey ||
+        spacePressedRef.current;
+      const forceSelectImmediate = e.shiftKey || e.ctrlKey || e.metaKey;
+
+      let gestureMode: 'PENDING' | 'PAN' | 'MARQUEE' = forcePanImmediate
+        ? 'PAN'
+        : forceSelectImmediate
+        ? 'MARQUEE'
+        : 'PENDING';
+
+      let hasMoved = false;
+
+      if (gestureMode === 'PAN') {
+        setIsPanningCanvas(true);
+      }
+
+      // If user holds the mouse button down on the page without moving for 190ms, switch to PAN mode ("اگه صفحه رو نگه داشتن")
+      const holdToPanTimer =
+        gestureMode === 'PENDING'
+          ? window.setTimeout(() => {
+              if (!hasMoved && gestureMode === 'PENDING') {
+                gestureMode = 'PAN';
+                setIsPanningCanvas(true);
+              }
+            }, 190)
+          : null;
+
+      const handleWindowPointerMove = (moveEvent: PointerEvent) => {
+        const dx = moveEvent.clientX - startClientX;
+        const dy = moveEvent.clientY - startClientY;
+        const dist = Math.hypot(dx, dy);
+
+        if (!hasMoved && dist >= 4) {
+          hasMoved = true;
+          if (holdToPanTimer !== null) {
+            window.clearTimeout(holdToPanTimer);
+          }
+          if (gestureMode === 'PENDING') {
+            // Immediate drag in SELECT mode draws Windows-style Marquee Selection Box
+            gestureMode = interactionMode === 'PAN' ? 'PAN' : 'MARQUEE';
+            if (gestureMode === 'PAN') {
+              setIsPanningCanvas(true);
+            }
+          }
+        }
+
+        if (gestureMode === 'PAN') {
+          setPanOffset({
+            x: Math.round(startPanX + dx),
+            y: Math.round(startPanY + dy),
+          });
+        } else if (gestureMode === 'MARQUEE' && hasMoved) {
+          const curWb = clientToWhiteboardCoords(
+            moveEvent.clientX,
+            moveEvent.clientY
+          );
+          const nextMarquee: MarqueeBoxCoords = {
+            startWx: startWb.wx,
+            startWy: startWb.wy,
+            currentWx: curWb.wx,
+            currentWy: curWb.wy,
+          };
+          setMarqueeBox(nextMarquee);
+          const hitIds = computeMarqueeSelectedNodeIds(activeNodes, nextMarquee);
+          setMultiSelectedNodeIds(hitIds);
+        }
+      };
+
+      const handleWindowPointerUp = () => {
+        if (holdToPanTimer !== null) {
+          window.clearTimeout(holdToPanTimer);
+        }
+        window.removeEventListener('pointermove', handleWindowPointerMove);
+        window.removeEventListener('pointerup', handleWindowPointerUp);
+        setIsPanningCanvas(false);
+        setMarqueeBox(null);
+
+        if (!hasMoved && !forceSelectImmediate) {
+          // Clicking empty canvas clears multi-selection
+          setMultiSelectedNodeIds([]);
+        }
+      };
+
+      window.addEventListener('pointermove', handleWindowPointerMove);
+      window.addEventListener('pointerup', handleWindowPointerUp);
+    },
+    [
+      activeNodes,
+      clientToWhiteboardCoords,
+      interactionMode,
+      panOffset.x,
+      panOffset.y,
+    ]
+  );
+
+  // Dragging Single or Multiple Selected Nodes on the Board
+  const handleNodePointerDown = useCallback(
+    (node: WhiteboardSketchNode, e: React.PointerEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+
+      const startClientX = e.clientX;
+      const startClientY = e.clientY;
+      let prevClientX = startClientX;
+      let prevClientY = startClientY;
+      let startedDrag = false;
+      didDragObjectRef.current = false;
+
+      // Determine the group of nodes that will move together if dragged
+      const isAlreadyMultiSelected = multiSelectedNodeIds.includes(node.id);
+      const groupIdsToMove = isAlreadyMultiSelected
+        ? multiSelectedNodeIds
+        : e.shiftKey || e.ctrlKey || e.metaKey
+        ? Array.from(new Set([...multiSelectedNodeIds, node.id]))
+        : [node.id];
+
+      const handleWindowPointerMove = (moveEvent: PointerEvent) => {
+        const totalDist = Math.hypot(
+          moveEvent.clientX - startClientX,
+          moveEvent.clientY - startClientY
+        );
+
+        if (!startedDrag && totalDist > 5) {
+          startedDrag = true;
+          didDragObjectRef.current = true;
+          setIsDraggingNodes(true);
+          setHoveredNodeId(null);
+          if (!isAlreadyMultiSelected) {
+            setMultiSelectedNodeIds(groupIdsToMove);
+          }
+        }
+
+        if (startedDrag) {
+          const rigEl = cameraRigRef.current || boardContainerRef.current;
+          const rect = rigEl?.getBoundingClientRect();
+          const width = rect?.width || 1000;
+          const height = rect?.height || 550;
+
+          const stepClientDx = moveEvent.clientX - prevClientX;
+          const stepClientDy = moveEvent.clientY - prevClientY;
+          prevClientX = moveEvent.clientX;
+          prevClientY = moveEvent.clientY;
+
+          const deltaWx = (stepClientDx / width) * WHITEBOARD_WIDTH;
+          const deltaWy = (stepClientDy / height) * WHITEBOARD_HEIGHT;
+
+          setNodeOffsetsByScenario((prev) => {
+            const currentOffsets = prev[boardScopeKey] || {};
+            return {
+              ...prev,
+              [boardScopeKey]: moveSelectedNodesByDelta(
+                groupIdsToMove,
+                currentOffsets,
+                deltaWx,
+                deltaWy
+              ),
+            };
+          });
+        }
+      };
+
+      const handleWindowPointerUp = () => {
+        window.removeEventListener('pointermove', handleWindowPointerMove);
+        window.removeEventListener('pointerup', handleWindowPointerUp);
+        setIsDraggingNodes(false);
+      };
+
+      window.addEventListener('pointermove', handleWindowPointerMove);
+      window.addEventListener('pointerup', handleWindowPointerUp);
+    },
+    [boardScopeKey, multiSelectedNodeIds]
+  );
+
+  // Dragging a Network Zone Container (moves the Zone + all nodes belonging to that Zone)
+  const handleStartZoneDrag = useCallback(
+    (
+      zoneId: NetworkZoneColumn['id'],
+      e: React.PointerEvent<SVGGElement>
+    ) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+
+      const startClientX = e.clientX;
+      const startClientY = e.clientY;
+      let prevClientX = startClientX;
+      let prevClientY = startClientY;
+      let startedDrag = false;
+      didDragObjectRef.current = false;
+
+      const zoneNodeIds = activeNodes
+        .filter((n) => n.zoneId === zoneId)
+        .map((n) => n.id);
+
+      const handleWindowPointerMove = (moveEvent: PointerEvent) => {
+        const totalDist = Math.hypot(
+          moveEvent.clientX - startClientX,
+          moveEvent.clientY - startClientY
+        );
+
+        if (!startedDrag && totalDist > 5) {
+          startedDrag = true;
+          didDragObjectRef.current = true;
+          setIsDraggingNodes(true);
+          setMultiSelectedNodeIds(zoneNodeIds);
+        }
+
+        if (startedDrag) {
+          const rigEl = cameraRigRef.current || boardContainerRef.current;
+          const rect = rigEl?.getBoundingClientRect();
+          const width = rect?.width || 1000;
+          const height = rect?.height || 550;
+
+          const stepClientDx = moveEvent.clientX - prevClientX;
+          const stepClientDy = moveEvent.clientY - prevClientY;
+          prevClientX = moveEvent.clientX;
+          prevClientY = moveEvent.clientY;
+
+          const deltaWx = (stepClientDx / width) * WHITEBOARD_WIDTH;
+          const deltaWy = (stepClientDy / height) * WHITEBOARD_HEIGHT;
+
+          setZoneOffsetsByScenario((prev) => {
+            const currentZoneOffsets = prev[boardScopeKey] || {};
+            return {
+              ...prev,
+              [boardScopeKey]: moveSelectedNodesByDelta(
+                [zoneId],
+                currentZoneOffsets,
+                deltaWx,
+                deltaWy
+              ),
+            };
+          });
+
+          if (zoneNodeIds.length > 0) {
+            setNodeOffsetsByScenario((prev) => {
+              const currentNodeOffsets = prev[boardScopeKey] || {};
+              return {
+                ...prev,
+                [boardScopeKey]: moveSelectedNodesByDelta(
+                  zoneNodeIds,
+                  currentNodeOffsets,
+                  deltaWx,
+                  deltaWy
+                ),
+              };
+            });
+          }
+        }
+      };
+
+      const handleWindowPointerUp = () => {
+        window.removeEventListener('pointermove', handleWindowPointerMove);
+        window.removeEventListener('pointerup', handleWindowPointerUp);
+        setIsDraggingNodes(false);
+      };
+
+      window.addEventListener('pointermove', handleWindowPointerMove);
+      window.addEventListener('pointerup', handleWindowPointerUp);
+    },
+    [activeNodes, boardScopeKey]
+  );
 
   const handleNodeClick = (node: WhiteboardSketchNode) => {
     const xPct = Math.round(((node.wx / 1480) * 100) * 10) / 10;
@@ -221,11 +728,13 @@ export function AttackVisualizer({
       xPct,
       yPct,
       nodeLabel: node.label,
-      seqKey: Date.now() });
+      seqKey: Date.now(),
+    });
     setLastReturnedNodeId(null);
     setActiveSketchNodeId(node.id);
     onSelectNode(node.id);
     setSelectedInternalSubNodeId(null);
+    setMultiSelectedNodeIds([]);
   };
 
   const handleBackToMainTopology = () => {
@@ -243,13 +752,35 @@ export function AttackVisualizer({
       xPct,
       yPct,
       nodeLabel: returningNode?.label || 'Network Topology',
-      seqKey: Date.now() });
+      seqKey: Date.now(),
+    });
     if (returningNode) {
       setLastReturnedNodeId(returningNode.id);
     }
     setActiveSketchNodeId(null);
     onSelectNode(null);
     setSelectedInternalSubNodeId(null);
+    setMultiSelectedNodeIds([]);
+  };
+
+  const toggleNodeInMultiSelection = (
+    nodeId: string,
+    e: React.MouseEvent | React.PointerEvent
+  ) => {
+    e.stopPropagation();
+    setMultiSelectedNodeIds((prev) =>
+      prev.includes(nodeId)
+        ? prev.filter((id) => id !== nodeId)
+        : [...prev, nodeId]
+    );
+  };
+
+  const handleSelectAllNodes = () => {
+    if (multiSelectedNodeIds.length === activeNodes.length) {
+      setMultiSelectedNodeIds([]);
+    } else {
+      setMultiSelectedNodeIds(activeNodes.map((n) => n.id));
+    }
   };
 
   const boardMotionKey =
@@ -258,8 +789,11 @@ export function AttackVisualizer({
       : `main-topology-${scenario.id}-${activeEnvironment}`;
 
   const hoveredNode = useMemo(
-    () => activeNodes.find((n) => n.id === hoveredNodeId) || null,
-    [activeNodes, hoveredNodeId]
+    () =>
+      !isDraggingNodes && !marqueeBox
+        ? activeNodes.find((n) => n.id === hoveredNodeId) || null
+        : null,
+    [activeNodes, hoveredNodeId, isDraggingNodes, marqueeBox]
   );
 
   const envBadgeColorClass =
@@ -278,12 +812,108 @@ export function AttackVisualizer({
       <Laptop className="w-3 h-3 shrink-0" />
     );
 
+  // Interactive Mode & Multi-Select Controls Strip (rendered in top bar of canvas)
+  const interactionToolbarNode = (
+    <div
+      data-testid="canvas-interaction-toolbar"
+      onClick={(e) => e.stopPropagation()}
+      className="flex flex-wrap items-center gap-1.5 shrink-0"
+    >
+      {/* Multi-Selected Nodes Count Pill */}
+      {multiSelectedNodeIds.length > 0 && (
+        <span
+          data-testid="multi-selection-count-badge"
+          data-selected-count={multiSelectedNodeIds.length}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-600 text-white font-mono text-[10px] font-bold shadow-2xs"
+        >
+          <Move className="w-3 h-3 shrink-0" />
+          <span>{multiSelectedNodeIds.length} Selected · Drag to move</span>
+        </span>
+      )}
+
+      {/* Segmented Tool Switcher: Box Select vs Pan Page */}
+      <div
+        role="group"
+        aria-label="Canvas Pointer Interaction Mode"
+        className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700"
+      >
+        <button
+          type="button"
+          data-testid="canvas-mode-select-btn"
+          aria-pressed={interactionMode === 'SELECT'}
+          onClick={() => setInteractionMode('SELECT')}
+          title="Windows-Style Box Select & Drag Objects (Hold on page 0.2s to Pan)"
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer ${
+            interactionMode === 'SELECT'
+              ? 'bg-indigo-600 text-white shadow-2xs'
+              : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          <MousePointer className="w-3 h-3 shrink-0" />
+          <span>Box Select</span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="canvas-mode-pan-btn"
+          aria-pressed={interactionMode === 'PAN'}
+          onClick={() => setInteractionMode('PAN')}
+          title="Pan / Move Page with Mouse Drag (Shift+Drag to Box Select)"
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer ${
+            interactionMode === 'PAN'
+              ? 'bg-indigo-600 text-white shadow-2xs'
+              : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          <Hand className="w-3 h-3 shrink-0" />
+          <span>Pan Page</span>
+        </button>
+      </div>
+
+      {/* Select All / Deselect All Objects Button */}
+      <button
+        type="button"
+        data-testid="canvas-select-all-btn"
+        onClick={handleSelectAllNodes}
+        title="Select All Objects on Diagram to Move Together"
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer ${
+          multiSelectedNodeIds.length === activeNodes.length &&
+          activeNodes.length > 0
+            ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-400 dark:border-indigo-700'
+            : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
+        }`}
+      >
+        <CheckSquare className="w-3 h-3 shrink-0" />
+        <span className="hidden xl:inline">
+          {multiSelectedNodeIds.length === activeNodes.length
+            ? 'Deselect All'
+            : 'Select All'}
+        </span>
+      </button>
+
+      {/* Reset Layout / Positions / Pan & Zoom Button */}
+      {hasCustomLayoutOrView && (
+        <button
+          type="button"
+          data-testid="canvas-reset-layout-btn"
+          onClick={handleResetCanvasLayout}
+          title="Reset Moved Objects, Pan Offset & Zoom to Default"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-mono font-bold transition-colors cursor-pointer"
+        >
+          <RotateCcw className="w-2.5 h-2.5 shrink-0" />
+          <span>Reset Layout</span>
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div
       className="relative flex-1 w-full h-full flex flex-col min-h-0 overflow-hidden select-none p-2.5 gap-2"
       data-testid="attack-visualizer"
       data-active-environment={activeEnvironment}
       data-tactical-mode={tacticalMode ? 'true' : 'false'}
+      data-interaction-mode={interactionMode}
       dir="ltr"
     >
       {/* Persistent Environment & Expandable Zone Sub-View Context Bar */}
@@ -315,7 +945,9 @@ export function AttackVisualizer({
 
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-semibold shrink-0">
                   <Maximize2 className="w-3 h-3" />
-                  <span>EXPANDED ZONE · NODE #{selectedSketchNode.chainOrder}</span>
+                  <span>
+                    EXPANDED ZONE · NODE #{selectedSketchNode.chainOrder}
+                  </span>
                 </span>
 
                 <span className="font-semibold text-xs text-zinc-900 dark:text-white truncate">
@@ -344,12 +976,7 @@ export function AttackVisualizer({
                   </button>
                 )}
 
-                <span
-                  data-testid="expanded-sequence-lineage-badge"
-                  className="hidden lg:inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 font-mono text-[10px] font-medium truncate max-w-[280px]"
-                >
-                  {internalSubBoard.sequenceLineage.lineageBadgeText}
-                </span>
+                {interactionToolbarNode}
               </div>
             </div>
 
@@ -385,7 +1012,9 @@ export function AttackVisualizer({
               >
                 {envIconNode}
                 <span>{envProfile.badgeLabel}</span>
-                <span className="opacity-75">· {envProfile.environmentTag}</span>
+                <span className="opacity-75">
+                  · {envProfile.environmentTag}
+                </span>
               </span>
 
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold shrink-0">
@@ -394,21 +1023,24 @@ export function AttackVisualizer({
                   : `TOPOLOGY (${scenario.stages.length} STEPS)`}
               </span>
 
-              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate max-w-[560px]">
+              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate max-w-[440px]">
                 {stageLocationContext.whereWeAreSummary}
               </span>
             </div>
 
-            <div className="hidden md:flex items-center gap-1.5 text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0">
-              <span>Click any node or zone to expand internal sub-view</span>
-            </div>
+            {interactionToolbarNode}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Maximum-Height Center Diagram Canvas with Tactical Grid Overlay, Spatial Portal Zoom + Cinematic Camera Rig */}
+      {/* Maximum-Height Center Diagram Canvas with Scroll Zoom, Mouse Pan, Windows Marquee Selection & Object Dragging */}
       <div className="relative flex-1 w-full h-full min-h-0 overflow-hidden">
         <div
+          ref={boardContainerRef}
+          onPointerDown={handleBoardPointerDown}
+          onContextMenu={(e) => {
+            if (isPanningCanvas) e.preventDefault();
+          }}
           data-testid={
             internalSubBoard
               ? 'expanded-node-visual-board'
@@ -417,7 +1049,17 @@ export function AttackVisualizer({
           data-active-environment={activeEnvironment}
           data-architecture-code={envProfile.architectureCode}
           data-tactical-mode={tacticalMode ? 'true' : 'false'}
+          data-zoom-scale={effectiveScale}
+          data-pan-x={panOffset.x}
+          data-pan-y={panOffset.y}
+          data-selected-count={multiSelectedNodeIds.length}
           className={`relative w-full h-full rounded-2xl border overflow-hidden transition-colors duration-300 ${
+            isPanningCanvas
+              ? 'cursor-grabbing'
+              : interactionMode === 'PAN'
+              ? 'cursor-grab'
+              : 'cursor-crosshair'
+          } ${
             tacticalMode
               ? 'bg-[#050B14] border-emerald-500/60 shadow-[inset_0_0_55px_rgba(16,185,129,0.14)]'
               : 'bg-[#FDFBF7] dark:bg-[#0D111A] border-zinc-200/90 dark:border-zinc-800 shadow-2xs'
@@ -438,6 +1080,25 @@ export function AttackVisualizer({
                   activeEnvironment={activeEnvironment}
                   scenarioCode={scenario.code}
                 />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Panning Active Indicator Pill */}
+          <AnimatePresence>
+            {isPanningCanvas && (
+              <motion.div
+                key="panning-active-hud"
+                data-testid="canvas-panning-hud"
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-mono font-bold shadow-lg flex items-center gap-1.5"
+              >
+                <Hand className="w-3.5 h-3.5" />
+                <span>
+                  Panning Canvas ({panOffset.x}px, {panOffset.y}px)
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -555,14 +1216,17 @@ export function AttackVisualizer({
                 <motion.div
                   initial={{
                     scale: portalAnim.mode === 'EXPAND' ? 0.2 : 2.2,
-                    opacity: 0.85 }}
+                    opacity: 0.85,
+                  }}
                   animate={{
                     scale: portalAnim.mode === 'EXPAND' ? 2.6 : 0.25,
-                    opacity: 0 }}
+                    opacity: 0,
+                  }}
                   transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
                   style={{
                     left: `${portalAnim.xPct}%`,
-                    top: `${portalAnim.yPct}%` }}
+                    top: `${portalAnim.yPct}%`,
+                  }}
                   className={`absolute -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full border-2 ${
                     portalAnim.mode === 'EXPAND'
                       ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_50px_rgba(99,102,241,0.35)]'
@@ -602,7 +1266,8 @@ export function AttackVisualizer({
             <motion.div
               key={boardMotionKey}
               style={{
-                transformOrigin: `${portalOrigin.xPct}% ${portalOrigin.yPct}%` }}
+                transformOrigin: `${portalOrigin.xPct}% ${portalOrigin.yPct}%`,
+              }}
               initial={
                 portalAnim
                   ? internalSubBoard
@@ -613,7 +1278,8 @@ export function AttackVisualizer({
               animate={{
                 opacity: 1,
                 scale: 1,
-                filter: 'blur(0px)' }}
+                filter: 'blur(0px)',
+              }}
               exit={
                 portalAnim
                   ? internalSubBoard
@@ -625,7 +1291,8 @@ export function AttackVisualizer({
                 type: 'spring',
                 stiffness: 320,
                 damping: 26,
-                mass: 0.8 }}
+                mass: 0.8,
+              }}
               className="relative w-full h-full z-20"
             >
               {/* Mobile (< 640px) */}
@@ -651,22 +1318,30 @@ export function AttackVisualizer({
                 />
               </div>
 
-              {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig */}
+              {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig with Scroll Zoom & Mouse Pan */}
               <motion.div
+                ref={cameraRigRef}
                 data-testid="cinematic-camera-rig"
                 data-camera-frame={director.camera.frameCode}
                 data-camera-scale={effectiveScale}
                 animate={{
-                  x: `${effectiveTxPct}%`,
-                  y: `${effectiveTyPct}%`,
-                  scale: effectiveScale }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 170,
-                  damping: 26,
-                  mass: 0.9 }}
+                  x: `calc(${effectiveTxPct}% + ${panOffset.x}px)`,
+                  y: `calc(${effectiveTyPct}% + ${panOffset.y}px)`,
+                  scale: effectiveScale,
+                }}
+                transition={
+                  isPanningCanvas
+                    ? { duration: 0 }
+                    : {
+                        type: 'spring',
+                        stiffness: 210,
+                        damping: 26,
+                        mass: 0.8,
+                      }
+                }
                 style={{
-                  transformOrigin: '50% 50%' }}
+                  transformOrigin: '50% 50%',
+                }}
                 className="hidden sm:block relative w-full h-full"
               >
                 <SketchWhiteboardSvg
@@ -675,9 +1350,14 @@ export function AttackVisualizer({
                   sketchFlows={activeFlows}
                   selectedTelemetryId={selectedTelemetryId}
                   onSelectTelemetry={onSelectTelemetry}
+                  onStartZoneDrag={handleStartZoneDrag}
                   onSelectZone={
                     !internalSubBoard
                       ? (zoneId) => {
+                          if (didDragObjectRef.current) {
+                            didDragObjectRef.current = false;
+                            return;
+                          }
                           const targetNode = sketchNodes.find(
                             (n) => n.zoneId === zoneId
                           );
@@ -690,6 +1370,36 @@ export function AttackVisualizer({
                   activeEnvironment={activeEnvironment}
                   tacticalMode={tacticalMode}
                 />
+
+                {/* Windows-Style Marquee Rubber-Band Selection Box */}
+                {marqueeBox && (
+                  <div
+                    data-testid="windows-marquee-selection-box"
+                    style={{
+                      left: `${
+                        (Math.min(marqueeBox.startWx, marqueeBox.currentWx) /
+                          WHITEBOARD_WIDTH) *
+                        100
+                      }%`,
+                      top: `${
+                        (Math.min(marqueeBox.startWy, marqueeBox.currentWy) /
+                          WHITEBOARD_HEIGHT) *
+                        100
+                      }%`,
+                      width: `${
+                        (Math.abs(marqueeBox.currentWx - marqueeBox.startWx) /
+                          WHITEBOARD_WIDTH) *
+                        100
+                      }%`,
+                      height: `${
+                        (Math.abs(marqueeBox.currentWy - marqueeBox.startWy) /
+                          WHITEBOARD_HEIGHT) *
+                        100
+                      }%`,
+                    }}
+                    className="pointer-events-none absolute z-40 rounded-md bg-indigo-500/18 border-2 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.35)]"
+                  />
+                )}
 
                 {/* Hover-Based Technical Summary Tooltip for Network Nodes */}
                 <AnimatePresence>
@@ -714,10 +1424,12 @@ export function AttackVisualizer({
                       transition={{
                         type: 'spring',
                         stiffness: 380,
-                        damping: 24 }}
+                        damping: 24,
+                      }}
                       style={{
                         left: `${(director.activeCallout.wx / 1480) * 100}%`,
-                        top: `${(director.activeCallout.wy / 650) * 100}%` }}
+                        top: `${(director.activeCallout.wy / 650) * 100}%`,
+                      }}
                       className={`pointer-events-none absolute -translate-x-1/2 z-30 w-56 rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
                         director.activeCallout.placement === 'TOP'
                           ? '-translate-y-[calc(100%+58px)]'
@@ -748,11 +1460,12 @@ export function AttackVisualizer({
                   )}
                 </AnimatePresence>
 
-                {/* Sleek Schematic Nodes */}
+                {/* Draggable & Multi-Selectable Schematic Nodes */}
                 {activeNodes.map((node, nIdx) => {
                   const isSelected = internalSubBoard
                     ? activeInternalSubNode?.id === node.id
                     : selectedSketchNode?.id === node.id;
+                  const isMultiSelected = multiSelectedNodeIds.includes(node.id);
                   const isRecentlyReturned =
                     !internalSubBoard && lastReturnedNodeId === node.id;
                   const leftPct = (node.wx / 1480) * 100;
@@ -764,7 +1477,8 @@ export function AttackVisualizer({
                     yOffset: 0,
                     showPulseRing: false,
                     pulseColor: '#6366F1',
-                    role: 'OVERVIEW' };
+                    role: 'OVERVIEW',
+                  };
 
                   return (
                     <motion.button
@@ -776,22 +1490,39 @@ export function AttackVisualizer({
                           : `sketch-node-${node.id}`
                       }
                       data-node-role={cState.role}
+                      data-multi-selected={isMultiSelected ? 'true' : 'false'}
+                      data-wx={node.wx}
+                      data-wy={node.wy}
                       initial={{ opacity: 0, scale: 0.78, y: -24 }}
                       animate={{
                         opacity: cState.opacity,
-                        scale: isSelected ? 1.08 : cState.scale,
-                        y: cState.yOffset }}
-                      whileHover={{ y: -4, scale: 1.07, opacity: 1 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 320,
-                        damping: 22,
-                        delay:
-                          activeStageIndex === 0 && director.phase === 'OVERVIEW'
-                            ? nIdx * 0.04
-                            : 0 }}
-                      onMouseEnter={() => setHoveredNodeId(node.id)}
+                        scale:
+                          isSelected || isMultiSelected ? 1.06 : cState.scale,
+                        y: cState.yOffset,
+                      }}
+                      whileHover={
+                        isDraggingNodes
+                          ? undefined
+                          : { y: -3, scale: 1.06, opacity: 1 }
+                      }
+                      transition={
+                        isDraggingNodes
+                          ? { duration: 0 }
+                          : {
+                              type: 'spring',
+                              stiffness: 320,
+                              damping: 22,
+                              delay:
+                                activeStageIndex === 0 &&
+                                director.phase === 'OVERVIEW'
+                                  ? nIdx * 0.04
+                                  : 0,
+                            }
+                      }
+                      onPointerDown={(e) => handleNodePointerDown(node, e)}
+                      onMouseEnter={() => {
+                        if (!isDraggingNodes) setHoveredNodeId(node.id);
+                      }}
                       onMouseLeave={() =>
                         setHoveredNodeId((prev) =>
                           prev === node.id ? null : prev
@@ -806,6 +1537,14 @@ export function AttackVisualizer({
                       onClick={(e) => {
                         e.stopPropagation();
                         setHoveredNodeId(null);
+                        if (didDragObjectRef.current) {
+                          didDragObjectRef.current = false;
+                          return;
+                        }
+                        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                          toggleNodeInMultiSelection(node.id, e);
+                          return;
+                        }
                         if (internalSubBoard) {
                           setSelectedInternalSubNodeId(node.id);
                           const relatedFlow = internalSubBoard.subFlows.find(
@@ -820,8 +1559,31 @@ export function AttackVisualizer({
                         }
                       }}
                       style={{ left: `${leftPct}%`, top: `${topPct}%` }}
-                      className="group absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center text-center cursor-pointer focus:outline-none"
+                      className={`group absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center text-center focus:outline-none ${
+                        isDraggingNodes ? 'cursor-grabbing' : 'cursor-grab'
+                      }`}
                     >
+                      {/* Windows-Style Multi-Selection Checkbox Badge (Top-Right of Node) */}
+                      <span
+                        role="checkbox"
+                        aria-checked={isMultiSelected}
+                        data-testid={`node-multiselect-toggle-${node.id}`}
+                        title={
+                          isMultiSelected
+                            ? 'Selected (Click to deselect, or drag node to move group)'
+                            : 'Click to add to multi-selection (or Shift+Click / drag box)'
+                        }
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => toggleNodeInMultiSelection(node.id, e)}
+                        className={`absolute -top-2 -right-2 z-30 w-4 h-4 rounded-md border flex items-center justify-center transition-all cursor-pointer ${
+                          isMultiSelected
+                            ? 'bg-indigo-600 border-indigo-400 text-white opacity-100 scale-105 shadow-md'
+                            : 'bg-white/95 dark:bg-zinc-900/95 border-zinc-400 dark:border-zinc-600 text-transparent opacity-0 group-hover:opacity-100 hover:border-indigo-500'
+                        }`}
+                      >
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </span>
+
                       {cState.showPulseRing && (
                         <motion.span
                           initial={{ scale: 0.85, opacity: 0.85 }}
@@ -829,7 +1591,8 @@ export function AttackVisualizer({
                           transition={{
                             duration: 1.35,
                             repeat: Infinity,
-                            ease: 'easeOut' }}
+                            ease: 'easeOut',
+                          }}
                           style={{ borderColor: cState.pulseColor }}
                           className="pointer-events-none absolute inset-0 rounded-2xl border-2"
                         />
@@ -842,7 +1605,8 @@ export function AttackVisualizer({
                           transition={{
                             duration: 1.1,
                             repeat: 2,
-                            ease: 'easeOut' }}
+                            ease: 'easeOut',
+                          }}
                           className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-indigo-500"
                         />
                       )}
@@ -882,9 +1646,11 @@ export function AttackVisualizer({
                             ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
                             : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'
                         } ${
-                          isSelected ||
-                          cState.role === 'CURRENT_TARGET' ||
-                          cState.role === 'CURRENT_SOURCE'
+                          isMultiSelected
+                            ? 'ring-2 ring-indigo-500 border-indigo-600 bg-indigo-50/95 dark:bg-indigo-950/90 shadow-[0_0_16px_rgba(99,102,241,0.35)]'
+                            : isSelected ||
+                              cState.role === 'CURRENT_TARGET' ||
+                              cState.role === 'CURRENT_SOURCE'
                             ? 'ring-2 ring-rose-500 border-rose-600'
                             : ''
                         }`}
@@ -1008,12 +1774,16 @@ export function AttackVisualizer({
               effectiveScale={effectiveScale}
               frameTitle={director.camera.frameTitle}
               onZoomOut={() =>
-                setManualZoom((z) => Math.max(0.75, +(z - 0.1).toFixed(2)))
+                setManualZoom((z) =>
+                  Math.max(MIN_CANVAS_ZOOM, +(z - 0.15).toFixed(2))
+                )
               }
               onZoomIn={() =>
-                setManualZoom((z) => Math.min(1.25, +(z + 0.1).toFixed(2)))
+                setManualZoom((z) =>
+                  Math.min(MAX_CANVAS_ZOOM, +(z + 0.15).toFixed(2))
+                )
               }
-              onResetZoom={() => setManualZoom(1)}
+              onResetZoom={handleResetCanvasLayout}
             />
           </div>
         </div>

@@ -20,6 +20,10 @@ interface SketchWhiteboardSvgProps {
   selectedTelemetryId: string | null;
   onSelectTelemetry: (event: TelemetryEvent) => void;
   onSelectZone?: (zoneId: NetworkZoneColumn['id']) => void;
+  onStartZoneDrag?: (
+    zoneId: NetworkZoneColumn['id'],
+    e: React.PointerEvent<SVGGElement>
+  ) => void;
   activeEnvironment?: ActiveEnvironmentId;
   tacticalMode?: boolean;
 }
@@ -31,6 +35,7 @@ export function SketchWhiteboardSvg({
   selectedTelemetryId,
   onSelectTelemetry,
   onSelectZone,
+  onStartZoneDrag,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   tacticalMode = false }: SketchWhiteboardSvgProps) {
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
@@ -163,16 +168,27 @@ export function SketchWhiteboardSvg({
               strokeDasharray="8 5"
             />
 
-            {/* Clean Clickable Zone Header Bar Along Top of Zone */}
+            {/* Clean Clickable & Draggable Zone Header Bar Along Top of Zone */}
             <g
               transform={`translate(${zone.xStart + 12}, ${yTop + 8})`}
+              data-testid={`zone-header-${zone.id}`}
+              onPointerDown={(e) => {
+                if (onStartZoneDrag) {
+                  e.stopPropagation();
+                  onStartZoneDrag(zone.id, e);
+                }
+              }}
               onClick={(e) => {
                 if (onSelectZone) {
                   e.stopPropagation();
                   onSelectZone(zone.id);
                 }
               }}
-              className={onSelectZone ? 'cursor-pointer' : undefined}
+              className={
+                onSelectZone || onStartZoneDrag
+                  ? 'cursor-grab active:cursor-grabbing'
+                  : undefined
+              }
             >
               <rect
                 x={0}
