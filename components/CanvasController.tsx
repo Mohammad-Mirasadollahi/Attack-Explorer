@@ -21,7 +21,12 @@ export interface CanvasControllerHandle {
   zoomIn: (step?: number) => void;
   zoomOut: (step?: number) => void;
   resetTransform: () => void;
-  setTransform: (x: number, y: number, scale: number) => void;
+  setTransform: (
+    x: number,
+    y: number,
+    scale: number,
+    animationTime?: number
+  ) => void;
 }
 
 export interface CanvasControllerProps {
@@ -45,10 +50,9 @@ export interface CanvasControllerProps {
 
 /**
  * CanvasController wraps the AttackExplorerWorkbench diagram workspace with
- * `react-zoom-pan-pinch` to provide smooth mouse-wheel zooming and click-and-drag
- * workspace panning while excluding interactive sub-components (nodes, draggable
- * network zones, checkboxes, and HUD controls) so their own drag/click events
- * work without conflict.
+ * `react-zoom-pan-pinch` to provide hardware-accelerated 2D transform matrices
+ * (`translate3d` + `scale`) without competing pointer/wheel listeners or
+ * per-frame React state thrashing.
  */
 export const CanvasController = forwardRef<
   CanvasControllerHandle,
@@ -59,9 +63,6 @@ export const CanvasController = forwardRef<
     panningEnabled = true,
     wheelZoomEnabled = true,
     initialScale = 1,
-    onTransformChange,
-    onPanningStart,
-    onPanningStop,
     className = '',
   },
   ref
@@ -70,26 +71,32 @@ export const CanvasController = forwardRef<
 
   const handleZoomIn = useCallback((step = 0.15) => {
     if (transformRef.current) {
-      transformRef.current.zoomIn(step, 180, 'easeOut');
+      transformRef.current.zoomIn(step, 140, 'easeOut');
     }
   }, []);
 
   const handleZoomOut = useCallback((step = 0.15) => {
     if (transformRef.current) {
-      transformRef.current.zoomOut(step, 180, 'easeOut');
+      transformRef.current.zoomOut(step, 140, 'easeOut');
     }
   }, []);
 
   const handleReset = useCallback(() => {
     if (transformRef.current) {
-      transformRef.current.resetTransform(220, 'easeOut');
+      transformRef.current.resetTransform(160, 'easeOut');
     }
   }, []);
 
   const handleSetTransform = useCallback(
-    (x: number, y: number, scale: number) => {
+    (x: number, y: number, scale: number, animationTime = 0) => {
       if (transformRef.current) {
-        transformRef.current.setTransform(x, y, scale, 220, 'easeOut');
+        transformRef.current.setTransform(
+          x,
+          y,
+          scale,
+          animationTime,
+          'easeOut'
+        );
       }
     },
     []
@@ -110,6 +117,7 @@ export const CanvasController = forwardRef<
     <div
       data-testid="canvas-controller"
       data-panning-enabled={panningEnabled ? 'true' : 'false'}
+      data-wheel-zoom-enabled={wheelZoomEnabled ? 'true' : 'false'}
       onContextMenu={(e) => e.preventDefault()}
       className={`relative w-full h-full overflow-hidden ${className}`}
     >
@@ -120,47 +128,23 @@ export const CanvasController = forwardRef<
         maxScale={MAX_CANVAS_ZOOM}
         centerOnInit={false}
         limitToBounds={false}
-        velocityAnimation={{ disabled: false, sensitivityMouse: 1, animationTime: 220 }}
+        velocityAnimation={{ disabled: true }}
         wheel={{
-          disabled: !wheelZoomEnabled,
-          step: 0.12,
-          excluded: ['canvas-wheel-excluded'],
+          disabled: true,
         }}
         panning={{
-          disabled: !panningEnabled,
-          velocityDisabled: false,
-          excluded: [
-            'canvas-interactive-node',
-            'canvas-interactive-zone',
-            'canvas-interactive-control',
-            'nopan',
-            'button',
-            'input',
-            'select',
-            'a',
-          ],
+          disabled: true,
+        }}
+        pinch={{
+          disabled: !wheelZoomEnabled,
         }}
         doubleClick={{
           disabled: true,
         }}
-        onTransform={(r) => {
-          onTransformChange?.({
-            scale: Number(r.state.scale.toFixed(2)),
-            positionX: Math.round(r.state.positionX),
-            positionY: Math.round(r.state.positionY),
-          });
-        }}
-        onPanningStart={() => {
-          onPanningStart?.();
-        }}
-        onPanningStop={(r) => {
-          onPanningStop?.({
-            x: Math.round(r.state.positionX),
-            y: Math.round(r.state.positionY),
-          });
-        }}
       >
         <TransformComponent
+          wrapperClass="!w-full !h-full !overflow-visible"
+          contentClass="!w-full !h-full !overflow-visible"
           wrapperStyle={{
             width: '100%',
             height: '100%',
@@ -169,6 +153,9 @@ export const CanvasController = forwardRef<
           contentStyle={{
             width: '100%',
             height: '100%',
+            overflow: 'visible',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
           }}
         >
           {children}

@@ -861,13 +861,201 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(shouldSkipIntroFromSearch('?autostart=1'), true);
     assert.equal(shouldSkipIntroFromSearch('?skipIntro=true'), true);
   });
+
+  it('computeScrollWheelZoom zooms gradually (~5% per notch) and never jumps directly to min/max bounds on a single wheel event', async () => {
+    const {
+      computeScrollWheelZoom,
+      MIN_CANVAS_ZOOM,
+      MAX_CANVAS_ZOOM,
+    } = await import('./canvas-interaction-engine');
+
+    // Single wheel down (zoom out) from 1.00 -> ~0.95 (never 0.45)
+    const zoomOutOneStep = computeScrollWheelZoom(1, 100);
+    assert.equal(zoomOutOneStep, 0.95);
+    assert.ok(zoomOutOneStep > MIN_CANVAS_ZOOM);
+
+    // Single wheel up (zoom in) from 1.00 -> ~1.052 (never 2.50)
+    const zoomInOneStep = computeScrollWheelZoom(1, -100);
+    assert.equal(zoomInOneStep, 1.052);
+    assert.ok(zoomInOneStep < MAX_CANVAS_ZOOM);
+
+    // Even an extreme deltaY spike (e.g. 1200) is clamped to a gentle step
+    const extremeSpikeOut = computeScrollWheelZoom(1, 1200);
+    assert.equal(extremeSpikeOut, 0.95);
+  });
+
+  it('keyboard-shortcuts catalog and hotkey resolver map B to Box Select, P to Pan/Pen, and canvas navigation keys accurately', async () => {
+    const {
+      KEYBOARD_SHORTCUT_ITEMS,
+      SHORTCUT_CATEGORIES,
+      filterKeyboardShortcuts,
+      isEditableKeyboardTarget,
+      resolveKeyboardShortcutCommand,
+      KEYBOARD_PAN_STEP_PX,
+    } = await import('./keyboard-shortcuts');
+
+    assert.equal(SHORTCUT_CATEGORIES.length, 4);
+    assert.ok(KEYBOARD_SHORTCUT_ITEMS.length >= 16);
+    assert.equal(KEYBOARD_PAN_STEP_PX, 48);
+
+    // 1. Verify B -> Box Select and P -> Pan Page / Pen
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'b' }), 'TOOL_BOX_SELECT');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'B' }), 'TOOL_BOX_SELECT');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'p' }), 'TOOL_PAN_PAGE');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'P' }), 'TOOL_PAN_PAGE');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'h' }), 'TOOL_PAN_PAGE');
+
+    // 2. Verify Zoom, Reset, and Directional Panning
+    assert.equal(resolveKeyboardShortcutCommand({ key: '+' }), 'ZOOM_IN');
+    assert.equal(resolveKeyboardShortcutCommand({ key: '=' }), 'ZOOM_IN');
+    assert.equal(resolveKeyboardShortcutCommand({ key: '-' }), 'ZOOM_OUT');
+    assert.equal(resolveKeyboardShortcutCommand({ key: '0' }), 'RESET_CANVAS');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'r' }), 'RESET_CANVAS');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'ArrowUp' }), 'PAN_UP');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'ArrowDown' }), 'PAN_DOWN');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'ArrowLeft' }), 'PAN_LEFT');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'ArrowRight' }), 'PAN_RIGHT');
+
+    // 3. Verify Toggles & Help Overlay
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'c' }), 'TOGGLE_AUTOCAM');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 't' }), 'TOGGLE_TACTICAL');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'l' }), 'TOGGLE_LEGEND');
+    assert.equal(
+      resolveKeyboardShortcutCommand({ key: '?' }),
+      'TOGGLE_SHORTCUTS_HELP'
+    );
+    assert.equal(
+      resolveKeyboardShortcutCommand({ key: 'a', ctrlKey: true }),
+      'SELECT_ALL_NODES'
+    );
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'Escape' }), 'ESCAPE');
+
+    // 4. Ignore single-key hotkeys when typing in INPUT or TEXTAREA
+    assert.equal(isEditableKeyboardTarget('INPUT', false), true);
+    assert.equal(isEditableKeyboardTarget('TEXTAREA', false), true);
+    assert.equal(isEditableKeyboardTarget('DIV', false), false);
+    assert.equal(
+      resolveKeyboardShortcutCommand({ key: 'b', targetTagName: 'INPUT' }),
+      null
+    );
+
+    // 5. Filtering by category and search query
+    const toolShortcuts = filterKeyboardShortcuts('', 'TOOLS_SELECTION');
+    assert.ok(toolShortcuts.some((s) => s.id === 'TOOL_BOX_SELECT'));
+    assert.ok(toolShortcuts.some((s) => s.id === 'TOOL_PAN_PAGE'));
+
+    const boxSearch = filterKeyboardShortcuts('Box Select', 'ALL');
+    assert.ok(boxSearch.length >= 1);
+    assert.equal(boxSearch[0].id, 'TOOL_BOX_SELECT');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'm' }), 'TOGGLE_MINIMAP');
+  });
+
+  it('computeMinimapViewportRect, computePanFromMinimapPoint, and Zero-Truncation UI standards work accurately and forbid ellipsis in active UI components', async () => {
+    const {
+      computeMinimapViewportRect,
+      computePanFromMinimapPoint,
+    } = await import('./canvas-interaction-engine');
+    const {
+      formatConciseStagePillLabel,
+      formatConciseInternalFlowPill,
+      ZERO_TRUNCATION_STANDARD,
+    } = await import('./ui-text-standards');
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+
+    // 1. Minimap viewport rectangle math at 1x and zoomed/panned states
+    const rect1x = computeMinimapViewportRect({
+      panX: 0,
+      panY: 0,
+      zoomScale: 1,
+    });
+    assert.equal(rect1x.x, 0);
+    assert.equal(rect1x.y, 0);
+    assert.equal(rect1x.width, 1480);
+    assert.equal(rect1x.height, 650);
+
+    const rect2x = computeMinimapViewportRect({
+      panX: -200,
+      panY: -100,
+      zoomScale: 2,
+      containerWidth: 1000,
+      containerHeight: 500,
+    });
+    assert.ok(rect2x.width < 1480);
+    assert.ok(rect2x.height < 650);
+    assert.ok(rect2x.x > 0);
+    assert.ok(rect2x.y > 0);
+
+    // 2. Minimap click-to-pan centers the clicked whiteboard coordinate
+    const centerPan = computePanFromMinimapPoint({
+      targetWx: 740,
+      targetWy: 325,
+      zoomScale: 1,
+      containerWidth: 1000,
+      containerHeight: 500,
+    });
+    assert.equal(centerPan.x, 0);
+    assert.equal(centerPan.y, 0);
+
+    const topLeftPan = computePanFromMinimapPoint({
+      targetWx: 0,
+      targetWy: 0,
+      zoomScale: 1,
+      containerWidth: 1000,
+      containerHeight: 500,
+    });
+    assert.equal(topLeftPan.x, 500);
+    assert.equal(topLeftPan.y, 250);
+
+    // 3. Concise stage pills & internal flow pills never contain '...'
+    assert.equal(ZERO_TRUNCATION_STANDARD.forbidEllipsisOnCardsAndPills, true);
+    for (const scenario of ATTACK_SCENARIOS) {
+      for (const stage of scenario.stages) {
+        const pill = formatConciseStagePillLabel(stage);
+        assert.ok(pill.shortLabel.length > 0 && pill.shortLabel.length <= 36);
+        assert.equal(
+          pill.shortLabel.includes('...'),
+          false,
+          `Stage pill "${pill.shortLabel}" must never contain '...'`
+        );
+        assert.ok(pill.tooltipTitle.includes(stage.title));
+      }
+    }
+
+    const flowPill = formatConciseInternalFlowPill({
+      sequenceCode: '1.1',
+      forwardSeq: '1.1.1',
+      returnSeq: '1.1.2',
+      label: 'Dispatch Request to Engine',
+      returnLabel: 'RESP SESSION_OPEN',
+    });
+    assert.equal(flowPill.codeBadge, '#1.1');
+    assert.equal(flowPill.shortRoute, '(1.1.1→ · ⇠1.1.2)');
+    assert.equal(flowPill.shortRoute.includes('...'), false);
+    assert.ok(flowPill.tooltipDetail.includes('Dispatch Request to Engine'));
+
+    // 4. Permanent Zero-Truncation guard on active UI components
+    const zeroTruncateFiles = [
+      'components/AttackStepProgressBar.tsx',
+      'components/AttackSidebar.tsx',
+      'components/AttackVisualizer.tsx',
+      'components/DraggableDiagramNode.tsx',
+      'components/InspectorPanel.tsx',
+      'components/MitreStats.tsx',
+      'components/ThreatIntelCard.tsx',
+      'components/canvas/CanvasMinimapOverlay.tsx',
+      'components/canvas/ProcessMemoryView.tsx',
+      'components/canvas/SequenceView.tsx',
+      'components/canvas/RawTablesView.tsx',
+    ];
+    for (const relPath of zeroTruncateFiles) {
+      const fullPath = path.join(process.cwd(), relPath);
+      const source = fs.readFileSync(fullPath, 'utf8');
+      assert.equal(
+        /\btruncate\b/.test(source),
+        false,
+        `${relPath} must not contain CSS 'truncate' class (violates Zero-Truncation Standard)`
+      );
+    }
+  });
 });
-
-
-
-
-
-
-
-
-

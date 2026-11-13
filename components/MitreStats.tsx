@@ -17,6 +17,7 @@ import {
   MitreTacticFrequencyItem,
 } from '@/lib/threat-intel-service';
 import { BarChart3, ShieldAlert } from 'lucide-react';
+import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 
 interface MitreStatsProps {
   scenario: AttackScenario;
@@ -65,16 +66,19 @@ export function MitreStats({
       aria-label="MITRE ATT&CK Coverage Statistics"
       className="p-3 rounded-xl bg-zinc-50/90 dark:bg-zinc-900/75 border border-zinc-200/90 dark:border-zinc-800 space-y-2.5"
     >
-      <div className="flex items-center justify-between gap-2 min-w-0">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <BarChart3 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-          <h4
-            title="MITRE ATT&CK Tactic Coverage"
-            className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate min-w-0"
-          >
-            MITRE ATT&CK Tactic Coverage
-          </h4>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+        <WorkbenchIconTooltip
+          label="MITRE ATT&CK Tactic Coverage"
+          detail="Enterprise matrix tactic distribution across scenario stages and SIEM telemetry events"
+          placement="top"
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            <BarChart3 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+              MITRE Tactic Coverage
+            </h4>
+          </div>
+        </WorkbenchIconTooltip>
 
         <div className="flex items-center gap-1 p-0.5 rounded-md bg-zinc-200/75 dark:bg-zinc-800 shrink-0">
           <button
@@ -221,7 +225,7 @@ export function MitreStats({
         </ResponsiveContainer>
       </div>
 
-      {/* Full Tactic Names Breakdown Grid with Ellipsis + Tooltip */}
+      {/* Full Tactic Names Breakdown Grid with Concise Label + Tooltip */}
       <div className="grid grid-cols-2 gap-1 text-[9.5px] font-mono">
         {tacticData.map((t) => {
           const count =
@@ -238,7 +242,7 @@ export function MitreStats({
                   : 'bg-zinc-100/50 dark:bg-zinc-900/40 border-transparent text-zinc-400 dark:text-zinc-500'
               }`}
             >
-              <span className="truncate min-w-0 leading-tight">
+              <span className="min-w-0 leading-tight break-words">
                 TA0{t.phase} · {t.shortName}
               </span>
               <span className="shrink-0 font-bold">{count}</span>

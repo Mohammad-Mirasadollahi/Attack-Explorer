@@ -176,7 +176,7 @@ export function InspectorPanel({
       }
       style={{ width }}
       dir="ltr"
-      className="fixed lg:relative inset-y-12 lg:inset-y-auto right-0 z-30 max-w-[90vw] shrink-0 bg-white dark:bg-zinc-950 border-l border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-[calc(100dvh-3rem)] lg:h-full shadow-xl lg:shadow-none overflow-hidden"
+      className="absolute lg:relative inset-y-0 lg:inset-y-auto right-0 z-50 lg:z-20 max-w-[90vw] shrink-0 bg-white dark:bg-zinc-950 border-l border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-full shadow-2xl lg:shadow-none overflow-hidden"
     >
       {resizeHandleNode}
       {/* 3-Tab Segmented Mode Header: Overview | SIEM Logs | Sources */}
@@ -209,7 +209,7 @@ export function InspectorPanel({
               }`}
             >
               <Layers className="w-3 h-3 shrink-0" />
-              <span className="truncate">Overview</span>
+              <span className="whitespace-nowrap">Overview</span>
             </span>
           </button>
 
@@ -236,7 +236,7 @@ export function InspectorPanel({
               }`}
             >
               <FileTerminal className="w-3 h-3 shrink-0" />
-              <span className="truncate">SIEM Logs</span>
+              <span className="whitespace-nowrap">SIEM Logs</span>
             </span>
           </button>
 
@@ -263,7 +263,7 @@ export function InspectorPanel({
               }`}
             >
               <Scale className="w-3 h-3 shrink-0" />
-              <span className="truncate">Sources</span>
+              <span className="whitespace-nowrap">Sources</span>
             </span>
           </button>
         </div>
@@ -276,17 +276,17 @@ export function InspectorPanel({
           data-testid="inspector-active-env-badge"
           data-environment-id={activeEnvironment}
           title={`${envProfile.badgeLabel} · ${envProfile.environmentTag}`}
-          className="px-2.5 py-1.5 rounded-lg bg-zinc-100/90 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2 min-w-0 text-[10px] font-mono"
+          className="px-2.5 py-1.5 rounded-lg bg-zinc-100/90 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 min-w-0 text-[10px] font-mono"
         >
           <span
             title={envProfile.badgeLabel}
-            className="font-bold text-indigo-600 dark:text-indigo-400 truncate min-w-0"
+            className="font-bold text-indigo-600 dark:text-indigo-400 min-w-0 leading-snug"
           >
             {envProfile.badgeLabel}
           </span>
           <span
             title={envProfile.environmentTag}
-            className="text-zinc-500 dark:text-zinc-400 truncate shrink-0"
+            className="text-zinc-500 dark:text-zinc-400 shrink-0 leading-snug"
           >
             {envProfile.environmentTag}
           </span>
@@ -296,16 +296,16 @@ export function InspectorPanel({
           <>
             {/* Narrative Section */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
                 <div
                   title={
                     currentStage
                       ? `Stage ${currentStage.index} of ${scenario.stages.length} · ${currentStage.mitreTechniqueId}`
                       : `Scenario Overview · ${scenario.code}`
                   }
-                  className="flex items-center gap-1.5 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 tabular-nums min-w-0 truncate"
+                  className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 tabular-nums min-w-0"
                 >
-                  <span className="truncate">
+                  <span>
                     {currentStage
                       ? `Stage ${currentStage.index} of ${scenario.stages.length}`
                       : 'Scenario Overview'}
@@ -336,11 +336,11 @@ export function InspectorPanel({
                 <>
                   <h3
                     title={currentStage.title}
-                    className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug"
+                    className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug break-words"
                   >
                     {currentStage.title}
                   </h3>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
                     {currentStage.description}
                   </p>
                 </>
@@ -349,18 +349,18 @@ export function InspectorPanel({
                   <div>
                     <h3
                       title={scenario.name}
-                      className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug"
+                      className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug break-words"
                     >
                       {scenario.name}
                     </h3>
                     <p
                       title={scenario.shortSubtitle}
-                      className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 truncate"
+                      className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 leading-snug break-words"
                     >
                       {scenario.shortSubtitle}
                     </p>
                   </div>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-1">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-1 break-words">
                     {scenario.overview}
                   </p>
                 </>
@@ -378,16 +378,16 @@ export function InspectorPanel({
                 onClick={() => onSelectTelemetry?.(stagePacket)}
                 className="rounded-xl border border-rose-500/40 bg-zinc-950 text-white overflow-hidden shadow-sm cursor-pointer hover:border-rose-500 transition-colors"
               >
-                <div className="px-3 py-1.5 bg-rose-600 text-white flex items-center justify-between gap-2 min-w-0 text-[10.5px] font-mono">
+                <div className="px-3 py-1.5 bg-rose-600 text-white flex flex-wrap items-center justify-between gap-2 min-w-0 text-[10.5px] font-mono">
                   <span
                     title={`#${currentStage.index}.1→ ${stagePacket.shortAction}`}
-                    className="font-bold truncate min-w-0"
+                    className="font-bold min-w-0 leading-snug break-words"
                   >
                     #{currentStage.index}.1→ {stagePacket.shortAction}
                   </span>
                   <span
                     title={`${stagePacket.sourceLabel} → ${stagePacket.targetLabel}`}
-                    className="text-rose-100 truncate shrink-0 max-w-[52%]"
+                    className="text-rose-100 leading-snug break-words"
                   >
                     {stagePacket.sourceLabel} → {stagePacket.targetLabel}
                   </span>
@@ -399,17 +399,17 @@ export function InspectorPanel({
                   >
                     {stagePacket.info}
                   </div>
-                  <div className="pt-1 border-t border-zinc-800 flex items-center justify-between gap-2 min-w-0 text-[9.5px] font-mono text-zinc-400">
+                  <div className="pt-1 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2 min-w-0 text-[9.5px] font-mono text-zinc-400">
                     <span
                       title={`PACKET ${currentStage.index} OF ${scenario.stages.length} · ${stagePacket.protocolOrEventId}`}
-                      className="truncate min-w-0"
+                      className="min-w-0 leading-snug"
                     >
                       PACKET {currentStage.index} OF {scenario.stages.length} ·{' '}
                       {stagePacket.protocolOrEventId}
                     </span>
                     <span
                       title={`⇠#${currentStage.index}.2 ${stagePacket.sizeOrCode}`}
-                      className="text-emerald-400 truncate shrink-0"
+                      className="text-emerald-400 shrink-0 leading-snug"
                     >
                       ⇠#{currentStage.index}.2 {stagePacket.sizeOrCode}
                     </span>
@@ -443,7 +443,7 @@ export function InspectorPanel({
                     <div key={idx} className="py-2 flex flex-col gap-0.5 min-w-0">
                       <dt
                         title={spec.term}
-                        className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate"
+                        className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug break-words"
                       >
                         {spec.term}
                       </dt>
@@ -476,15 +476,15 @@ export function InspectorPanel({
                       title={`${st.index}. ${st.title} (${st.mitreTechniqueId}) — ${st.subtitle}`}
                       className="w-full py-2.5 flex flex-col gap-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer text-left min-w-0"
                     >
-                      <div className="flex items-center justify-between gap-2 w-full min-w-0">
-                        <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate min-w-0 leading-snug">
+                      <div className="flex items-start justify-between gap-2 w-full min-w-0">
+                        <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug break-words">
                           {st.index}. {st.title}
                         </span>
                         <span className="text-[10.5px] font-mono text-zinc-400 shrink-0">
                           {st.mitreTechniqueId}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug truncate w-full">
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug break-words w-full">
                         {st.subtitle}
                       </p>
                     </button>
@@ -500,13 +500,13 @@ export function InspectorPanel({
               data-testid="inspector-sources-summary-card"
               className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/35 border border-emerald-200/90 dark:border-emerald-800/75 space-y-2"
             >
-              <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
                 <span
                   title="Verified Sources & Legal Notice"
-                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-900 dark:text-emerald-200 min-w-0 truncate"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-900 dark:text-emerald-200 min-w-0 leading-snug"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span className="truncate">Verified Sources & Legal Notice</span>
+                  <span>Verified Sources & Legal Notice</span>
                 </span>
                 <button
                   type="button"

@@ -5,19 +5,23 @@ import { motion } from 'motion/react';
 import {
   ATTACK_SCENARIOS,
   AttackCategory,
-  AttackScenario } from '@/lib/attack-scenarios';
+  AttackScenario,
+} from '@/lib/attack-scenarios';
 import {
   categorizeScenarios,
   ScenarioGroupByMode,
   ScenarioSortOption,
-  sortScenarios } from '@/lib/simulation-engine';
+  sortScenarios,
+} from '@/lib/simulation-engine';
 import {
   ArrowUpDown,
   ChevronDown,
   ChevronRight,
   FolderTree,
-  Search } from 'lucide-react';
+  Search,
+} from 'lucide-react';
 import { OperationalGuideIcon } from './OperationalGuideIcon';
+import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 
 interface AttackSidebarProps {
   category: AttackCategory;
@@ -44,14 +48,15 @@ export function AttackSidebar({
   sortBy: externalSortBy,
   onSortChange,
   groupBy: externalGroupBy,
-  onGroupByChange }: AttackSidebarProps) {
+  onGroupByChange,
+}: AttackSidebarProps) {
   const [internalSortBy, setInternalSortBy] =
     useState<ScenarioSortOption>('DEFAULT');
   const [internalGroupBy, setInternalGroupBy] =
     useState<ScenarioGroupByMode>('CATEGORY');
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [collapsedGroups, setCollapsedGroups] = useState<
+    Record<string, boolean>
+  >({});
 
   const sortBy = externalSortBy ?? internalSortBy;
   const groupBy = externalGroupBy ?? internalGroupBy;
@@ -75,7 +80,8 @@ export function AttackSidebar({
   const toggleGroupCollapse = (groupKey: string) => {
     setCollapsedGroups((prev) => ({
       ...prev,
-      [groupKey]: !prev[groupKey] }));
+      [groupKey]: !prev[groupKey],
+    }));
   };
 
   const categories: Array<{
@@ -88,18 +94,21 @@ export function AttackSidebar({
       id: 'ALL',
       label: 'All',
       tooltip: 'All Attack Scenarios',
-      count: ATTACK_SCENARIOS.length },
+      count: ATTACK_SCENARIOS.length,
+    },
     {
       id: 'MALWARE',
       label: 'Malware',
       tooltip: 'Malware & Process Execution Scenarios',
-      count: ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE').length },
+      count: ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE').length,
+    },
     {
       id: 'LOG_ANALYSIS',
       label: 'DFIR',
       tooltip: 'DFIR & Log Forensics Scenarios',
       count: ATTACK_SCENARIOS.filter((s) => s.category === 'LOG_ANALYSIS')
-        .length },
+        .length,
+    },
     {
       id: 'ACTIVE_DIRECTORY',
       label: 'AD/Net',
@@ -107,7 +116,8 @@ export function AttackSidebar({
       count: ATTACK_SCENARIOS.filter(
         (s) =>
           s.category === 'ACTIVE_DIRECTORY' || s.category === 'NETWORK_WEB'
-      ).length },
+      ).length,
+    },
   ];
 
   const sortedScenarios = useMemo(
@@ -122,41 +132,35 @@ export function AttackSidebar({
 
   const renderScenarioItem = (sc: AttackScenario) => {
     const isSelectedScenario = sc.id === activeScenarioId;
-    const fullScenarioTooltip = `${sc.code} (${sc.stages.length} steps) — ${sc.name}: ${sc.shortSubtitle}`;
 
     return (
       <li key={sc.id} className="min-w-0">
         <button
           type="button"
           data-testid={`scenario-item-${sc.id}`}
-          title={fullScenarioTooltip}
+          title={`${sc.code} (${sc.stages.length} steps) — ${sc.name}: ${sc.shortSubtitle}`}
           onClick={() => onSelectScenario(sc.id)}
-          className={`w-full min-w-0 flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer overflow-hidden ${
+          className={`w-full min-w-0 flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${
             isSelectedScenario
               ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
               : 'text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/70'
           }`}
         >
           <div
-            className={`flex items-center gap-1.5 text-[10.5px] font-mono tabular-nums min-w-0 w-full ${
+            className={`flex flex-wrap items-center gap-1.5 text-[10.5px] font-mono tabular-nums min-w-0 w-full ${
               isSelectedScenario
                 ? 'text-zinc-300 dark:text-zinc-600'
                 : 'text-zinc-400 dark:text-zinc-500'
             }`}
           >
-            <span className="font-semibold truncate" title={sc.code}>
-              {sc.code}
-            </span>
+            <span className="font-semibold">{sc.code}</span>
             <span aria-hidden="true" className="shrink-0">
               ·
             </span>
             <span className="shrink-0">{sc.stages.length} steps</span>
           </div>
 
-          <div
-            className="text-xs font-medium leading-snug truncate w-full"
-            title={sc.name}
-          >
+          <div className="text-xs font-medium leading-snug break-words w-full">
             {sc.name}
           </div>
         </button>
@@ -172,7 +176,7 @@ export function AttackSidebar({
       exit={{ width: 0, opacity: 0, x: -20 }}
       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
       dir="ltr"
-      className="fixed lg:static inset-y-12 left-0 z-30 w-[268px] shrink-0 bg-white dark:bg-zinc-950 border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-[calc(100dvh-3rem)] lg:h-full shadow-xl lg:shadow-none overflow-hidden"
+      className="absolute lg:static inset-y-0 left-0 z-50 lg:z-20 w-[268px] shrink-0 bg-white dark:bg-zinc-950 border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-full shadow-2xl lg:shadow-none overflow-hidden"
     >
       {/* Header: Restored Operational Guide Identity + Contextual Search + Category Filter + Sort & Categorize Controls */}
       <div className="p-3 border-b border-zinc-200/70 dark:border-zinc-800/80 space-y-2.5 shrink-0">
@@ -185,10 +189,10 @@ export function AttackSidebar({
           <div className="flex items-center gap-2 min-w-0">
             <OperationalGuideIcon size="sm" />
             <div className="min-w-0">
-              <div className="text-[10.5px] font-mono font-bold text-indigo-950 dark:text-indigo-200 truncate">
+              <div className="text-[10.5px] font-mono font-bold text-indigo-950 dark:text-indigo-200">
                 Operational Guide
               </div>
-              <div className="text-[9.5px] font-mono text-indigo-700/80 dark:text-indigo-300/80 truncate">
+              <div className="text-[9.5px] font-mono text-indigo-700/80 dark:text-indigo-300/80">
                 Attack Scenarios & Playbooks
               </div>
             </div>
@@ -207,48 +211,54 @@ export function AttackSidebar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search scenarios, T1055..."
-            className="w-full h-8 pl-8 pr-3 text-xs bg-zinc-100/80 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 focus:bg-white dark:focus:bg-zinc-900 transition-all truncate"
+            className="w-full h-8 pl-8 pr-3 text-xs bg-zinc-100/80 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 focus:bg-white dark:focus:bg-zinc-900 transition-all"
           />
         </div>
 
-        {/* Clean Segmented Category Filter */}
+        {/* Clean Segmented Category Filter (Zero Truncation + Rich Tooltips) */}
         <div
           role="tablist"
           aria-label="Attack categories"
-          className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900"
+          className="flex items-center justify-between gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900"
         >
           {categories.map((cat) => {
             const isSelected = category === cat.id;
             return (
-              <button
+              <WorkbenchIconTooltip
                 key={cat.id}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                title={`${cat.tooltip} (${cat.count})`}
-                onClick={() => onSelectCategory(cat.id)}
-                className="relative py-1 px-1.5 text-[11px] font-medium rounded-md text-center transition-colors cursor-pointer min-w-0 overflow-hidden"
+                label={cat.tooltip}
+                badge={`${cat.count} SCENARIOS`}
+                side="bottom"
               >
-                {isSelected && (
-                  <motion.span
-                    layoutId="sidebarCategoryActivePill"
-                    transition={{
-                      type: 'spring',
-                      stiffness: 400,
-                      damping: 30 }}
-                    className="absolute inset-0 rounded-md bg-white dark:bg-zinc-800 shadow-2xs"
-                  />
-                )}
-                <span
-                  className={`relative z-10 block truncate ${
-                    isSelected
-                      ? 'text-zinc-900 dark:text-white font-semibold'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
-                  }`}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => onSelectCategory(cat.id)}
+                  className="relative py-1 px-2 text-[11px] font-medium rounded-md text-center transition-colors cursor-pointer whitespace-nowrap"
                 >
-                  {cat.label}
-                </span>
-              </button>
+                  {isSelected && (
+                    <motion.span
+                      layoutId="sidebarCategoryActivePill"
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 30,
+                      }}
+                      className="absolute inset-0 rounded-md bg-white dark:bg-zinc-800 shadow-2xs"
+                    />
+                  )}
+                  <span
+                    className={`relative z-10 block whitespace-nowrap ${
+                      isSelected
+                        ? 'text-zinc-900 dark:text-white font-semibold'
+                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    {cat.label}
+                  </span>
+                </button>
+              </WorkbenchIconTooltip>
             );
           })}
         </div>
@@ -266,7 +276,7 @@ export function AttackSidebar({
               onChange={(e) =>
                 handleSortChange(e.target.value as ScenarioSortOption)
               }
-              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer truncate"
+              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
               <option value="DEFAULT">Sort: Default Order</option>
               <option value="NAME_ASC">Sort: Name (A–Z)</option>
@@ -287,7 +297,7 @@ export function AttackSidebar({
               onChange={(e) =>
                 handleGroupByChange(e.target.value as ScenarioGroupByMode)
               }
-              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer truncate"
+              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
               <option value="CATEGORY">Group: Attack Category</option>
               <option value="MITRE_PHASE">Group: MITRE Tactic</option>
@@ -298,7 +308,7 @@ export function AttackSidebar({
       </div>
 
       {/* Categorized & Sorted Scenario List */}
-      <div className="flex-1 overflow-auto p-3 space-y-3">
+      <div className="flex-1 overflow-auto p-3 pb-14 space-y-3">
         {sortedScenarios.length === 0 ? (
           <div className="py-8 text-center text-xs text-zinc-400">
             No matching attack scenarios.
@@ -330,7 +340,7 @@ export function AttackSidebar({
                     ) : (
                       <ChevronDown className="w-3 h-3 shrink-0" />
                     )}
-                    <span className="truncate">{group.label}</span>
+                    <span className="leading-snug">{group.label}</span>
                   </span>
                   <span className="text-[10.5px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 shrink-0">
                     {group.scenarios.length}
@@ -350,4 +360,3 @@ export function AttackSidebar({
     </motion.aside>
   );
 }
-

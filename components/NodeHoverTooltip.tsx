@@ -104,14 +104,30 @@ export function NodeHoverTooltip({
         </div>
       </div>
 
-      {/* Host Context & Activity Summary */}
-      <div className="text-left space-y-1 text-[10px]">
-        <div className="text-sky-300 font-mono break-words leading-snug">
-          {node.hostContext}
-        </div>
-        <p className="text-zinc-300 leading-snug break-words">
-          {node.internalSummary || node.activitySummary || details?.description}
-        </p>
+      {/* Complete Untruncated Host Context, Activities & Internal Summary */}
+      <div className="text-left space-y-1.5 text-[10px]">
+        {node.hostContext && (
+          <div
+            data-testid={`tooltip-host-context-${node.id}`}
+            className="px-2 py-1 rounded-md bg-sky-950/60 border border-sky-800/70 text-sky-200 font-mono break-words leading-snug"
+          >
+            {node.hostContext}
+          </div>
+        )}
+        {node.activitySummary && (
+          <div
+            data-testid={`tooltip-activity-summary-${node.id}`}
+            className="text-zinc-200 font-medium leading-snug break-words"
+          >
+            {node.activitySummary}
+          </div>
+        )}
+        {(node.internalSummary || details?.description) &&
+          node.internalSummary !== node.activitySummary && (
+            <p className="text-zinc-400 leading-snug break-words">
+              {node.internalSummary || details?.description}
+            </p>
+          )}
       </div>
 
       {/* Action Hint Footer */}

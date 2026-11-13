@@ -25,8 +25,8 @@ export function ProcessMemoryView({
       data-testid="process-memory-view"
       data-active-environment={activeEnvironment}
     >
-      <div className="max-w-6xl mx-auto mb-5 flex flex-wrap items-center justify-between gap-2 min-w-0 px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs overflow-hidden">
-        <div className="flex items-center gap-2 font-mono min-w-0">
+      <div className="max-w-6xl mx-auto mb-5 flex flex-wrap items-center justify-between gap-2 min-w-0 px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs">
+        <div className="flex flex-wrap items-center gap-2 font-mono min-w-0">
           <span
             data-testid="memory-env-badge"
             title={envProfile.badgeLabel}
@@ -36,14 +36,14 @@ export function ProcessMemoryView({
           </span>
           <span
             title={`${envProfile.primaryHostname} · ${envProfile.osSummary}`}
-            className="font-semibold text-zinc-800 dark:text-zinc-200 truncate min-w-0"
+            className="font-semibold text-zinc-800 dark:text-zinc-200 min-w-0 leading-snug break-words"
           >
             {envProfile.primaryHostname} · {envProfile.osSummary}
           </span>
         </div>
         <span
           title={`${envProfile.environmentTag} · ${envProfile.subnetBadge}`}
-          className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate shrink-0"
+          className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 shrink-0 leading-snug"
         >
           {envProfile.environmentTag} · {envProfile.subnetBadge}
         </span>
@@ -51,13 +51,13 @@ export function ProcessMemoryView({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-6xl mx-auto">
         {/* Left Column: Process Execution Tree */}
-        <div className="lg:col-span-6 min-w-0 bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-4 overflow-hidden">
-          <div className="flex items-center justify-between gap-2 min-w-0 pb-3 border-b border-zinc-200/70 dark:border-zinc-800">
+        <div className="lg:col-span-6 min-w-0 bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 pb-3 border-b border-zinc-200/70 dark:border-zinc-800">
             <div className="flex items-center gap-2 min-w-0">
               <Terminal className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <h3
                 title="Process Execution Tree & API Calls"
-                className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate min-w-0"
+                className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug"
               >
                 Process Execution Tree & API Calls
               </h3>
@@ -72,13 +72,13 @@ export function ProcessMemoryView({
               <div
                 key={proc.pid}
                 style={{ marginLeft: `${index * 14}px` }}
-                className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2 min-w-0 overflow-hidden"
+                className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2 min-w-0"
               >
-                <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-xs font-mono">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
                     <span
                       title={proc.name}
-                      className="font-semibold text-zinc-900 dark:text-white truncate min-w-0"
+                      className="font-semibold text-zinc-900 dark:text-white min-w-0 leading-snug"
                     >
                       {proc.name}
                     </span>
@@ -91,7 +91,7 @@ export function ProcessMemoryView({
                   </div>
                   <span
                     title={`${proc.status} · ${proc.integrity}`}
-                    className={`text-[11px] font-medium truncate shrink-0 ${
+                    className={`text-[11px] font-medium shrink-0 ${
                       proc.status === 'normal'
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : 'text-rose-600 dark:text-rose-400'
@@ -111,7 +111,7 @@ export function ProcessMemoryView({
                 <div className="flex flex-wrap items-center gap-1.5 min-w-0 text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
                   {proc.apiCalls.map((api, idx) => (
                     <React.Fragment key={idx}>
-                      <span title={api} className="truncate max-w-full">
+                      <span title={api} className="leading-snug break-all">
                         {api}
                       </span>
                       {idx < proc.apiCalls.length - 1 && (
@@ -128,13 +128,13 @@ export function ProcessMemoryView({
         </div>
 
         {/* Right Column: Virtual Memory Map & Hex Inspector */}
-        <div className="lg:col-span-6 min-w-0 bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-4 overflow-hidden">
-          <div className="flex items-center justify-between gap-2 min-w-0 pb-3 border-b border-zinc-200/70 dark:border-zinc-800">
+        <div className="lg:col-span-6 min-w-0 bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 pb-3 border-b border-zinc-200/70 dark:border-zinc-800">
             <div className="flex items-center gap-2 min-w-0">
               <Layers className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
               <h3
                 title="Virtual Memory Layout & Hex Forensics"
-                className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate min-w-0"
+                className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug"
               >
                 Virtual Memory Layout & Hex Forensics
               </h3>
@@ -151,18 +151,18 @@ export function ProcessMemoryView({
                 .map((block, i) => (
                   <div
                     key={i}
-                    className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2 min-w-0 overflow-hidden"
+                    className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2 min-w-0"
                   >
-                    <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono">
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-xs font-mono">
                       <span
                         title={`${block.address} · ${block.section}`}
-                        className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums truncate min-w-0"
+                        className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums min-w-0 leading-snug"
                       >
                         {block.address} · {block.section}
                       </span>
                       <span
                         title={`${block.permissions} (${block.size}) · ${block.status}`}
-                        className={`text-[11px] font-medium shrink-0 truncate ${
+                        className={`text-[11px] font-medium shrink-0 leading-snug ${
                           block.permissions === 'RWX'
                             ? 'text-rose-600 dark:text-rose-400 font-semibold'
                             : 'text-zinc-500'

@@ -13,10 +13,12 @@ import { CanvasViewMode } from './DiagramCanvas';
 import { AnimeBrandLogo } from './AnimeBrandLogo';
 import { SettingsDrawer } from './SettingsDrawer';
 import { OperationalGuideIcon } from './OperationalGuideIcon';
+import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 import {
   Cloud,
   Cpu,
   GitCommitHorizontal,
+  Keyboard,
   Laptop,
   Library,
   Network,
@@ -61,6 +63,7 @@ interface AttackHeaderProps {
   onOpenAttackLibrary: () => void;
   onOpenAnalyzerModal: () => void;
   onOpenSourcesModal?: () => void;
+  onOpenShortcutsModal?: () => void;
   onReplayIntro?: () => void;
 }
 
@@ -86,6 +89,7 @@ export function AttackHeader({
   onOpenAttackLibrary,
   onOpenAnalyzerModal,
   onOpenSourcesModal,
+  onOpenShortcutsModal,
   onReplayIntro,
 }: AttackHeaderProps) {
   const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
@@ -93,7 +97,7 @@ export function AttackHeader({
 
   const getEnvIcon = (
     envId: ActiveEnvironmentId,
-    className = 'w-3.5 h-3.5 shrink-0'
+    className = 'w-4 h-4 shrink-0'
   ) => {
     if (envId === 'SERVER') return <Server className={className} />;
     if (envId === 'CLOUD') return <Cloud className={className} />;
@@ -104,31 +108,36 @@ export function AttackHeader({
     id: CanvasViewMode;
     label: string;
     tooltip: string;
+    badge: string;
     icon: React.ReactNode;
   }> = [
     {
       id: 'TOPOLOGY',
       label: 'Diagram',
       tooltip: 'Interactive Attack Topology Diagram View',
-      icon: <Network className="w-3.5 h-3.5 shrink-0" />,
+      badge: 'VIEW 1',
+      icon: <Network className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'SEQUENCE',
       label: 'Sequence',
       tooltip: 'Chronological Attack Sequence Flow View',
-      icon: <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />,
+      badge: 'VIEW 2',
+      icon: <GitCommitHorizontal className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'PROCESS_MEMORY',
       label: 'Memory',
       tooltip: 'Process Virtual Memory & Syscall Forensic View',
-      icon: <Cpu className="w-3.5 h-3.5 shrink-0" />,
+      badge: 'VIEW 3',
+      icon: <Cpu className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'RAW_TABLES',
       label: 'Tables & Packets',
       tooltip: 'Raw Telemetry Tables & Bidirectional Packet Inspector',
-      icon: <Table2 className="w-3.5 h-3.5 shrink-0" />,
+      badge: 'VIEW 4',
+      icon: <Table2 className="w-4 h-4 shrink-0" />,
     },
   ];
 
@@ -137,207 +146,266 @@ export function AttackHeader({
       <header
         dir="ltr"
         data-testid="persistent-navigation-bar"
-        className="shrink-0 h-12 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 px-2.5 sm:px-3.5 flex items-center justify-between gap-1.5 sm:gap-2 z-40 overflow-hidden"
+        className="relative shrink-0 h-12 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 px-2.5 sm:px-3.5 flex items-center justify-between gap-2 z-40 overflow-visible"
       >
-        {/* Left Zone: Animated Logo + Scenarios Sidebar Toggle + Active Environment Indicator */}
-        <div className="flex items-center gap-1.5 min-w-0 shrink-0">
+        {/* Left Zone: Animated Logo + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <AnimeBrandLogo size="sm" showWordmark onClick={onReplayIntro} />
 
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
 
-          <button
-            type="button"
-            data-testid="toggle-left-sidebar-btn"
-            aria-label="Toggle left scenarios panel"
-            title="Toggle Attack Scenarios & Operational Guide Sidebar"
-            onClick={onToggleSidebar}
-            className={`h-8 px-2 flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer min-w-0 max-w-[140px] ${
-              sidebarOpen
-                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
-                : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            }`}
+          <WorkbenchIconTooltip
+            label="Scenarios"
+            badge={sidebarOpen ? 'OPEN' : 'PANEL'}
+            detail="Toggle Attack Scenarios & Operational Playbooks"
+            align="left"
           >
-            <PanelLeft className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline truncate">Scenarios</span>
-          </button>
-
-          {/* Active Environment Status Pill (Click opens consolidated Settings Drawer) */}
-          <button
-            type="button"
-            data-testid="header-environment-dropdown-trigger"
-            onClick={() => setSettingsDrawerOpen(true)}
-            title={`Active Environment: ${currentEnvProfile.badgeLabel} (${currentEnvProfile.telemetryTag}) — Click to configure in Settings`}
-            className="h-8 px-2 hidden sm:flex items-center gap-1.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer min-w-0 max-w-[175px]"
-          >
-            {getEnvIcon(
-              activeEnvironment,
-              'w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0'
-            )}
-            <span
-              data-testid="header-active-environment-badge"
-              data-environment-id={activeEnvironment}
-              className="flex items-center gap-1 min-w-0 truncate"
+            <button
+              type="button"
+              data-testid="toggle-left-sidebar-btn"
+              aria-label="Scenarios"
+              onClick={onToggleSidebar}
+              className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
+                sidebarOpen
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-2xs'
+                  : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }`}
             >
-              <span className="hidden 2xl:inline font-semibold truncate">
+              <PanelLeft className="w-4 h-4 shrink-0" />
+            </button>
+          </WorkbenchIconTooltip>
+
+          {/* Active Environment Icon-Only Trigger (Click opens consolidated Settings Drawer) */}
+          <WorkbenchIconTooltip
+            label={currentEnvProfile.badgeLabel}
+            badge={currentEnvProfile.shortLabel}
+            detail={`Active Environment: ${currentEnvProfile.telemetryTag}`}
+            align="left"
+          >
+            <button
+              type="button"
+              data-testid="header-environment-dropdown-trigger"
+              aria-label={currentEnvProfile.badgeLabel}
+              onClick={() => setSettingsDrawerOpen(true)}
+              className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
+            >
+              {getEnvIcon(
+                activeEnvironment,
+                'w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0'
+              )}
+              <span
+                data-testid="header-active-environment-badge"
+                data-environment-id={activeEnvironment}
+                className="sr-only"
+              >
                 {currentEnvProfile.badgeLabel}
               </span>
-              <span className="2xl:hidden font-semibold truncate">
-                {currentEnvProfile.shortLabel}
-              </span>
-            </span>
-          </button>
+            </button>
+          </WorkbenchIconTooltip>
         </div>
 
-        {/* Center Zone: Primary App Navigation Links (Views + Restored Operational Guide + Reference Suites) */}
+        {/* Center Zone: Icon-Only Primary App Navigation Links with Custom App-Styled Tooltips */}
         <nav
           aria-label="Primary Workbench Navigation"
           data-testid="primary-app-nav-links"
-          className="hidden md:flex items-center gap-1.5 min-w-0 shrink overflow-hidden"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <div
             role="tablist"
             aria-label="Diagram View Mode"
-            className="flex items-center gap-0.5 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800 min-w-0 shrink"
+            className="flex items-center gap-0.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/70 dark:border-zinc-800"
           >
             {viewNavLinks.map((tab) => {
               const isSelected = viewMode === tab.id;
               return (
-                <button
+                <WorkbenchIconTooltip
                   key={tab.id}
-                  type="button"
-                  role="tab"
-                  data-testid={`view-mode-tab-${tab.id}`}
-                  aria-selected={isSelected}
-                  title={tab.tooltip}
-                  onClick={() => onViewModeChange(tab.id)}
-                  className="relative flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md transition-colors cursor-pointer min-w-0 max-w-[140px]"
+                  label={tab.label}
+                  badge={isSelected ? 'ACTIVE' : tab.badge}
+                  detail={tab.tooltip}
                 >
-                  {isSelected && (
-                    <motion.span
-                      layoutId="canvasViewModeSlidingPill"
-                      transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 30,
-                      }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-zinc-800 shadow-2xs border border-zinc-200/70 dark:border-zinc-700"
-                    />
-                  )}
-                  <span
-                    className={`relative z-10 flex items-center gap-1 min-w-0 ${
-                      isSelected
-                        ? 'text-zinc-900 dark:text-white font-semibold'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                    }`}
+                  <button
+                    type="button"
+                    role="tab"
+                    data-testid={`view-mode-tab-${tab.id}`}
+                    aria-label={tab.label}
+                    aria-selected={isSelected}
+                    onClick={() => onViewModeChange(tab.id)}
+                    className="relative h-7 w-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
                   >
-                    {tab.icon}
-                    <span className="truncate">{tab.label}</span>
-                  </span>
-                </button>
+                    {isSelected && (
+                      <motion.span
+                        layoutId="canvasViewModeSlidingPill"
+                        transition={{
+                          type: 'spring',
+                          stiffness: 400,
+                          damping: 30,
+                        }}
+                        className="absolute inset-0 rounded-lg bg-white dark:bg-zinc-800 shadow-2xs border border-zinc-200/70 dark:border-zinc-700"
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 flex items-center justify-center ${
+                        isSelected
+                          ? 'text-indigo-600 dark:text-indigo-400'
+                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      {tab.icon}
+                    </span>
+                  </button>
+                </WorkbenchIconTooltip>
               );
             })}
           </div>
 
-          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden lg:block shrink-0" />
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
 
-          {/* Quick Navigation Links: Restored Operational Guide Badge + MITRE Library + Log Analyzer + Sources */}
-          <div className="hidden lg:flex items-center gap-1 min-w-0 shrink">
-            {/* Restored Operational Guide Icon & Signature Styled Navigation Button */}
-            <button
-              type="button"
-              data-testid="nav-operational-guide-btn"
-              aria-pressed={showLegend}
-              onClick={() => {
-                if (viewMode !== 'TOPOLOGY') {
-                  onViewModeChange('TOPOLOGY');
-                }
-                onToggleLegend?.();
-              }}
-              title="Operational Guide & Diagram Visual Legend — Toggle visual semantics & interactive guide on the diagram"
-              className={`h-8 px-2 flex items-center gap-1.5 rounded-lg border text-[11px] font-mono font-bold transition-all cursor-pointer min-w-0 max-w-[168px] ${
-                showLegend
-                  ? tacticalMode
-                    ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/80 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                    : 'bg-indigo-50/95 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-200 border-indigo-300/90 dark:border-indigo-700/90 shadow-2xs'
-                  : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
+          {/* Quick Navigation Icon-Only Links: Operational Guide + MITRE Library + Log Analyzer + Sources */}
+          <div className="hidden sm:flex items-center gap-1">
+            <WorkbenchIconTooltip
+              label="Operational Guide"
+              badge={showLegend ? 'ACTIVE' : 'GUIDE'}
+              detail="Toggle Visual Semantics & Interactive Diagram Legend"
             >
-              <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
-              <span className="truncate">Operational Guide</span>
-            </button>
-
-            <button
-              type="button"
-              data-testid="nav-link-attack-library"
-              onClick={onOpenAttackLibrary}
-              title="Open MITRE ATT&CK Technique & Scenario Library"
-              className="h-8 px-2 flex items-center gap-1 rounded-lg text-[11px] font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer min-w-0 max-w-[130px]"
-            >
-              <Library className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-              <span className="truncate">MITRE Library</span>
-            </button>
-
-            <button
-              type="button"
-              data-testid="nav-link-log-analyzer"
-              onClick={onOpenAnalyzerModal}
-              title="Open Interactive Raw SIEM Log & Malware Trace Analyzer"
-              className="h-8 px-2 flex items-center gap-1 rounded-lg text-[11px] font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer min-w-0 max-w-[125px]"
-            >
-              <SearchCode className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-              <span className="truncate">Log Analyzer</span>
-            </button>
-
-            {onOpenSourcesModal && (
               <button
                 type="button"
-                data-testid="header-sources-legal-btn"
-                onClick={onOpenSourcesModal}
-                title="View Authoritative Attack Analysis Sources, Citations & Legal Compliance"
-                className="h-8 px-2 flex items-center gap-1 rounded-lg text-[11px] font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer min-w-0 max-w-[100px]"
+                data-testid="nav-operational-guide-btn"
+                aria-label="Operational Guide"
+                aria-pressed={showLegend}
+                onClick={() => {
+                  if (viewMode !== 'TOPOLOGY') {
+                    onViewModeChange('TOPOLOGY');
+                  }
+                  onToggleLegend?.();
+                }}
+                className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer ${
+                  showLegend
+                    ? tacticalMode
+                      ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/80 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                      : 'bg-indigo-50/95 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-200 border-indigo-300/90 dark:border-indigo-700/90 shadow-2xs'
+                    : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                }`}
               >
-                <Scale className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="hidden xl:inline truncate">Sources</span>
+                <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
               </button>
+            </WorkbenchIconTooltip>
+
+            <WorkbenchIconTooltip
+              label="MITRE Library"
+              badge="ATT&CK"
+              detail="Open MITRE ATT&CK Technique & Scenario Matrix"
+            >
+              <button
+                type="button"
+                data-testid="nav-link-attack-library"
+                aria-label="MITRE Library"
+                onClick={onOpenAttackLibrary}
+                className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <Library className="w-4 h-4 text-indigo-500 shrink-0" />
+              </button>
+            </WorkbenchIconTooltip>
+
+            <WorkbenchIconTooltip
+              label="Log Analyzer"
+              badge="SIEM"
+              detail="Open Interactive Raw SIEM Log & Malware Trace Analyzer"
+            >
+              <button
+                type="button"
+                data-testid="nav-link-log-analyzer"
+                aria-label="Log Analyzer"
+                onClick={onOpenAnalyzerModal}
+                className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <SearchCode className="w-4 h-4 text-indigo-500 shrink-0" />
+              </button>
+            </WorkbenchIconTooltip>
+
+            {onOpenSourcesModal && (
+              <WorkbenchIconTooltip
+                label="Sources & Legal"
+                badge="VERIFIED"
+                detail="Authoritative Attack Analysis Sources & Citations"
+              >
+                <button
+                  type="button"
+                  data-testid="header-sources-legal-btn"
+                  aria-label="Sources"
+                  onClick={onOpenSourcesModal}
+                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-emerald-200/80 dark:border-emerald-900/70 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
+                >
+                  <Scale className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                </button>
+              </WorkbenchIconTooltip>
+            )}
+
+            {onOpenShortcutsModal && (
+              <WorkbenchIconTooltip
+                label="Keyboard Shortcuts"
+                badge="?"
+                detail="Hotkeys for Tools (B: Box Select, P: Pan/Pen) & Canvas Navigation"
+              >
+                <button
+                  type="button"
+                  data-testid="open-shortcuts-modal-btn"
+                  aria-label="Keyboard Shortcuts"
+                  onClick={onOpenShortcutsModal}
+                  className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <Keyboard className="w-4 h-4 text-indigo-500 shrink-0" />
+                </button>
+              </WorkbenchIconTooltip>
             )}
           </div>
         </nav>
 
-        {/* Right Zone: Inspector Toggle + Slide-Out Settings Drawer Trigger */}
-        <div className="flex items-center gap-1.5 shrink-0 min-w-0">
-          <button
-            type="button"
-            data-testid="toggle-right-inspector-btn"
-            aria-label="Toggle right inspector panel"
-            title="Toggle Right Inspector & Analytics Panel"
-            onClick={onToggleInspector}
-            className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer min-w-0 max-w-[120px] ${
-              inspectorOpen
-                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
-                : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            }`}
+        {/* Right Zone: Icon-Only Inspector Toggle + Icon-Only Slide-Out Settings Drawer Trigger */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <WorkbenchIconTooltip
+            label="Inspector"
+            badge={inspectorOpen ? 'OPEN' : 'PANEL'}
+            detail="Toggle Right Forensic Inspector & Telemetry Panel"
+            align="right"
           >
-            <PanelRight className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline truncate">Inspector</span>
-          </button>
+            <button
+              type="button"
+              data-testid="toggle-right-inspector-btn"
+              aria-label="Inspector"
+              onClick={onToggleInspector}
+              className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
+                inspectorOpen
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-2xs'
+                  : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <PanelRight className="w-4 h-4 shrink-0" />
+            </button>
+          </WorkbenchIconTooltip>
 
           {/* Consolidated Slide-Out Settings Drawer Trigger */}
-          <button
-            type="button"
-            data-testid="settings-menu-btn"
-            aria-label="Open Global Settings Drawer"
-            aria-expanded={settingsDrawerOpen}
-            title="Open Global Workbench Settings & Configuration Drawer"
-            onClick={() => setSettingsDrawerOpen((v) => !v)}
-            className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer min-w-0 max-w-[115px] ${
-              settingsDrawerOpen
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            }`}
+          <WorkbenchIconTooltip
+            label="Settings"
+            badge="CONFIG"
+            detail="Open Global Workbench Settings & Environment Drawer"
+            align="right"
           >
-            <Settings className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Settings</span>
-          </button>
+            <button
+              type="button"
+              data-testid="settings-menu-btn"
+              aria-label="Settings"
+              aria-expanded={settingsDrawerOpen}
+              onClick={() => setSettingsDrawerOpen((v) => !v)}
+              className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
+                settingsDrawerOpen
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                  : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <Settings className="w-4 h-4 shrink-0" />
+            </button>
+          </WorkbenchIconTooltip>
         </div>
       </header>
 

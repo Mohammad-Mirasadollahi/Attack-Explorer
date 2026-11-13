@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { TelemetryEvent } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
@@ -27,9 +27,10 @@ interface SketchWhiteboardSvgProps {
   ) => void;
   activeEnvironment?: ActiveEnvironmentId;
   tacticalMode?: boolean;
+  isInteracting?: boolean;
 }
 
-export function SketchWhiteboardSvg({
+export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
   zones = NETWORK_ZONE_COLUMNS,
   backboneLinks = [],
   sketchFlows,
@@ -39,16 +40,41 @@ export function SketchWhiteboardSvg({
   onStartZoneDrag,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   tacticalMode = false,
+  isInteracting = false,
 }: SketchWhiteboardSvgProps) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
   const stampText = `${envProfile.architectureCode} · ${envProfile.badgeLabel.toUpperCase()} · ${envProfile.primaryHostname} (${envProfile.subnetBadge})`;
   const stampWidth = Math.max(490, Math.round(stampText.length * 5.4 + 34));
 
+  // Pause continuous SVG SMIL animations during active pan/drag so the browser compositor
+  // caches the 1480x650 schematic as a static GPU texture tile (locked 60/120fps)
+  useEffect(() => {
+    const svgEl = svgRef.current;
+    if (!svgEl) return;
+    try {
+      if (isInteracting) {
+        if (typeof svgEl.pauseAnimations === 'function') {
+          svgEl.pauseAnimations();
+        }
+      } else {
+        if (typeof svgEl.unpauseAnimations === 'function') {
+          svgEl.unpauseAnimations();
+        }
+      }
+    } catch {
+      // Ignore in environments without SMIL pauseAnimations support
+    }
+  }, [isInteracting]);
+
   return (
     <svg
+      ref={svgRef}
       viewBox="0 0 1480 650"
       preserveAspectRatio="none"
-      className="w-full h-full"
+      overflow="visible"
+      style={{ overflow: 'visible' }}
+      className="w-full h-full pointer-events-auto overflow-visible"
     >
       <defs>
         {/* Minimal Dot Grid Pattern */}
@@ -117,8 +143,15 @@ export function SketchWhiteboardSvg({
         </marker>
       </defs>
 
-      {/* Subtle Dot Background */}
-      <rect width="1480" height="650" fill="url(#excalidraw-dot-grid)" />
+      {/* Infinite Dot Background across all 4 directions (no 1480x650 seam) */}
+      <rect
+        x="-8000"
+        y="-8000"
+        width="17480"
+        height="16650"
+        fill="url(#excalidraw-dot-grid)"
+        className="pointer-events-none"
+      />
 
       {/* Active Architecture Blueprint Watermark Stamp (Top-Left Margin, Clear of Bottom HUDs) */}
       <g
@@ -843,4 +876,4 @@ export function SketchWhiteboardSvg({
       })}
     </svg>
   );
-}
+});

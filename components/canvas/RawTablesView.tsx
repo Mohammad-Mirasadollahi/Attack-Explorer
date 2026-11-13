@@ -97,10 +97,10 @@ export function RawTablesView({
         <div className="bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 min-w-0">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <h2
                   title="Raw Forensic Tables & Captured Network Packets"
-                  className="text-sm font-semibold text-zinc-900 dark:text-white truncate min-w-0"
+                  className="text-sm font-semibold text-zinc-900 dark:text-white min-w-0 leading-snug"
                 >
                   Raw Forensic Tables & Captured Network Packets
                 </h2>
@@ -114,7 +114,7 @@ export function RawTablesView({
               </div>
               <p
                 title={`Inspecting Node: ${drillDown.nodeLabel} (${drillDown.nodeSublabel})`}
-                className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate"
+                className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug break-words"
               >
                 Inspecting Node: {drillDown.nodeLabel} ({drillDown.nodeSublabel})
               </p>
@@ -136,7 +136,7 @@ export function RawTablesView({
                     data-testid={`raw-table-node-btn-${n.chainOrder}`}
                     title={`#${n.chainOrder} ${n.label} (${n.sublabel})`}
                     onClick={() => onSelectNode(n.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer whitespace-nowrap max-w-[220px] truncate ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer whitespace-nowrap ${
                       isSelected
                         ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-semibold shadow-2xs'
                         : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -343,19 +343,19 @@ export function RawTablesView({
             </div>
 
             {/* Host Process Table */}
-            <div className="bg-zinc-50/60 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-3 min-w-0 overflow-hidden">
+            <div className="bg-zinc-50/60 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-3 min-w-0">
               <div className="flex items-center gap-2 min-w-0 text-xs font-semibold text-zinc-900 dark:text-white">
                 <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                <span className="truncate">Host Process Tree Table</span>
+                <span>Host Process Tree Table</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3" dir="ltr">
                 {scenario.processTree.map((pt) => (
                   <div
                     key={pt.pid}
-                    className="p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-1 min-w-0 overflow-hidden"
+                    className="p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-1 min-w-0"
                   >
-                    <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono font-semibold text-zinc-900 dark:text-white">
-                      <span title={pt.name} className="truncate min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-xs font-mono font-semibold text-zinc-900 dark:text-white">
+                      <span title={pt.name} className="min-w-0 leading-snug">
                         {pt.name}
                       </span>
                       <span
@@ -367,13 +367,13 @@ export function RawTablesView({
                     </div>
                     <div
                       title={`PPID ${pt.ppid} · ${pt.integrity}`}
-                      className="text-[11px] font-mono text-zinc-400 tabular-nums truncate"
+                      className="text-[11px] font-mono text-zinc-400 tabular-nums leading-snug"
                     >
                       PPID {pt.ppid} · {pt.integrity}
                     </div>
                     <div
                       title={pt.commandLine}
-                      className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 truncate leading-snug pt-1"
+                      className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 leading-snug pt-1 break-all"
                     >
                       {pt.commandLine}
                     </div>

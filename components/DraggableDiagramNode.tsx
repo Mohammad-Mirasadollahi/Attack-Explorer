@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { motion, useDragControls } from 'framer-motion';
+import React, { memo, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { SketchNodeIcon } from './SketchNodeIcons';
@@ -23,6 +23,7 @@ export interface DraggableDiagramNodeProps {
   isMultiSelected: boolean;
   isRecentlyReturned: boolean;
   isDraggingNodes: boolean;
+  isInteracting?: boolean;
   activeStageIndex: number;
   directorPhase: string;
   cState: NodeCinematicRenderState;
@@ -43,13 +44,12 @@ export interface DraggableDiagramNodeProps {
 }
 
 /**
- * Draggable & Multi-Selectable Diagram Node powered by `framer-motion` `useDragControls`.
+ * Memoized Draggable & Multi-Selectable Diagram Node.
  * - Supports Shift+Click (or top-right checkbox) to add/remove nodes in a multi-selection group.
- * - Supports simultaneous group movement of all selected nodes across the workspace.
- * - Uses `.canvas-interactive-node.nopan` so `CanvasController` (`react-zoom-pan-pinch`)
- *   delegates pointer events directly to the node without panning the background canvas.
+ * - Supports simultaneous 60/120fps group movement of all selected nodes across the workspace.
+ * - Disables hover/spring recalculations during active canvas panning or node dragging.
  */
-export function DraggableDiagramNode({
+export const DraggableDiagramNode = memo(function DraggableDiagramNode({
   node,
   nodeIndex,
   isSubBoard,
@@ -57,6 +57,7 @@ export function DraggableDiagramNode({
   isMultiSelected,
   isRecentlyReturned,
   isDraggingNodes,
+  isInteracting = false,
   activeStageIndex,
   directorPhase,
   cState,
@@ -66,18 +67,16 @@ export function DraggableDiagramNode({
   onNodeClick,
   onHoverChange,
 }: DraggableDiagramNodeProps) {
-  const dragControls = useDragControls();
   const nodeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const leftPct = (node.wx / 1480) * 100;
   const topPct = (node.wy / 650) * 100;
+  const skipSpring = isDraggingNodes || isInteracting;
 
   return (
     <motion.button
       ref={nodeButtonRef}
       type="button"
-      dragControls={dragControls}
-      dragListener={false}
       data-testid={
         isSubBoard
           ? `internal-subnode-${node.chainOrder}`
@@ -88,50 +87,52 @@ export function DraggableDiagramNode({
       data-multi-selected={isMultiSelected ? 'true' : 'false'}
       data-wx={node.wx}
       data-wy={node.wy}
-      initial={{ opacity: 0, scale: 0.85, y: -16 }}
+      initial={false}
       animate={{
         opacity: cState.opacity,
         scale: isSelected || isMultiSelected ? 1.06 : cState.scale,
         y: cState.yOffset,
       }}
       whileHover={
-        isDraggingNodes ? undefined : { y: -3, scale: 1.06, opacity: 1 }
+        skipSpring ? undefined : { y: -3, scale: 1.06, opacity: 1 }
       }
       transition={
-        isDraggingNodes
+        skipSpring
           ? { duration: 0 }
           : {
               type: 'spring',
               stiffness: 320,
-              damping: 22,
+              damping: 24,
               delay:
                 activeStageIndex === 0 && directorPhase === 'OVERVIEW'
-                  ? nodeIndex * 0.04
+                  ? nodeIndex * 0.02
                   : 0,
             }
       }
       onPointerDown={(e) => {
         if (e.button !== 0) return;
-        // Trigger framer-motion dragControls alongside synchronized group drag handler
-        try {
-          dragControls.start(e);
-        } catch {
-          // Ignore if pointer capture is unavailable in synthetic tests
-        }
         onStartNodeGroupDrag(node, e);
       }}
       onContextMenu={(e) => e.preventDefault()}
       onMouseEnter={() => {
-        if (!isDraggingNodes) onHoverChange(node.id);
+        if (!skipSpring) onHoverChange(node.id);
       }}
-      onMouseLeave={() => onHoverChange(null)}
-      onFocus={() => onHoverChange(node.id)}
+      onMouseLeave={() => {
+        if (!skipSpring) onHoverChange(null);
+      }}
+      onFocus={() => {
+        if (!skipSpring) onHoverChange(node.id);
+      }}
       onBlur={() => onHoverChange(null)}
       onClick={(e) => onNodeClick(node, e)}
       title={`${node.actionBadge} · ${node.label} (${node.sublabel})${
         node.hostContext ? ` — ${node.hostContext}` : ''
       }${node.activitySummary ? ` | ${node.activitySummary}` : ''}`}
-      style={{ left: `${leftPct}%`, top: `${topPct}%` }}
+      style={{
+        left: `${leftPct}%`,
+        top: `${topPct}%`,
+        willChange: skipSpring ? 'left, top, transform' : 'transform',
+      }}
       className={`canvas-interactive-node nopan group absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center text-center focus:outline-none ${
         isDraggingNodes ? 'cursor-grabbing' : 'cursor-grab'
       }`}
@@ -186,7 +187,7 @@ export function DraggableDiagramNode({
 
       <span
         title={node.actionBadge}
-        className={`mb-0.5 px-1.5 py-0 text-[7.5px] font-mono font-bold border rounded-full shadow-2xs transition-transform group-hover:scale-105 max-w-[198px] truncate ${
+        className={`mb-0.5 px-2 py-0.5 text-[7.5px] font-mono font-bold border rounded-full shadow-2xs transition-transform group-hover:scale-105 whitespace-nowrap ${
           node.isNetworkDevice
             ? 'bg-teal-600 text-white border-teal-800'
             : node.iconType === 'MALWARE_PAYLOAD' ||
@@ -215,7 +216,7 @@ export function DraggableDiagramNode({
       />
 
       <div
-        className={`mt-0.5 px-2.5 py-1.5 border rounded-lg shadow-xs transition-all min-w-[168px] sm:min-w-[198px] w-[198px] max-w-[198px] overflow-hidden ${
+        className={`mt-0.5 px-3 py-1.5 border rounded-xl shadow-xs transition-all min-w-[172px] w-max max-w-[260px] ${
           tacticalMode
             ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
             : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'
@@ -231,7 +232,7 @@ export function DraggableDiagramNode({
       >
         <div
           title={node.label}
-          className={`text-[9.5px] font-bold leading-snug truncate w-full ${
+          className={`text-[9.5px] font-bold leading-snug whitespace-nowrap ${
             tacticalMode
               ? 'text-emerald-100'
               : 'text-slate-900 dark:text-white'
@@ -241,7 +242,7 @@ export function DraggableDiagramNode({
         </div>
         <div
           title={node.sublabel}
-          className={`text-[7.8px] font-mono leading-snug truncate w-full ${
+          className={`text-[8px] font-mono leading-snug whitespace-nowrap ${
             tacticalMode
               ? 'text-emerald-400/85'
               : 'text-slate-500 dark:text-zinc-400'
@@ -249,46 +250,8 @@ export function DraggableDiagramNode({
         >
           {node.sublabel}
         </div>
-        {node.hostContext && (
-          <div
-            data-testid={
-              isSubBoard
-                ? `subnode-host-context-${node.chainOrder}`
-                : `node-host-context-${node.id}`
-            }
-            title={node.hostContext}
-            className={`mt-0.5 px-1.5 py-0.5 rounded text-[7.4px] font-medium leading-snug truncate w-full border ${
-              node.iconType === 'MALWARE_PAYLOAD' ||
-              node.iconType === 'KERNEL_MEMORY'
-                ? 'bg-rose-50/90 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/70'
-                : node.iconType === 'VICTIM_LAPTOP' ||
-                  node.iconType === 'PROCESS_THREAD'
-                ? 'bg-sky-50/90 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/70'
-                : 'bg-zinc-100/90 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700'
-            }`}
-          >
-            {node.hostContext}
-          </div>
-        )}
-        {node.activitySummary && (
-          <div
-            data-testid={
-              isSubBoard
-                ? `subnode-activity-summary-${node.chainOrder}`
-                : `node-activity-summary-${node.id}`
-            }
-            title={node.activitySummary}
-            className={`mt-0.5 text-[7.2px] leading-snug truncate w-full ${
-              tacticalMode
-                ? 'text-slate-300'
-                : 'text-slate-500 dark:text-zinc-400'
-            }`}
-          >
-            {node.activitySummary}
-          </div>
-        )}
       </div>
     </motion.button>
   );
-}
+});
 

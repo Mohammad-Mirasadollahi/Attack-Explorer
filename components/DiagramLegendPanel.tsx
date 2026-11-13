@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { OperationalGuideIcon } from './OperationalGuideIcon';
+import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 
 interface DiagramLegendPanelProps {
   tacticalMode?: boolean;
@@ -12,7 +13,7 @@ interface DiagramLegendPanelProps {
 
 export function DiagramLegendPanel({
   tacticalMode = false,
-  defaultExpanded = true,
+  defaultExpanded = false,
 }: DiagramLegendPanelProps) {
   const [expanded, setExpanded] = useState<boolean>(defaultExpanded);
 
@@ -26,23 +27,44 @@ export function DiagramLegendPanel({
           : 'bg-white/95 dark:bg-zinc-900/95 border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200'
       }`}
     >
-      <button
-        type="button"
-        data-testid="diagram-legend-toggle-btn"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((v) => !v)}
-        className="px-2.5 py-1.5 flex items-center justify-between gap-2.5 text-[10.5px] font-mono font-bold cursor-pointer hover:opacity-90 whitespace-nowrap"
-      >
-        <span className="inline-flex items-center gap-2">
-          <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
-          <span>Diagram Visual Legend · Operational Guide</span>
-        </span>
-        {expanded ? (
+      {!expanded ? (
+        <WorkbenchIconTooltip
+          label="Diagram Visual Legend"
+          badge="GUIDE · L"
+          detail="Click to view Node & Traffic Color Semantics"
+          side="top"
+          align="left"
+        >
+          <button
+            type="button"
+            data-testid="diagram-legend-toggle-btn"
+            aria-label="Diagram Visual Legend"
+            aria-expanded={false}
+            onClick={() => setExpanded(true)}
+            className="h-8 w-8 flex items-center justify-center rounded-xl cursor-pointer hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-colors"
+          >
+            <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
+            <span className="sr-only">
+              Diagram Visual Legend · Operational Guide
+            </span>
+          </button>
+        </WorkbenchIconTooltip>
+      ) : (
+        <button
+          type="button"
+          data-testid="diagram-legend-toggle-btn"
+          aria-label="Collapse Diagram Visual Legend"
+          aria-expanded={true}
+          onClick={() => setExpanded(false)}
+          className="px-2.5 py-1.5 flex items-center justify-between gap-2.5 text-[10.5px] font-mono font-bold cursor-pointer hover:opacity-90 whitespace-nowrap"
+        >
+          <span className="inline-flex items-center gap-2">
+            <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
+            <span>Diagram Visual Legend · Operational Guide</span>
+          </span>
           <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-        ) : (
-          <ChevronUp className="w-3.5 h-3.5 opacity-70" />
-        )}
-      </button>
+        </button>
+      )}
 
       <AnimatePresence initial={false}>
         {expanded && (

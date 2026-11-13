@@ -46,6 +46,10 @@ interface DiagramCanvasProps {
   playbackSpeed?: number;
   onSpeedChange?: (speed: number) => void;
   showLegend?: boolean;
+  onToggleLegend?: () => void;
+  shortcutsModalOpen?: boolean;
+  onOpenShortcutsModal?: () => void;
+  onCloseShortcutsModal?: () => void;
 }
 
 export function DiagramCanvas({
@@ -72,7 +76,12 @@ export function DiagramCanvas({
   canStepForward = true,
   playbackSpeed = 0.5,
   onSpeedChange,
-  showLegend = true }: DiagramCanvasProps) {
+  showLegend = true,
+  onToggleLegend,
+  shortcutsModalOpen = false,
+  onOpenShortcutsModal,
+  onCloseShortcutsModal,
+}: DiagramCanvasProps) {
   return (
     <motion.div
       layout
@@ -107,6 +116,10 @@ export function DiagramCanvas({
           playbackSpeed={playbackSpeed}
           onSpeedChange={onSpeedChange}
           showLegend={showLegend}
+          onToggleLegend={onToggleLegend}
+          shortcutsModalOpen={shortcutsModalOpen}
+          onOpenShortcutsModal={onOpenShortcutsModal}
+          onCloseShortcutsModal={onCloseShortcutsModal}
         />
       )}
 

@@ -67,7 +67,8 @@ export function resolveCanvasHoldInteractionMode(params: {
 
 /**
  * Computes new zoom scale from mouse wheel / trackpad deltaY.
- * Negative deltaY (scroll up) zooms in; positive deltaY (scroll down) zooms out.
+ * Negative deltaY (scroll up) zooms in gradually (~5% per notch);
+ * positive deltaY (scroll down) zooms out gradually (~5% per notch).
  */
 export function computeScrollWheelZoom(
   currentZoom: number,
@@ -76,11 +77,14 @@ export function computeScrollWheelZoom(
   maxZoom: number = MAX_CANVAS_ZOOM
 ): number {
   if (deltaY === 0 || Number.isNaN(deltaY)) return currentZoom;
-  // Normalize wheel delta so both discrete mouse wheels (~100) and smooth trackpads (~10-30) feel natural
-  const clampedDelta = Math.max(-160, Math.min(160, deltaY));
-  const zoomFactor = Math.exp(-clampedDelta * 0.0014);
+  // Normalize wheel delta so discrete mouse wheel notches (~100-120) change zoom by ~5% per step
+  // and smooth trackpad gestures (~4-25) change zoom proportionally by ~0.4%-2% per tick.
+  const clampedDelta = Math.max(-60, Math.min(60, deltaY));
+  const zoomFactor = Math.exp(-clampedDelta * 0.00085);
   const nextZoom = currentZoom * zoomFactor;
-  return Math.round(Math.max(minZoom, Math.min(maxZoom, nextZoom)) * 100) / 100;
+  return (
+    Math.round(Math.max(minZoom, Math.min(maxZoom, nextZoom)) * 1000) / 1000
+  );
 }
 
 /**
@@ -400,3 +404,93 @@ export function recomputeGeometryForMovedBoard(
 
   return { flows, backboneLinks };
 }
+
+export interface MinimapViewportRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Computes the visible viewport indicator rectangle in whiteboard coordinates (1480x650)
+ * from the current panOffset (px), effectiveScale, and container dimensions.
+ */
+export function computeMinimapViewportRect(params: {
+  panX: number;
+  panY: number;
+  zoomScale: number;
+  containerWidth?: number;
+  containerHeight?: number;
+}): MinimapViewportRect {
+  const safeScale = Math.max(
+    MIN_CANVAS_ZOOM,
+    Math.min(MAX_CANVAS_ZOOM, Number.isFinite(params.zoomScale) ? params.zoomScale : 1)
+  );
+  const cWidth = Math.max(320, params.containerWidth || 1000);
+  const cHeight = Math.max(220, params.containerHeight || 550);
+
+  const viewWidth = Math.round((WHITEBOARD_WIDTH / safeScale) * 10) / 10;
+  const viewHeight = Math.round((WHITEBOARD_HEIGHT / safeScale) * 10) / 10;
+
+  // Convert pixel pan offset into whiteboard coordinate offset
+  const rawX =
+    ((-params.panX / cWidth) * WHITEBOARD_WIDTH) / safeScale;
+  const rawY =
+    ((-params.panY / cHeight) * WHITEBOARD_HEIGHT) / safeScale;
+
+  // Clamp so the viewport frame remains discoverable within the minimap
+  const minX = -WHITEBOARD_WIDTH * 0.35;
+  const maxX = WHITEBOARD_WIDTH * 0.85;
+  const minY = -WHITEBOARD_HEIGHT * 0.35;
+  const maxY = WHITEBOARD_HEIGHT * 0.85;
+
+  const clampedX = Math.round(Math.max(minX, Math.min(maxX, rawX)) * 10) / 10;
+  const clampedY = Math.round(Math.max(minY, Math.min(maxY, rawY)) * 10) / 10;
+
+  return {
+    x: Object.is(clampedX, -0) ? 0 : clampedX,
+    y: Object.is(clampedY, -0) ? 0 : clampedY,
+    width: viewWidth,
+    height: viewHeight,
+  };
+}
+
+/**
+ * Converts a target whiteboard point (wx, wy) clicked or dragged on the minimap
+ * into the corresponding main-canvas pixel panOffset { x, y } so that (wx, wy)
+ * is centered in the user's viewport.
+ */
+export function computePanFromMinimapPoint(params: {
+  targetWx: number;
+  targetWy: number;
+  zoomScale: number;
+  containerWidth?: number;
+  containerHeight?: number;
+}): Point2D {
+  const safeScale = Math.max(
+    MIN_CANVAS_ZOOM,
+    Math.min(MAX_CANVAS_ZOOM, Number.isFinite(params.zoomScale) ? params.zoomScale : 1)
+  );
+  const cWidth = Math.max(320, params.containerWidth || 1000);
+  const cHeight = Math.max(220, params.containerHeight || 550);
+
+  const viewWidth = WHITEBOARD_WIDTH / safeScale;
+  const viewHeight = WHITEBOARD_HEIGHT / safeScale;
+
+  const desiredTopLeftWx = params.targetWx - viewWidth / 2;
+  const desiredTopLeftWy = params.targetWy - viewHeight / 2;
+
+  const panX = Math.round(
+    (-desiredTopLeftWx * safeScale * cWidth) / WHITEBOARD_WIDTH
+  );
+  const panY = Math.round(
+    (-desiredTopLeftWy * safeScale * cHeight) / WHITEBOARD_HEIGHT
+  );
+
+  return {
+    x: Object.is(panX, -0) ? 0 : panX,
+    y: Object.is(panY, -0) ? 0 : panY,
+  };
+}
+

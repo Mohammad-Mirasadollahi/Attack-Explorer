@@ -32,7 +32,9 @@ import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
 import { AttackStepProgressBar } from './AttackStepProgressBar';
 import { AnimeIntroLoader } from './AnimeIntroLoader';
+import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { shouldSkipIntroFromSearch } from '@/lib/intro-loader-sequence';
+import { resolveKeyboardShortcutCommand } from '@/lib/keyboard-shortcuts';
 
 export function AttackExplorerWorkbench() {
   // Strictly English-only interface
@@ -98,6 +100,7 @@ export function AttackExplorerWorkbench() {
   const [attackLibraryOpen, setAttackLibraryOpen] = useState<boolean>(false);
   const [analyzerModalOpen, setAnalyzerModalOpen] = useState<boolean>(false);
   const [sourcesModalOpen, setSourcesModalOpen] = useState<boolean>(false);
+  const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
   // Responsive viewport adaptation
   useEffect(() => {
@@ -290,6 +293,77 @@ export function AttackExplorerWorkbench() {
     return filteredScenarios;
   }, [category, searchQuery, filteredScenarios]);
 
+  // Global Workbench Hotkeys (?, T, L, 1-4, [, ], Space, Esc)
+  useEffect(() => {
+    const onGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const command = resolveKeyboardShortcutCommand({
+        key: e.key,
+        code: e.code,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        targetTagName: target?.tagName,
+        isContentEditable: target?.isContentEditable,
+      });
+
+      if (!command) return;
+
+      if (command === 'TOGGLE_SHORTCUTS_HELP') {
+        e.preventDefault();
+        setShortcutsModalOpen((prev) => !prev);
+      } else if (command === 'ESCAPE') {
+        setShortcutsModalOpen(false);
+        setAttackLibraryOpen(false);
+        setAnalyzerModalOpen(false);
+        setSourcesModalOpen(false);
+      } else if (command === 'TOGGLE_TACTICAL') {
+        e.preventDefault();
+        setTacticalMode((prev) => !prev);
+      } else if (command === 'TOGGLE_LEGEND') {
+        e.preventDefault();
+        setShowLegend((prev) => !prev);
+      } else if (command === 'VIEW_TOPOLOGY') {
+        e.preventDefault();
+        setViewMode('TOPOLOGY');
+      } else if (command === 'VIEW_SEQUENCE') {
+        e.preventDefault();
+        setViewMode('SEQUENCE');
+      } else if (command === 'VIEW_PROCESS_MEMORY') {
+        e.preventDefault();
+        setViewMode('PROCESS_MEMORY');
+      } else if (command === 'VIEW_RAW_TABLES') {
+        e.preventDefault();
+        setViewMode('RAW_TABLES');
+      } else if (command === 'STEP_BACKWARD') {
+        e.preventDefault();
+        setIsPlaying(false);
+        setSelectedTelemetryId(null);
+        setActiveStageIndex((prev) => {
+          const next = stepBackward(prev);
+          setCinematicPhase(next === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+          return next;
+        });
+      } else if (command === 'STEP_FORWARD') {
+        e.preventDefault();
+        setIsPlaying(false);
+        setSelectedTelemetryId(null);
+        setCinematicPhase('STAGE_ACTIVE');
+        setActiveStageIndex((prev) => stepForward(activeScenario, prev));
+      } else if (
+        command === 'PLAY_PAUSE_SEQUENCE' &&
+        target?.tagName !== 'BUTTON'
+      ) {
+        e.preventDefault();
+        setIsPlaying((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', onGlobalKeyDown);
+    return () => window.removeEventListener('keydown', onGlobalKeyDown);
+  }, [activeScenario]);
+
   return (
     <ActiveEnvironmentProvider
       value={activeEnvironment}
@@ -305,11 +379,9 @@ export function AttackExplorerWorkbench() {
         className="min-h-screen h-screen flex flex-col bg-[#F4F4F5]/60 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 overflow-hidden"
       >
         {/* Minimal Anime Game-Style Entrance Loading Sequence */}
-        <AnimatePresence>
-          {showIntro && (
-            <AnimeIntroLoader onComplete={() => setShowIntro(false)} />
-          )}
-        </AnimatePresence>
+        {showIntro && (
+          <AnimeIntroLoader onComplete={() => setShowIntro(false)} />
+        )}
 
         {/* Persistent Navigation Bar with Animated Logo, Navigation Links & Slide-Out Settings Drawer */}
         <AttackHeader
@@ -344,6 +416,7 @@ export function AttackExplorerWorkbench() {
           onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
           onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
           onOpenSourcesModal={() => setSourcesModalOpen(true)}
+          onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
           onReplayIntro={() => setShowIntro(true)}
         />
 
@@ -370,7 +443,7 @@ export function AttackExplorerWorkbench() {
                   setSidebarOpen(false);
                   setInspectorOpen(false);
                 }}
-                className="lg:hidden fixed inset-0 top-12 z-20 bg-black/35 backdrop-blur-[1px]"
+                className="lg:hidden absolute inset-0 z-40 bg-black/35 backdrop-blur-[1px]"
               />
             )}
           </AnimatePresence>
@@ -421,6 +494,10 @@ export function AttackExplorerWorkbench() {
                 playbackSpeed={playbackSpeed}
                 onSpeedChange={setPlaybackSpeed}
                 showLegend={showLegend}
+                onToggleLegend={() => setShowLegend((prev) => !prev)}
+                shortcutsModalOpen={shortcutsModalOpen}
+                onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
+                onCloseShortcutsModal={() => setShortcutsModalOpen(false)}
               />
 
               {/* Right Collapsible & Resizable Story, SIEM & Sources Inspector Panel */}
@@ -483,6 +560,25 @@ export function AttackExplorerWorkbench() {
           onClose={() => setSourcesModalOpen(false)}
           scenario={activeScenario}
         />
+
+        {/* Fallback Keyboard Shortcuts Modal when not in TOPOLOGY view */}
+        {viewMode !== 'TOPOLOGY' && (
+          <KeyboardShortcutsModal
+            isOpen={shortcutsModalOpen}
+            onClose={() => setShortcutsModalOpen(false)}
+            tacticalMode={tacticalMode}
+            showLegend={showLegend}
+            isPlaying={isPlaying}
+            onExecuteCommand={(cmd) => {
+              if (cmd === 'TOGGLE_TACTICAL') setTacticalMode((v) => !v);
+              else if (cmd === 'TOGGLE_LEGEND') setShowLegend((v) => !v);
+              else if (cmd === 'PLAY_PAUSE_SEQUENCE') handleTogglePlay();
+              else if (cmd === 'STEP_BACKWARD') handleStepBackward();
+              else if (cmd === 'STEP_FORWARD') handleStepForward();
+              else if (cmd === 'ESCAPE') setShortcutsModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </ActiveEnvironmentProvider>
   );

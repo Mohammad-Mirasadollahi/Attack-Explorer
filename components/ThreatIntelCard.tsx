@@ -85,12 +85,12 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       className="p-3 rounded-xl bg-zinc-50/90 dark:bg-zinc-900/75 border border-zinc-200/90 dark:border-zinc-800 space-y-3"
     >
       {/* Header Row */}
-      <div className="flex items-center justify-between gap-2 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <Globe className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
           <h4
             title="Threat Intel & Search Grounding"
-            className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate min-w-0"
+            className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug"
           >
             Threat Intel & Search Grounding
           </h4>
@@ -112,8 +112,8 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       </div>
 
       {/* Source Grounding Status Line */}
-      <div className="flex items-center justify-between gap-2 min-w-0 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
-        <span className="truncate min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+        <span className="min-w-0 leading-snug">
           Mode:{' '}
           <strong className="text-indigo-600 dark:text-indigo-400">
             {intel.sourceMode === 'LIVE_SEARCH_GROUNDING'
@@ -127,7 +127,7 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       {/* Real-World Executive Context */}
       <p
         data-testid="threat-intel-summary"
-        className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed"
+        className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words"
       >
         {intel.summary}
       </p>
@@ -136,7 +136,7 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-[10.5px] font-semibold text-zinc-800 dark:text-zinc-200">
           <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
-          <span className="truncate">Associated CVEs & Exploited Flaws</span>
+          <span className="leading-snug">Associated CVEs & Exploited Flaws</span>
         </div>
         <div className="space-y-1.5" data-testid="threat-intel-cve-list">
           {intel.cves.map((cve) => (
@@ -144,21 +144,21 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
               key={cve.id}
               className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-0.5 min-w-0"
             >
-              <div className="flex items-center justify-between gap-2 min-w-0 text-[10.5px] font-mono">
+              <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-[10.5px] font-mono">
                 <span
                   title={cve.id}
-                  className="font-bold text-rose-600 dark:text-rose-400 truncate min-w-0"
+                  className="font-bold text-rose-600 dark:text-rose-400 min-w-0 leading-snug"
                 >
                   {cve.id}
                 </span>
                 <span
                   title={`CVSS ${cve.cvss} · ${cve.status}`}
-                  className="text-amber-600 dark:text-amber-400 font-semibold truncate shrink-0"
+                  className="text-amber-600 dark:text-amber-400 font-semibold shrink-0 leading-snug"
                 >
                   CVSS {cve.cvss} · {cve.status}
                 </span>
               </div>
-              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug break-words">
                 {cve.description}
               </p>
             </div>
@@ -170,7 +170,7 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-[10.5px] font-semibold text-zinc-800 dark:text-zinc-200">
           <Users className="w-3 h-3 text-indigo-500 shrink-0" />
-          <span className="truncate">Associated Adversary & APT Groups</span>
+          <span className="leading-snug">Associated Adversary & APT Groups</span>
         </div>
         <div className="space-y-1.5" data-testid="threat-intel-actors-list">
           {intel.actorGroups.map((actor) => (
@@ -178,23 +178,23 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
               key={actor.name}
               className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-0.5 min-w-0"
             >
-              <div className="flex items-center justify-between gap-1.5 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 min-w-0">
                 <span
                   title={actor.name}
-                  className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-100 truncate min-w-0"
+                  className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug"
                 >
                   {actor.name}
                 </span>
                 <span
                   title={actor.aliases}
-                  className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400 truncate max-w-[55%]"
+                  className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words"
                 >
                   {actor.aliases}
                 </span>
               </div>
               <div
                 title={`Sectors: ${actor.targetSectors}`}
-                className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 truncate leading-snug"
+                className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 leading-snug break-words"
               >
                 Sectors: {actor.targetSectors}
               </div>
@@ -211,7 +211,7 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
         <div className="pt-1.5 border-t border-zinc-200/70 dark:border-zinc-800 space-y-1">
           <div className="flex items-center gap-1 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
             <ShieldAlert className="w-3 h-3 text-emerald-500 shrink-0" />
-            <span className="truncate">Search-Grounded Citations</span>
+            <span className="leading-snug">Search-Grounded Citations</span>
           </div>
           <div className="flex flex-col gap-1 min-w-0">
             {intel.groundedSources.map((src, idx) => (
@@ -223,7 +223,7 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
                 title={`${src.title} — ${src.uri}`}
                 className="inline-flex items-center justify-between gap-1.5 px-2 py-1 rounded bg-white dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-[10px] font-mono text-indigo-600 dark:text-indigo-400 hover:underline min-w-0"
               >
-                <span className="truncate min-w-0 leading-snug">{src.title}</span>
+                <span className="min-w-0 leading-snug break-words">{src.title}</span>
                 <ExternalLink className="w-2.5 h-2.5 shrink-0" />
               </a>
             ))}
