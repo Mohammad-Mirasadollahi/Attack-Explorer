@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'motion/react';
 import { TelemetryEvent } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
@@ -166,9 +165,11 @@ export function SketchWhiteboardSvg({
           ? Math.max(148, Math.round(zone.subnetBadge.length * 5.0 + 20))
           : 148;
 
+        const headerTotalW = Math.min(width - 16, Math.max(headerBarW, width - 20));
+
         return (
           <g key={zone.id} data-testid={`network-zone-${zone.id}`}>
-            {/* Architectural 2D Zone Box */}
+            {/* Architectural 2D Zone Box (Interior lets empty-space drag pan the canvas; border is draggable) */}
             <rect
               x={zone.xStart + 4}
               y={yTop}
@@ -181,11 +182,12 @@ export function SketchWhiteboardSvg({
               strokeOpacity={tacticalMode ? 0.75 : 0.48}
               strokeWidth={tacticalMode ? '2' : '1.7'}
               strokeDasharray="8 5"
+              className="pointer-events-none"
             />
 
             {/* Clean Clickable & Draggable Zone Header Bar Along Top of Zone */}
             <g
-              transform={`translate(${zone.xStart + 12}, ${yTop + 8})`}
+              transform={`translate(${zone.xStart + 10}, ${yTop + 8})`}
               data-testid={`zone-header-${zone.id}`}
               onPointerDown={(e) => {
                 if (onStartZoneDrag) {
@@ -199,16 +201,13 @@ export function SketchWhiteboardSvg({
                   onSelectZone(zone.id);
                 }
               }}
-              className={
-                onSelectZone || onStartZoneDrag
-                  ? 'cursor-grab active:cursor-grabbing'
-                  : undefined
-              }
+              className="canvas-interactive-zone nopan cursor-grab active:cursor-grabbing"
             >
+              <title>{`Drag "${zone.title}" to reposition this Network Zone`}</title>
               <rect
                 x={0}
                 y={0}
-                width={Math.min(width - 16, headerBarW)}
+                width={headerTotalW}
                 height={26}
                 rx={7}
                 fill={tacticalMode ? '#071324' : '#FFFFFF'}
@@ -240,20 +239,42 @@ export function SketchWhiteboardSvg({
                 x={codePillW + 10}
                 y={16.5}
                 fill={tacticalMode ? '#E2E8F0' : '#0F172A'}
-                fontSize="8.8"
+                fontSize="8.6"
                 fontWeight="800"
                 fontFamily="sans-serif"
               >
                 {zone.title}
               </text>
+
+              {/* 6-Dot Drag Handle Indicator on Right End of Zone Header */}
+              <g
+                transform={`translate(${headerTotalW - 14}, 7)`}
+                opacity={0.65}
+                data-testid={`zone-drag-grip-${zone.id}`}
+              >
+                <circle cx={2} cy={2} r={1.2} fill={zone.accentHex} />
+                <circle cx={6} cy={2} r={1.2} fill={zone.accentHex} />
+                <circle cx={2} cy={6} r={1.2} fill={zone.accentHex} />
+                <circle cx={6} cy={6} r={1.2} fill={zone.accentHex} />
+                <circle cx={2} cy={10} r={1.2} fill={zone.accentHex} />
+                <circle cx={6} cy={10} r={1.2} fill={zone.accentHex} />
+              </g>
             </g>
 
-            {/* Subnet / VLAN Architectural Badge at Bottom-Left of Zone */}
+            {/* Subnet / VLAN Architectural Badge at Bottom-Left of Zone (Also Draggable to Move Zone) */}
             {zone.subnetBadge && (
               <g
                 transform={`translate(${zone.xStart + 14}, ${
                   yTop + height - 24
                 })`}
+                data-testid={`zone-subnet-handle-${zone.id}`}
+                onPointerDown={(e) => {
+                  if (onStartZoneDrag) {
+                    e.stopPropagation();
+                    onStartZoneDrag(zone.id, e);
+                  }
+                }}
+                className="canvas-interactive-zone nopan cursor-grab active:cursor-grabbing"
               >
                 <rect
                   x={0}
@@ -262,7 +283,7 @@ export function SketchWhiteboardSvg({
                   height={16}
                   rx={4.5}
                   fill="#0F172A"
-                  fillOpacity={0.86}
+                  fillOpacity={0.88}
                   stroke={zone.accentHex}
                   strokeWidth="1"
                 />
@@ -352,36 +373,51 @@ export function SketchWhiteboardSvg({
           .map((fl) => (
             <g key={`pulse-pair-${fl.id}`}>
               {/* Source Launch Pulse Ring */}
-              <motion.circle
+              <circle
                 cx={fl.fromX}
                 cy={fl.fromY}
+                r={16}
                 fill="none"
                 stroke="#E11D48"
                 strokeWidth="2.4"
-                initial={{ r: 16, opacity: 0.75 }}
-                animate={{ r: 62, opacity: 0 }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeOut',
-                }}
-              />
+              >
+                <animate
+                  attributeName="r"
+                  values="16;62"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0.78;0"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
               {/* Destination Arrival Impact Ring */}
-              <motion.circle
+              <circle
                 cx={fl.toX}
                 cy={fl.toY}
+                r={16}
                 fill="none"
                 stroke="#10B981"
                 strokeWidth="2.6"
-                initial={{ r: 16, opacity: 0.8 }}
-                animate={{ r: 68, opacity: 0 }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeOut',
-                  delay: 0.55,
-                }}
-              />
+              >
+                <animate
+                  attributeName="r"
+                  values="16;68"
+                  dur="1.5s"
+                  begin="0.55s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values="0.82;0"
+                  dur="1.5s"
+                  begin="0.55s"
+                  repeatCount="indefinite"
+                />
+              </circle>
             </g>
           ))}
       </g>
@@ -429,6 +465,9 @@ export function SketchWhiteboardSvg({
         );
         const retTotalW = retSeqPillW + retLabelW + 8;
 
+        const fwdDurSec = isHighlighted ? '2.2s' : '3.4s';
+        const retDurSec = isHighlighted ? '2.4s' : '3.8s';
+
         return (
           <g key={flow.id} data-testid={`sketch-flow-${flow.stepNo}`}>
             {/* 1. OUTBOUND / FORWARD PATH (#N.1 →) */}
@@ -445,19 +484,13 @@ export function SketchWhiteboardSvg({
 
             {flow.isVisible && (
               <>
-                <motion.path
+                <path
                   d={flow.pathD}
                   fill="none"
                   stroke={strokeHex}
+                  strokeOpacity={0.95}
                   strokeWidth={isHighlighted ? 2.8 : 1.8}
                   strokeDasharray={isHighlighted ? '8 5' : '5 5'}
-                  initial={{ pathLength: 0, opacity: 0.4 }}
-                  animate={{ pathLength: 1, opacity: 0.95 }}
-                  transition={{
-                    duration: 0.55,
-                    ease: 'easeOut',
-                    delay: idx * 0.05,
-                  }}
                   markerStart={
                     isHighlighted
                       ? 'url(#sketch-arrow-crimson)'
@@ -468,7 +501,15 @@ export function SketchWhiteboardSvg({
                       ? 'url(#sketch-arrow-crimson)'
                       : 'url(#sketch-arrow-ink)'
                   }
-                />
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    values={isHighlighted ? '26;0' : '20;0'}
+                    dur={isHighlighted ? '0.9s' : '1.4s'}
+                    repeatCount="indefinite"
+                  />
+                </path>
+
                 {/* Explicit Directional Arrowheads Along the Outbound Curve (#N.1 →) */}
                 {flow.forwardArrows.map((arr, aIdx) => {
                   const isTip = aIdx === flow.forwardArrows.length - 1;
@@ -511,28 +552,27 @@ export function SketchWhiteboardSvg({
                   strokeWidth={isHighlighted ? 3.4 : 1.6}
                   strokeLinecap="round"
                 />
-                <motion.path
+                <path
                   d={flow.returnPathD}
                   fill="none"
                   stroke={returnHex}
+                  strokeOpacity={isHighlighted ? 0.94 : 0.68}
                   strokeWidth={isHighlighted ? 2.1 : 1.4}
                   strokeDasharray="4 5"
-                  initial={{ pathLength: 0, opacity: 0.35 }}
-                  animate={{
-                    pathLength: 1,
-                    opacity: isHighlighted ? 0.94 : 0.68,
-                  }}
-                  transition={{
-                    duration: 0.6,
-                    ease: 'easeOut',
-                    delay: idx * 0.05 + 0.12,
-                  }}
                   markerEnd={
                     isHighlighted
                       ? 'url(#sketch-arrow-return-active)'
                       : 'url(#sketch-arrow-return-muted)'
                   }
-                />
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    values="18;0"
+                    dur={isHighlighted ? '1.0s' : '1.6s'}
+                    repeatCount="indefinite"
+                  />
+                </path>
+
                 {/* Explicit Directional Arrowheads Along the Return Curve (#N.2 ⇠) */}
                 {flow.returnArrows.map((arr, aIdx) => {
                   const isTip = aIdx === flow.returnArrows.length - 1;
@@ -564,70 +604,54 @@ export function SketchWhiteboardSvg({
               </>
             )}
 
-            {/* 3. Protocol-Explorer Style Comet Trail + Traveling Outbound Packet Card (#N.1 →) */}
+            {/* 3. Continuous Traveling Outbound Packet + Comet Trail (#N.1 →) */}
             {flow.isVisible && (
               <>
                 {/* 3 Trailing Comet Dots when Highlighted */}
                 {isHighlighted &&
-                  [0.06, 0.12, 0.18].map((lagSec, tIdx) => (
-                    <motion.circle
+                  [0.08, 0.16, 0.24].map((lagSec, tIdx) => (
+                    <circle
                       key={`comet-trail-${flow.id}-${tIdx}`}
                       cx={0}
                       cy={0}
                       r={4.2 - tIdx * 1.1}
                       fill="#E11D48"
-                      opacity={0.48 - tIdx * 0.13}
-                      initial={{
-                        x: flow.xKeyframes[0],
-                        y: flow.yKeyframes[0],
-                      }}
-                      animate={{
-                        x: flow.xKeyframes,
-                        y: flow.yKeyframes,
-                      }}
-                      transition={{
-                        duration: 2.2,
-                        repeat: Infinity,
-                        ease: 'linear',
-                        delay: lagSec,
-                      }}
-                    />
+                      opacity={0.5 - tIdx * 0.13}
+                    >
+                      <animateMotion
+                        path={flow.pathD}
+                        dur="2.2s"
+                        begin={`${lagSec}s`}
+                        repeatCount="indefinite"
+                      />
+                    </circle>
                   ))}
 
-                {/* Main Traveling Outbound Packet Group + Floating Live Packet Tag when Current Step */}
-                <motion.g
-                  initial={{
-                    x: flow.xKeyframes[0],
-                    y: flow.yKeyframes[0],
-                  }}
-                  animate={{
-                    x: flow.xKeyframes,
-                    y: flow.yKeyframes,
-                  }}
-                  transition={{
-                    duration: isHighlighted ? 2.2 : 3.4,
-                    repeat: Infinity,
-                    ease: 'linear',
-                    delay: isHighlighted ? 0 : idx * 0.25,
-                  }}
-                >
-                  <circle
-                    cx={0}
-                    cy={0}
-                    r={isHighlighted ? 11 : 5.5}
-                    fill={isHighlighted ? '#E11D48' : '#475569'}
-                    fillOpacity={0.22}
+                {/* Main Traveling Outbound Packet Group */}
+                <g data-testid={`traveling-outbound-packet-${flow.stepNo}`}>
+                  <animateMotion
+                    path={flow.pathD}
+                    dur={fwdDurSec}
+                    begin={isHighlighted ? '0s' : `${idx * 0.22}s`}
+                    repeatCount="indefinite"
                   />
                   <circle
                     cx={0}
                     cy={0}
-                    r={isHighlighted ? 5.2 : 3.2}
+                    r={isHighlighted ? 11 : 6}
+                    fill={isHighlighted ? '#E11D48' : '#475569'}
+                    fillOpacity={0.24}
+                  />
+                  <circle
+                    cx={0}
+                    cy={0}
+                    r={isHighlighted ? 5.2 : 3.5}
                     fill={isHighlighted ? '#E11D48' : '#1E293B'}
                     stroke="#FFFFFF"
                     strokeWidth="1.6"
                   />
 
-                  {/* Glowing Active Packet Pulse Halo (Permanent Forward/Return Badges Display Full Text) */}
+                  {/* Glowing Active Packet Pulse Halo */}
                   {isHighlighted && (
                     <g data-testid={`active-flying-packet-tag-${flow.stepNo}`}>
                       <circle
@@ -641,44 +665,35 @@ export function SketchWhiteboardSvg({
                       />
                     </g>
                   )}
-                </motion.g>
+                </g>
               </>
             )}
 
-            {/* 4. Sleek Traveling Return / ACK Packet Pulse (#N.2 ⇠) */}
+            {/* 4. Continuous Traveling Return / ACK Packet Pulse (#N.2 ⇠) */}
             {flow.isBidirectional && flow.isVisible && (
-              <motion.g
-                initial={{
-                  x: flow.returnXKeyframes[0],
-                  y: flow.returnYKeyframes[0],
-                }}
-                animate={{
-                  x: flow.returnXKeyframes,
-                  y: flow.returnYKeyframes,
-                }}
-                transition={{
-                  duration: isHighlighted ? 2.4 : 3.8,
-                  repeat: Infinity,
-                  ease: 'linear',
-                  delay: isHighlighted ? 0.9 : idx * 0.25 + 1.1,
-                }}
-              >
-                <circle
-                  cx={0}
-                  cy={0}
-                  r={isHighlighted ? 8.5 : 4}
-                  fill="#059669"
-                  fillOpacity={0.2}
+              <g data-testid={`traveling-return-packet-${flow.stepNo}`}>
+                <animateMotion
+                  path={flow.returnPathD}
+                  dur={retDurSec}
+                  begin={isHighlighted ? '0.6s' : `${idx * 0.25 + 0.7}s`}
+                  repeatCount="indefinite"
                 />
                 <circle
                   cx={0}
                   cy={0}
-                  r={isHighlighted ? 4.4 : 2.8}
+                  r={isHighlighted ? 8.5 : 4.5}
+                  fill="#059669"
+                  fillOpacity={0.22}
+                />
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={isHighlighted ? 4.4 : 3.0}
                   fill="#059669"
                   stroke="#FFFFFF"
                   strokeWidth="1.3"
                 />
-              </motion.g>
+              </g>
             )}
 
             {/* 5. Prominent Link Start Step Number Badge (1..5 on main board, P.1..P.4 in expanded view) */}

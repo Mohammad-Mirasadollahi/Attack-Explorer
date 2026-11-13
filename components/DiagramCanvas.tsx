@@ -76,6 +76,7 @@ export function DiagramCanvas({
   return (
     <motion.div
       layout
+      onContextMenu={(e) => e.preventDefault()}
       className="relative flex-1 flex flex-col bg-[#F4F4F5]/60 dark:bg-[#09090B] min-w-0 min-h-0 overflow-hidden select-none"
       data-testid="diagram-canvas"
       data-active-environment={activeEnvironment}

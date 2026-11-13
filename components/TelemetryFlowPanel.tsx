@@ -324,7 +324,10 @@ export function TelemetryFlowPanel({
                     <td className="py-1 px-2.5 tabular-nums text-zinc-500 whitespace-nowrap">
                       {ev.timestamp}
                     </td>
-                    <td className="py-1 px-2.5 font-medium text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
+                    <td
+                      title={ev.sourceLabel}
+                      className="py-1 px-2.5 max-w-[160px] font-medium text-zinc-800 dark:text-zinc-200 truncate"
+                    >
                       {ev.sourceLabel}
                     </td>
                     <td className="py-1 px-1.5 text-center whitespace-nowrap">
@@ -332,15 +335,22 @@ export function TelemetryFlowPanel({
                         {ev.no}.1⇄{ev.no}.2
                       </span>
                     </td>
-                    <td className="py-1 px-2.5 font-medium text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
+                    <td
+                      title={ev.targetLabel}
+                      className="py-1 px-2.5 max-w-[160px] font-medium text-zinc-800 dark:text-zinc-200 truncate"
+                    >
                       {ev.targetLabel}
                     </td>
                     <td
-                      className={`py-1 px-2.5 font-semibold whitespace-nowrap ${meta.badgeClass}`}
+                      title={ev.protocolOrEventId}
+                      className={`py-1 px-2.5 max-w-[130px] font-semibold truncate ${meta.badgeClass}`}
                     >
                       {ev.protocolOrEventId}
                     </td>
-                    <td className="py-1 px-2.5 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                    <td
+                      title={`#${ev.no}.1→ ${ev.shortAction} · ⇠#${ev.no}.2 [${ev.sizeOrCode}] — ${ev.info}`}
+                      className="py-1 px-2.5 max-w-[420px] text-zinc-600 dark:text-zinc-300 truncate"
+                    >
                       <span className="font-semibold text-rose-600 dark:text-rose-400">
                         #{ev.no}.1→ {ev.shortAction}
                       </span>{' '}
@@ -352,6 +362,7 @@ export function TelemetryFlowPanel({
                     </td>
                     <td className="py-1 px-2.5 text-right tabular-nums whitespace-nowrap">
                       <span
+                        title={ev.mitreId}
                         className={`font-semibold ${
                           ev.severity === 'CRITICAL'
                             ? 'text-rose-600 dark:text-rose-400'

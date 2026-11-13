@@ -17,6 +17,7 @@ import {
   ChevronRight,
   FolderTree,
   Search } from 'lucide-react';
+import { OperationalGuideIcon } from './OperationalGuideIcon';
 
 interface AttackSidebarProps {
   category: AttackCategory;
@@ -80,24 +81,29 @@ export function AttackSidebar({
   const categories: Array<{
     id: AttackCategory;
     label: string;
+    tooltip: string;
     count: number;
   }> = [
     {
       id: 'ALL',
       label: 'All',
+      tooltip: 'All Attack Scenarios',
       count: ATTACK_SCENARIOS.length },
     {
       id: 'MALWARE',
       label: 'Malware',
+      tooltip: 'Malware & Process Execution Scenarios',
       count: ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE').length },
     {
       id: 'LOG_ANALYSIS',
       label: 'DFIR',
+      tooltip: 'DFIR & Log Forensics Scenarios',
       count: ATTACK_SCENARIOS.filter((s) => s.category === 'LOG_ANALYSIS')
         .length },
     {
       id: 'ACTIVE_DIRECTORY',
       label: 'AD/Net',
+      tooltip: 'Active Directory, Identity & Network Exfiltration Scenarios',
       count: ATTACK_SCENARIOS.filter(
         (s) =>
           s.category === 'ACTIVE_DIRECTORY' || s.category === 'NETWORK_WEB'
@@ -116,32 +122,41 @@ export function AttackSidebar({
 
   const renderScenarioItem = (sc: AttackScenario) => {
     const isSelectedScenario = sc.id === activeScenarioId;
+    const fullScenarioTooltip = `${sc.code} (${sc.stages.length} steps) — ${sc.name}: ${sc.shortSubtitle}`;
 
     return (
-      <li key={sc.id}>
+      <li key={sc.id} className="min-w-0">
         <button
           type="button"
           data-testid={`scenario-item-${sc.id}`}
+          title={fullScenarioTooltip}
           onClick={() => onSelectScenario(sc.id)}
-          className={`w-full flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${
+          className={`w-full min-w-0 flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer overflow-hidden ${
             isSelectedScenario
               ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs'
               : 'text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/70'
           }`}
         >
           <div
-            className={`flex items-center gap-1.5 text-[10.5px] font-mono tabular-nums ${
+            className={`flex items-center gap-1.5 text-[10.5px] font-mono tabular-nums min-w-0 w-full ${
               isSelectedScenario
                 ? 'text-zinc-300 dark:text-zinc-600'
                 : 'text-zinc-400 dark:text-zinc-500'
             }`}
           >
-            <span className="font-semibold">{sc.code}</span>
-            <span aria-hidden="true">·</span>
-            <span>{sc.stages.length} steps</span>
+            <span className="font-semibold truncate" title={sc.code}>
+              {sc.code}
+            </span>
+            <span aria-hidden="true" className="shrink-0">
+              ·
+            </span>
+            <span className="shrink-0">{sc.stages.length} steps</span>
           </div>
 
-          <div className="text-xs font-medium leading-snug break-words w-full">
+          <div
+            className="text-xs font-medium leading-snug truncate w-full"
+            title={sc.name}
+          >
             {sc.name}
           </div>
         </button>
@@ -159,17 +174,40 @@ export function AttackSidebar({
       dir="ltr"
       className="fixed lg:static inset-y-12 left-0 z-30 w-[268px] shrink-0 bg-white dark:bg-zinc-950 border-r border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-[calc(100dvh-3rem)] lg:h-full shadow-xl lg:shadow-none overflow-hidden"
     >
-      {/* Header: Contextual Search + Category Filter + Sort & Categorize Controls */}
+      {/* Header: Restored Operational Guide Identity + Contextual Search + Category Filter + Sort & Categorize Controls */}
       <div className="p-3 border-b border-zinc-200/70 dark:border-zinc-800/80 space-y-2.5 shrink-0">
+        {/* Restored Operational Guide Header Banner integrated into Sidebar Navigation */}
+        <div
+          data-testid="sidebar-operational-guide-header"
+          title="Operational Guide — Select an attack scenario to inspect its live topology, telemetry, and forensic stages"
+          className="px-2.5 py-1.5 rounded-lg bg-indigo-50/85 dark:bg-indigo-950/50 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-between gap-2 min-w-0"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <OperationalGuideIcon size="sm" />
+            <div className="min-w-0">
+              <div className="text-[10.5px] font-mono font-bold text-indigo-950 dark:text-indigo-200 truncate">
+                Operational Guide
+              </div>
+              <div className="text-[9.5px] font-mono text-indigo-700/80 dark:text-indigo-300/80 truncate">
+                Attack Scenarios & Playbooks
+              </div>
+            </div>
+          </div>
+          <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-mono font-bold tabular-nums shrink-0">
+            {sortedScenarios.length}
+          </span>
+        </div>
+
         <div className="relative w-full">
           <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             aria-label="Search attack scenarios, MITRE ID, or Event ID"
+            title="Search attack scenarios by name, MITRE technique ID (e.g., T1055), or Event ID"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search scenarios, T1055..."
-            className="w-full h-8 pl-8 pr-3 text-xs bg-zinc-100/80 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 focus:bg-white dark:focus:bg-zinc-900 transition-all"
+            className="w-full h-8 pl-8 pr-3 text-xs bg-zinc-100/80 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 focus:bg-white dark:focus:bg-zinc-900 transition-all truncate"
           />
         </div>
 
@@ -187,8 +225,9 @@ export function AttackSidebar({
                 type="button"
                 role="tab"
                 aria-selected={isSelected}
+                title={`${cat.tooltip} (${cat.count})`}
                 onClick={() => onSelectCategory(cat.id)}
-                className="relative py-1 px-1.5 text-[11px] font-medium rounded-md text-center transition-colors cursor-pointer whitespace-nowrap"
+                className="relative py-1 px-1.5 text-[11px] font-medium rounded-md text-center transition-colors cursor-pointer min-w-0 overflow-hidden"
               >
                 {isSelected && (
                   <motion.span
@@ -201,7 +240,7 @@ export function AttackSidebar({
                   />
                 )}
                 <span
-                  className={`relative z-10 ${
+                  className={`relative z-10 block truncate ${
                     isSelected
                       ? 'text-zinc-900 dark:text-white font-semibold'
                       : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
@@ -214,19 +253,20 @@ export function AttackSidebar({
           })}
         </div>
 
-        {/* Sort & Categorize Controls (Full-Width Non-Truncated Rows) */}
+        {/* Sort & Categorize Controls */}
         <div className="grid grid-cols-1 gap-1.5 pt-0.5">
           {/* Sort Selector */}
-          <div className="relative flex items-center">
+          <div className="relative flex items-center min-w-0">
             <ArrowUpDown className="w-3 h-3 text-zinc-400 absolute left-2.5 pointer-events-none" />
             <select
               aria-label="Sort scenarios"
+              title="Sort attack scenarios"
               data-testid="sidebar-sort-select"
               value={sortBy}
               onChange={(e) =>
                 handleSortChange(e.target.value as ScenarioSortOption)
               }
-              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer truncate"
             >
               <option value="DEFAULT">Sort: Default Order</option>
               <option value="NAME_ASC">Sort: Name (A–Z)</option>
@@ -237,16 +277,17 @@ export function AttackSidebar({
           </div>
 
           {/* Categorize / Group-By Selector */}
-          <div className="relative flex items-center">
+          <div className="relative flex items-center min-w-0">
             <FolderTree className="w-3 h-3 text-zinc-400 absolute left-2.5 pointer-events-none" />
             <select
               aria-label="Categorize scenarios"
+              title="Group attack scenarios by category or MITRE tactic"
               data-testid="sidebar-group-select"
               value={groupBy}
               onChange={(e) =>
                 handleGroupByChange(e.target.value as ScenarioGroupByMode)
               }
-              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer truncate"
             >
               <option value="CATEGORY">Group: Attack Category</option>
               <option value="MITRE_PHASE">Group: MITRE Tactic</option>
@@ -273,14 +314,15 @@ export function AttackSidebar({
               <div
                 key={group.groupKey}
                 data-testid={`sidebar-category-group-${group.groupKey}`}
-                className="space-y-1"
+                className="space-y-1 min-w-0"
               >
                 <button
                   type="button"
                   data-testid={`sidebar-group-header-${group.groupKey}`}
                   aria-expanded={!isCollapsed}
+                  title={`${group.label} (${group.scenarios.length} scenarios)`}
                   onClick={() => toggleGroupCollapse(group.groupKey)}
-                  className="w-full flex items-center justify-between gap-1.5 px-1.5 py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full min-w-0 flex items-center justify-between gap-1.5 px-1.5 py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors cursor-pointer text-left"
                 >
                   <span className="flex items-center gap-1 min-w-0">
                     {isCollapsed ? (
@@ -288,7 +330,7 @@ export function AttackSidebar({
                     ) : (
                       <ChevronDown className="w-3 h-3 shrink-0" />
                     )}
-                    <span className="break-words">{group.label}</span>
+                    <span className="truncate">{group.label}</span>
                   </span>
                   <span className="text-[10.5px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 shrink-0">
                     {group.scenarios.length}
@@ -308,3 +350,4 @@ export function AttackSidebar({
     </motion.aside>
   );
 }
+

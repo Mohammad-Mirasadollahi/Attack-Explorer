@@ -65,10 +65,13 @@ export function MitreStats({
       aria-label="MITRE ATT&CK Coverage Statistics"
       className="p-3 rounded-xl bg-zinc-50/90 dark:bg-zinc-900/75 border border-zinc-200/90 dark:border-zinc-800 space-y-2.5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <BarChart3 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-          <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 break-words">
+          <h4
+            title="MITRE ATT&CK Tactic Coverage"
+            className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate min-w-0"
+          >
             MITRE ATT&CK Tactic Coverage
           </h4>
         </div>
@@ -218,7 +221,7 @@ export function MitreStats({
         </ResponsiveContainer>
       </div>
 
-      {/* Full Tactic Names Breakdown Grid (No Clipped Labels) */}
+      {/* Full Tactic Names Breakdown Grid with Ellipsis + Tooltip */}
       <div className="grid grid-cols-2 gap-1 text-[9.5px] font-mono">
         {tacticData.map((t) => {
           const count =
@@ -228,13 +231,14 @@ export function MitreStats({
           return (
             <div
               key={t.phase}
-              className={`flex items-center justify-between gap-1 px-1.5 py-0.5 rounded border ${
+              title={`${t.fullName} — ${count} ${metricMode === 'STAGES' ? 'Stages' : 'Events'}`}
+              className={`flex items-center justify-between gap-1 px-1.5 py-0.5 rounded border min-w-0 ${
                 count > 0
                   ? 'bg-white dark:bg-zinc-950 border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold'
                   : 'bg-zinc-100/50 dark:bg-zinc-900/40 border-transparent text-zinc-400 dark:text-zinc-500'
               }`}
             >
-              <span className="break-words leading-tight">
+              <span className="truncate min-w-0 leading-tight">
                 TA0{t.phase} · {t.shortName}
               </span>
               <span className="shrink-0 font-bold">{count}</span>

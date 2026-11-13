@@ -33,9 +33,18 @@ export function AttackStepProgressBar({
       className="shrink-0 bg-white/95 dark:bg-zinc-950/95 border-b border-zinc-200/80 dark:border-zinc-800/80 px-3 py-1.5 flex flex-col gap-1.5 z-20"
     >
       {/* Top Synchronized Continuous Progress Track */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10.5px] font-mono font-bold text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
+      <div className="flex items-center justify-between gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span
+            title={
+              activeStageIndex === 0
+                ? `FULL TOPOLOGY OVERVIEW (${totalStages} STAGES) — ${scenario.name}`
+                : `STAGE ${activeStageIndex} OF ${totalStages} · ${
+                    scenario.stages[activeStageIndex - 1]?.title || ''
+                  }`
+            }
+            className="text-[10.5px] font-mono font-bold text-zinc-800 dark:text-zinc-200 truncate"
+          >
             {activeStageIndex === 0
               ? `FULL TOPOLOGY OVERVIEW (${totalStages} STAGES)`
               : `STAGE ${activeStageIndex} OF ${totalStages} · ${
@@ -82,6 +91,7 @@ export function AttackStepProgressBar({
         <button
           type="button"
           data-testid="visualizer-step-btn-0"
+          title={`All Stages Overview (${totalStages} stages) — ${scenario.name}`}
           onClick={() => onSelectStage(0)}
           className={`px-2 py-1 rounded-md text-[10.5px] font-mono flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 border ${
             activeStageIndex === 0
@@ -103,8 +113,8 @@ export function AttackStepProgressBar({
               type="button"
               data-testid={`visualizer-step-btn-${stage.index}`}
               onClick={() => onSelectStage(stage.index)}
-              title={`Stage ${stage.index}: ${stage.title} (${stage.mitreTechniqueId})`}
-              className={`relative shrink-0 px-2.5 py-1 rounded-md text-[10.5px] font-mono flex items-center justify-between gap-2 transition-all cursor-pointer whitespace-nowrap border ${
+              title={`Stage ${stage.index}: ${stage.title} (${stage.mitreTechniqueId}) — ${stage.subtitle}`}
+              className={`relative shrink-0 max-w-[240px] sm:max-w-[290px] px-2.5 py-1 rounded-md text-[10.5px] font-mono flex items-center justify-between gap-2 transition-all cursor-pointer border overflow-hidden ${
                 isCurrent
                   ? 'bg-indigo-600 text-white border-indigo-600 font-bold shadow-2xs'
                   : isCompleted
@@ -112,7 +122,7 @@ export function AttackStepProgressBar({
                   : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
               }`}
             >
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 min-w-0">
                 <span
                   className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
                     isCurrent
@@ -128,7 +138,7 @@ export function AttackStepProgressBar({
                     stage.index
                   )}
                 </span>
-                <span>
+                <span className="truncate">
                   S{stage.index}: {stage.title}
                 </span>
               </span>

@@ -38,7 +38,6 @@ import {
   WHITEBOARD_HEIGHT,
   WHITEBOARD_WIDTH,
 } from '@/lib/canvas-interaction-engine';
-import { SketchNodeIcon } from './SketchNodeIcons';
 import { SketchWhiteboardSvg } from './canvas/SketchWhiteboardSvg';
 import { ResponsiveMobileZonesView } from './canvas/ResponsiveMobileZonesView';
 import { TacticalGridOverlay } from './canvas/TacticalGridOverlay';
@@ -46,9 +45,14 @@ import { NodeHoverTooltip } from './NodeHoverTooltip';
 import { DiagramLegendPanel } from './DiagramLegendPanel';
 import { PlaybackControlBar } from './PlaybackControlBar';
 import {
+  CanvasController,
+  CanvasControllerHandle,
+} from './CanvasController';
+import { DraggableDiagramNode } from './DraggableDiagramNode';
+import { OperationalGuideIcon } from './OperationalGuideIcon';
+import {
   ArrowLeft,
   ArrowRightLeft,
-  Check,
   CheckCircle2,
   CheckSquare,
   Cloud,
@@ -125,13 +129,16 @@ export function AttackVisualizer({
   const activeStageIndex = currentStage ? currentStage.index : 0;
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
 
-  // Zoom, Pan, Marquee Selection & Object Dragging State
+  // Zoom, Pan, Marquee Selection & Object Dragging State (Default 'PAN' so clicking & dragging empty space moves the diagram immediately)
   const [manualZoom, setManualZoom] = useState<number>(1);
   const [panOffset, setPanOffset] = useState<Point2D>({ x: 0, y: 0 });
   const [interactionMode, setInteractionMode] =
-    useState<CanvasInteractionMode>('SELECT');
+    useState<CanvasInteractionMode>('PAN');
   const [isPanningCanvas, setIsPanningCanvas] = useState<boolean>(false);
   const [isDraggingNodes, setIsDraggingNodes] = useState<boolean>(false);
+  const [draggingZoneTitle, setDraggingZoneTitle] = useState<string | null>(
+    null
+  );
   const [marqueeBox, setMarqueeBox] = useState<MarqueeBoxCoords | null>(null);
   const [multiSelectedNodeIds, setMultiSelectedNodeIds] = useState<string[]>(
     []
@@ -166,6 +173,7 @@ export function AttackVisualizer({
 
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const cameraRigRef = useRef<HTMLDivElement>(null);
+  const canvasControllerRef = useRef<CanvasControllerHandle | null>(null);
   const didDragObjectRef = useRef<boolean>(false);
   const spacePressedRef = useRef<boolean>(false);
 
@@ -375,6 +383,7 @@ export function AttackVisualizer({
   const handleResetCanvasLayout = useCallback(() => {
     setManualZoom(1);
     setPanOffset({ x: 0, y: 0 });
+    canvasControllerRef.current?.resetTransform();
     setMultiSelectedNodeIds([]);
     setMarqueeBox(null);
     setNodeOffsetsByScenario((prev) => {
@@ -419,27 +428,37 @@ export function AttackVisualizer({
     []
   );
 
-  // Mouse Wheel / Trackpad Scroll Zoom Handler (native non-passive listener to allow preventDefault without console error)
+  // Mouse Wheel / Trackpad Scroll Zoom Handler synchronized with CanvasController
   useEffect(() => {
     const boardEl = boardContainerRef.current;
     if (!boardEl) return;
     const onNativeWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      setManualZoom((prev) => computeScrollWheelZoom(prev, e.deltaY));
+      setManualZoom((prev) => {
+        const nextZoom = computeScrollWheelZoom(prev, e.deltaY);
+        canvasControllerRef.current?.setTransform(
+          panOffset.x,
+          panOffset.y,
+          nextZoom
+        );
+        return nextZoom;
+      });
     };
     boardEl.addEventListener('wheel', onNativeWheel, { passive: false });
     return () => {
       boardEl.removeEventListener('wheel', onNativeWheel);
     };
-  }, [internalSubBoard]);
+  }, [internalSubBoard, panOffset.x, panOffset.y]);
 
-  // Canvas Background Pointer Down: Supports both Windows-style Marquee Box Selection AND Hold/Drag Page Panning
+  // Canvas Empty Space Pointer Down: Click-and-Drag Panning by default, or Shift+Drag / Box Select Mode for Marquee Selection
   const handleBoardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      // Ignore if clicking inside floating HUD buttons or controls
       const targetEl = e.target as HTMLElement;
       if (
+        targetEl.closest('.canvas-interactive-node') ||
+        targetEl.closest('.canvas-interactive-zone') ||
+        targetEl.closest('.canvas-interactive-control') ||
         targetEl.closest('button') ||
         targetEl.closest('[data-testid="diagram-legend-panel"]') ||
         targetEl.closest('[data-testid="playback-control-bar"]')
@@ -453,62 +472,33 @@ export function AttackVisualizer({
       const startPanY = panOffset.y;
       const startWb = clientToWhiteboardCoords(startClientX, startClientY);
 
-      const forcePanImmediate =
-        interactionMode === 'PAN' ||
-        e.button === 1 ||
-        e.button === 2 ||
-        e.altKey ||
-        spacePressedRef.current;
-      const forceSelectImmediate = e.shiftKey || e.ctrlKey || e.metaKey;
-
-      let gestureMode: 'PENDING' | 'PAN' | 'MARQUEE' = forcePanImmediate
-        ? 'PAN'
-        : forceSelectImmediate
-        ? 'MARQUEE'
-        : 'PENDING';
+      const useMarqueeMode =
+        interactionMode === 'SELECT' ||
+        e.shiftKey ||
+        e.ctrlKey ||
+        e.metaKey;
 
       let hasMoved = false;
 
-      if (gestureMode === 'PAN') {
+      if (!useMarqueeMode) {
         setIsPanningCanvas(true);
       }
-
-      // If user holds the mouse button down on the page without moving for 190ms, switch to PAN mode ("اگه صفحه رو نگه داشتن")
-      const holdToPanTimer =
-        gestureMode === 'PENDING'
-          ? window.setTimeout(() => {
-              if (!hasMoved && gestureMode === 'PENDING') {
-                gestureMode = 'PAN';
-                setIsPanningCanvas(true);
-              }
-            }, 190)
-          : null;
 
       const handleWindowPointerMove = (moveEvent: PointerEvent) => {
         const dx = moveEvent.clientX - startClientX;
         const dy = moveEvent.clientY - startClientY;
         const dist = Math.hypot(dx, dy);
 
-        if (!hasMoved && dist >= 4) {
+        if (!hasMoved && dist >= 3) {
           hasMoved = true;
-          if (holdToPanTimer !== null) {
-            window.clearTimeout(holdToPanTimer);
-          }
-          if (gestureMode === 'PENDING') {
-            // Immediate drag in SELECT mode draws Windows-style Marquee Selection Box
-            gestureMode = interactionMode === 'PAN' ? 'PAN' : 'MARQUEE';
-            if (gestureMode === 'PAN') {
-              setIsPanningCanvas(true);
-            }
-          }
         }
 
-        if (gestureMode === 'PAN') {
-          setPanOffset({
-            x: Math.round(startPanX + dx),
-            y: Math.round(startPanY + dy),
-          });
-        } else if (gestureMode === 'MARQUEE' && hasMoved) {
+        if (!useMarqueeMode && hasMoved) {
+          const nextX = Math.round(startPanX + dx);
+          const nextY = Math.round(startPanY + dy);
+          setPanOffset({ x: nextX, y: nextY });
+          canvasControllerRef.current?.setTransform(nextX, nextY, manualZoom);
+        } else if (useMarqueeMode && hasMoved) {
           const curWb = clientToWhiteboardCoords(
             moveEvent.clientX,
             moveEvent.clientY
@@ -526,16 +516,12 @@ export function AttackVisualizer({
       };
 
       const handleWindowPointerUp = () => {
-        if (holdToPanTimer !== null) {
-          window.clearTimeout(holdToPanTimer);
-        }
         window.removeEventListener('pointermove', handleWindowPointerMove);
         window.removeEventListener('pointerup', handleWindowPointerUp);
         setIsPanningCanvas(false);
         setMarqueeBox(null);
 
-        if (!hasMoved && !forceSelectImmediate) {
-          // Clicking empty canvas clears multi-selection
+        if (!hasMoved && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
           setMultiSelectedNodeIds([]);
         }
       };
@@ -547,14 +533,15 @@ export function AttackVisualizer({
       activeNodes,
       clientToWhiteboardCoords,
       interactionMode,
+      manualZoom,
       panOffset.x,
       panOffset.y,
     ]
   );
 
-  // Dragging Single or Multiple Selected Nodes on the Board
+  // Dragging Single or Multiple Selected Nodes Simultaneously Across the Workspace
   const handleNodePointerDown = useCallback(
-    (node: WhiteboardSketchNode, e: React.PointerEvent<HTMLButtonElement>) => {
+    (node: WhiteboardSketchNode, e: React.PointerEvent<HTMLElement>) => {
       if (e.button !== 0) return;
       e.stopPropagation();
 
@@ -579,7 +566,7 @@ export function AttackVisualizer({
           moveEvent.clientY - startClientY
         );
 
-        if (!startedDrag && totalDist > 5) {
+        if (!startedDrag && totalDist > 4) {
           startedDrag = true;
           didDragObjectRef.current = true;
           setIsDraggingNodes(true);
@@ -646,6 +633,7 @@ export function AttackVisualizer({
       let startedDrag = false;
       didDragObjectRef.current = false;
 
+      const targetZone = activeZones.find((z) => z.id === zoneId);
       const zoneNodeIds = activeNodes
         .filter((n) => n.zoneId === zoneId)
         .map((n) => n.id);
@@ -656,10 +644,11 @@ export function AttackVisualizer({
           moveEvent.clientY - startClientY
         );
 
-        if (!startedDrag && totalDist > 5) {
+        if (!startedDrag && totalDist > 4) {
           startedDrag = true;
           didDragObjectRef.current = true;
           setIsDraggingNodes(true);
+          setDraggingZoneTitle(targetZone?.code || zoneId);
           setMultiSelectedNodeIds(zoneNodeIds);
         }
 
@@ -711,12 +700,13 @@ export function AttackVisualizer({
         window.removeEventListener('pointermove', handleWindowPointerMove);
         window.removeEventListener('pointerup', handleWindowPointerUp);
         setIsDraggingNodes(false);
+        setDraggingZoneTitle(null);
       };
 
       window.addEventListener('pointermove', handleWindowPointerMove);
       window.addEventListener('pointerup', handleWindowPointerUp);
     },
-    [activeNodes, boardScopeKey]
+    [activeNodes, activeZones, boardScopeKey]
   );
 
   const handleNodeClick = (node: WhiteboardSketchNode) => {
@@ -914,6 +904,7 @@ export function AttackVisualizer({
       data-active-environment={activeEnvironment}
       data-tactical-mode={tacticalMode ? 'true' : 'false'}
       data-interaction-mode={interactionMode}
+      onContextMenu={(e) => e.preventDefault()}
       dir="ltr"
     >
       {/* Persistent Environment & Expandable Zone Sub-View Context Bar */}
@@ -930,27 +921,34 @@ export function AttackVisualizer({
             className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1 overflow-hidden"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 <motion.button
                   type="button"
                   whileHover={{ x: -2, scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                   data-testid="back-to-main-topology-btn"
                   onClick={handleBackToMainTopology}
+                  title="Return to parent network topology view"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-[11px] font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back to Parent View</span>
                 </motion.button>
 
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-semibold shrink-0">
+                <span
+                  title={`EXPANDED ZONE · NODE #${selectedSketchNode.chainOrder}`}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-semibold shrink-0"
+                >
                   <Maximize2 className="w-3 h-3" />
-                  <span>
+                  <span className="truncate">
                     EXPANDED ZONE · NODE #{selectedSketchNode.chainOrder}
                   </span>
                 </span>
 
-                <span className="font-semibold text-xs text-zinc-900 dark:text-white break-words">
+                <span
+                  title={internalSubBoard.title}
+                  className="font-semibold text-xs text-zinc-900 dark:text-white truncate min-w-0"
+                >
                   {internalSubBoard.title}
                 </span>
               </div>
@@ -961,14 +959,19 @@ export function AttackVisualizer({
                     type="button"
                     data-testid="switch-companion-host-process-btn"
                     onClick={() => handleNodeClick(companionSketchNode)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                    title={
+                      internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
+                        ? `Host: ${companionSketchNode.label}`
+                        : `Process: ${companionSketchNode.label}`
+                    }
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer max-w-[220px] ${
                       internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
                         ? 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800'
                         : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
                     }`}
                   >
                     <ArrowRightLeft className="w-3 h-3 shrink-0" />
-                    <span>
+                    <span className="truncate">
                       {internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
                         ? `Host: ${companionSketchNode.label}`
                         : `Process: ${companionSketchNode.label}`}
@@ -982,7 +985,8 @@ export function AttackVisualizer({
 
             <div
               data-testid="expanded-node-environment-breadcrumb"
-              className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border break-words leading-snug ${
+              title={internalSubBoard.environmentBreadcrumb}
+              className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border truncate leading-snug ${
                 internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
                   ? 'bg-rose-50/80 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200 border-rose-200/80 dark:border-rose-800/70'
                   : internalSubBoard.currentScopeType === 'HOST_OS_ENVIRONMENT'
@@ -1004,26 +1008,39 @@ export function AttackVisualizer({
             data-testid="current-environment-context-bar"
             className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-wrap items-center justify-between gap-2"
           >
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
+
               <span
                 data-testid="canvas-active-environment-pill"
                 data-environment-id={activeEnvironment}
+                title={`${envProfile.badgeLabel} · ${envProfile.environmentTag}`}
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-mono text-[10px] font-bold shrink-0 ${envBadgeColorClass}`}
               >
                 {envIconNode}
-                <span>{envProfile.badgeLabel}</span>
-                <span className="opacity-75">
+                <span className="truncate">{envProfile.badgeLabel}</span>
+                <span className="opacity-75 truncate">
                   · {envProfile.environmentTag}
                 </span>
               </span>
 
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold shrink-0">
+              <span
+                title={
+                  activeStageIndex > 0
+                    ? `STAGE #${activeStageIndex} FOCUS`
+                    : `TOPOLOGY (${scenario.stages.length} STEPS)`
+                }
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold shrink-0"
+              >
                 {activeStageIndex > 0
                   ? `STAGE #${activeStageIndex} FOCUS`
                   : `TOPOLOGY (${scenario.stages.length} STEPS)`}
               </span>
 
-              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 break-words leading-snug">
+              <span
+                title={stageLocationContext.whereWeAreSummary}
+                className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate min-w-0 leading-snug"
+              >
                 {stageLocationContext.whereWeAreSummary}
               </span>
             </div>
@@ -1033,13 +1050,13 @@ export function AttackVisualizer({
         )}
       </AnimatePresence>
 
-      {/* Maximum-Height Center Diagram Canvas with Scrollbars, Wheel Zoom, Mouse Pan, Windows Marquee Selection & Object Dragging */}
+      {/* Maximum-Height Center Diagram Canvas with CanvasController (react-zoom-pan-pinch), Scrollbars, Mouse Pan, Shift+Click Multi-Selection & Zone/Node Dragging */}
       <div className="relative flex-1 w-full h-full min-h-0 overflow-hidden rounded-2xl">
         <div
           ref={boardContainerRef}
           onPointerDown={handleBoardPointerDown}
           onContextMenu={(e) => {
-            if (isPanningCanvas) e.preventDefault();
+            e.preventDefault();
           }}
           data-testid={
             internalSubBoard
@@ -1084,9 +1101,9 @@ export function AttackVisualizer({
             )}
           </AnimatePresence>
 
-          {/* Panning Active Indicator Pill */}
+          {/* Panning or Zone Moving Active Indicator Pill */}
           <AnimatePresence>
-            {isPanningCanvas && (
+            {(isPanningCanvas || draggingZoneTitle) && (
               <motion.div
                 key="panning-active-hud"
                 data-testid="canvas-panning-hud"
@@ -1095,10 +1112,19 @@ export function AttackVisualizer({
                 exit={{ opacity: 0, y: -6, scale: 0.95 }}
                 className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-mono font-bold shadow-lg flex items-center gap-1.5"
               >
-                <Hand className="w-3.5 h-3.5" />
-                <span>
-                  Panning Canvas ({panOffset.x}px, {panOffset.y}px)
-                </span>
+                {draggingZoneTitle ? (
+                  <>
+                    <Move className="w-3.5 h-3.5" />
+                    <span>Moving Network Zone: {draggingZoneTitle}</span>
+                  </>
+                ) : (
+                  <>
+                    <Hand className="w-3.5 h-3.5" />
+                    <span>
+                      Panning Canvas ({panOffset.x}px, {panOffset.y}px)
+                    </span>
+                  </>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1261,463 +1287,288 @@ export function AttackVisualizer({
             )}
           </AnimatePresence>
 
-          {/* 4. Animated Board Switcher */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={boardMotionKey}
-              style={{
-                transformOrigin: `${portalOrigin.xPct}% ${portalOrigin.yPct}%`,
-              }}
-              initial={
-                portalAnim
-                  ? internalSubBoard
-                    ? { opacity: 0, scale: 0.74, filter: 'blur(6px)' }
-                    : { opacity: 0, scale: 1.32, filter: 'blur(5px)' }
-                  : { opacity: 0.75, scale: 0.985, filter: 'blur(0px)' }
-              }
-              animate={{
-                opacity: 1,
-                scale: 1,
-                filter: 'blur(0px)',
-              }}
-              exit={
-                portalAnim
-                  ? internalSubBoard
-                    ? { opacity: 0, scale: 0.7, filter: 'blur(5px)' }
-                    : { opacity: 0, scale: 1.42, filter: 'blur(6px)' }
-                  : { opacity: 0.75, scale: 0.99, filter: 'blur(0px)' }
-              }
-              transition={{
-                type: 'spring',
-                stiffness: 320,
-                damping: 26,
-                mass: 0.8,
-              }}
-              className="relative w-full h-full min-w-[1380px] min-h-[660px] z-20"
-            >
-              {/* Mobile (< 640px) */}
-              <div className="sm:hidden w-full h-full">
-                <ResponsiveMobileZonesView
-                  zones={activeZones}
-                  sketchNodes={activeNodes}
-                  sketchFlows={activeFlows}
-                  selectedSketchNode={
-                    internalSubBoard
-                      ? activeInternalSubNode
-                      : selectedSketchNode
-                  }
-                  onSelectNode={(node) => {
-                    if (internalSubBoard) {
-                      setSelectedInternalSubNodeId(node.id);
-                    } else {
-                      handleNodeClick(node);
-                    }
-                  }}
-                  selectedTelemetryId={selectedTelemetryId}
-                  onSelectTelemetry={onSelectTelemetry}
-                />
-              </div>
-
-              {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig with Scroll Zoom & Mouse Pan */}
+          {/* 4. Animated Board Switcher Wrapped in CanvasController (react-zoom-pan-pinch) */}
+          <CanvasController
+            ref={canvasControllerRef}
+            panningEnabled={interactionMode === 'PAN'}
+            wheelZoomEnabled={true}
+            onTransformChange={({ scale, positionX, positionY }) => {
+              setManualZoom(scale);
+              setPanOffset({ x: positionX, y: positionY });
+            }}
+            onPanningStart={() => setIsPanningCanvas(true)}
+            onPanningStop={(offset) => {
+              setIsPanningCanvas(false);
+              setPanOffset(offset);
+            }}
+          >
+            <AnimatePresence mode="wait">
               <motion.div
-                ref={cameraRigRef}
-                data-testid="cinematic-camera-rig"
-                data-camera-frame={director.camera.frameCode}
-                data-camera-scale={effectiveScale}
-                animate={{
-                  x: `calc(${effectiveTxPct}% + ${panOffset.x}px)`,
-                  y: `calc(${effectiveTyPct}% + ${panOffset.y}px)`,
-                  scale: effectiveScale,
-                }}
-                transition={
-                  isPanningCanvas
-                    ? { duration: 0 }
-                    : {
-                        type: 'spring',
-                        stiffness: 210,
-                        damping: 26,
-                        mass: 0.8,
-                      }
-                }
+                key={boardMotionKey}
                 style={{
-                  transformOrigin: '50% 50%',
+                  transformOrigin: `${portalOrigin.xPct}% ${portalOrigin.yPct}%`,
                 }}
-                className="hidden sm:block relative w-full h-full min-w-[1380px] min-h-[660px]"
+                initial={
+                  portalAnim
+                    ? internalSubBoard
+                      ? { opacity: 0, scale: 0.74, filter: 'blur(6px)' }
+                      : { opacity: 0, scale: 1.32, filter: 'blur(5px)' }
+                    : { opacity: 0.92, scale: 0.995, filter: 'blur(0px)' }
+                }
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  filter: 'blur(0px)',
+                }}
+                exit={
+                  portalAnim
+                    ? internalSubBoard
+                      ? { opacity: 0, scale: 0.7, filter: 'blur(5px)' }
+                      : { opacity: 0, scale: 1.42, filter: 'blur(6px)' }
+                    : { opacity: 0.85, scale: 0.99, filter: 'blur(0px)' }
+                }
+                transition={{
+                  type: 'spring',
+                  stiffness: 320,
+                  damping: 26,
+                  mass: 0.8,
+                }}
+                className="relative w-full h-full min-w-[1380px] min-h-[660px] z-20"
               >
-                <SketchWhiteboardSvg
-                  zones={activeZones}
-                  backboneLinks={activeBackboneLinks}
-                  sketchFlows={activeFlows}
-                  selectedTelemetryId={selectedTelemetryId}
-                  onSelectTelemetry={onSelectTelemetry}
-                  onStartZoneDrag={handleStartZoneDrag}
-                  onSelectZone={
-                    !internalSubBoard
-                      ? (zoneId) => {
+                {/* Mobile (< 640px) */}
+                <div className="sm:hidden w-full h-full">
+                  <ResponsiveMobileZonesView
+                    zones={activeZones}
+                    sketchNodes={activeNodes}
+                    sketchFlows={activeFlows}
+                    selectedSketchNode={
+                      internalSubBoard
+                        ? activeInternalSubNode
+                        : selectedSketchNode
+                    }
+                    onSelectNode={(node) => {
+                      if (internalSubBoard) {
+                        setSelectedInternalSubNodeId(node.id);
+                      } else {
+                        handleNodeClick(node);
+                      }
+                    }}
+                    selectedTelemetryId={selectedTelemetryId}
+                    onSelectTelemetry={onSelectTelemetry}
+                  />
+                </div>
+
+                {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig */}
+                <motion.div
+                  ref={cameraRigRef}
+                  data-testid="cinematic-camera-rig"
+                  data-camera-frame={director.camera.frameCode}
+                  data-camera-scale={effectiveScale}
+                  animate={{
+                    x: `${effectiveTxPct}%`,
+                    y: `${effectiveTyPct}%`,
+                    scale: autoCameraEnabled ? director.camera.scale : 1,
+                  }}
+                  transition={
+                    isPanningCanvas
+                      ? { duration: 0 }
+                      : {
+                          type: 'spring',
+                          stiffness: 210,
+                          damping: 26,
+                          mass: 0.8,
+                        }
+                  }
+                  style={{
+                    transformOrigin: '50% 50%',
+                  }}
+                  className="hidden sm:block relative w-full h-full min-w-[1380px] min-h-[660px]"
+                >
+                  <SketchWhiteboardSvg
+                    zones={activeZones}
+                    backboneLinks={activeBackboneLinks}
+                    sketchFlows={activeFlows}
+                    selectedTelemetryId={selectedTelemetryId}
+                    onSelectTelemetry={onSelectTelemetry}
+                    onStartZoneDrag={handleStartZoneDrag}
+                    onSelectZone={
+                      !internalSubBoard
+                        ? (zoneId) => {
+                            if (didDragObjectRef.current) {
+                              didDragObjectRef.current = false;
+                              return;
+                            }
+                            const targetNode = sketchNodes.find(
+                              (n) => n.zoneId === zoneId
+                            );
+                            if (targetNode) {
+                              handleNodeClick(targetNode);
+                            }
+                          }
+                        : undefined
+                    }
+                    activeEnvironment={activeEnvironment}
+                    tacticalMode={tacticalMode}
+                  />
+
+                  {/* Windows-Style Marquee Rubber-Band Selection Box */}
+                  {marqueeBox && (
+                    <div
+                      data-testid="windows-marquee-selection-box"
+                      style={{
+                        left: `${
+                          (Math.min(marqueeBox.startWx, marqueeBox.currentWx) /
+                            WHITEBOARD_WIDTH) *
+                          100
+                        }%`,
+                        top: `${
+                          (Math.min(marqueeBox.startWy, marqueeBox.currentWy) /
+                            WHITEBOARD_HEIGHT) *
+                          100
+                        }%`,
+                        width: `${
+                          (Math.abs(marqueeBox.currentWx - marqueeBox.startWx) /
+                            WHITEBOARD_WIDTH) *
+                          100
+                        }%`,
+                        height: `${
+                          (Math.abs(marqueeBox.currentWy - marqueeBox.startWy) /
+                            WHITEBOARD_HEIGHT) *
+                          100
+                        }%`,
+                      }}
+                      className="pointer-events-none absolute z-40 rounded-md bg-indigo-500/18 border-2 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.35)]"
+                    />
+                  )}
+
+                  {/* Hover-Based Technical Summary Tooltip for Network Nodes */}
+                  <AnimatePresence>
+                    {hoveredNode && (
+                      <NodeHoverTooltip
+                        key={`hover-tooltip-${hoveredNode.id}`}
+                        node={hoveredNode}
+                        isSubBoard={Boolean(internalSubBoard)}
+                      />
+                    )}
+                  </AnimatePresence>
+
+                  {/* Floating Speech-Bubble Callout */}
+                  <AnimatePresence mode="wait">
+                    {director.activeCallout && (
+                      <motion.div
+                        key={`callout-${director.phase}-${director.activeCallout.nodeId}-${activeStageIndex}`}
+                        data-testid="cinematic-node-callout"
+                        initial={{ opacity: 0, scale: 0.65, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.75, y: 6 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 380,
+                          damping: 24,
+                        }}
+                        style={{
+                          left: `${(director.activeCallout.wx / 1480) * 100}%`,
+                          top: `${(director.activeCallout.wy / 650) * 100}%`,
+                        }}
+                        className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
+                          director.activeCallout.placement === 'TOP'
+                            ? '-translate-y-[calc(100%+58px)]'
+                            : 'translate-y-[58px]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1.5 text-[9.5px] font-mono">
+                          <span className="inline-flex items-center gap-1 font-bold text-amber-300">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                            <span>{director.activeCallout.stepBadge}</span>
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words">
+                          {director.activeCallout.headline}
+                        </div>
+                        <div className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words">
+                          {director.activeCallout.detail}
+                        </div>
+                        <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 text-[9px] font-mono">
+                          <span className="text-rose-400 font-bold break-all">
+                            {director.activeCallout.forwardTag}
+                          </span>
+                          <span className="text-emerald-400 font-bold break-all">
+                            {director.activeCallout.returnTag}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Draggable & Multi-Selectable Schematic Nodes (framer-motion useDragControls + Shift+Click Group Selection) */}
+                  {activeNodes.map((node, nIdx) => {
+                    const isSelected = internalSubBoard
+                      ? activeInternalSubNode?.id === node.id
+                      : selectedSketchNode?.id === node.id;
+                    const isMultiSelected = multiSelectedNodeIds.includes(
+                      node.id
+                    );
+                    const isRecentlyReturned =
+                      !internalSubBoard && lastReturnedNodeId === node.id;
+
+                    const cState = director.nodeStates[node.id] || {
+                      opacity: 1,
+                      scale: 1,
+                      yOffset: 0,
+                      showPulseRing: false,
+                      pulseColor: '#6366F1',
+                      role: 'OVERVIEW',
+                    };
+
+                    return (
+                      <DraggableDiagramNode
+                        key={node.id}
+                        node={node}
+                        nodeIndex={nIdx}
+                        isSubBoard={Boolean(internalSubBoard)}
+                        isSelected={isSelected}
+                        isMultiSelected={isMultiSelected}
+                        isRecentlyReturned={isRecentlyReturned}
+                        isDraggingNodes={isDraggingNodes}
+                        activeStageIndex={activeStageIndex}
+                        directorPhase={director.phase}
+                        cState={cState}
+                        tacticalMode={tacticalMode}
+                        onStartNodeGroupDrag={handleNodePointerDown}
+                        onToggleMultiSelect={toggleNodeInMultiSelection}
+                        onHoverChange={setHoveredNodeId}
+                        onNodeClick={(clickedNode, e) => {
+                          e.stopPropagation();
+                          setHoveredNodeId(null);
                           if (didDragObjectRef.current) {
                             didDragObjectRef.current = false;
                             return;
                           }
-                          const targetNode = sketchNodes.find(
-                            (n) => n.zoneId === zoneId
-                          );
-                          if (targetNode) {
-                            handleNodeClick(targetNode);
+                          if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                            toggleNodeInMultiSelection(clickedNode.id, e);
+                            return;
                           }
-                        }
-                      : undefined
-                  }
-                  activeEnvironment={activeEnvironment}
-                  tacticalMode={tacticalMode}
-                />
-
-                {/* Windows-Style Marquee Rubber-Band Selection Box */}
-                {marqueeBox && (
-                  <div
-                    data-testid="windows-marquee-selection-box"
-                    style={{
-                      left: `${
-                        (Math.min(marqueeBox.startWx, marqueeBox.currentWx) /
-                          WHITEBOARD_WIDTH) *
-                        100
-                      }%`,
-                      top: `${
-                        (Math.min(marqueeBox.startWy, marqueeBox.currentWy) /
-                          WHITEBOARD_HEIGHT) *
-                        100
-                      }%`,
-                      width: `${
-                        (Math.abs(marqueeBox.currentWx - marqueeBox.startWx) /
-                          WHITEBOARD_WIDTH) *
-                        100
-                      }%`,
-                      height: `${
-                        (Math.abs(marqueeBox.currentWy - marqueeBox.startWy) /
-                          WHITEBOARD_HEIGHT) *
-                        100
-                      }%`,
-                    }}
-                    className="pointer-events-none absolute z-40 rounded-md bg-indigo-500/18 border-2 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.35)]"
-                  />
-                )}
-
-                {/* Hover-Based Technical Summary Tooltip for Network Nodes */}
-                <AnimatePresence>
-                  {hoveredNode && (
-                    <NodeHoverTooltip
-                      key={`hover-tooltip-${hoveredNode.id}`}
-                      node={hoveredNode}
-                      isSubBoard={Boolean(internalSubBoard)}
-                    />
-                  )}
-                </AnimatePresence>
-
-                {/* Floating Speech-Bubble Callout */}
-                <AnimatePresence mode="wait">
-                  {director.activeCallout && (
-                    <motion.div
-                      key={`callout-${director.phase}-${director.activeCallout.nodeId}-${activeStageIndex}`}
-                      data-testid="cinematic-node-callout"
-                      initial={{ opacity: 0, scale: 0.65, y: 8 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.75, y: 6 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 380,
-                        damping: 24,
-                      }}
-                      style={{
-                        left: `${(director.activeCallout.wx / 1480) * 100}%`,
-                        top: `${(director.activeCallout.wy / 650) * 100}%`,
-                      }}
-                      className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
-                        director.activeCallout.placement === 'TOP'
-                          ? '-translate-y-[calc(100%+58px)]'
-                          : 'translate-y-[58px]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1.5 text-[9.5px] font-mono">
-                        <span className="inline-flex items-center gap-1 font-bold text-amber-300">
-                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                          <span>{director.activeCallout.stepBadge}</span>
-                        </span>
-                      </div>
-                      <div className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words">
-                        {director.activeCallout.headline}
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words">
-                        {director.activeCallout.detail}
-                      </div>
-                      <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 text-[9px] font-mono">
-                        <span className="text-rose-400 font-bold break-all">
-                          {director.activeCallout.forwardTag}
-                        </span>
-                        <span className="text-emerald-400 font-bold break-all">
-                          {director.activeCallout.returnTag}
-                        </span>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Draggable & Multi-Selectable Schematic Nodes */}
-                {activeNodes.map((node, nIdx) => {
-                  const isSelected = internalSubBoard
-                    ? activeInternalSubNode?.id === node.id
-                    : selectedSketchNode?.id === node.id;
-                  const isMultiSelected = multiSelectedNodeIds.includes(node.id);
-                  const isRecentlyReturned =
-                    !internalSubBoard && lastReturnedNodeId === node.id;
-                  const leftPct = (node.wx / 1480) * 100;
-                  const topPct = (node.wy / 650) * 100;
-
-                  const cState = director.nodeStates[node.id] || {
-                    opacity: 1,
-                    scale: 1,
-                    yOffset: 0,
-                    showPulseRing: false,
-                    pulseColor: '#6366F1',
-                    role: 'OVERVIEW',
-                  };
-
-                  return (
-                    <motion.button
-                      key={node.id}
-                      type="button"
-                      data-testid={
-                        internalSubBoard
-                          ? `internal-subnode-${node.chainOrder}`
-                          : `sketch-node-${node.id}`
-                      }
-                      data-node-role={cState.role}
-                      data-multi-selected={isMultiSelected ? 'true' : 'false'}
-                      data-wx={node.wx}
-                      data-wy={node.wy}
-                      initial={{ opacity: 0, scale: 0.78, y: -24 }}
-                      animate={{
-                        opacity: cState.opacity,
-                        scale:
-                          isSelected || isMultiSelected ? 1.06 : cState.scale,
-                        y: cState.yOffset,
-                      }}
-                      whileHover={
-                        isDraggingNodes
-                          ? undefined
-                          : { y: -3, scale: 1.06, opacity: 1 }
-                      }
-                      transition={
-                        isDraggingNodes
-                          ? { duration: 0 }
-                          : {
-                              type: 'spring',
-                              stiffness: 320,
-                              damping: 22,
-                              delay:
-                                activeStageIndex === 0 &&
-                                director.phase === 'OVERVIEW'
-                                  ? nIdx * 0.04
-                                  : 0,
+                          if (internalSubBoard) {
+                            setSelectedInternalSubNodeId(clickedNode.id);
+                            const relatedFlow = internalSubBoard.subFlows.find(
+                              (f) =>
+                                f.fromNodeId === clickedNode.id ||
+                                f.toNodeId === clickedNode.id
+                            );
+                            if (relatedFlow) {
+                              onSelectTelemetry(relatedFlow.telemetryEvent);
                             }
-                      }
-                      onPointerDown={(e) => handleNodePointerDown(node, e)}
-                      onMouseEnter={() => {
-                        if (!isDraggingNodes) setHoveredNodeId(node.id);
-                      }}
-                      onMouseLeave={() =>
-                        setHoveredNodeId((prev) =>
-                          prev === node.id ? null : prev
-                        )
-                      }
-                      onFocus={() => setHoveredNodeId(node.id)}
-                      onBlur={() =>
-                        setHoveredNodeId((prev) =>
-                          prev === node.id ? null : prev
-                        )
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setHoveredNodeId(null);
-                        if (didDragObjectRef.current) {
-                          didDragObjectRef.current = false;
-                          return;
-                        }
-                        if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                          toggleNodeInMultiSelection(node.id, e);
-                          return;
-                        }
-                        if (internalSubBoard) {
-                          setSelectedInternalSubNodeId(node.id);
-                          const relatedFlow = internalSubBoard.subFlows.find(
-                            (f) =>
-                              f.fromNodeId === node.id || f.toNodeId === node.id
-                          );
-                          if (relatedFlow) {
-                            onSelectTelemetry(relatedFlow.telemetryEvent);
+                          } else {
+                            handleNodeClick(clickedNode);
                           }
-                        } else {
-                          handleNodeClick(node);
-                        }
-                      }}
-                      style={{ left: `${leftPct}%`, top: `${topPct}%` }}
-                      className={`group absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center text-center focus:outline-none ${
-                        isDraggingNodes ? 'cursor-grabbing' : 'cursor-grab'
-                      }`}
-                    >
-                      {/* Windows-Style Multi-Selection Checkbox Badge (Top-Right of Node) */}
-                      <span
-                        role="checkbox"
-                        aria-checked={isMultiSelected}
-                        data-testid={`node-multiselect-toggle-${node.id}`}
-                        title={
-                          isMultiSelected
-                            ? 'Selected (Click to deselect, or drag node to move group)'
-                            : 'Click to add to multi-selection (or Shift+Click / drag box)'
-                        }
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => toggleNodeInMultiSelection(node.id, e)}
-                        className={`absolute -top-2 -right-2 z-30 w-4 h-4 rounded-md border flex items-center justify-center transition-all cursor-pointer ${
-                          isMultiSelected
-                            ? 'bg-indigo-600 border-indigo-400 text-white opacity-100 scale-105 shadow-md'
-                            : 'bg-white/95 dark:bg-zinc-900/95 border-zinc-400 dark:border-zinc-600 text-transparent opacity-0 group-hover:opacity-100 hover:border-indigo-500'
-                        }`}
-                      >
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </span>
-
-                      {cState.showPulseRing && (
-                        <motion.span
-                          initial={{ scale: 0.85, opacity: 0.85 }}
-                          animate={{ scale: 1.55, opacity: 0 }}
-                          transition={{
-                            duration: 1.35,
-                            repeat: Infinity,
-                            ease: 'easeOut',
-                          }}
-                          style={{ borderColor: cState.pulseColor }}
-                          className="pointer-events-none absolute inset-0 rounded-2xl border-2"
-                        />
-                      )}
-
-                      {isRecentlyReturned && (
-                        <motion.span
-                          initial={{ scale: 0.85, opacity: 0.9 }}
-                          animate={{ scale: 1.65, opacity: 0 }}
-                          transition={{
-                            duration: 1.1,
-                            repeat: 2,
-                            ease: 'easeOut',
-                          }}
-                          className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-indigo-500"
-                        />
-                      )}
-
-                      <span
-                        className={`mb-0.5 px-1.5 py-0 text-[7.5px] font-mono font-bold border rounded-full shadow-2xs transition-transform group-hover:scale-105 whitespace-nowrap ${
-                          node.isNetworkDevice
-                            ? 'bg-teal-600 text-white border-teal-800'
-                            : node.iconType === 'MALWARE_PAYLOAD' ||
-                              node.iconType === 'KERNEL_MEMORY'
-                            ? 'bg-rose-600 text-white border-rose-800'
-                            : node.iconType === 'VICTIM_LAPTOP' ||
-                              node.iconType === 'PROCESS_THREAD'
-                            ? 'bg-sky-600 text-white border-sky-800'
-                            : node.iconType === 'LATERAL_SERVER' ||
-                              node.iconType === 'CREDENTIAL_VAULT'
-                            ? 'bg-violet-600 text-white border-violet-800'
-                            : 'bg-amber-500 text-slate-950 border-amber-700'
-                        }`}
-                      >
-                        {node.actionBadge}
-                      </span>
-
-                      <SketchNodeIcon
-                        iconType={node.iconType}
-                        isActive={
-                          node.isActive ||
-                          cState.role === 'CURRENT_SOURCE' ||
-                          cState.role === 'CURRENT_TARGET'
-                        }
-                        isCompromised={node.isCompromised}
+                        }}
                       />
-
-                      <div
-                        className={`mt-0.5 px-2.5 py-1.5 border rounded-lg shadow-xs transition-all w-[198px] ${
-                          tacticalMode
-                            ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
-                            : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'
-                        } ${
-                          isMultiSelected
-                            ? 'ring-2 ring-indigo-500 border-indigo-600 bg-indigo-50/95 dark:bg-indigo-950/90 shadow-[0_0_16px_rgba(99,102,241,0.35)]'
-                            : isSelected ||
-                              cState.role === 'CURRENT_TARGET' ||
-                              cState.role === 'CURRENT_SOURCE'
-                            ? 'ring-2 ring-rose-500 border-rose-600'
-                            : ''
-                        }`}
-                      >
-                        <div
-                          className={`text-[9.5px] font-bold leading-snug break-words whitespace-normal ${
-                            tacticalMode
-                              ? 'text-emerald-100'
-                              : 'text-slate-900 dark:text-white'
-                          }`}
-                        >
-                          {node.label}
-                        </div>
-                        <div
-                          className={`text-[7.8px] font-mono leading-snug break-words whitespace-normal ${
-                            tacticalMode
-                              ? 'text-emerald-400/85'
-                              : 'text-slate-500 dark:text-zinc-400'
-                          }`}
-                        >
-                          {node.sublabel}
-                        </div>
-                        {node.hostContext && (
-                          <div
-                            data-testid={
-                              internalSubBoard
-                                ? `subnode-host-context-${node.chainOrder}`
-                                : `node-host-context-${node.id}`
-                            }
-                            title={node.hostContext}
-                            className={`mt-0.5 px-1.5 py-0.5 rounded text-[7.4px] font-medium leading-snug break-words whitespace-normal border ${
-                              node.iconType === 'MALWARE_PAYLOAD' ||
-                              node.iconType === 'KERNEL_MEMORY'
-                                ? 'bg-rose-50/90 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/70'
-                                : node.iconType === 'VICTIM_LAPTOP' ||
-                                  node.iconType === 'PROCESS_THREAD'
-                                ? 'bg-sky-50/90 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/70'
-                                : 'bg-zinc-100/90 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700'
-                            }`}
-                          >
-                            {node.hostContext}
-                          </div>
-                        )}
-                        {node.activitySummary && (
-                          <div
-                            data-testid={
-                              internalSubBoard
-                                ? `subnode-activity-summary-${node.chainOrder}`
-                                : `node-activity-summary-${node.id}`
-                            }
-                            title={node.activitySummary}
-                            className={`mt-0.5 text-[7.2px] leading-snug break-words whitespace-normal ${
-                              tacticalMode
-                                ? 'text-slate-300'
-                                : 'text-slate-500 dark:text-zinc-400'
-                            }`}
-                          >
-                            {node.activitySummary}
-                          </div>
-                        )}
-                      </div>
-                    </motion.button>
-                  );
-                })}
+                    );
+                  })}
+                </motion.div>
               </motion.div>
-            </motion.div>
-          </AnimatePresence>
+            </AnimatePresence>
+          </CanvasController>
 
           </div>
 
@@ -1775,16 +1626,28 @@ export function AttackVisualizer({
               onToggleAutoCamera={() => setAutoCameraEnabled((v) => !v)}
               effectiveScale={effectiveScale}
               frameTitle={director.camera.frameTitle}
-              onZoomOut={() =>
-                setManualZoom((z) =>
-                  Math.max(MIN_CANVAS_ZOOM, +(z - 0.15).toFixed(2))
-                )
-              }
-              onZoomIn={() =>
-                setManualZoom((z) =>
-                  Math.min(MAX_CANVAS_ZOOM, +(z + 0.15).toFixed(2))
-                )
-              }
+              onZoomOut={() => {
+                setManualZoom((z) => {
+                  const next = Math.max(MIN_CANVAS_ZOOM, +(z - 0.15).toFixed(2));
+                  canvasControllerRef.current?.setTransform(
+                    panOffset.x,
+                    panOffset.y,
+                    next
+                  );
+                  return next;
+                });
+              }}
+              onZoomIn={() => {
+                setManualZoom((z) => {
+                  const next = Math.min(MAX_CANVAS_ZOOM, +(z + 0.15).toFixed(2));
+                  canvasControllerRef.current?.setTransform(
+                    panOffset.x,
+                    panOffset.y,
+                    next
+                  );
+                  return next;
+                });
+              }}
               onResetZoom={handleResetCanvasLayout}
             />
           </div>

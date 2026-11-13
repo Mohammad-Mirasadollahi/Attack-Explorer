@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ChevronDown, ChevronUp, Compass } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { OperationalGuideIcon } from './OperationalGuideIcon';
 
 interface DiagramLegendPanelProps {
   tacticalMode?: boolean;
@@ -19,7 +20,7 @@ export function DiagramLegendPanel({
     <div
       data-testid="diagram-legend-panel"
       onClick={(e) => e.stopPropagation()}
-      className={`hidden sm:flex flex-col rounded-xl border backdrop-blur-md shadow-md transition-colors z-30 ${
+      className={`canvas-interactive-control nopan hidden sm:flex flex-col rounded-xl border backdrop-blur-md shadow-md transition-colors z-30 ${
         tacticalMode
           ? 'bg-slate-950/92 border-emerald-500/50 text-emerald-100'
           : 'bg-white/95 dark:bg-zinc-900/95 border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200'
@@ -30,11 +31,11 @@ export function DiagramLegendPanel({
         data-testid="diagram-legend-toggle-btn"
         aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="px-2.5 py-1.5 flex items-center justify-between gap-3 text-[10.5px] font-mono font-bold cursor-pointer hover:opacity-85 whitespace-nowrap"
+        className="px-2.5 py-1.5 flex items-center justify-between gap-2.5 text-[10.5px] font-mono font-bold cursor-pointer hover:opacity-90 whitespace-nowrap"
       >
-        <span className="inline-flex items-center gap-1.5">
-          <Compass className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-          <span>Diagram Visual Legend</span>
+        <span className="inline-flex items-center gap-2">
+          <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
+          <span>Diagram Visual Legend · Operational Guide</span>
         </span>
         {expanded ? (
           <ChevronDown className="w-3.5 h-3.5 opacity-70" />

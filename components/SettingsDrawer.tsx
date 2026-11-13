@@ -11,7 +11,6 @@ import { CanvasViewMode } from './DiagramCanvas';
 import {
   Check,
   Cloud,
-  Compass,
   Cpu,
   Crosshair,
   GitCommitHorizontal,
@@ -30,6 +29,7 @@ import {
   Table2,
   X,
 } from 'lucide-react';
+import { OperationalGuideIcon } from './OperationalGuideIcon';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -306,8 +306,8 @@ export function SettingsDrawer({
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-xs transition-colors cursor-pointer"
                   >
                     <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-zinc-200">
-                      <Compass className="w-4 h-4 text-indigo-500" />
-                      <span>Diagram Visual Legend</span>
+                      <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
+                      <span>Diagram Visual Legend · Operational Guide</span>
                     </span>
                     <span
                       className={`text-[11px] font-mono font-semibold ${
