@@ -283,7 +283,7 @@ export function SettingsDrawer({
                     </span>
                   </button>
 
-                  {/* Desktop vs Responsive layout (default Desktop on phones) */}
+                  {/* Desktop vs Responsive layout (Responsive default on phones) */}
                   <div
                     data-testid="drawer-layout-mode-section"
                     className="rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 overflow-hidden"
@@ -299,10 +299,10 @@ export function SettingsDrawer({
                           Screen Layout
                         </div>
                         <p className="text-[10.5px] leading-snug text-zinc-500 dark:text-zinc-400 mt-0.5">
-                          Desktop keeps the full workbench on phones. Pinch to
-                          zoom the page, one-finger drag to pan the diagram, use
-                          Box Select for marquee, and tap nodes to open them.
-                          Responsive uses the compact mobile UI.
+                          Responsive is the default on phones (compact UI).
+                          Desktop forces the full workbench; pinch to zoom the
+                          page, drag to pan the diagram, and use Box Select for
+                          marquee.
                         </p>
                       </div>
                     </div>

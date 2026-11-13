@@ -51,7 +51,7 @@ export function AttackExplorerWorkbench() {
   // Minimal Anime Game-Style Entrance Loading Sequence State
   const [showIntro, setShowIntro] = useState<boolean>(true);
 
-  // Desktop layout by default (phones/tablets); toggleable in Settings
+  // Responsive (native mobile) by default; Desktop available in Settings
   const [layoutMode, setLayoutMode] =
     useState<WorkbenchLayoutMode>(DEFAULT_LAYOUT_MODE);
 

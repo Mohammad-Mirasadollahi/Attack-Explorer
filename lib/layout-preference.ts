@@ -1,7 +1,7 @@
 export type WorkbenchLayoutMode = 'DESKTOP' | 'RESPONSIVE';
 
 export const LAYOUT_MODE_STORAGE_KEY = 'attack-explorer-layout-mode';
-export const DEFAULT_LAYOUT_MODE: WorkbenchLayoutMode = 'DESKTOP';
+export const DEFAULT_LAYOUT_MODE: WorkbenchLayoutMode = 'RESPONSIVE';
 export const DESKTOP_LAYOUT_WIDTH = 1400;
 
 /** Physical CSS width captured before desktop viewport override */

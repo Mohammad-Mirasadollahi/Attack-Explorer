@@ -108,7 +108,7 @@ export function AttackHeader({
   onOpenSourcesModal,
   onOpenAboutModal,
   onOpenShortcutsModal,
-  layoutMode = 'DESKTOP',
+  layoutMode = 'RESPONSIVE',
   onLayoutModeChange,
   onReplayIntro,
   nodeSearchQuery = '',
