@@ -30,6 +30,7 @@ import {
   TelemetryFlowPanel } from './TelemetryFlowPanel';
 import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
+import { AboutAuthorModal } from './AboutAuthorModal';
 import { AttackStepProgressBar } from './AttackStepProgressBar';
 import { AnimeIntroLoader } from './AnimeIntroLoader';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
@@ -100,6 +101,7 @@ export function AttackExplorerWorkbench() {
   const [attackLibraryOpen, setAttackLibraryOpen] = useState<boolean>(false);
   const [analyzerModalOpen, setAnalyzerModalOpen] = useState<boolean>(false);
   const [sourcesModalOpen, setSourcesModalOpen] = useState<boolean>(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
   // Responsive viewport adaptation
@@ -379,10 +381,45 @@ export function AttackExplorerWorkbench() {
         className="min-h-screen h-screen flex flex-col bg-[#F4F4F5]/60 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 overflow-hidden"
       >
         {/* Minimal Anime Game-Style Entrance Loading Sequence */}
-        {showIntro && (
-          <AnimeIntroLoader onComplete={() => setShowIntro(false)} />
-        )}
+        <AnimatePresence mode="sync">
+          {showIntro && (
+            <AnimeIntroLoader
+              key="anime-intro-loader"
+              onComplete={() => setShowIntro(false)}
+            />
+          )}
+        </AnimatePresence>
 
+        {/* Main workbench reveals with motion after intro exits (no hard cut) */}
+        <motion.div
+          data-testid="workbench-shell"
+          data-workbench-revealed={showIntro ? 'false' : 'true'}
+          aria-hidden={showIntro}
+          initial={false}
+          animate={
+            showIntro
+              ? {
+                  opacity: 0,
+                  y: 28,
+                  scale: 0.985,
+                  filter: 'blur(8px)',
+                }
+              : {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  filter: 'blur(0px)',
+                }
+          }
+          transition={{
+            duration: 0.7,
+            ease: [0.16, 1, 0.3, 1],
+            delay: showIntro ? 0 : 0.12,
+          }}
+          className={`flex flex-col flex-1 min-h-0 origin-center ${
+            showIntro ? 'pointer-events-none' : 'pointer-events-auto'
+          }`}
+        >
         {/* Persistent Navigation Bar with Animated Logo, Navigation Links & Slide-Out Settings Drawer */}
         <AttackHeader
           scenario={activeScenario}
@@ -416,6 +453,7 @@ export function AttackExplorerWorkbench() {
           onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
           onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
           onOpenSourcesModal={() => setSourcesModalOpen(true)}
+          onOpenAboutModal={() => setAboutModalOpen(true)}
           onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
           onReplayIntro={() => setShowIntro(true)}
         />
@@ -538,6 +576,7 @@ export function AttackExplorerWorkbench() {
             </AnimatePresence>
           </div>
         </main>
+        </motion.div>
 
         {/* MITRE ATT&CK Technique & Scenario Library Modal */}
         <AttackLibrary
@@ -559,6 +598,11 @@ export function AttackExplorerWorkbench() {
           isOpen={sourcesModalOpen}
           onClose={() => setSourcesModalOpen(false)}
           scenario={activeScenario}
+        />
+
+        <AboutAuthorModal
+          isOpen={aboutModalOpen}
+          onClose={() => setAboutModalOpen(false)}
         />
 
         {/* Fallback Keyboard Shortcuts Modal when not in TOPOLOGY view */}

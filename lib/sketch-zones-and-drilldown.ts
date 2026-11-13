@@ -990,7 +990,6 @@ function getScenarioTopologyBlueprint(scenario: AttackScenario): ScenarioTopolog
         ] };
 
     case 'process-hollowing':
-    default:
       return {
         zones: NETWORK_ZONE_COLUMNS,
         nodeCoords: [
@@ -1020,6 +1019,112 @@ function getScenarioTopologyBlueprint(scenario: AttackScenario): ScenarioTopolog
           { id: 'bb-3', x1: 830, y1: 185, x2: 1235, y2: 195, label: 'VLAN 10 Route', linkType: 'VLAN_TRUNK' },
           { id: 'bb-4', x1: 1055, y1: 535, x2: 1295, y2: 475, label: 'SPAN Mirror', linkType: 'SPAN_MIRROR' },
         ] };
+
+    default: {
+      const hasSixNodes = scenario.nodes.length >= 5;
+      const gwNode = hasSixNodes ? scenario.nodes[1] : null;
+      const hostNode = hasSixNodes
+        ? scenario.nodes[2]
+        : scenario.nodes[1] || scenario.nodes[0];
+      const netIcon: SketchIconType =
+        scenario.category === 'NETWORK_WEB' || scenario.category === 'LOG_ANALYSIS'
+          ? 'WAF_REVERSE_PROXY'
+          : scenario.category === 'ACTIVE_DIRECTORY'
+            ? 'CORE_SWITCH'
+            : 'FIREWALL_ROUTER';
+      const defaultGatewayLabel =
+        scenario.category === 'NETWORK_WEB'
+          ? 'DMZ Reverse Proxy & SPAN Tap'
+          : scenario.category === 'ACTIVE_DIRECTORY'
+            ? 'Core Identity & VLAN Switch'
+            : 'Perimeter Firewall & NDR Tap';
+      const defaultGatewaySub =
+        scenario.category === 'NETWORK_WEB'
+          ? '172.16.10.1 · TLS / HTTP Inspection'
+          : scenario.category === 'ACTIVE_DIRECTORY'
+            ? '10.10.0.1 · Kerberos / LDAP / SAML Trunk'
+            : '172.16.1.1 · Perimeter Ingress & SPAN';
+      return {
+        zones: [
+          {
+            id: 'EXTERNAL_ATTACKER',
+            code: `WAN · ${scenario.code}`,
+            title: 'ADVERSARY INFRASTRUCTURE & C2',
+            subtitle: scenario.nodes[0]?.label || 'External Threat Actor Origin',
+            xStart: 18,
+            xEnd: 312,
+            yStart: 22,
+            yEnd: 435,
+            subnetBadge: `WAN · ${scenario.nodes[0]?.sublabel || '198.51.100.0/24'}`,
+            accentHex: '#E11D48',
+            bgTintClass: 'bg-rose-500/5' },
+          {
+            id: 'PERIMETER_DELIVERY',
+            code: 'DMZ / PERIMETER',
+            title: 'PERIMETER GATEWAY & TELEMETRY TAP',
+            subtitle: gwNode?.label || defaultGatewayLabel,
+            xStart: 335,
+            xEnd: 655,
+            yStart: 130,
+            yEnd: 625,
+            subnetBadge: `EDGE · ${gwNode?.sublabel || '172.16.10.0/24'}`,
+            accentHex: '#D97706',
+            bgTintClass: 'bg-amber-500/5' },
+          {
+            id: 'ENDPOINT_LAPTOP_MALWARE',
+            code: 'TARGET · SYSTEM & PROCESS',
+            title: 'COMPROMISED SYSTEM & IMPLANT RUNTIME',
+            subtitle: `${hostNode?.label || 'Target System'} & In-Memory Execution`,
+            xStart: 678,
+            xEnd: 1070,
+            yStart: 18,
+            yEnd: 595,
+            subnetBadge: `TARGET · ${hostNode?.sublabel || '10.10.4.0/24'}`,
+            accentHex: '#0284C7',
+            bgTintClass: 'bg-sky-500/5' },
+          {
+            id: 'CORP_LATERAL_MOVEMENT',
+            code: 'CORE · OBJECTIVE & SIEM',
+            title: 'POST-EXPLOIT OBJECTIVE & SOC SIEM',
+            subtitle: 'Persistence, Credential Access & Detection Analytics',
+            xStart: 1092,
+            xEnd: 1462,
+            yStart: 68,
+            yEnd: 632,
+            subnetBadge: 'SOC-CORE · 10.10.99.0/24',
+            accentHex: '#7C3AED',
+            bgTintClass: 'bg-violet-500/5' },
+        ],
+        nodeCoords: [
+          { wx: 165, wy: 215 },
+          {
+            wx: 495,
+            wy: 380,
+            netIcon,
+            netLabel: gwNode?.label || defaultGatewayLabel,
+            netSublabel: gwNode
+              ? `${gwNode.sublabel} · ${gwNode.details.pidOrPort || 'Inspection'}`
+              : defaultGatewaySub,
+            netBadge: `NET-DEV ② · ${gwNode?.label || defaultGatewayLabel}` },
+          { wx: 830, wy: 190 },
+          { wx: 915, wy: 470 },
+          { wx: 1235, wy: 195 },
+          { wx: 1295, wy: 475 },
+        ],
+        routeChain: [
+          { fromIdx: 0, toIdx: 1, packetKind: 'EMAIL', curveOffset: -48, returnOffset: 48 },
+          { fromIdx: 1, toIdx: 2, packetKind: 'MALWARE_DROP', curveOffset: -48, returnOffset: 48 },
+          { fromIdx: 2, toIdx: 3, packetKind: 'SYSCALL', curveOffset: -54, returnOffset: 54 },
+          { fromIdx: 3, toIdx: 4, packetKind: 'LATERAL_HOP', curveOffset: -48, returnOffset: 48 },
+          { fromIdx: 3, toIdx: 5, packetKind: 'C2_EXFIL', curveOffset: 52, returnOffset: -52 },
+        ],
+        backboneLinks: [
+          { id: 'bb-1', x1: 165, y1: 215, x2: 495, y2: 380, label: 'WAN / Ingress Link', linkType: 'WAN_TRUNK' },
+          { id: 'bb-2', x1: 495, y1: 380, x2: 830, y2: 190, label: 'Target Segment Route', linkType: 'VLAN_TRUNK' },
+          { id: 'bb-3', x1: 830, y1: 190, x2: 1235, y2: 195, label: 'Internal / Core Bus', linkType: 'VLAN_TRUNK' },
+          { id: 'bb-4', x1: 1055, y1: 535, x2: 1295, y2: 475, label: 'SIEM / EDR Telemetry', linkType: 'SPAN_MIRROR' },
+        ] };
+    }
   }
 }
 
@@ -1226,7 +1331,6 @@ function getScenarioNodeMetas(
       ];
 
     case 'process-hollowing':
-    default:
       return [
         {
           label: 'Attacker Phishing & C2 Server',
@@ -1260,6 +1364,79 @@ function getScenarioNodeMetas(
           hostContext: '📡 SOC Platform: Collects Sysmon EID 1/10/25 from Laptop WKS-04 & Firewall logs',
           activitySummary: 'Activities: Detects EID 25 (ProcessTampering) on svchost.exe inside Laptop WKS-04' },
       ];
+
+    default: {
+      const hasFivePlus = scenario.nodes.length >= 5;
+      const n0 = scenario.nodes[0];
+      const hostNode = hasFivePlus
+        ? scenario.nodes[2]
+        : scenario.nodes[1] || scenario.nodes[0];
+      const procNode = hasFivePlus
+        ? scenario.nodes[3]
+        : scenario.nodes[2] || hostNode;
+      const targetNode = hasFivePlus
+        ? scenario.nodes[4]
+        : scenario.nodes[3] || procNode;
+      const siemNode = scenario.nodes[5] || null;
+      const procLabel =
+        procNode.label === n0.label
+          ? `${procNode.label} (Implant)`
+          : procNode.label;
+
+      const vendorSiemLabel = scenario.id.startsWith('elastic-')
+        ? 'Elastic Defend & SIEM'
+        : scenario.id.startsWith('unit42-')
+          ? 'Unit 42 / Cortex XDR SIEM'
+          : scenario.id.startsWith('ms-')
+            ? 'Microsoft Sentinel & MDE'
+            : scenario.id.startsWith('talos-')
+              ? 'Cisco Talos / NetFlow SIEM'
+              : scenario.id.startsWith('splunk-')
+                ? 'Splunk Enterprise Security'
+                : scenario.id.startsWith('kaspersky-')
+                  ? 'Kaspersky KATA / EDR SIEM'
+                  : scenario.id.startsWith('mandiant-')
+                    ? 'Mandiant / Google SecOps'
+                    : 'F5 ASM & SOC SIEM Collector';
+
+      return [
+        {
+          label: n0.label,
+          sublabel: `${n0.sublabel} · ${n0.details.pidOrPort || 'WAN'}`,
+          actionBadge: `HOST ① · ${n0.label}`,
+          hostContext: `🌐 External Origin: ${n0.label} (${n0.sublabel} · ${n0.details.osOrType})`,
+          activitySummary: `Activities: ${n0.details.description}` },
+        gatewayMeta,
+        {
+          label: hostNode.label,
+          sublabel: `${hostNode.sublabel} · ${hostNode.details.pidOrPort || 'Target'}`,
+          actionBadge: `HOST ③ · ${hostNode.label}`,
+          hostContext: `💻 Host System: ${hostNode.label} (${hostNode.sublabel}) · Runs Node ④`,
+          activitySummary: `Host Activities: ${hostNode.details.description}` },
+        {
+          label: procLabel,
+          sublabel: `${procNode.sublabel} (On ${hostNode.label})`,
+          actionBadge: `PROCESS ④ · ${procLabel} ON ${hostNode.label}`,
+          hostContext: `📍 Running ON: ${hostNode.label} (Node ③) · ${procNode.details.pidOrPort || 'Memory'}`,
+          activitySummary: `Process Activity: ${procNode.details.description}` },
+        {
+          label: targetNode.label,
+          sublabel: `${targetNode.sublabel} · ${targetNode.details.pidOrPort || 'Objective'}`,
+          actionBadge: `TARGET ⑤ · ${targetNode.label}`,
+          hostContext: `🗄️ Target Subsystem: ${targetNode.label} (${targetNode.details.osOrType})`,
+          activitySummary: `Activities: ${targetNode.details.description}` },
+        {
+          label: siemNode ? siemNode.label : vendorSiemLabel,
+          sublabel: siemNode
+            ? `${siemNode.sublabel} · ${scenario.code} Telemetry`
+            : `10.10.99.10 · ${scenario.code} Detection Rules`,
+          actionBadge: `APPLIANCE ⑥ · ${siemNode ? siemNode.label : vendorSiemLabel}`,
+          hostContext: `📡 SOC Platform: ${siemNode ? siemNode.label : vendorSiemLabel} (Correlates ${hostNode.label} & ${procLabel})`,
+          activitySummary: siemNode
+            ? `Activities: ${siemNode.details.description}`
+            : `Activities: Correlates ${scenario.code} telemetry across ${hostNode.label} and ${targetNode.label}` },
+      ];
+    }
   }
 }
 

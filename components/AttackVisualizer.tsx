@@ -46,7 +46,6 @@ import {
 import { SketchWhiteboardSvg } from './canvas/SketchWhiteboardSvg';
 import { ResponsiveMobileZonesView } from './canvas/ResponsiveMobileZonesView';
 import { TacticalGridOverlay } from './canvas/TacticalGridOverlay';
-import { CanvasMinimapOverlay } from './canvas/CanvasMinimapOverlay';
 import { NodeHoverTooltip } from './NodeHoverTooltip';
 import { DiagramLegendPanel } from './DiagramLegendPanel';
 import { PlaybackControlBar } from './PlaybackControlBar';
@@ -196,10 +195,9 @@ export function AttackVisualizer({
     Record<string, Record<string, NodeOffsetDelta>>
   >({});
 
-  // Visibility toggles for Top Toolbar, Bottom Sub-Node Dock, and Interactive Minimap
+  // Visibility toggles for Top Toolbar and Bottom Sub-Node Dock
   const [topBarHidden, setTopBarHidden] = useState<boolean>(false);
   const [bottomDockHidden, setBottomDockHidden] = useState<boolean>(false);
-  const [minimapHidden, setMinimapHidden] = useState<boolean>(false);
 
   // Force-Directed Auto-Layout state per board scope
   const [autoLayoutModeByScope, setAutoLayoutModeByScope] = useState<
@@ -673,8 +671,6 @@ export function AttackVisualizer({
         targetEl.closest('[data-testid="diagram-legend-panel"]') ||
         targetEl.closest('[data-testid="playback-control-bar"]') ||
         targetEl.closest('[data-testid="show-playback-bar-btn"]') ||
-        targetEl.closest('[data-testid="canvas-minimap-overlay"]') ||
-        targetEl.closest('[data-testid="canvas-minimap-collapsed"]') ||
         targetEl.closest('[data-testid="show-canvas-top-bar-btn"]') ||
         targetEl.closest('[data-testid="show-bottom-dock-btn"]')
       ) {
@@ -1265,10 +1261,6 @@ export function AttackVisualizer({
         onToggleLegend?.();
         return;
       }
-      if (commandId === 'TOGGLE_MINIMAP') {
-        setMinimapHidden((v) => !v);
-        return;
-      }
       if (commandId === 'PLAY_PAUSE_SEQUENCE') {
         if (onTogglePlay) {
           onTogglePlay();
@@ -1342,8 +1334,7 @@ export function AttackVisualizer({
         command === 'PAN_DOWN' ||
         command === 'PAN_LEFT' ||
         command === 'PAN_RIGHT' ||
-        command === 'TOGGLE_AUTOCAM' ||
-        command === 'TOGGLE_MINIMAP'
+        command === 'TOGGLE_AUTOCAM'
       ) {
         e.preventDefault();
         executeShortcutCommand(command);
@@ -2171,7 +2162,12 @@ export function AttackVisualizer({
                 />
               </div>
 
-              {/* Tablet & Desktop (>= 640px): Animated Cinematic Camera Rig */}
+              {/* Tablet & Desktop (>= 640px): aspect-contained camera rig (no stretch when side panels collapse) */}
+              <div
+                className="hidden sm:flex relative w-full h-full overflow-visible items-center justify-center"
+                style={{ containerType: 'size' }}
+                data-testid="whiteboard-aspect-stage"
+              >
               <motion.div
                   ref={cameraRigRef}
                 data-testid="cinematic-camera-rig"
@@ -2194,8 +2190,11 @@ export function AttackVisualizer({
                   }
                 style={{
                     transformOrigin: '50% 50%',
+                    aspectRatio: `${WHITEBOARD_WIDTH} / ${WHITEBOARD_HEIGHT}`,
+                    width: `min(100cqw, calc(100cqh * ${WHITEBOARD_WIDTH} / ${WHITEBOARD_HEIGHT}))`,
+                    height: `min(100cqh, calc(100cqw * ${WHITEBOARD_HEIGHT} / ${WHITEBOARD_WIDTH}))`,
                   }}
-                  className="hidden sm:block relative w-full h-full overflow-visible"
+                  className="relative overflow-visible"
               >
                 <SketchWhiteboardSvg
                   zones={activeZones}
@@ -2381,6 +2380,7 @@ export function AttackVisualizer({
                   );
                 })}
               </motion.div>
+              </div>
             </motion.div>
           </AnimatePresence>
           </CanvasController>
@@ -2441,44 +2441,11 @@ export function AttackVisualizer({
             )}
           </div>
 
-          {/* Bottom-Right: Interactive Minimap Overlay + Play/Pause Sequence Control Bar (Pinned in Viewport) */}
+          {/* Bottom-Right: Play/Pause Sequence Control Bar (Pinned in Viewport) */}
           <div
             onClick={(e) => e.stopPropagation()}
             className="flex flex-col items-end gap-2 absolute bottom-4 right-4 z-30"
           >
-            <div className="hidden sm:block">
-              <CanvasMinimapOverlay
-                zones={activeZones}
-                backboneLinks={activeBackboneLinks}
-                nodes={activeNodes}
-                flows={activeFlows}
-                selectedNodeId={
-                  internalSubBoard
-                    ? activeInternalSubNode?.id || null
-                    : selectedSketchNode?.id || null
-                }
-                multiSelectedNodeIds={multiSelectedNodeIds}
-                searchMatchedNodeIds={searchResult.matchedNodeIds}
-                isSearchFiltering={searchResult.isFiltering}
-                panOffset={panOffset}
-                effectiveScale={effectiveScale}
-                tacticalMode={tacticalMode}
-                isHidden={minimapHidden}
-                onToggleHidden={() => setMinimapHidden((v) => !v)}
-                onResetView={handleResetCanvasLayout}
-                onPanToOffset={(nextPan) => {
-                  panOffsetRef.current = nextPan;
-                  canvasControllerRef.current?.setTransform(
-                    nextPan.x,
-                    nextPan.y,
-                    manualZoomRef.current,
-                    60
-                  );
-                  setPanOffset(nextPan);
-                }}
-              />
-            </div>
-
             <PlaybackControlBar
               isPlaying={isPlaying}
               onTogglePlay={

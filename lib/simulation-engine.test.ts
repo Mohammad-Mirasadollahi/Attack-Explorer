@@ -24,16 +24,22 @@ import {
 import { computeScenarioChoreography } from './camera-choreography';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately', () => {
+  it('filterScenarios filters by category and search query accurately across all 26 scenarios (including 20 APT campaigns)', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 6);
+    assert.equal(all.length, 26);
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
-    assert.equal(malwareOnly.length, 3);
+    assert.equal(malwareOnly.length, 12);
 
     const byMitre = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'T1055.012');
     assert.equal(byMitre.length, 1);
     assert.equal(byMitre[0].id, 'process-hollowing');
+
+    const elasticScenarios = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'Elastic Security Labs');
+    assert.ok(elasticScenarios.length >= 2);
+
+    const unit42Scenarios = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'Unit 42');
+    assert.ok(unit42Scenarios.length >= 3);
   });
 
   it('stepForward and stepBackward bound stage indices properly', () => {
@@ -57,7 +63,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.ok(stage2.visibleTelemetry.every((t) => t.stageIndex <= 2));
   });
 
-  it('analyzeCustomLogInput detects Process Hollowing, Log4Shell, AMSI, and Kerberoasting logs', () => {
+  it('analyzeCustomLogInput detects Process Hollowing, Log4Shell, AMSI, Kerberoasting, and new APT logs (Unit 42, Elastic, Talos, Mandiant, Splunk)', () => {
     const hollowFindings = analyzeCustomLogInput(
       'EventID 25 Image is replaced NtUnmapViewOfSection'
     );
@@ -72,11 +78,35 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       'EventID 4769 TicketEncryptionType 0x17'
     );
     assert.equal(krbFindings[0].recommendedScenarioId, 'ad-kerberoasting');
+
+    const unit42PanFindings = analyzeCustomLogInput(
+      'Cookie: SESSID=/../../../opt/panlogs/tmp/device_telemetry/minute/ UPSTYLE'
+    );
+    assert.equal(
+      unit42PanFindings[0].recommendedScenarioId,
+      'unit42-panos-midnight-eclipse'
+    );
+
+    const elasticGrimFindings = analyzeCustomLogInput(
+      'mmc.exe ImageLoaded C:\\Windows\\System32\\apds.dll GrimResource'
+    );
+    assert.equal(
+      elasticGrimFindings[0].recommendedScenarioId,
+      'elastic-grimresource-msc'
+    );
+
+    const talosArcaneFindings = analyzeCustomLogInput(
+      'CVE-2024-20353 Line Dancer lina_monitor'
+    );
+    assert.equal(
+      talosArcaneFindings[0].recommendedScenarioId,
+      'talos-arcanedoor-asa'
+    );
   });
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 6);
+    assert.equal(fullLib.totalCount, 26);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass
@@ -947,7 +977,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     const boxSearch = filterKeyboardShortcuts('Box Select', 'ALL');
     assert.ok(boxSearch.length >= 1);
     assert.equal(boxSearch[0].id, 'TOOL_BOX_SELECT');
-    assert.equal(resolveKeyboardShortcutCommand({ key: 'm' }), 'TOGGLE_MINIMAP');
+    assert.equal(resolveKeyboardShortcutCommand({ key: 'm' }), null);
   });
 
   it('computeMinimapViewportRect, computePanFromMinimapPoint, and Zero-Truncation UI standards work accurately and forbid ellipsis in active UI components', async () => {
@@ -1043,7 +1073,6 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       'components/InspectorPanel.tsx',
       'components/MitreStats.tsx',
       'components/ThreatIntelCard.tsx',
-      'components/canvas/CanvasMinimapOverlay.tsx',
       'components/canvas/ProcessMemoryView.tsx',
       'components/canvas/SequenceView.tsx',
       'components/canvas/RawTablesView.tsx',

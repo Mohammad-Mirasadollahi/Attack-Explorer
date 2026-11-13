@@ -515,6 +515,96 @@ export function analyzeCustomLogInput(rawText: string): LogAnalysisFinding[] {
       recommendedScenarioId: 'dns-tunneling-exfil' });
   }
 
+  if (/apds\.dll|apds:\/\/|GrimResource|\.msc.*mmc\.exe/i.test(text)) {
+    findings.push({
+      title: 'Elastic Security Labs: GrimResource MMC (.msc) Execution',
+      mitreId: 'T1218.014',
+      severity: 'CRITICAL',
+      matchedPattern: 'mmc.exe loading apds.dll / DotNetToJScript',
+      explanation: 'Abuse of apds.dll XSS redirection inside a Microsoft Management Console (.msc) snap-in to execute JScript/CLR code and inject into dllhost.exe.',
+      recommendedScenarioId: 'elastic-grimresource-msc' });
+  }
+
+  if (/GUP\.exe|libcurl\.dll|CHRYSALIS|Lotus\s*Blossom/i.test(text)) {
+    findings.push({
+      title: 'Elastic Security Labs: Lotus Blossom WinGUp Side-Loading & CHRYSALIS',
+      mitreId: 'T1574.002',
+      severity: 'CRITICAL',
+      matchedPattern: 'GUP.exe side-loading libcurl.dll / CHRYSALIS',
+      explanation: 'Signed Notepad++ updater GUP.exe side-loading malicious libcurl.dll to decrypt the CHRYSALIS backdoor in memory.',
+      recommendedScenarioId: 'elastic-lotus-blossom-chrysalis' });
+  }
+
+  if (/DUSTPAN|STEALTHVECTOR|DodgeBox|Call-Stack\s*Spoofing/i.test(text)) {
+    findings.push({
+      title: 'Elastic & Mandiant: APT41 DodgeBox & DUSTPAN Call-Stack Spoofing',
+      mitreId: 'T1620',
+      severity: 'CRITICAL',
+      matchedPattern: 'DodgeBox / DUSTPAN / RtlUserThreadStart Call-Stack Spoofing',
+      explanation: 'Reflective loader forging synthetic thread call-stack frames and decrypting STEALTHVECTOR in memory.',
+      recommendedScenarioId: 'elastic-apt41-dustpan-stealthvector' });
+  }
+
+  if (/CVE-2024-3400|device_telemetry\/minute|UPSTYLE|MidnightEclipse/i.test(text)) {
+    findings.push({
+      title: 'Palo Alto Unit 42: Operation MidnightEclipse (CVE-2024-3400 & UPSTYLE)',
+      mitreId: 'T1190',
+      severity: 'CRITICAL',
+      matchedPattern: 'SESSID=/../../../opt/panlogs/tmp/device_telemetry/minute/ / UPSTYLE',
+      explanation: 'PAN-OS GlobalProtect arbitrary file creation and cron command injection deploying the in-memory UPSTYLE Python backdoor.',
+      recommendedScenarioId: 'unit42-panos-midnight-eclipse' });
+  }
+
+  if (/ArcaneDoor|Line\s*Dancer|Line\s*Runner|lina_monitor|CVE-2024-20353/i.test(text)) {
+    findings.push({
+      title: 'Cisco Talos: ArcaneDoor ASA/FTD Espionage (Line Dancer & Line Runner)',
+      mitreId: 'T1542.004',
+      severity: 'CRITICAL',
+      matchedPattern: 'CVE-2024-20353 / lina_monitor / Line Dancer Shellcode',
+      explanation: 'Perimeter firewall intrusion disabling syslog/crashdumps in memory and persisting across reboots via Line Runner.',
+      recommendedScenarioId: 'talos-arcanedoor-asa' });
+  }
+
+  if (/ntdsutil.*create\s+full|portproxy\s+add\s+v4tov4|Volt\s*Typhoon/i.test(text)) {
+    findings.push({
+      title: 'Microsoft Threat Intel: Volt Typhoon LOTL (ntdsutil & netsh portproxy)',
+      mitreId: 'T1003.003',
+      severity: 'CRITICAL',
+      matchedPattern: 'ntdsutil "ac i ntds" ifm / netsh interface portproxy',
+      explanation: 'Living-off-the-land Active Directory NTDS.dit extraction and internal TCP port forwarding via netsh portproxy.',
+      recommendedScenarioId: 'ms-volt-typhoon-lotl' });
+  }
+
+  if (/user-backup-code\/\.\.\/|ZIPLINE|libsecure\.so|OpenSSH_0\.3xx|WARPWIRE/i.test(text)) {
+    findings.push({
+      title: 'Mandiant & Splunk SURGe: UNC5221 Ivanti Zero-Day Chain & ZIPLINE Backdoor',
+      mitreId: 'T1574.006',
+      severity: 'CRITICAL',
+      matchedPattern: 'CVE-2024-21887 / LD_PRELOAD libsecure.so (ZIPLINE)',
+      explanation: 'Ivanti Connect Secure auth bypass and command injection implanting the ZIPLINE LD_PRELOAD passive backdoor.',
+      recommendedScenarioId: 'splunk-ivanti-connect-secure' });
+  }
+
+  if (/NSC_AAAC|openid-configuration|Citrix\s*Bleed|CVE-2023-4966/i.test(text)) {
+    findings.push({
+      title: 'Splunk SURGe: Citrix Bleed (CVE-2023-4966) Session Token Leak',
+      mitreId: 'T1550.004',
+      severity: 'CRITICAL',
+      matchedPattern: '/oauth/idp/.well-known/openid-configuration / NSC_AAAC',
+      explanation: 'NetScaler memory overread leaking valid 64-byte NSC_AAAC session cookies to hijack MFA-authenticated sessions.',
+      recommendedScenarioId: 'splunk-citrix-bleed-session-hijack' });
+  }
+
+  if (/SetupWizard\.aspx\/|ScreenConnect\.ClientService|CVE-2024-1709/i.test(text)) {
+    findings.push({
+      title: 'Splunk SURGe: ConnectWise ScreenConnect Auth Bypass (CVE-2024-1709)',
+      mitreId: 'T1190',
+      severity: 'CRITICAL',
+      matchedPattern: '/SetupWizard.aspx/ / ScreenConnect.ClientService.exe',
+      explanation: 'ScreenConnect authentication bypass overwriting User.xml and executing SYSTEM commands across managed endpoints.',
+      recommendedScenarioId: 'splunk-screenconnect-slashandgrab' });
+  }
+
   if (findings.length === 0) {
     findings.push({
       title: 'General Security Telemetry Inspection',

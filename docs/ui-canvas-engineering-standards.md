@@ -20,6 +20,5 @@ To prevent visual regressions, clipped text (`...`), or overlapping HUD controls
 - Every persistent bar around the diagram must provide both **Hide** and **Show** controls so analysts can dedicate 100% of the viewport to the attack graph:
   - **Top Stage Progress Bar**: `hide-step-progress-bar-btn` / `show-step-progress-bar-btn`
   - **Canvas Top Context & Tool Bar**: `hide-canvas-top-bar-btn` / `show-canvas-top-bar-btn`
-  - **Bottom-Right Interactive Minimap**: `hide-minimap-btn` / `show-minimap-btn` (or hotkey `M`)
   - **Bottom-Right Playback Control Bar**: `hide-playback-bar-btn` / `show-playback-bar-btn`
   - **Bottom Internal Sub-Node Details Bar**: `hide-bottom-dock-btn` / `show-bottom-dock-btn`

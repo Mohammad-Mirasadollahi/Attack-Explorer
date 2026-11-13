@@ -25,7 +25,6 @@ export type ShortcutCommandId =
   | 'TOGGLE_AUTOCAM'
   | 'TOGGLE_TACTICAL'
   | 'TOGGLE_LEGEND'
-  | 'TOGGLE_MINIMAP'
   | 'PLAY_PAUSE_SEQUENCE'
   | 'STEP_BACKWARD'
   | 'STEP_FORWARD'
@@ -249,17 +248,6 @@ export const KEYBOARD_SHORTCUT_ITEMS: KeyboardShortcutItem[] = [
     badge: 'LEGEND',
     canTriggerFromOverlay: true,
   },
-  {
-    id: 'TOGGLE_MINIMAP',
-    category: 'CANVAS_NAVIGATION',
-    title: 'Toggle Interactive Minimap',
-    description:
-      'Show or hide the bottom-right interactive topology minimap overlay',
-    keys: ['M'],
-    badge: 'MINIMAP',
-    canTriggerFromOverlay: true,
-  },
-
   // 3. SIMULATION & WORKBENCH VIEWS
   {
     id: 'PLAY_PAUSE_SEQUENCE',
@@ -427,12 +415,11 @@ export function resolveKeyboardShortcutCommand(
   if (key === 'ArrowLeft') return 'PAN_LEFT';
   if (key === 'ArrowRight') return 'PAN_RIGHT';
 
-  // Camera, Tactical, Legend, Minimap & Force-Directed Auto-Layout Toggles
+  // Camera, Tactical, Legend & Force-Directed Auto-Layout Toggles
   if (lower === 'a') return 'AUTO_LAYOUT_NODES';
   if (lower === 'c') return 'TOGGLE_AUTOCAM';
   if (lower === 't') return 'TOGGLE_TACTICAL';
   if (lower === 'l') return 'TOGGLE_LEGEND';
-  if (lower === 'm') return 'TOGGLE_MINIMAP';
 
   // Simulation Stage Stepping & Playback
   if (key === '[') return 'STEP_BACKWARD';

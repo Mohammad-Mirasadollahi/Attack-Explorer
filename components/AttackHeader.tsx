@@ -34,6 +34,7 @@ import {
   Settings,
   Sparkles,
   Table2,
+  UserRound,
   X,
 } from 'lucide-react';
 
@@ -69,6 +70,7 @@ interface AttackHeaderProps {
   onOpenAttackLibrary: () => void;
   onOpenAnalyzerModal: () => void;
   onOpenSourcesModal?: () => void;
+  onOpenAboutModal?: () => void;
   onOpenShortcutsModal?: () => void;
   onReplayIntro?: () => void;
   nodeSearchQuery?: string;
@@ -101,6 +103,7 @@ export function AttackHeader({
   onOpenAttackLibrary,
   onOpenAnalyzerModal,
   onOpenSourcesModal,
+  onOpenAboutModal,
   onOpenShortcutsModal,
   onReplayIntro,
   nodeSearchQuery = '',
@@ -593,8 +596,65 @@ export function AttackHeader({
           </div>
         </nav>
 
-        {/* Right Zone: Icon-Only Inspector Toggle + Icon-Only Slide-Out Settings Drawer Trigger */}
+        {/* Right Zone: About CTA + Inspector + Settings */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {onOpenAboutModal && (
+            <WorkbenchIconTooltip
+              label="About the Creator"
+              badge="PROFILE"
+              detail="GitHub, X, and LinkedIn profiles for Mohammad Mirasadollahi"
+              align="right"
+            >
+              <motion.button
+                type="button"
+                data-testid="header-about-author-btn"
+                aria-label="About"
+                onClick={onOpenAboutModal}
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="relative h-8 pl-2 pr-2.5 flex items-center gap-1.5 rounded-lg border border-teal-400/80 dark:border-teal-500/70 bg-teal-500 text-white shadow-[0_0_0_0_rgba(20,184,166,0.55)] hover:bg-teal-400 cursor-pointer overflow-hidden"
+              >
+                <motion.span
+                  aria-hidden
+                  className="absolute inset-0 rounded-lg"
+                  animate={{
+                    boxShadow: [
+                      '0 0 0 0 rgba(20,184,166,0.55)',
+                      '0 0 0 8px rgba(20,184,166,0)',
+                      '0 0 0 0 rgba(20,184,166,0)',
+                    ],
+                  }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+                />
+                <motion.span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 -left-8 w-8 bg-white/35 skew-x-[-20deg]"
+                  animate={{ x: [0, 88] }}
+                  transition={{
+                    duration: 2.2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    repeatDelay: 1.1,
+                  }}
+                />
+                <motion.span
+                  animate={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 2.1, repeat: Infinity, ease: 'easeInOut' }}
+                  className="relative shrink-0"
+                >
+                  <UserRound className="w-3.5 h-3.5" />
+                </motion.span>
+                <motion.span
+                  className="relative text-[11px] font-bold tracking-wide whitespace-nowrap"
+                  animate={{ opacity: [1, 0.72, 1] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  About
+                </motion.span>
+              </motion.button>
+            </WorkbenchIconTooltip>
+          )}
+
           <WorkbenchIconTooltip
             label="Inspector"
             badge={inspectorOpen ? 'OPEN' : 'PANEL'}

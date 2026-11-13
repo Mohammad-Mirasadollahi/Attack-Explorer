@@ -123,10 +123,16 @@ export function formatConciseStagePillLabel(
     }
   }
 
-  // Fallback deterministic shortening without ellipsis: take up to 3 core words
+  // Fallback deterministic shortening without ellipsis: take up to 3 core words (or 2 if needed to stay <= 36 chars)
   const words = rawTitle.split(/\s+/);
-  const concise =
+  let concise =
     words.length <= 3 ? rawTitle : words.slice(0, 3).join(' ');
+  if (`S${stage.index}: ${concise}`.length > 36 && words.length >= 2) {
+    concise = words.slice(0, 2).join(' ');
+  }
+  if (`S${stage.index}: ${concise}`.length > 36) {
+    concise = words[0].slice(0, 30);
+  }
 
   return {
     shortLabel: `S${stage.index}: ${concise}`,

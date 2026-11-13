@@ -71,7 +71,7 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
     <svg
       ref={svgRef}
       viewBox="0 0 1480 650"
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMid meet"
       overflow="visible"
       style={{ overflow: 'visible' }}
       className="w-full h-full pointer-events-auto overflow-visible"
