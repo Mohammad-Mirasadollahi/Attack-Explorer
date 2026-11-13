@@ -17,6 +17,9 @@ web_modules/
 # Next.js / build / cache
 # ---------------------------------------------------------------------------
 .next/
+.open-next/
+.wrangler/
+.dev.vars
 out/
 build/
 dist/
@@ -229,3 +232,7 @@ dump.rdb
 .dynamodb/
 .npmrc.local
 .nvmrc.local
+
+# Prefer npm lockfile for Cloudflare CI
+bun.lock
+bun.lockb
