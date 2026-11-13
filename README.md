@@ -6,10 +6,6 @@ Live product: **[www.attackexplorer.com](https://www.attackexplorer.com/)**
 
 Interactive workbench for exploring cyber-attack scenarios: kill-chain visuals, Sysmon/SIEM-style telemetry, and MITRE ATT&CK mapping.
 
-## Credits
-
-Original idea inspired by **[Dilum Sanjaya](https://x.com/DilumSanjaya)**.
-
 ## Screenshots
 
 ### Workbench overview
@@ -64,3 +60,7 @@ GET /api/attacks?category=ALL&mitrePhase=ALL&severity=ALL&search=
 ## Docs
 
 - [UI & Canvas Engineering Standards](./docs/ui-canvas-engineering-standards.md)
+
+## Credits
+
+Original idea inspired by **[Dilum Sanjaya](https://x.com/DilumSanjaya)**.

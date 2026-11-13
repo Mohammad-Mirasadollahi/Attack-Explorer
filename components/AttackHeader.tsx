@@ -16,6 +16,7 @@ import { AnimeBrandLogo } from './AnimeBrandLogo';
 import { SettingsDrawer } from './SettingsDrawer';
 import { OperationalGuideIcon } from './OperationalGuideIcon';
 import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
+import { WorkbenchLayoutMode } from '@/lib/layout-preference';
 import {
   Cloud,
   Cpu,
@@ -72,6 +73,8 @@ interface AttackHeaderProps {
   onOpenSourcesModal?: () => void;
   onOpenAboutModal?: () => void;
   onOpenShortcutsModal?: () => void;
+  layoutMode?: WorkbenchLayoutMode;
+  onLayoutModeChange?: (mode: WorkbenchLayoutMode) => void;
   onReplayIntro?: () => void;
   nodeSearchQuery?: string;
   onNodeSearchQueryChange?: (query: string) => void;
@@ -105,6 +108,8 @@ export function AttackHeader({
   onOpenSourcesModal,
   onOpenAboutModal,
   onOpenShortcutsModal,
+  layoutMode = 'DESKTOP',
+  onLayoutModeChange,
   onReplayIntro,
   nodeSearchQuery = '',
   onNodeSearchQueryChange,
@@ -715,6 +720,8 @@ export function AttackHeader({
         onToggleLegend={() => onToggleLegend?.()}
         isDark={isDark}
         onToggleDark={onToggleDark}
+        layoutMode={layoutMode}
+        onLayoutModeChange={(mode) => onLayoutModeChange?.(mode)}
         playbackSpeed={playbackSpeed}
         onSpeedChange={onSpeedChange}
         sidebarOpen={sidebarOpen}

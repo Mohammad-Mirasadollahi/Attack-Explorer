@@ -36,6 +36,13 @@ import { AnimeIntroLoader } from './AnimeIntroLoader';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { shouldSkipIntroFromSearch } from '@/lib/intro-loader-sequence';
 import { resolveKeyboardShortcutCommand } from '@/lib/keyboard-shortcuts';
+import {
+  applyWorkbenchLayoutMode,
+  DEFAULT_LAYOUT_MODE,
+  persistLayoutMode,
+  readStoredLayoutMode,
+  WorkbenchLayoutMode,
+} from '@/lib/layout-preference';
 
 export function AttackExplorerWorkbench() {
   // Strictly English-only interface
@@ -43,6 +50,10 @@ export function AttackExplorerWorkbench() {
 
   // Minimal Anime Game-Style Entrance Loading Sequence State
   const [showIntro, setShowIntro] = useState<boolean>(true);
+
+  // Desktop layout by default (phones/tablets); toggleable in Settings
+  const [layoutMode, setLayoutMode] =
+    useState<WorkbenchLayoutMode>(DEFAULT_LAYOUT_MODE);
 
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
@@ -52,6 +63,30 @@ export function AttackExplorerWorkbench() {
     });
     return () => window.cancelAnimationFrame(rafId);
   }, []);
+
+  useEffect(() => {
+    const stored = readStoredLayoutMode();
+    setLayoutMode(stored);
+    applyWorkbenchLayoutMode(stored);
+  }, []);
+
+  useEffect(() => {
+    if (layoutMode !== 'DESKTOP') return;
+    const refreshDesktopViewport = () =>
+      applyWorkbenchLayoutMode('DESKTOP', { refreshPhysicalWidth: true });
+    // Only refresh on orientation changes — not every resize/pinch (that would
+    // reset scale using the already-overridden layout width).
+    window.addEventListener('orientationchange', refreshDesktopViewport);
+    return () => {
+      window.removeEventListener('orientationchange', refreshDesktopViewport);
+    };
+  }, [layoutMode]);
+
+  const handleLayoutModeChange = (mode: WorkbenchLayoutMode) => {
+    setLayoutMode(mode);
+    persistLayoutMode(mode);
+    applyWorkbenchLayoutMode(mode);
+  };
 
   // Tactical Mode Grid Overlay & Diagram Legend State
   const [tacticalMode, setTacticalMode] = useState<boolean>(false);
@@ -104,8 +139,16 @@ export function AttackExplorerWorkbench() {
   const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
-  // Responsive viewport adaptation
+  // Responsive chrome: only auto-toggle side panels in true responsive mode
   useEffect(() => {
+    if (layoutMode === 'DESKTOP') {
+      // Keep side drawers closed by default so the dense desktop canvas has room;
+      // users can reopen them from the header while scrolling/pinching the page.
+      setSidebarOpen(false);
+      setInspectorOpen(false);
+      return;
+    }
+
     let wasDesktop = window.innerWidth >= 1024;
     const rafId = window.requestAnimationFrame(() => {
       if (window.innerWidth < 1024) {
@@ -126,7 +169,7 @@ export function AttackExplorerWorkbench() {
       window.cancelAnimationFrame(rafId);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [layoutMode]);
 
   // Sync Dark Mode class with <html>
   useEffect(() => {
@@ -376,6 +419,7 @@ export function AttackExplorerWorkbench() {
         data-active-environment={activeEnvironment}
         data-tactical-mode={tacticalMode ? 'true' : 'false'}
         data-intro-active={showIntro ? 'true' : 'false'}
+        data-layout-mode={layoutMode}
         onContextMenu={(e) => e.preventDefault()}
         dir="ltr"
         className="min-h-screen h-screen flex flex-col bg-[#F4F4F5]/60 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 overflow-hidden"
@@ -455,6 +499,8 @@ export function AttackExplorerWorkbench() {
           onOpenSourcesModal={() => setSourcesModalOpen(true)}
           onOpenAboutModal={() => setAboutModalOpen(true)}
           onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
+          layoutMode={layoutMode}
+          onLayoutModeChange={handleLayoutModeChange}
           onReplayIntro={() => setShowIntro(true)}
         />
 
@@ -536,6 +582,7 @@ export function AttackExplorerWorkbench() {
                 shortcutsModalOpen={shortcutsModalOpen}
                 onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
                 onCloseShortcutsModal={() => setShortcutsModalOpen(false)}
+                forceDesktopCanvas={layoutMode === 'DESKTOP'}
               />
 
               {/* Right Collapsible & Resizable Story, SIEM & Sources Inspector Panel */}

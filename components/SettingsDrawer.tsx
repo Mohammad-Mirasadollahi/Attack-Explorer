@@ -16,6 +16,7 @@ import {
   GitCommitHorizontal,
   Laptop,
   Library,
+  Monitor,
   Moon,
   Network,
   PanelBottom,
@@ -25,11 +26,13 @@ import {
   SearchCode,
   Server,
   Settings,
+  Smartphone,
   Sun,
   Table2,
   X,
 } from 'lucide-react';
 import { OperationalGuideIcon } from './OperationalGuideIcon';
+import { WorkbenchLayoutMode } from '@/lib/layout-preference';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -44,6 +47,8 @@ interface SettingsDrawerProps {
   onToggleLegend: () => void;
   isDark: boolean;
   onToggleDark: () => void;
+  layoutMode: WorkbenchLayoutMode;
+  onLayoutModeChange: (mode: WorkbenchLayoutMode) => void;
   playbackSpeed: number;
   onSpeedChange: (speed: number) => void;
   sidebarOpen: boolean;
@@ -70,6 +75,8 @@ export function SettingsDrawer({
   onToggleLegend,
   isDark,
   onToggleDark,
+  layoutMode,
+  onLayoutModeChange,
   playbackSpeed,
   onSpeedChange,
   sidebarOpen,
@@ -275,6 +282,59 @@ export function SettingsDrawer({
                       {isDark ? 'Dark Workbench' : 'Light Workbench'}
                     </span>
                   </button>
+
+                  {/* Desktop vs Responsive layout (default Desktop on phones) */}
+                  <div
+                    data-testid="drawer-layout-mode-section"
+                    className="rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 overflow-hidden"
+                  >
+                    <div className="px-3 pt-2.5 pb-1.5 flex items-start gap-2">
+                      {layoutMode === 'DESKTOP' ? (
+                        <Monitor className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                      ) : (
+                        <Smartphone className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
+                          Screen Layout
+                        </div>
+                        <p className="text-[10.5px] leading-snug text-zinc-500 dark:text-zinc-400 mt-0.5">
+                          Desktop keeps the full workbench on phones. Pinch to
+                          zoom the page, one-finger drag to pan the diagram, use
+                          Box Select for marquee, and tap nodes to open them.
+                          Responsive uses the compact mobile UI.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 p-1.5">
+                      <button
+                        type="button"
+                        data-testid="drawer-layout-mode-desktop"
+                        onClick={() => onLayoutModeChange('DESKTOP')}
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+                          layoutMode === 'DESKTOP'
+                            ? 'bg-teal-500 text-white shadow-2xs'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <Monitor className="w-3.5 h-3.5 shrink-0" />
+                        <span>Desktop</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="drawer-layout-mode-responsive"
+                        onClick={() => onLayoutModeChange('RESPONSIVE')}
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+                          layoutMode === 'RESPONSIVE'
+                            ? 'bg-indigo-600 text-white shadow-2xs'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <Smartphone className="w-3.5 h-3.5 shrink-0" />
+                        <span>Responsive</span>
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Tactical Grid Mode Toggle */}
                   <button

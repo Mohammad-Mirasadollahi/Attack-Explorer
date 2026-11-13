@@ -63,6 +63,9 @@ export const CanvasController = forwardRef<
     panningEnabled = true,
     wheelZoomEnabled = true,
     initialScale = 1,
+    onTransformChange,
+    onPanningStart,
+    onPanningStop,
     className = '',
   },
   ref
@@ -132,15 +135,38 @@ export const CanvasController = forwardRef<
         wheel={{
           disabled: true,
         }}
+        // Custom AttackVisualizer pointer pan owns one-finger drag; keep
+        // library panning off so it does not fight Select / node drag.
         panning={{
           disabled: true,
+          excluded: [
+            'canvas-interactive-node',
+            'canvas-interactive-zone',
+            'canvas-interactive-control',
+          ],
         }}
+        // Pinch-zoom must stay on for phones in forced-desktop layout.
         pinch={{
           disabled: !wheelZoomEnabled,
+          step: 5,
         }}
         doubleClick={{
           disabled: true,
         }}
+        onTransform={(_ref, state) => {
+          onTransformChange?.({
+            scale: state.scale,
+            positionX: state.positionX,
+            positionY: state.positionY,
+          });
+        }}
+        onPanningStart={() => onPanningStart?.()}
+        onPanningStop={(ref) =>
+          onPanningStop?.({
+            x: ref.state.positionX,
+            y: ref.state.positionY,
+          })
+        }
       >
         <TransformComponent
           wrapperClass="!w-full !h-full !overflow-visible"

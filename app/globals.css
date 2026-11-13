@@ -171,3 +171,45 @@
   white-space: nowrap;
 }
 
+/*
+ * Forced desktop layout (default on phones/tablets):
+ * keep page scroll + pinch-zoom so the dense workbench stays navigable.
+ */
+html.layout-force-desktop,
+html.layout-force-desktop body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+html.layout-force-desktop [data-testid="workbench-root"] {
+  touch-action: manipulation;
+}
+
+/* Diagram board owns one-finger pan / pinch; chrome stays tappable */
+html.layout-force-desktop [data-testid="main-network-topology-board"],
+html.layout-force-desktop [data-testid="expanded-node-visual-board"],
+html.layout-force-desktop [data-testid="canvas-controller"] {
+  touch-action: none;
+}
+
+html.layout-force-desktop header,
+html.layout-force-desktop [data-testid="settings-popover-menu"],
+html.layout-force-desktop [data-testid="playback-control-bar"],
+html.layout-force-desktop [data-testid="canvas-interaction-toolbar"],
+html.layout-force-desktop button,
+html.layout-force-desktop a,
+html.layout-force-desktop input,
+html.layout-force-desktop textarea,
+html.layout-force-desktop [role="dialog"] {
+  touch-action: manipulation;
+}
+
+html.layout-responsive,
+html.layout-responsive body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+

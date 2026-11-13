@@ -120,6 +120,8 @@ export interface AttackVisualizerProps {
   autoLayoutTriggerSeq?: number;
   onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
+  /** Prefer full desktop topology board even on narrow physical screens */
+  forceDesktopCanvas?: boolean;
 }
 
 interface PortalAnimationState {
@@ -165,6 +167,7 @@ export function AttackVisualizer({
   autoLayoutTriggerSeq = 0,
   onAutoLayoutActiveChange,
   onActiveNodesChange,
+  forceDesktopCanvas = false,
 }: AttackVisualizerProps) {
   const { currentStage } = stageView;
   const activeStageIndex = currentStage ? currentStage.index : 0;
@@ -664,6 +667,8 @@ export function AttackVisualizer({
   const handleBoardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0 && e.button !== 2) return;
+      // Secondary touch fingers belong to pinch-zoom — do not start pan/select.
+      if (e.pointerType === 'touch' && e.isPrimary === false) return;
 
       const targetEl = e.target as HTMLElement;
       if (
@@ -691,6 +696,13 @@ export function AttackVisualizer({
         e.preventDefault();
       }
 
+      // Keep touch drags locked to this gesture (phones in forced-desktop layout).
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch {
+        // Older browsers may reject capture on some targets
+      }
+
       const startClientX = e.clientX;
       const startClientY = e.clientY;
       const startPanX = panOffsetRef.current.x;
@@ -715,12 +727,20 @@ export function AttackVisualizer({
 
       const startWb = fastClientToWb(startClientX, startClientY);
 
-      const holdResolution = resolveCanvasHoldInteractionMode({
-        button: e.button,
-        shiftKey: e.shiftKey,
-        ctrlKey: e.ctrlKey,
-        metaKey: e.metaKey,
-      });
+      // Honor the toolbar SELECT tool on left/touch drag (needed on phones with no right-click).
+      const holdResolution =
+        interactionMode === 'SELECT' && e.button === 0
+          ? {
+              mode: 'SELECT' as const,
+              useMarqueeSelection: true,
+              useCanvasPan: false,
+            }
+          : resolveCanvasHoldInteractionMode({
+              button: e.button,
+              shiftKey: e.shiftKey,
+              ctrlKey: e.ctrlKey,
+              metaKey: e.metaKey,
+            });
 
       const useMarqueeMode = holdResolution.useMarqueeSelection;
       let hasMoved = false;
@@ -750,8 +770,11 @@ export function AttackVisualizer({
         }
       };
 
-      // Trigger mode switch when mouse button is held down
-      const holdTimer = window.setTimeout(activateHoldMode, 110);
+      // Touch should arm pan/select immediately; mouse keeps a short hold delay.
+      const holdTimer = window.setTimeout(
+        activateHoldMode,
+        e.pointerType === 'touch' ? 0 : 110
+      );
 
       const applyPanFrame = () => {
         panRafId = null;
@@ -851,7 +874,7 @@ export function AttackVisualizer({
       window.addEventListener('pointerup', handleWindowPointerUp);
       window.addEventListener('pointercancel', handleWindowPointerUp);
     },
-    [activeNodes]
+    [activeNodes, interactionMode]
   );
 
   // Dragging Single or Multiple Selected Nodes Simultaneously Across the Workspace (rAF-batched, cached rect)
@@ -2097,11 +2120,15 @@ export function AttackVisualizer({
             panningEnabled={interactionMode === 'PAN' && !isBoxSelectHoldActive}
             wheelZoomEnabled={true}
             onTransformChange={({ scale, positionX, positionY }) => {
+              // Keep refs in sync for pinch-zoom on touch / forced-desktop phones.
+              manualZoomRef.current = scale;
+              panOffsetRef.current = { x: positionX, y: positionY };
               setManualZoom(scale);
               setPanOffset({ x: positionX, y: positionY });
             }}
             onPanningStart={() => setIsPanningCanvas(true)}
             onPanningStop={(offset) => {
+              panOffsetRef.current = offset;
               setIsPanningCanvas(false);
               setPanOffset(offset);
             }}
@@ -2139,7 +2166,8 @@ export function AttackVisualizer({
                 }}
                 className="relative w-full h-full overflow-visible z-20"
             >
-              {/* Mobile (< 640px) */}
+              {/* Compact mobile board — skipped when Desktop layout is forced */}
+              {!forceDesktopCanvas && (
               <div className="sm:hidden w-full h-full">
                 <ResponsiveMobileZonesView
                   zones={activeZones}
@@ -2161,10 +2189,13 @@ export function AttackVisualizer({
                   onSelectTelemetry={onSelectTelemetry}
                 />
               </div>
+              )}
 
-              {/* Tablet & Desktop (>= 640px): aspect-contained camera rig (no stretch when side panels collapse) */}
+              {/* Desktop topology board (also used on phones when Desktop layout is forced) */}
               <div
-                className="hidden sm:flex relative w-full h-full overflow-visible items-center justify-center"
+                className={`${
+                  forceDesktopCanvas ? 'flex' : 'hidden sm:flex'
+                } relative w-full h-full overflow-visible items-center justify-center`}
                 style={{ containerType: 'size' }}
                 data-testid="whiteboard-aspect-stage"
               >
@@ -2413,7 +2444,9 @@ export function AttackVisualizer({
           {/* Bottom-Left: Persistent Visual Semantics Legend Panel + Camera Status (Pinned in Viewport) */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="hidden sm:flex flex-col items-start gap-2 absolute bottom-4 left-4 z-30"
+            className={`${
+              forceDesktopCanvas ? 'flex' : 'hidden sm:flex'
+            } flex-col items-start gap-2 absolute bottom-4 left-4 z-30`}
           >
             {showLegend && (
               <DiagramLegendPanel

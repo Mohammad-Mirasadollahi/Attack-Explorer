@@ -58,6 +58,7 @@ interface DiagramCanvasProps {
   autoLayoutTriggerSeq?: number;
   onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
+  forceDesktopCanvas?: boolean;
 }
 
 export function DiagramCanvas({
@@ -96,6 +97,7 @@ export function DiagramCanvas({
   autoLayoutTriggerSeq = 0,
   onAutoLayoutActiveChange,
   onActiveNodesChange,
+  forceDesktopCanvas = false,
 }: DiagramCanvasProps) {
   return (
     <motion.div
@@ -142,6 +144,7 @@ export function DiagramCanvas({
           autoLayoutTriggerSeq={autoLayoutTriggerSeq}
           onAutoLayoutActiveChange={onAutoLayoutActiveChange}
           onActiveNodesChange={onActiveNodesChange}
+          forceDesktopCanvas={forceDesktopCanvas}
         />
       )}
 
