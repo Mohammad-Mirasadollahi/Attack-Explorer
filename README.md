@@ -6,6 +6,10 @@ Live product: **[www.attackexplorer.com](https://www.attackexplorer.com/)**
 
 Interactive workbench for exploring cyber-attack scenarios: kill-chain visuals, Sysmon/SIEM-style telemetry, and MITRE ATT&CK mapping.
 
+## Credits
+
+Original idea inspired by **[Dilum Sanjaya](https://x.com/DilumSanjaya)**.
+
 ## Screenshots
 
 ### Workbench overview
