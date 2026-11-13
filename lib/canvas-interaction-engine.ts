@@ -30,6 +30,41 @@ export const MAX_CANVAS_ZOOM = 2.5;
 export const WHITEBOARD_WIDTH = 1480;
 export const WHITEBOARD_HEIGHT = 650;
 
+export interface CanvasHoldInteractionResult {
+  mode: 'SELECT' | 'PAN';
+  useMarqueeSelection: boolean;
+  useCanvasPan: boolean;
+}
+
+/**
+ * Resolves the active pointer hold interaction mode on the workspace canvas:
+ * - Right-click & hold (`button === 2`) -> switches to `'SELECT'` (Box Select / Marquee mode)
+ * - Left-click & hold (`button === 0` without modifier keys) -> switches to `'PAN'` (Pan Page mode)
+ * - Left-click & hold with Shift/Ctrl/Meta modifier -> `'SELECT'` (Box Select / Marquee mode)
+ */
+export function resolveCanvasHoldInteractionMode(params: {
+  button: number;
+  shiftKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+}): CanvasHoldInteractionResult {
+  const { button, shiftKey = false, ctrlKey = false, metaKey = false } = params;
+
+  if (button === 2 || shiftKey || ctrlKey || metaKey) {
+    return {
+      mode: 'SELECT',
+      useMarqueeSelection: true,
+      useCanvasPan: false,
+    };
+  }
+
+  return {
+    mode: 'PAN',
+    useMarqueeSelection: false,
+    useCanvasPan: true,
+  };
+}
+
 /**
  * Computes new zoom scale from mouse wheel / trackpad deltaY.
  * Negative deltaY (scroll up) zooms in; positive deltaY (scroll down) zooms out.

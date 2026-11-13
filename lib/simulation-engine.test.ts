@@ -785,8 +785,84 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       [schematic.zones[0].id]: { dx: 30, dy: 20 },
     });
     assert.equal(movedZones[0].xStart, schematic.zones[0].xStart + 30);
+
+    // 5. Pointer hold interaction mode resolution (Right-click hold -> SELECT / Box Select, Left-click hold -> PAN / Pan Page)
+    const { resolveCanvasHoldInteractionMode } = await import(
+      './canvas-interaction-engine'
+    );
+    const rightHold = resolveCanvasHoldInteractionMode({ button: 2 });
+    assert.equal(rightHold.mode, 'SELECT');
+    assert.equal(rightHold.useMarqueeSelection, true);
+    assert.equal(rightHold.useCanvasPan, false);
+
+    const leftHold = resolveCanvasHoldInteractionMode({ button: 0 });
+    assert.equal(leftHold.mode, 'PAN');
+    assert.equal(leftHold.useMarqueeSelection, false);
+    assert.equal(leftHold.useCanvasPan, true);
+
+    const shiftLeftHold = resolveCanvasHoldInteractionMode({
+      button: 0,
+      shiftKey: true,
+    });
+    assert.equal(shiftLeftHold.mode, 'SELECT');
+    assert.equal(shiftLeftHold.useMarqueeSelection, true);
+    assert.equal(shiftLeftHold.useCanvasPan, false);
+  });
+
+  it('intro-loader-sequence orchestrates 4-phase minimal anime game-style loading progression, module readiness ticks, and ?autostart=1 bypass', async () => {
+    const {
+      clampIntroProgress,
+      formatIntroProgressPct,
+      resolveIntroPhase,
+      computeIntroSequenceState,
+      shouldSkipIntroFromSearch,
+    } = await import('./intro-loader-sequence');
+
+    // 1. Progress clamping & tabular percentage formatting
+    assert.equal(clampIntroProgress(-12), 0);
+    assert.equal(clampIntroProgress(42.4), 42);
+    assert.equal(clampIntroProgress(145), 100);
+    assert.equal(formatIntroProgressPct(0), '00%');
+    assert.equal(formatIntroProgressPct(7), '07%');
+    assert.equal(formatIntroProgressPct(100), '100%');
+
+    // 2. 4-Phase sequence progression
+    assert.equal(resolveIntroPhase(0).id, 'INK_SYNTHESIS');
+    assert.equal(resolveIntroPhase(35).id, 'VECTOR_THRUST');
+    assert.equal(resolveIntroPhase(72).id, 'TELEMETRY_SYNC');
+    assert.equal(resolveIntroPhase(98).id, 'READY_BURST');
+
+    // 3. Choreographed anime emblem states & subsystem readiness
+    const s0 = computeIntroSequenceState(0);
+    assert.equal(s0.mechaWingsDeployed, false);
+    assert.equal(s0.spearheadSlashed, false);
+    assert.equal(s0.hikariFlareActive, false);
+    assert.equal(s0.wordmarkLocked, false);
+    assert.equal(s0.isComplete, false);
+    assert.ok(s0.modules.every((m) => !m.isReady));
+
+    const s55 = computeIntroSequenceState(55);
+    assert.equal(s55.mechaWingsDeployed, true);
+    assert.equal(s55.spearheadSlashed, true);
+    assert.equal(s55.hikariFlareActive, true);
+    assert.equal(s55.wordmarkLocked, false);
+    assert.equal(s55.modules[0].isReady, true);
+    assert.equal(s55.modules[1].isReady, true);
+    assert.equal(s55.modules[2].isReady, false);
+
+    const s100 = computeIntroSequenceState(100);
+    assert.equal(s100.isComplete, true);
+    assert.equal(s100.wordmarkLocked, true);
+    assert.ok(s100.modules.every((m) => m.isReady));
+
+    // 4. ?autostart=1 and ?skipIntro=1 query parameter detection
+    assert.equal(shouldSkipIntroFromSearch(''), false);
+    assert.equal(shouldSkipIntroFromSearch('?foo=bar'), false);
+    assert.equal(shouldSkipIntroFromSearch('?autostart=1'), true);
+    assert.equal(shouldSkipIntroFromSearch('?skipIntro=true'), true);
   });
 });
+
 
 
 

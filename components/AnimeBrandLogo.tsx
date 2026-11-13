@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 interface AnimeBrandLogoProps {
   size?: 'sm' | 'md' | 'lg';
   showWordmark?: boolean;
+  onClick?: () => void;
 }
 
 /**
@@ -22,7 +23,8 @@ interface AnimeBrandLogoProps {
  */
 export function AnimeBrandLogo({
   size = 'md',
-  showWordmark = true }: AnimeBrandLogoProps) {
+  showWordmark = true,
+  onClick }: AnimeBrandLogoProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const dimensions =
@@ -40,9 +42,11 @@ export function AnimeBrandLogo({
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
+      onClick={onClick}
       whileTap={{ scale: 0.96 }}
       data-testid="anime-brand-logo"
       data-hovered={isHovered ? 'true' : 'false'}
+      title={onClick ? 'Attack Explorer — Click to replay anime entrance sequence' : undefined}
       className="inline-flex items-center gap-2.5 select-none group cursor-pointer shrink-0 py-0.5"
     >
       {/* Free-Standing Cel-Shaded Anime Vector Mark */}

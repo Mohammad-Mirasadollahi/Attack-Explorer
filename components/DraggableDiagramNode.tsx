@@ -215,7 +215,7 @@ export function DraggableDiagramNode({
       />
 
       <div
-        className={`mt-0.5 px-2.5 py-1.5 border rounded-lg shadow-xs transition-all w-[198px] max-w-[198px] overflow-hidden ${
+        className={`mt-0.5 px-2.5 py-1.5 border rounded-lg shadow-xs transition-all min-w-[168px] sm:min-w-[198px] w-[198px] max-w-[198px] overflow-hidden ${
           tacticalMode
             ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
             : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'

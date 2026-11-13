@@ -95,20 +95,27 @@ export function RawTablesView({
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Top Control Bar: Node Selector + Forensic Table Type Switcher */}
         <div className="bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-4 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+          <div className="flex flex-wrap items-center justify-between gap-3 min-w-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2
+                  title="Raw Forensic Tables & Captured Network Packets"
+                  className="text-sm font-semibold text-zinc-900 dark:text-white truncate min-w-0"
+                >
                   Raw Forensic Tables & Captured Network Packets
                 </h2>
                 <span
                   data-testid="raw-tables-env-badge"
-                  className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono text-[10px] font-bold"
+                  title={`${envProfile.badgeLabel} · ${envProfile.environmentTag}`}
+                  className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono text-[10px] font-bold shrink-0"
                 >
                   {envProfile.badgeLabel} · {envProfile.environmentTag}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              <p
+                title={`Inspecting Node: ${drillDown.nodeLabel} (${drillDown.nodeSublabel})`}
+                className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate"
+              >
                 Inspecting Node: {drillDown.nodeLabel} ({drillDown.nodeSublabel})
               </p>
             </div>
@@ -116,7 +123,7 @@ export function RawTablesView({
             {/* Node Filter Strip */}
             <div
               dir="ltr"
-              className="flex flex-wrap items-center gap-1.5"
+              className="flex flex-wrap items-center gap-1.5 min-w-0"
               role="group"
               aria-label="Select Node for Raw Tables"
             >
@@ -127,8 +134,9 @@ export function RawTablesView({
                     key={n.id}
                     type="button"
                     data-testid={`raw-table-node-btn-${n.chainOrder}`}
+                    title={`#${n.chainOrder} ${n.label} (${n.sublabel})`}
                     onClick={() => onSelectNode(n.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer whitespace-nowrap ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer whitespace-nowrap max-w-[220px] truncate ${
                       isSelected
                         ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-semibold shadow-2xs'
                         : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -335,27 +343,38 @@ export function RawTablesView({
             </div>
 
             {/* Host Process Table */}
-            <div className="bg-zinc-50/60 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-900 dark:text-white">
-                <ShieldAlert className="w-4 h-4 text-rose-600" />
-                <span>Host Process Tree Table</span>
+            <div className="bg-zinc-50/60 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-3 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-2 min-w-0 text-xs font-semibold text-zinc-900 dark:text-white">
+                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
+                <span className="truncate">Host Process Tree Table</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3" dir="ltr">
                 {scenario.processTree.map((pt) => (
                   <div
                     key={pt.pid}
-                    className="p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-1"
+                    className="p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-1 min-w-0 overflow-hidden"
                   >
-                    <div className="flex items-center justify-between text-xs font-mono font-semibold text-zinc-900 dark:text-white">
-                      <span>{pt.name}</span>
-                      <span className="text-rose-600 dark:text-rose-400 tabular-nums">
+                    <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono font-semibold text-zinc-900 dark:text-white">
+                      <span title={pt.name} className="truncate min-w-0">
+                        {pt.name}
+                      </span>
+                      <span
+                        title={`PID ${pt.pid}`}
+                        className="text-rose-600 dark:text-rose-400 tabular-nums shrink-0"
+                      >
                         PID {pt.pid}
                       </span>
                     </div>
-                    <div className="text-[11px] font-mono text-zinc-400 tabular-nums">
+                    <div
+                      title={`PPID ${pt.ppid} · ${pt.integrity}`}
+                      className="text-[11px] font-mono text-zinc-400 tabular-nums truncate"
+                    >
                       PPID {pt.ppid} · {pt.integrity}
                     </div>
-                    <div className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 break-all leading-snug pt-1">
+                    <div
+                      title={pt.commandLine}
+                      className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 truncate leading-snug pt-1"
+                    >
                       {pt.commandLine}
                     </div>
                   </div>

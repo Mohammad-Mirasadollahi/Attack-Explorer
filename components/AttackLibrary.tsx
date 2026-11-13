@@ -167,44 +167,58 @@ export function AttackLibrary({
                 return (
                   <article
                     key={item.scenarioId}
-                    className={`rounded-2xl border p-5 flex flex-col justify-between gap-4 transition-all ${
+                    className={`rounded-2xl border p-5 flex flex-col justify-between gap-4 transition-all min-w-0 overflow-hidden ${
                       isCurrent
                         ? 'border-indigo-500 bg-indigo-50/15 dark:bg-indigo-950/15'
                         : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-zinc-300 dark:hover:border-zinc-700'
                     }`}
                   >
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between gap-2 text-xs font-mono text-zinc-500">
-                        <span>
+                    <div className="space-y-2.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono text-zinc-500">
+                        <span
+                          title={`${item.code} · ${item.tacticName}`}
+                          className="truncate min-w-0"
+                        >
                           <strong className="text-zinc-900 dark:text-white">
                             {item.code}
                           </strong>{' '}
                           · {item.tacticName}
                         </span>
-                        <span className="text-rose-600 dark:text-rose-400 font-semibold">
+                        <span
+                          title={item.severity}
+                          className="text-rose-600 dark:text-rose-400 font-semibold shrink-0"
+                        >
                           {item.severity}
                         </span>
                       </div>
 
-                      <h3 className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug">
+                      <h3
+                        title={item.name}
+                        className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug truncate"
+                      >
                         {item.name}
                       </h3>
 
-                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
+                      <p
+                        title={item.overview}
+                        className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words"
+                      >
                         {item.overview}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 min-w-0">
                       <span
                         dir="ltr"
-                        className="text-[11px] font-mono text-zinc-400 break-words"
+                        title={`${item.stageCount} steps · ${item.logSources.join(' · ')}`}
+                        className="text-[11px] font-mono text-zinc-400 truncate min-w-0 flex-1"
                       >
                         {item.stageCount} steps · {item.logSources.join(' · ')}
                       </span>
 
                       <button
                         type="button"
+                        title={`Open Scenario: ${item.name}`}
                         onClick={() => handleLaunchScenario(item.scenarioId)}
                         className="flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-xs font-medium rounded-lg shrink-0 cursor-pointer whitespace-nowrap"
                       >

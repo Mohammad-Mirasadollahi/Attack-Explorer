@@ -56,14 +56,18 @@ export function ResponsiveMobileZonesView({
               className={`rounded-xl border border-dashed p-2 space-y-2 ${zone.bgTintClass}`}
             >
               {/* Compact Zone Header Badge */}
-              <div className="flex items-center justify-between gap-2 bg-white/95 dark:bg-zinc-900/95 px-2 py-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800">
+              <div className="flex items-center justify-between gap-2 min-w-0 bg-white/95 dark:bg-zinc-900/95 px-2 py-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800">
                 <span
+                  title={zone.code}
                   style={{ backgroundColor: zone.accentHex }}
                   className="px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded uppercase shrink-0"
                 >
                   {zone.code}
                 </span>
-                <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-100 break-words">
+                <span
+                  title={zone.title}
+                  className="text-[10px] font-bold text-zinc-800 dark:text-zinc-100 truncate min-w-0"
+                >
                   {zone.title}
                 </span>
               </div>
@@ -81,18 +85,20 @@ export function ResponsiveMobileZonesView({
                       key={node.id}
                       type="button"
                       whileTap={{ scale: 0.97 }}
+                      title={`${node.actionBadge} · ${node.label} (${node.sublabel})`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectNode(node);
                       }}
-                      className={`flex flex-col items-center text-center p-1.5 rounded-lg bg-white/95 dark:bg-zinc-900/95 border transition-all cursor-pointer ${
+                      className={`flex flex-col items-center text-center p-1.5 rounded-lg bg-white/95 dark:bg-zinc-900/95 border transition-all cursor-pointer min-w-0 overflow-hidden ${
                         isSelected
                           ? 'ring-1.5 ring-indigo-500 border-indigo-500 shadow-2xs'
                           : 'border-zinc-200/90 dark:border-zinc-800 hover:border-zinc-400'
                       }`}
                     >
                       <span
-                        className={`mb-0.5 px-1.5 py-0.2 text-[8.5px] font-medium border rounded-full whitespace-nowrap ${
+                        title={node.actionBadge}
+                        className={`mb-0.5 px-1.5 py-0.2 text-[8.5px] font-medium border rounded-full truncate max-w-full ${
                           node.iconType === 'MALWARE_PAYLOAD'
                             ? 'bg-rose-50 dark:bg-rose-950/90 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700'
                             : node.iconType === 'VICTIM_LAPTOP'
@@ -111,16 +117,23 @@ export function ResponsiveMobileZonesView({
                         isCompromised={node.isCompromised}
                       />
 
-                      <div className="mt-0.5 text-[10px] font-semibold text-zinc-900 dark:text-white leading-snug break-words max-w-full">
+                      <div
+                        title={node.label}
+                        className="mt-0.5 text-[10px] font-semibold text-zinc-900 dark:text-white leading-snug truncate w-full"
+                      >
                         {node.label}
                       </div>
-                      <div className="text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words max-w-full">
+                      <div
+                        title={node.sublabel}
+                        className="text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug truncate w-full"
+                      >
                         {node.sublabel}
                       </div>
                       {node.hostContext && (
                         <div
                           dir="ltr"
-                          className="mt-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[8px] font-medium text-zinc-700 dark:text-zinc-300 leading-snug break-words max-w-full"
+                          title={node.hostContext}
+                          className="mt-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[8px] font-medium text-zinc-700 dark:text-zinc-300 leading-snug truncate w-full"
                         >
                           {node.hostContext}
                         </div>
@@ -128,7 +141,8 @@ export function ResponsiveMobileZonesView({
                       {node.activitySummary && (
                         <div
                           dir="ltr"
-                          className="mt-0.5 text-[7.5px] text-zinc-500 dark:text-zinc-400 leading-snug break-words max-w-full"
+                          title={node.activitySummary}
+                          className="mt-0.5 text-[7.5px] text-zinc-500 dark:text-zinc-400 leading-snug truncate w-full"
                         >
                           {node.activitySummary}
                         </div>
@@ -140,7 +154,7 @@ export function ResponsiveMobileZonesView({
 
               {/* Active Packet Flows originating from this zone */}
               {zoneFlows.length > 0 && (
-                <div className="flex flex-wrap items-center justify-center gap-1 pt-0.5">
+                <div className="flex flex-wrap items-center justify-center gap-1 pt-0.5 min-w-0">
                   {zoneFlows.map((flow) => {
                     const isSelected =
                       selectedTelemetryId === flow.telemetryEvent.id;
@@ -148,29 +162,30 @@ export function ResponsiveMobileZonesView({
                       <button
                         key={flow.id}
                         type="button"
+                        title={`#${flow.sequenceCode || flow.stepNo} [S${flow.stageIndex}] · ${flow.initiatorLabel} ⇄ ${flow.targetLabel} | ${flow.forwardSeq}→ ${flow.label} · ⇠${flow.returnSeq} ${flow.returnLabel}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectTelemetry(flow.telemetryEvent);
                         }}
-                        className={`inline-flex flex-col items-start gap-0.5 px-2 py-1 text-[9px] font-mono rounded-md border transition-all cursor-pointer ${
+                        className={`inline-flex flex-col items-start gap-0.5 px-2 py-1 text-[9px] font-mono rounded-md border transition-all cursor-pointer max-w-full overflow-hidden ${
                           flow.isCurrentStep || isSelected
                             ? 'bg-rose-600 text-white border-slate-900'
                             : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700'
                         }`}
                       >
-                        <div className="flex items-center gap-1 font-bold">
+                        <div className="flex items-center gap-1 font-bold min-w-0 max-w-full">
                           <Radio className="w-2.5 h-2.5 text-amber-400 animate-pulse shrink-0" />
-                          <span>
+                          <span className="truncate">
                             #{flow.sequenceCode || flow.stepNo} [S{flow.stageIndex}] ·{' '}
                             {flow.initiatorLabel} ⇄ {flow.targetLabel}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[8px] opacity-90">
-                          <span>
+                        <div className="flex items-center gap-1.5 text-[8px] opacity-90 min-w-0 max-w-full">
+                          <span className="truncate">
                             {flow.forwardSeq}→ {flow.label}
                           </span>
-                          <span>·</span>
-                          <span>
+                          <span className="shrink-0">·</span>
+                          <span className="truncate">
                             ⇠{flow.returnSeq} {flow.returnLabel}
                           </span>
                         </div>

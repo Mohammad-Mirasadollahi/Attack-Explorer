@@ -31,10 +31,24 @@ import {
 import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
 import { AttackStepProgressBar } from './AttackStepProgressBar';
+import { AnimeIntroLoader } from './AnimeIntroLoader';
+import { shouldSkipIntroFromSearch } from '@/lib/intro-loader-sequence';
 
 export function AttackExplorerWorkbench() {
   // Strictly English-only interface
   const [isDark, setIsDark] = useState<boolean>(false);
+
+  // Minimal Anime Game-Style Entrance Loading Sequence State
+  const [showIntro, setShowIntro] = useState<boolean>(true);
+
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => {
+      if (shouldSkipIntroFromSearch(window.location.search)) {
+        setShowIntro(false);
+      }
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
 
   // Tactical Mode Grid Overlay & Diagram Legend State
   const [tacticalMode, setTacticalMode] = useState<boolean>(false);
@@ -285,9 +299,18 @@ export function AttackExplorerWorkbench() {
         data-testid="workbench-root"
         data-active-environment={activeEnvironment}
         data-tactical-mode={tacticalMode ? 'true' : 'false'}
+        data-intro-active={showIntro ? 'true' : 'false'}
+        onContextMenu={(e) => e.preventDefault()}
         dir="ltr"
         className="min-h-screen h-screen flex flex-col bg-[#F4F4F5]/60 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 overflow-hidden"
       >
+        {/* Minimal Anime Game-Style Entrance Loading Sequence */}
+        <AnimatePresence>
+          {showIntro && (
+            <AnimeIntroLoader onComplete={() => setShowIntro(false)} />
+          )}
+        </AnimatePresence>
+
         {/* Persistent Navigation Bar with Animated Logo, Navigation Links & Slide-Out Settings Drawer */}
         <AttackHeader
           scenario={activeScenario}
@@ -321,6 +344,7 @@ export function AttackExplorerWorkbench() {
           onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
           onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
           onOpenSourcesModal={() => setSourcesModalOpen(true)}
+          onReplayIntro={() => setShowIntro(true)}
         />
 
         {/* Visual Step-Indicator Progress Bar Synchronized with Animation State */}
@@ -331,7 +355,10 @@ export function AttackExplorerWorkbench() {
           onSelectStage={handleSelectStage}
         />
 
-        <main className="relative flex-1 flex min-h-0 overflow-hidden">
+        <main
+          onContextMenu={(e) => e.preventDefault()}
+          className="relative flex-1 flex min-h-0 overflow-hidden"
+        >
           {/* Mobile/Tablet Backdrop when a side drawer is open */}
           <AnimatePresence>
             {(sidebarOpen || inspectorOpen) && (

@@ -61,6 +61,7 @@ interface AttackHeaderProps {
   onOpenAttackLibrary: () => void;
   onOpenAnalyzerModal: () => void;
   onOpenSourcesModal?: () => void;
+  onReplayIntro?: () => void;
 }
 
 export function AttackHeader({
@@ -85,6 +86,7 @@ export function AttackHeader({
   onOpenAttackLibrary,
   onOpenAnalyzerModal,
   onOpenSourcesModal,
+  onReplayIntro,
 }: AttackHeaderProps) {
   const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
   const currentEnvProfile = getActiveEnvironmentProfile(activeEnvironment);
@@ -139,7 +141,7 @@ export function AttackHeader({
       >
         {/* Left Zone: Animated Logo + Scenarios Sidebar Toggle + Active Environment Indicator */}
         <div className="flex items-center gap-1.5 min-w-0 shrink-0">
-          <AnimeBrandLogo size="sm" showWordmark />
+          <AnimeBrandLogo size="sm" showWordmark onClick={onReplayIntro} />
 
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
 

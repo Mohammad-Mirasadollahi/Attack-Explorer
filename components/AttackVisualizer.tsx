@@ -35,6 +35,7 @@ import {
   NodeOffsetDelta,
   Point2D,
   recomputeGeometryForMovedBoard,
+  resolveCanvasHoldInteractionMode,
   WHITEBOARD_HEIGHT,
   WHITEBOARD_WIDTH,
 } from '@/lib/canvas-interaction-engine';
@@ -135,6 +136,8 @@ export function AttackVisualizer({
   const [interactionMode, setInteractionMode] =
     useState<CanvasInteractionMode>('PAN');
   const [isPanningCanvas, setIsPanningCanvas] = useState<boolean>(false);
+  const [isBoxSelectHoldActive, setIsBoxSelectHoldActive] =
+    useState<boolean>(false);
   const [isDraggingNodes, setIsDraggingNodes] = useState<boolean>(false);
   const [draggingZoneTitle, setDraggingZoneTitle] = useState<string | null>(
     null
@@ -451,19 +454,34 @@ export function AttackVisualizer({
     };
   }, [internalSubBoard, panOffset.x, panOffset.y]);
 
-  // Canvas Empty Space Pointer Down: Click-and-Drag Panning by default, or Shift+Drag / Box Select Mode for Marquee Selection
+  // Canvas Empty Space Pointer Down:
+  // - Left-Click & Hold (`button === 0`) -> Switches to Pan Page ('PAN') mode and pans canvas
+  // - Right-Click & Hold (`button === 2`) -> Switches to Box Select ('SELECT') mode and draws marquee selection box
   const handleBoardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0 && e.button !== 2) return;
+
       const targetEl = e.target as HTMLElement;
       if (
-        targetEl.closest('.canvas-interactive-node') ||
-        targetEl.closest('.canvas-interactive-zone') ||
-        targetEl.closest('.canvas-interactive-control') ||
-        targetEl.closest('button') ||
+        targetEl.closest('[data-testid="canvas-interaction-toolbar"]') ||
         targetEl.closest('[data-testid="diagram-legend-panel"]') ||
         targetEl.closest('[data-testid="playback-control-bar"]')
       ) {
         return;
+      }
+
+      if (
+        e.button === 0 &&
+        (targetEl.closest('.canvas-interactive-node') ||
+          targetEl.closest('.canvas-interactive-zone') ||
+          targetEl.closest('.canvas-interactive-control') ||
+          targetEl.closest('button'))
+      ) {
+        return;
+      }
+
+      if (e.button === 2) {
+        e.preventDefault();
       }
 
       const startClientX = e.clientX;
@@ -472,25 +490,49 @@ export function AttackVisualizer({
       const startPanY = panOffset.y;
       const startWb = clientToWhiteboardCoords(startClientX, startClientY);
 
-      const useMarqueeMode =
-        interactionMode === 'SELECT' ||
-        e.shiftKey ||
-        e.ctrlKey ||
-        e.metaKey;
+      const holdResolution = resolveCanvasHoldInteractionMode({
+        button: e.button,
+        shiftKey: e.shiftKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+      });
 
+      const useMarqueeMode = holdResolution.useMarqueeSelection;
       let hasMoved = false;
+      let holdActivated = false;
 
-      if (!useMarqueeMode) {
-        setIsPanningCanvas(true);
-      }
+      const activateHoldMode = () => {
+        if (holdActivated) return;
+        holdActivated = true;
+        setInteractionMode(holdResolution.mode);
+        if (useMarqueeMode) {
+          setIsBoxSelectHoldActive(true);
+          setIsPanningCanvas(false);
+          setMarqueeBox((prev) =>
+            prev ?? {
+              startWx: startWb.wx,
+              startWy: startWb.wy,
+              currentWx: startWb.wx,
+              currentWy: startWb.wy,
+            }
+          );
+        } else {
+          setIsPanningCanvas(true);
+          setIsBoxSelectHoldActive(false);
+        }
+      };
+
+      // Trigger mode switch when mouse button is held down
+      const holdTimer = window.setTimeout(activateHoldMode, 110);
 
       const handleWindowPointerMove = (moveEvent: PointerEvent) => {
         const dx = moveEvent.clientX - startClientX;
         const dy = moveEvent.clientY - startClientY;
         const dist = Math.hypot(dx, dy);
 
-        if (!hasMoved && dist >= 3) {
+        if (!hasMoved && dist >= 2.5) {
           hasMoved = true;
+          activateHoldMode();
         }
 
         if (!useMarqueeMode && hasMoved) {
@@ -498,7 +540,7 @@ export function AttackVisualizer({
           const nextY = Math.round(startPanY + dy);
           setPanOffset({ x: nextX, y: nextY });
           canvasControllerRef.current?.setTransform(nextX, nextY, manualZoom);
-        } else if (useMarqueeMode && hasMoved) {
+        } else if (useMarqueeMode && (hasMoved || holdActivated)) {
           const curWb = clientToWhiteboardCoords(
             moveEvent.clientX,
             moveEvent.clientY
@@ -510,29 +552,43 @@ export function AttackVisualizer({
             currentWy: curWb.wy,
           };
           setMarqueeBox(nextMarquee);
-          const hitIds = computeMarqueeSelectedNodeIds(activeNodes, nextMarquee);
-          setMultiSelectedNodeIds(hitIds);
+          if (hasMoved) {
+            const hitIds = computeMarqueeSelectedNodeIds(
+              activeNodes,
+              nextMarquee
+            );
+            setMultiSelectedNodeIds(hitIds);
+          }
         }
       };
 
       const handleWindowPointerUp = () => {
+        window.clearTimeout(holdTimer);
         window.removeEventListener('pointermove', handleWindowPointerMove);
         window.removeEventListener('pointerup', handleWindowPointerUp);
+        window.removeEventListener('pointercancel', handleWindowPointerUp);
         setIsPanningCanvas(false);
+        setIsBoxSelectHoldActive(false);
         setMarqueeBox(null);
 
-        if (!hasMoved && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        if (
+          e.button === 0 &&
+          !hasMoved &&
+          !e.shiftKey &&
+          !e.ctrlKey &&
+          !e.metaKey
+        ) {
           setMultiSelectedNodeIds([]);
         }
       };
 
       window.addEventListener('pointermove', handleWindowPointerMove);
       window.addEventListener('pointerup', handleWindowPointerUp);
+      window.addEventListener('pointercancel', handleWindowPointerUp);
     },
     [
       activeNodes,
       clientToWhiteboardCoords,
-      interactionMode,
       manualZoom,
       panOffset.x,
       panOffset.y,
@@ -832,7 +888,7 @@ export function AttackVisualizer({
           data-testid="canvas-mode-select-btn"
           aria-pressed={interactionMode === 'SELECT'}
           onClick={() => setInteractionMode('SELECT')}
-          title="Windows-Style Box Select & Drag Objects (Hold on page 0.2s to Pan)"
+          title="Box Select Mode (Hold Right-Click & Drag on Canvas to Box Select)"
           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer ${
             interactionMode === 'SELECT'
               ? 'bg-indigo-600 text-white shadow-2xs'
@@ -840,7 +896,7 @@ export function AttackVisualizer({
           }`}
         >
           <MousePointer className="w-3 h-3 shrink-0" />
-          <span>Box Select</span>
+          <span className="truncate">Box Select</span>
         </button>
 
         <button
@@ -848,7 +904,7 @@ export function AttackVisualizer({
           data-testid="canvas-mode-pan-btn"
           aria-pressed={interactionMode === 'PAN'}
           onClick={() => setInteractionMode('PAN')}
-          title="Pan / Move Page with Mouse Drag (Shift+Drag to Box Select)"
+          title="Pan Page Mode (Hold Left-Click & Drag on Canvas to Pan Page)"
           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer ${
             interactionMode === 'PAN'
               ? 'bg-indigo-600 text-white shadow-2xs'
@@ -856,7 +912,7 @@ export function AttackVisualizer({
           }`}
         >
           <Hand className="w-3 h-3 shrink-0" />
-          <span>Pan Page</span>
+          <span className="truncate">Pan Page</span>
         </button>
       </div>
 
@@ -1101,26 +1157,35 @@ export function AttackVisualizer({
             )}
           </AnimatePresence>
 
-          {/* Panning or Zone Moving Active Indicator Pill */}
+          {/* Panning, Box Selecting, or Zone Moving Active Indicator Pill */}
           <AnimatePresence>
-            {(isPanningCanvas || draggingZoneTitle) && (
+            {(isPanningCanvas || isBoxSelectHoldActive || draggingZoneTitle) && (
               <motion.div
                 key="panning-active-hud"
                 data-testid="canvas-panning-hud"
                 initial={{ opacity: 0, y: -8, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-mono font-bold shadow-lg flex items-center gap-1.5"
+                className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-mono font-bold shadow-lg flex items-center gap-1.5 max-w-[90%]"
               >
                 {draggingZoneTitle ? (
                   <>
-                    <Move className="w-3.5 h-3.5" />
-                    <span>Moving Network Zone: {draggingZoneTitle}</span>
+                    <Move className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      Moving Network Zone: {draggingZoneTitle}
+                    </span>
+                  </>
+                ) : isBoxSelectHoldActive ? (
+                  <>
+                    <MousePointer className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      Box Select Active ({multiSelectedNodeIds.length} selected)
+                    </span>
                   </>
                 ) : (
                   <>
-                    <Hand className="w-3.5 h-3.5" />
-                    <span>
+                    <Hand className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
                       Panning Canvas ({panOffset.x}px, {panOffset.y}px)
                     </span>
                   </>
@@ -1140,34 +1205,58 @@ export function AttackVisualizer({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -12, scale: 0.96 }}
                 transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-                className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-xl rounded-xl bg-slate-950/92 text-white border border-rose-500/50 shadow-2xl px-4 py-2.5 backdrop-blur-md"
+                className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-xl min-w-[260px] rounded-xl bg-slate-950/92 text-white border border-rose-500/50 shadow-2xl px-4 py-2.5 backdrop-blur-md overflow-hidden"
               >
-                <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-rose-400 uppercase tracking-wider">
-                  <span className="inline-flex items-center gap-1.5 font-bold">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>
+                <div className="flex items-center justify-between gap-2 min-w-0 text-[10px] font-mono text-rose-400 uppercase tracking-wider">
+                  <span
+                    title={
+                      director.phase === 'INTRO_SURVEY'
+                        ? 'SCENARIO BRIEFING · FULL TOPOLOGY SURVEY'
+                        : 'CAMERA LOCKING ON ATTACK ORIGIN'
+                    }
+                    className="inline-flex items-center gap-1.5 font-bold min-w-0 truncate"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="truncate">
                       {director.phase === 'INTRO_SURVEY'
                         ? 'SCENARIO BRIEFING · FULL TOPOLOGY SURVEY'
                         : 'CAMERA LOCKING ON ATTACK ORIGIN'}
                     </span>
                   </span>
-                  <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span
+                    title={scenario.code}
+                    className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0"
+                  >
                     {scenario.code}
                   </span>
                 </div>
-                <div className="mt-1 text-xs sm:text-sm font-bold text-white break-words">
+                <div
+                  title={scenario.name}
+                  className="mt-1 text-xs sm:text-sm font-bold text-white truncate"
+                >
                   {scenario.name}
                 </div>
-                <div className="mt-0.5 text-[11px] text-slate-300 leading-snug break-words">
+                <div
+                  title={scenario.overview}
+                  className="mt-0.5 text-[11px] text-slate-300 leading-snug break-words"
+                >
                   {scenario.overview}
                 </div>
                 {director.originNode && director.finalNode && (
-                  <div className="mt-1.5 pt-1.5 border-t border-slate-800 flex items-center justify-between text-[10px] font-mono text-amber-300">
-                    <span>START: {director.originNode.label}</span>
-                    <span className="text-rose-400">
+                  <div className="mt-1.5 pt-1.5 border-t border-slate-800 flex items-center justify-between gap-2 min-w-0 text-[10px] font-mono text-amber-300">
+                    <span
+                      title={`START: ${director.originNode.label}`}
+                      className="truncate min-w-0"
+                    >
+                      START: {director.originNode.label}
+                    </span>
+                    <span className="text-rose-400 shrink-0">
                       ── {scenario.stages.length} STAGES ──▶
                     </span>
-                    <span className="text-emerald-400">
+                    <span
+                      title={`END: ${director.finalNode.label}`}
+                      className="text-emerald-400 truncate min-w-0"
+                    >
                       END: {director.finalNode.label}
                     </span>
                   </div>
@@ -1290,7 +1379,7 @@ export function AttackVisualizer({
           {/* 4. Animated Board Switcher Wrapped in CanvasController (react-zoom-pan-pinch) */}
           <CanvasController
             ref={canvasControllerRef}
-            panningEnabled={interactionMode === 'PAN'}
+            panningEnabled={interactionMode === 'PAN' && !isBoxSelectHoldActive}
             wheelZoomEnabled={true}
             onTransformChange={({ scale, positionX, positionY }) => {
               setManualZoom(scale);
@@ -1470,29 +1559,46 @@ export function AttackVisualizer({
                           left: `${(director.activeCallout.wx / 1480) * 100}%`,
                           top: `${(director.activeCallout.wy / 650) * 100}%`,
                         }}
-                        className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
+                        className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 min-w-[240px] max-w-[300px] rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 overflow-hidden ${
                           director.activeCallout.placement === 'TOP'
                             ? '-translate-y-[calc(100%+58px)]'
                             : 'translate-y-[58px]'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-1.5 text-[9.5px] font-mono">
-                          <span className="inline-flex items-center gap-1 font-bold text-amber-300">
-                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                            <span>{director.activeCallout.stepBadge}</span>
+                        <div className="flex items-center justify-between gap-1.5 min-w-0 text-[9.5px] font-mono">
+                          <span
+                            title={director.activeCallout.stepBadge}
+                            className="inline-flex items-center gap-1 font-bold text-amber-300 truncate min-w-0"
+                          >
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+                            <span className="truncate">
+                              {director.activeCallout.stepBadge}
+                            </span>
                           </span>
                         </div>
-                        <div className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words">
+                        <div
+                          title={director.activeCallout.headline}
+                          className="mt-0.5 text-[11px] font-extrabold text-white leading-snug truncate"
+                        >
                           {director.activeCallout.headline}
                         </div>
-                        <div className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words">
+                        <div
+                          title={director.activeCallout.detail}
+                          className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words"
+                        >
                           {director.activeCallout.detail}
                         </div>
-                        <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 text-[9px] font-mono">
-                          <span className="text-rose-400 font-bold break-all">
+                        <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 min-w-0 text-[9px] font-mono">
+                          <span
+                            title={director.activeCallout.forwardTag}
+                            className="text-rose-400 font-bold truncate max-w-full"
+                          >
                             {director.activeCallout.forwardTag}
                           </span>
-                          <span className="text-emerald-400 font-bold break-all">
+                          <span
+                            title={director.activeCallout.returnTag}
+                            className="text-emerald-400 font-bold truncate max-w-full"
+                          >
                             {director.activeCallout.returnTag}
                           </span>
                         </div>
@@ -1664,25 +1770,35 @@ export function AttackVisualizer({
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             onClick={(e) => e.stopPropagation()}
             data-testid="internal-subnode-inspector-bar"
-            className="relative z-20 px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1.5 shrink-0"
+            className="relative z-20 px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1.5 shrink-0 min-w-0 overflow-hidden"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                <span className="font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+            <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 min-w-0 text-xs text-zinc-500 dark:text-zinc-400">
+                <span
+                  title={activeInternalSubNode.actionBadge}
+                  className="font-mono font-semibold text-indigo-600 dark:text-indigo-400 truncate max-w-[180px]"
+                >
                   {activeInternalSubNode.actionBadge}
                 </span>
                 <span aria-hidden="true">·</span>
-                <span className="font-semibold text-zinc-900 dark:text-white">
+                <span
+                  title={activeInternalSubNode.label}
+                  className="font-semibold text-zinc-900 dark:text-white truncate max-w-[220px]"
+                >
                   {activeInternalSubNode.label}
                 </span>
                 <span aria-hidden="true">·</span>
-                <span className="font-mono text-[11px]">
+                <span
+                  title={activeInternalSubNode.sublabel}
+                  className="font-mono text-[11px] truncate max-w-[200px]"
+                >
                   {activeInternalSubNode.sublabel}
                 </span>
                 {activeInternalSubNode.hostContext && (
                   <span
                     data-testid="internal-dock-host-context"
-                    className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10.5px] font-medium border border-indigo-200/80 dark:border-indigo-800/70"
+                    title={activeInternalSubNode.hostContext}
+                    className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10.5px] font-medium border border-indigo-200/80 dark:border-indigo-800/70 truncate max-w-[260px]"
                   >
                     {activeInternalSubNode.hostContext}
                   </span>
@@ -1690,7 +1806,7 @@ export function AttackVisualizer({
               </div>
 
               <div
-                className="flex flex-wrap items-center gap-1"
+                className="flex flex-wrap items-center gap-1 min-w-0"
                 role="group"
                 aria-label="Internal Communication Links"
               >
@@ -1701,18 +1817,21 @@ export function AttackVisualizer({
                       key={fl.id}
                       type="button"
                       data-testid={`internal-link-pill-${fl.stepNo}`}
+                      title={`#${fl.sequenceCode} (${fl.forwardSeq}→ ${fl.label} · ⇠${fl.returnSeq} ${fl.returnLabel})`}
                       onClick={() => {
                         setSelectedInternalSubNodeId(fl.toNodeId);
                         onSelectTelemetry(fl.telemetryEvent);
                       }}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono border transition-colors cursor-pointer whitespace-nowrap ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono border transition-colors cursor-pointer whitespace-nowrap max-w-[240px] ${
                         isFlowSelected
                           ? 'bg-rose-600 text-white border-rose-600 font-semibold'
                           : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                       }`}
                     >
-                      <span className="font-bold">#{fl.sequenceCode}</span>
-                      <span>
+                      <span className="font-bold shrink-0">
+                        #{fl.sequenceCode}
+                      </span>
+                      <span className="truncate">
                         ({fl.forwardSeq}→ {fl.label} · ⇠{fl.returnSeq})
                       </span>
                     </button>
@@ -1721,7 +1840,10 @@ export function AttackVisualizer({
               </div>
             </div>
 
-            <p className="w-full text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+            <p
+              title={activeInternalSubNode.internalSummary}
+              className="w-full text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words"
+            >
               {activeInternalSubNode.internalSummary}
             </p>
           </motion.div>

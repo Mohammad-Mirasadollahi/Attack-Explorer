@@ -40,17 +40,26 @@ export function SequenceView({
         {/* Active Environment Architecture Banner */}
         <div
           data-testid="sequence-env-banner"
-          className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs"
+          className="flex items-center justify-between gap-3 min-w-0 px-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs overflow-hidden"
         >
-          <div className="flex items-center gap-2 font-mono">
-            <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10.5px]">
+          <div className="flex items-center gap-2 font-mono min-w-0">
+            <span
+              title={envProfile.badgeLabel}
+              className="px-2 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10.5px] shrink-0"
+            >
               {envProfile.badgeLabel}
             </span>
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+            <span
+              title={envProfile.architectureHeadline}
+              className="font-semibold text-zinc-800 dark:text-zinc-200 truncate min-w-0"
+            >
               {envProfile.architectureHeadline}
             </span>
           </div>
-          <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span
+            title={`${envProfile.environmentTag} · ${envProfile.primaryHostname} (${envProfile.subnetBadge})`}
+            className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate shrink-0 max-w-[45%]"
+          >
             {envProfile.environmentTag} · {envProfile.primaryHostname} (
             {envProfile.subnetBadge})
           </span>
@@ -67,13 +76,15 @@ export function SequenceView({
             return (
               <div
                 key={node.id}
-                className="flex flex-col items-center text-center px-2 space-y-1"
+                title={`Node ${nIdx + 1}: ${node.label} (${node.sublabel})`}
+                className="flex flex-col items-center text-center px-2 space-y-1 min-w-0 overflow-hidden"
               >
-                <span className="text-[10.5px] font-mono text-zinc-400 tabular-nums">
+                <span className="text-[10.5px] font-mono text-zinc-400 tabular-nums truncate w-full">
                   Node {nIdx + 1}
                 </span>
                 <span
-                  className={`text-xs font-semibold ${
+                  title={node.label}
+                  className={`text-xs font-semibold truncate w-full ${
                     isCompromised || node.role === 'attacker'
                       ? 'text-rose-600 dark:text-rose-400'
                       : 'text-zinc-900 dark:text-zinc-100'
@@ -81,7 +92,10 @@ export function SequenceView({
                 >
                   {node.label}
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
+                <span
+                  title={node.sublabel}
+                  className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums truncate w-full"
+                >
                   {node.sublabel}
                 </span>
               </div>
@@ -122,13 +136,14 @@ export function SequenceView({
               >
                 {/* Clean Stage Header */}
                 <div
-                  className={`flex items-center justify-between px-4 py-2 text-xs rounded-xl border ${
+                  title={`Stage ${st.index} · ${st.title} (${st.mitreTechniqueId})`}
+                  className={`flex items-center justify-between min-w-0 px-4 py-2 text-xs rounded-xl border ${
                     isCurrentStage
                       ? 'bg-indigo-50/90 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 font-semibold'
                       : 'bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800'
                   }`}
                 >
-                  <span className="font-mono">
+                  <span className="font-mono truncate min-w-0">
                     Stage {st.index} · {st.title} ({st.mitreTechniqueId})
                   </span>
                 </div>
@@ -171,48 +186,63 @@ export function SequenceView({
                           style={{
                             marginLeft: `${leftPct}%`,
                             width: `${widthPct}%` }}
-                          className={`relative flex flex-col p-3.5 rounded-xl border transition-all space-y-2.5 ${
+                          className={`relative flex flex-col min-w-[200px] sm:min-w-[260px] p-3.5 rounded-xl border transition-all space-y-2.5 overflow-hidden ${
                             isSelected
                               ? 'bg-white dark:bg-zinc-900 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm'
                               : 'bg-white/95 dark:bg-zinc-900/95 border-zinc-200/90 dark:border-zinc-800 group-hover:border-zinc-400 dark:group-hover:border-zinc-700'
                           }`}
                         >
                           {/* Request Row */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between gap-2 text-xs font-mono">
-                              <span className="inline-flex items-center gap-1.5 font-semibold text-rose-600 dark:text-rose-400">
-                                <span>#{traceMeta.forwardSeq}</span>
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono">
+                              <span
+                                title={`#${traceMeta.forwardSeq} ${ev.shortAction}`}
+                                className="inline-flex items-center gap-1.5 font-semibold text-rose-600 dark:text-rose-400 min-w-0 truncate"
+                              >
+                                <span className="shrink-0">#{traceMeta.forwardSeq}</span>
                                 {isLeftToRight ? (
-                                  <ArrowRight className="w-3.5 h-3.5" />
+                                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                                 ) : (
-                                  <ArrowLeft className="w-3.5 h-3.5" />
+                                  <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
                                 )}
-                                <span>{ev.shortAction}</span>
+                                <span className="truncate">{ev.shortAction}</span>
                               </span>
-                              <span className="text-[11px] text-zinc-400 tabular-nums">
+                              <span
+                                title={`${ev.protocolOrEventId} · ${ev.timestamp}`}
+                                className="text-[11px] text-zinc-400 tabular-nums truncate shrink-0"
+                              >
                                 {ev.protocolOrEventId} · {ev.timestamp}
                               </span>
                             </div>
 
                             <div className="h-0.5 w-full bg-rose-500/70 rounded-full" />
 
-                            <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 break-words leading-snug">
+                            <div
+                              title={ev.info}
+                              className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 break-words leading-snug"
+                            >
                               {ev.info}
                             </div>
                           </div>
 
                           {/* Response Row */}
-                          <div className="pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
-                            <span className="inline-flex items-center gap-1.5 font-medium">
-                              <span>#{traceMeta.returnSeq}</span>
+                          <div className="pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2 min-w-0 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+                            <span
+                              title={`#${traceMeta.returnSeq} ${traceMeta.returnLabel}`}
+                              className="inline-flex items-center gap-1.5 font-medium min-w-0 truncate"
+                            >
+                              <span className="shrink-0">#{traceMeta.returnSeq}</span>
                               {isLeftToRight ? (
-                                <ArrowLeft className="w-3.5 h-3.5" />
+                                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
                               ) : (
-                                <ArrowRight className="w-3.5 h-3.5" />
+                                <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                               )}
-                              <span>{traceMeta.returnLabel}</span>
+                              <span className="truncate">{traceMeta.returnLabel}</span>
                             </span>
-                            <span className="text-zinc-400">
+                            <span
+                              title={`${ev.targetLabel} ⇠ ${ev.sourceLabel}`}
+                              className="text-zinc-400 truncate shrink-0 max-w-[45%]"
+                            >
                               {ev.targetLabel} ⇠ {ev.sourceLabel}
                             </span>
                           </div>
