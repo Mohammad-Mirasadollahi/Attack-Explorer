@@ -9,6 +9,7 @@ import {
   ActiveEnvironmentId,
   ComputedStageView,
   DEFAULT_ACTIVE_ENVIRONMENT } from '@/lib/simulation-engine';
+import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import { AttackVisualizer } from './AttackVisualizer';
 import { SequenceView } from './canvas/SequenceView';
@@ -50,6 +51,13 @@ interface DiagramCanvasProps {
   shortcutsModalOpen?: boolean;
   onOpenShortcutsModal?: () => void;
   onCloseShortcutsModal?: () => void;
+  nodeSearchQuery?: string;
+  onNodeSearchQueryChange?: (query: string) => void;
+  focusedSearchNodeId?: string | null;
+  focusSearchSeq?: number;
+  autoLayoutTriggerSeq?: number;
+  onAutoLayoutActiveChange?: (isActive: boolean) => void;
+  onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
 }
 
 export function DiagramCanvas({
@@ -81,6 +89,13 @@ export function DiagramCanvas({
   shortcutsModalOpen = false,
   onOpenShortcutsModal,
   onCloseShortcutsModal,
+  nodeSearchQuery = '',
+  onNodeSearchQueryChange,
+  focusedSearchNodeId = null,
+  focusSearchSeq = 0,
+  autoLayoutTriggerSeq = 0,
+  onAutoLayoutActiveChange,
+  onActiveNodesChange,
 }: DiagramCanvasProps) {
   return (
     <motion.div
@@ -120,6 +135,13 @@ export function DiagramCanvas({
           shortcutsModalOpen={shortcutsModalOpen}
           onOpenShortcutsModal={onOpenShortcutsModal}
           onCloseShortcutsModal={onCloseShortcutsModal}
+          nodeSearchQuery={nodeSearchQuery}
+          onNodeSearchQueryChange={onNodeSearchQueryChange}
+          focusedSearchNodeId={focusedSearchNodeId}
+          focusSearchSeq={focusSearchSeq}
+          autoLayoutTriggerSeq={autoLayoutTriggerSeq}
+          onAutoLayoutActiveChange={onAutoLayoutActiveChange}
+          onActiveNodesChange={onActiveNodesChange}
         />
       )}
 

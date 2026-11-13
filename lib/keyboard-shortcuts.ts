@@ -15,6 +15,7 @@ export type ShortcutCommandId =
   | 'ZOOM_IN'
   | 'ZOOM_OUT'
   | 'RESET_CANVAS'
+  | 'AUTO_LAYOUT_NODES'
   | 'WHEEL_ZOOM'
   | 'PAN_DIRECTIONAL'
   | 'PAN_UP'
@@ -186,6 +187,16 @@ export const KEYBOARD_SHORTCUT_ITEMS: KeyboardShortcutItem[] = [
     keys: ['0'],
     secondaryKeys: ['R'],
     badge: '100% DEFAULT',
+    canTriggerFromOverlay: true,
+  },
+  {
+    id: 'AUTO_LAYOUT_NODES',
+    category: 'CANVAS_NAVIGATION',
+    title: 'Force-Directed Auto-Layout',
+    description:
+      'Automatically organize attack graph nodes using Coulomb repulsion and Hooke spring forces for maximum readability',
+    keys: ['A'],
+    badge: 'FORCE LAYOUT',
     canTriggerFromOverlay: true,
   },
   {
@@ -416,7 +427,8 @@ export function resolveKeyboardShortcutCommand(
   if (key === 'ArrowLeft') return 'PAN_LEFT';
   if (key === 'ArrowRight') return 'PAN_RIGHT';
 
-  // Camera, Tactical, Legend & Minimap Toggles
+  // Camera, Tactical, Legend, Minimap & Force-Directed Auto-Layout Toggles
+  if (lower === 'a') return 'AUTO_LAYOUT_NODES';
   if (lower === 'c') return 'TOGGLE_AUTOCAM';
   if (lower === 't') return 'TOGGLE_TACTICAL';
   if (lower === 'l') return 'TOGGLE_LEGEND';

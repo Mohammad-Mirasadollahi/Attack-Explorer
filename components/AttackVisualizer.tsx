@@ -26,8 +26,11 @@ import {
 import {
   applyNodePositionOffsets,
   applyZonePositionOffsets,
+  computeForceDirectedNodeLayout,
   computeMarqueeSelectedNodeIds,
+  computePanFromMinimapPoint,
   computeScrollWheelZoom,
+  ForceLayoutPresetMode,
   MarqueeBoxCoords,
   MAX_CANVAS_ZOOM,
   MIN_CANVAS_ZOOM,
@@ -36,6 +39,7 @@ import {
   Point2D,
   recomputeGeometryForMovedBoard,
   resolveCanvasHoldInteractionMode,
+  searchAttackGraphNodes,
   WHITEBOARD_HEIGHT,
   WHITEBOARD_WIDTH,
 } from '@/lib/canvas-interaction-engine';
@@ -76,8 +80,10 @@ import {
   MousePointer,
   Move,
   RotateCcw,
+  Search,
   Server,
   Sparkles,
+  X,
 } from 'lucide-react';
 
 export interface AttackVisualizerProps {
@@ -108,6 +114,13 @@ export interface AttackVisualizerProps {
   shortcutsModalOpen?: boolean;
   onOpenShortcutsModal?: () => void;
   onCloseShortcutsModal?: () => void;
+  nodeSearchQuery?: string;
+  onNodeSearchQueryChange?: (query: string) => void;
+  focusedSearchNodeId?: string | null;
+  focusSearchSeq?: number;
+  autoLayoutTriggerSeq?: number;
+  onAutoLayoutActiveChange?: (isActive: boolean) => void;
+  onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
 }
 
 interface PortalAnimationState {
@@ -146,6 +159,13 @@ export function AttackVisualizer({
   shortcutsModalOpen = false,
   onOpenShortcutsModal,
   onCloseShortcutsModal,
+  nodeSearchQuery = '',
+  onNodeSearchQueryChange,
+  focusedSearchNodeId = null,
+  focusSearchSeq = 0,
+  autoLayoutTriggerSeq = 0,
+  onAutoLayoutActiveChange,
+  onActiveNodesChange,
 }: AttackVisualizerProps) {
   const { currentStage } = stageView;
   const activeStageIndex = currentStage ? currentStage.index : 0;
@@ -180,6 +200,14 @@ export function AttackVisualizer({
   const [topBarHidden, setTopBarHidden] = useState<boolean>(false);
   const [bottomDockHidden, setBottomDockHidden] = useState<boolean>(false);
   const [minimapHidden, setMinimapHidden] = useState<boolean>(false);
+
+  // Force-Directed Auto-Layout state per board scope
+  const [autoLayoutModeByScope, setAutoLayoutModeByScope] = useState<
+    Record<string, ForceLayoutPresetMode | null>
+  >({});
+  const [isAutoLayoutAnimating, setIsAutoLayoutAnimating] =
+    useState<boolean>(false);
+  const autoLayoutTimerRef = useRef<number | null>(null);
 
   const [autoCameraEnabled, setAutoCameraEnabled] = useState<boolean>(true);
   const [activeSketchNodeId, setActiveSketchNodeId] = useState<string | null>(
@@ -408,10 +436,33 @@ export function AttackVisualizer({
   const effectiveTxPct = autoCameraEnabled ? director.camera.txPct : 0;
   const effectiveTyPct = autoCameraEnabled ? director.camera.tyPct : 0;
 
+  const activeAutoLayoutMode = autoLayoutModeByScope[boardScopeKey] || null;
+  const isAutoLayoutActive = activeAutoLayoutMode !== null;
+
+  // Sync active nodes and auto-layout status upward to the Top Workbench Toolbar
+  useEffect(() => {
+    onActiveNodesChange?.(activeNodes);
+  }, [activeNodes, onActiveNodesChange]);
+
+  useEffect(() => {
+    onAutoLayoutActiveChange?.(isAutoLayoutActive);
+  }, [isAutoLayoutActive, onAutoLayoutActiveChange]);
+
+  const searchResult = useMemo(
+    () => searchAttackGraphNodes(activeNodes, nodeSearchQuery),
+    [activeNodes, nodeSearchQuery]
+  );
+
+  const matchedNodeIdSet = useMemo(
+    () => new Set(searchResult.matchedNodeIds),
+    [searchResult.matchedNodeIds]
+  );
+
   const hasCustomLayoutOrView =
     manualZoom !== 1 ||
     panOffset.x !== 0 ||
     panOffset.y !== 0 ||
+    isAutoLayoutActive ||
     Object.keys(currentBoardNodeOffsets).length > 0 ||
     Object.keys(currentBoardZoneOffsets).length > 0;
 
@@ -433,7 +484,125 @@ export function AttackVisualizer({
       delete next[boardScopeKey];
       return next;
     });
+    setAutoLayoutModeByScope((prev) => {
+      const next = { ...prev };
+      delete next[boardScopeKey];
+      return next;
+    });
   }, [boardScopeKey]);
+
+  const handleAutoLayoutNodes = useCallback(() => {
+    const baseNodes = rawInternalSubBoard
+      ? rawInternalSubBoard.subNodes
+      : rawSketchNodes;
+    const baseFlows = rawInternalSubBoard
+      ? rawInternalSubBoard.subFlows
+      : rawSketchFlows;
+    const baseZones = rawInternalSubBoard
+      ? rawInternalSubBoard.zones
+      : scenarioZones;
+
+    const currentPreset = autoLayoutModeByScope[boardScopeKey];
+    const nextPreset: ForceLayoutPresetMode =
+      currentPreset === 'BALANCED' ? 'SPACIOUS' : 'BALANCED';
+
+    const layoutResult = computeForceDirectedNodeLayout({
+      nodes: baseNodes,
+      flows: baseFlows,
+      zones: baseZones,
+      mode: nextPreset,
+    });
+
+    if (autoLayoutTimerRef.current !== null) {
+      window.clearTimeout(autoLayoutTimerRef.current);
+    }
+    setIsAutoLayoutAnimating(true);
+    autoLayoutTimerRef.current = window.setTimeout(() => {
+      setIsAutoLayoutAnimating(false);
+      autoLayoutTimerRef.current = null;
+    }, 560);
+
+    setNodeOffsetsByScenario((prev) => ({
+      ...prev,
+      [boardScopeKey]: layoutResult.nodeOffsets,
+    }));
+    setZoneOffsetsByScenario((prev) => {
+      const next = { ...prev };
+      delete next[boardScopeKey];
+      return next;
+    });
+    setAutoLayoutModeByScope((prev) => ({
+      ...prev,
+      [boardScopeKey]: nextPreset,
+    }));
+
+    // Frame the newly organized graph cleanly
+    manualZoomRef.current = 1;
+    panOffsetRef.current = { x: 0, y: 0 };
+    setManualZoom(1);
+    setPanOffset({ x: 0, y: 0 });
+    canvasControllerRef.current?.setTransform(0, 0, 1, 220);
+  }, [
+    autoLayoutModeByScope,
+    boardScopeKey,
+    rawInternalSubBoard,
+    rawSketchFlows,
+    rawSketchNodes,
+    scenarioZones,
+  ]);
+
+  // Trigger Force-Directed Auto-Layout when clicked from Top Workbench Toolbar
+  const lastProcessedAutoLayoutSeqRef = useRef<number>(autoLayoutTriggerSeq);
+  useEffect(() => {
+    if (
+      autoLayoutTriggerSeq > 0 &&
+      autoLayoutTriggerSeq !== lastProcessedAutoLayoutSeqRef.current
+    ) {
+      lastProcessedAutoLayoutSeqRef.current = autoLayoutTriggerSeq;
+      const rafId = window.requestAnimationFrame(() => {
+        handleAutoLayoutNodes();
+      });
+      return () => window.cancelAnimationFrame(rafId);
+    }
+  }, [autoLayoutTriggerSeq, handleAutoLayoutNodes]);
+
+  // Center & Focus node when selected from Top Workbench Toolbar Search Bar
+  const lastProcessedFocusSeqRef = useRef<number>(focusSearchSeq);
+  useEffect(() => {
+    if (
+      focusSearchSeq > 0 &&
+      focusSearchSeq !== lastProcessedFocusSeqRef.current &&
+      focusedSearchNodeId
+    ) {
+      lastProcessedFocusSeqRef.current = focusSearchSeq;
+      const targetNode = activeNodes.find((n) => n.id === focusedSearchNodeId);
+      if (!targetNode) return;
+
+      const rafId = window.requestAnimationFrame(() => {
+        const rect = boardContainerRef.current?.getBoundingClientRect();
+        const nextPan = computePanFromMinimapPoint({
+          targetWx: targetNode.wx,
+          targetWy: targetNode.wy,
+          zoomScale: manualZoomRef.current,
+          containerWidth: rect?.width || 1000,
+          containerHeight: rect?.height || 550,
+        });
+        panOffsetRef.current = nextPan;
+        canvasControllerRef.current?.setTransform(
+          nextPan.x,
+          nextPan.y,
+          manualZoomRef.current,
+          240
+        );
+        setPanOffset(nextPan);
+        setMultiSelectedNodeIds([targetNode.id]);
+        if (internalSubBoard) {
+          setSelectedInternalSubNodeId(targetNode.id);
+        }
+      });
+      return () => window.cancelAnimationFrame(rafId);
+    }
+  }, [activeNodes, focusSearchSeq, focusedSearchNodeId, internalSubBoard]);
 
   // Mouse Wheel / Trackpad Scroll Zoom Handler synchronized with CanvasController
   useEffect(() => {
@@ -1064,6 +1233,10 @@ export function AttackVisualizer({
         handleResetCanvasLayout();
         return;
       }
+      if (commandId === 'AUTO_LAYOUT_NODES') {
+        handleAutoLayoutNodes();
+        return;
+      }
       if (commandId === 'PAN_UP') {
         handleDirectionalPanNudge(0, KEYBOARD_PAN_STEP_PX);
         return;
@@ -1121,6 +1294,7 @@ export function AttackVisualizer({
       }
     },
     [
+      handleAutoLayoutNodes,
       handleDirectionalPanNudge,
       handleResetCanvasLayout,
       handleSelectAllNodes,
@@ -1137,7 +1311,7 @@ export function AttackVisualizer({
     ]
   );
 
-  // Global Keyboard Shortcut Listener for Tool Switching (B / P) & Canvas Navigation
+  // Global Keyboard Shortcut Listener for Tool Switching (B / P), Force-Directed Auto-Layout (A) & Canvas Navigation
   useEffect(() => {
     const onWindowKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -1163,6 +1337,7 @@ export function AttackVisualizer({
         command === 'ZOOM_IN' ||
         command === 'ZOOM_OUT' ||
         command === 'RESET_CANVAS' ||
+        command === 'AUTO_LAYOUT_NODES' ||
         command === 'PAN_UP' ||
         command === 'PAN_DOWN' ||
         command === 'PAN_LEFT' ||
@@ -1215,6 +1390,37 @@ export function AttackVisualizer({
       onClick={(e) => e.stopPropagation()}
       className="flex flex-wrap items-center gap-1.5 shrink-0"
     >
+      {/* Active Node Search Filter Status Pill */}
+      {searchResult.isFiltering && (
+        <WorkbenchIconTooltip
+          label={`Search Filter: "${searchResult.query}"`}
+          badge={`${searchResult.matchedNodeIds.length}/${searchResult.totalNodes}`}
+          detail="Matching attack nodes are highlighted on the graph; click X to clear filter"
+          side="bottom"
+        >
+          <span
+            data-testid="canvas-search-filter-pill"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-400 dark:border-amber-700 font-mono text-[10px] font-bold whitespace-nowrap"
+          >
+            <Search className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              {searchResult.matchedNodeIds.length}/{searchResult.totalNodes}{' '}
+              Matched
+            </span>
+            {onNodeSearchQueryChange && (
+              <button
+                type="button"
+                aria-label="Clear canvas node search filter"
+                onClick={() => onNodeSearchQueryChange('')}
+                className="ml-0.5 rounded-full p-0.5 hover:bg-amber-200/80 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-200 cursor-pointer"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            )}
+          </span>
+        </WorkbenchIconTooltip>
+      )}
+
       {/* Multi-Selected Nodes Count Pill (Concise Label + Rich Tooltip) */}
       {multiSelectedNodeIds.length > 0 && (
         <WorkbenchIconTooltip
@@ -1290,6 +1496,37 @@ export function AttackVisualizer({
           </button>
         </WorkbenchIconTooltip>
       </div>
+
+      {/* Force-Directed Auto-Layout Button */}
+      <WorkbenchIconTooltip
+        label="Force-Directed Auto-Layout"
+        badge={
+          activeAutoLayoutMode
+            ? `FORCE · ${activeAutoLayoutMode}`
+            : 'HOTKEY A'
+        }
+        detail="Automatically organize attack graph nodes using Coulomb repulsion and Hooke spring forces for optimal readability"
+        side="bottom"
+      >
+        <button
+          type="button"
+          data-testid="canvas-auto-layout-btn"
+          data-auto-layout-mode={activeAutoLayoutMode || 'NONE'}
+          aria-pressed={isAutoLayoutActive}
+          onClick={handleAutoLayoutNodes}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+            isAutoLayoutActive
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+              : 'bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80'
+          }`}
+        >
+          <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+          <span>Auto-Layout</span>
+          <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
+            A
+          </kbd>
+        </button>
+      </WorkbenchIconTooltip>
 
       {/* Select All / Deselect All Objects Button */}
       <WorkbenchIconTooltip
@@ -1393,6 +1630,10 @@ export function AttackVisualizer({
       data-active-environment={activeEnvironment}
       data-tactical-mode={tacticalMode ? 'true' : 'false'}
       data-interaction-mode={interactionMode}
+      data-auto-layout-active={isAutoLayoutActive ? 'true' : 'false'}
+      data-auto-layout-mode={activeAutoLayoutMode || 'NONE'}
+      data-search-filtering={searchResult.isFiltering ? 'true' : 'false'}
+      data-search-match-count={searchResult.matchedNodeIds.length}
       onContextMenu={(e) => e.preventDefault()}
       dir="ltr"
     >
@@ -2110,7 +2351,7 @@ export function AttackVisualizer({
                       role: 'OVERVIEW',
                     };
 
-                    return (
+                     return (
                       <DraggableDiagramNode
                         key={node.id}
                         node={node}
@@ -2121,6 +2362,13 @@ export function AttackVisualizer({
                         isRecentlyReturned={isRecentlyReturned}
                         isDraggingNodes={isDraggingNodes}
                         isInteracting={isCanvasInteracting}
+                        isAutoLayoutAnimating={isAutoLayoutAnimating}
+                        isSearchFiltering={searchResult.isFiltering}
+                        isSearchMatch={matchedNodeIdSet.has(node.id)}
+                        isSearchFocused={
+                          searchResult.isFiltering &&
+                          focusedSearchNodeId === node.id
+                        }
                         activeStageIndex={activeStageIndex}
                         directorPhase={director.phase}
                         cState={cState}
@@ -2210,6 +2458,8 @@ export function AttackVisualizer({
                     : selectedSketchNode?.id || null
                 }
                 multiSelectedNodeIds={multiSelectedNodeIds}
+                searchMatchedNodeIds={searchResult.matchedNodeIds}
+                isSearchFiltering={searchResult.isFiltering}
                 panOffset={panOffset}
                 effectiveScale={effectiveScale}
                 tacticalMode={tacticalMode}

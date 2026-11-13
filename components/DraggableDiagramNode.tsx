@@ -24,6 +24,10 @@ export interface DraggableDiagramNodeProps {
   isRecentlyReturned: boolean;
   isDraggingNodes: boolean;
   isInteracting?: boolean;
+  isAutoLayoutAnimating?: boolean;
+  isSearchFiltering?: boolean;
+  isSearchMatch?: boolean;
+  isSearchFocused?: boolean;
   activeStageIndex: number;
   directorPhase: string;
   cState: NodeCinematicRenderState;
@@ -47,7 +51,7 @@ export interface DraggableDiagramNodeProps {
  * Memoized Draggable & Multi-Selectable Diagram Node.
  * - Supports Shift+Click (or top-right checkbox) to add/remove nodes in a multi-selection group.
  * - Supports simultaneous 60/120fps group movement of all selected nodes across the workspace.
- * - Disables hover/spring recalculations during active canvas panning or node dragging.
+ * - Supports Force-Directed Auto-Layout smooth transitions and Top Toolbar Node Search highlighting.
  */
 export const DraggableDiagramNode = memo(function DraggableDiagramNode({
   node,
@@ -58,6 +62,10 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
   isRecentlyReturned,
   isDraggingNodes,
   isInteracting = false,
+  isAutoLayoutAnimating = false,
+  isSearchFiltering = false,
+  isSearchMatch = true,
+  isSearchFocused = false,
   activeStageIndex,
   directorPhase,
   cState,
@@ -73,6 +81,22 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
   const topPct = (node.wy / 650) * 100;
   const skipSpring = isDraggingNodes || isInteracting;
 
+  const effectiveOpacity = isSearchFiltering
+    ? isSearchMatch
+      ? 1
+      : 0.22
+    : cState.opacity;
+
+  const effectiveScale = isSearchFiltering
+    ? isSearchFocused
+      ? 1.1
+      : isSearchMatch
+      ? 1.05
+      : 0.96
+    : isSelected || isMultiSelected
+    ? 1.06
+    : cState.scale;
+
   return (
     <motion.button
       ref={nodeButtonRef}
@@ -85,12 +109,16 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       data-node-id={node.id}
       data-node-role={cState.role}
       data-multi-selected={isMultiSelected ? 'true' : 'false'}
+      data-search-match={
+        isSearchFiltering ? (isSearchMatch ? 'true' : 'false') : 'all'
+      }
+      data-search-focused={isSearchFocused ? 'true' : 'false'}
       data-wx={node.wx}
       data-wy={node.wy}
       initial={false}
       animate={{
-        opacity: cState.opacity,
-        scale: isSelected || isMultiSelected ? 1.06 : cState.scale,
+        opacity: effectiveOpacity,
+        scale: effectiveScale,
         y: cState.yOffset,
       }}
       whileHover={
@@ -133,10 +161,30 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         top: `${topPct}%`,
         willChange: skipSpring ? 'left, top, transform' : 'transform',
       }}
-      className={`canvas-interactive-node nopan group absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center text-center focus:outline-none ${
-        isDraggingNodes ? 'cursor-grabbing' : 'cursor-grab'
-      }`}
+      className={`canvas-interactive-node nopan group absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center focus:outline-none ${
+        isSearchFiltering && isSearchMatch ? 'z-30' : 'z-20'
+      } ${
+        isAutoLayoutAnimating && !skipSpring
+          ? 'transition-[left,top] duration-500 ease-out'
+          : ''
+      } ${
+        isSearchFiltering && !isSearchMatch ? 'grayscale-[45%]' : ''
+      } ${isDraggingNodes ? 'cursor-grabbing' : 'cursor-grab'}`}
     >
+      {/* Top-Left Search Match Badge when Top Toolbar Node Search is Active */}
+      {isSearchFiltering && isSearchMatch && (
+        <span
+          data-testid={`node-search-match-badge-${node.id}`}
+          className={`pointer-events-none absolute -top-2.5 -left-2 z-30 px-1.5 py-0.5 rounded-md text-[7.5px] font-mono font-extrabold tracking-wider uppercase shadow-md border ${
+            isSearchFocused
+              ? 'bg-amber-500 text-slate-950 border-amber-300'
+              : 'bg-indigo-600 text-white border-indigo-400'
+          }`}
+        >
+          {isSearchFocused ? 'FOCUSED' : 'MATCH'}
+        </span>
+      )}
+
       {/* Windows / Shift-Click Multi-Selection Checkbox Badge (Top-Right of Node) */}
       <span
         role="checkbox"
@@ -158,7 +206,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         <Check className="w-2.5 h-2.5 stroke-[3]" />
       </span>
 
-      {cState.showPulseRing && (
+      {(cState.showPulseRing || (isSearchFiltering && isSearchMatch)) && (
         <motion.span
           initial={{ scale: 0.85, opacity: 0.85 }}
           animate={{ scale: 1.55, opacity: 0 }}
@@ -167,7 +215,12 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
             repeat: Infinity,
             ease: 'easeOut',
           }}
-          style={{ borderColor: cState.pulseColor }}
+          style={{
+            borderColor:
+              isSearchFiltering && isSearchMatch
+                ? '#F59E0B'
+                : cState.pulseColor,
+          }}
           className="pointer-events-none absolute inset-0 rounded-2xl border-2"
         />
       )}
@@ -209,6 +262,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         iconType={node.iconType}
         isActive={
           node.isActive ||
+          (isSearchFiltering && isSearchMatch) ||
           cState.role === 'CURRENT_SOURCE' ||
           cState.role === 'CURRENT_TARGET'
         }
@@ -221,7 +275,9 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
             ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
             : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'
         } ${
-          isMultiSelected
+          isSearchFiltering && isSearchMatch
+            ? 'ring-2 ring-amber-400 border-amber-500 bg-amber-50/95 dark:bg-amber-950/85 shadow-[0_0_20px_rgba(245,158,11,0.4)]'
+            : isMultiSelected
             ? 'ring-2 ring-indigo-500 border-indigo-600 bg-indigo-50/95 dark:bg-indigo-950/90 shadow-[0_0_16px_rgba(99,102,241,0.35)]'
             : isSelected ||
               cState.role === 'CURRENT_TARGET' ||

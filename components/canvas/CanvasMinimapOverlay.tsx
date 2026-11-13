@@ -24,6 +24,8 @@ export interface CanvasMinimapOverlayProps {
   flows: WhiteboardSketchFlow[];
   selectedNodeId: string | null;
   multiSelectedNodeIds: string[];
+  searchMatchedNodeIds?: string[];
+  isSearchFiltering?: boolean;
   panOffset: Point2D;
   effectiveScale: number;
   tacticalMode?: boolean;
@@ -42,6 +44,8 @@ export function CanvasMinimapOverlay({
   flows,
   selectedNodeId,
   multiSelectedNodeIds,
+  searchMatchedNodeIds = [],
+  isSearchFiltering = false,
   panOffset,
   effectiveScale,
   tacticalMode = false,
@@ -326,11 +330,17 @@ export function CanvasMinimapOverlay({
             const isSelected =
               selectedNodeId === node.id ||
               multiSelectedNodeIds.includes(node.id);
-            const fillHex = isSelected
+            const isSearchMatch =
+              isSearchFiltering && searchMatchedNodeIds.includes(node.id);
+            const fillHex = isSearchMatch
+              ? '#F59E0B'
+              : isSelected
               ? '#4F46E5'
               : node.isActive || node.isCompromised
               ? '#E11D48'
               : '#475569';
+            const fillOpacity =
+              isSearchFiltering && !isSearchMatch ? 0.25 : 0.92;
             return (
               <g key={`mini-node-${node.id}`}>
                 <rect
@@ -340,9 +350,11 @@ export function CanvasMinimapOverlay({
                   height={64}
                   rx={14}
                   fill={fillHex}
-                  fillOpacity={0.9}
+                  fillOpacity={fillOpacity}
                   stroke="#FFFFFF"
-                  strokeWidth={isSelected || node.isActive ? '8' : '4'}
+                  strokeWidth={
+                    isSearchMatch || isSelected || node.isActive ? '8' : '4'
+                  }
                 />
               </g>
             );
