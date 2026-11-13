@@ -98,7 +98,7 @@ export function LogInspector({
                     S{item.stageIndex}
                   </span>
                   <span aria-hidden="true">·</span>
-                  <span className="truncate">{item.event.protocolOrEventId}</span>
+                  <span className="break-words">{item.event.protocolOrEventId}</span>
                   <span
                     data-testid={`log-inspector-env-badge-${item.stageIndex}`}
                     className="px-1.5 py-0 rounded bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 text-[9.5px] font-bold"
@@ -106,7 +106,7 @@ export function LogInspector({
                     {item.environmentBadge} · {item.environmentTag}
                   </span>
                 </div>
-                <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate mt-0.5">
+                <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 break-words leading-snug mt-0.5">
                   {item.stageTitle}
                 </div>
               </div>

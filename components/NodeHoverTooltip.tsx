@@ -50,15 +50,15 @@ export function NodeHoverTooltip({
         left: `${leftPct}%`,
         top: `${topPct}%`,
       }}
-      className={`pointer-events-none absolute -translate-x-1/2 z-50 w-72 rounded-xl bg-zinc-950/95 text-white border border-zinc-700/90 shadow-2xl p-3 space-y-2 backdrop-blur-md ${
+      className={`pointer-events-none absolute -translate-x-1/2 z-50 w-80 rounded-xl bg-zinc-950/95 text-white border border-zinc-700/90 shadow-2xl p-3 space-y-2 backdrop-blur-md ${
         placeBelow
           ? 'translate-y-[58px]'
           : '-translate-y-[calc(100%+58px)]'
       }`}
     >
       {/* Header: Sequence + Role + Status */}
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
-        <span className="text-[10px] font-mono font-bold text-indigo-300 truncate">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
+        <span className="text-[10px] font-mono font-bold text-indigo-300 break-words">
           NODE #{node.sequenceCode || node.chainOrder} · {node.actionBadge}
         </span>
         <span
@@ -79,26 +79,26 @@ export function NodeHoverTooltip({
 
       {/* Title & Technical Device Role */}
       <div className="space-y-0.5 text-left">
-        <div className="text-xs font-bold text-white leading-snug">
+        <div className="text-xs font-bold text-white leading-snug break-words">
           {node.label}
         </div>
         <div className="text-[10px] font-mono text-amber-300 flex items-center gap-1">
           <Cpu className="w-3 h-3 shrink-0" />
-          <span className="truncate">{formatRoleLabel(node)}</span>
+          <span className="break-words">{formatRoleLabel(node)}</span>
         </div>
       </div>
 
       {/* Technical Specs Grid */}
-      <div className="grid grid-cols-2 gap-1.5 text-left text-[9.5px] font-mono bg-zinc-900/90 rounded-lg p-2 border border-zinc-800/80">
-        <div className="truncate">
+      <div className="grid grid-cols-2 gap-2 text-left text-[9.5px] font-mono bg-zinc-900/90 rounded-lg p-2 border border-zinc-800/80">
+        <div className="break-words">
           <span className="text-zinc-400 block text-[8.5px]">ENDPOINT / PORT</span>
-          <span className="text-zinc-100 font-semibold">
+          <span className="text-zinc-100 font-semibold break-words">
             {details?.pidOrPort || node.sublabel}
           </span>
         </div>
-        <div className="truncate">
+        <div className="break-words">
           <span className="text-zinc-400 block text-[8.5px]">PRIVILEGE / OS</span>
-          <span className="text-zinc-100 font-semibold">
+          <span className="text-zinc-100 font-semibold break-words">
             {details?.privilege || details?.osOrType || 'System Context'}
           </span>
         </div>
@@ -106,10 +106,10 @@ export function NodeHoverTooltip({
 
       {/* Host Context & Activity Summary */}
       <div className="text-left space-y-1 text-[10px]">
-        <div className="text-sky-300 font-mono truncate">
+        <div className="text-sky-300 font-mono break-words leading-snug">
           {node.hostContext}
         </div>
-        <p className="text-zinc-300 leading-snug line-clamp-2">
+        <p className="text-zinc-300 leading-snug break-words">
           {node.internalSummary || node.activitySummary || details?.description}
         </p>
       </div>

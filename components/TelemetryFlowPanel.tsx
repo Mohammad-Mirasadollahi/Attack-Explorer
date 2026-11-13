@@ -324,7 +324,7 @@ export function TelemetryFlowPanel({
                     <td className="py-1 px-2.5 tabular-nums text-zinc-500 whitespace-nowrap">
                       {ev.timestamp}
                     </td>
-                    <td className="py-1 px-2.5 font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">
+                    <td className="py-1 px-2.5 font-medium text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
                       {ev.sourceLabel}
                     </td>
                     <td className="py-1 px-1.5 text-center whitespace-nowrap">
@@ -332,7 +332,7 @@ export function TelemetryFlowPanel({
                         {ev.no}.1⇄{ev.no}.2
                       </span>
                     </td>
-                    <td className="py-1 px-2.5 font-medium text-zinc-800 dark:text-zinc-200 truncate max-w-[140px]">
+                    <td className="py-1 px-2.5 font-medium text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
                       {ev.targetLabel}
                     </td>
                     <td
@@ -340,7 +340,7 @@ export function TelemetryFlowPanel({
                     >
                       {ev.protocolOrEventId}
                     </td>
-                    <td className="py-1 px-2.5 text-zinc-600 dark:text-zinc-300 truncate max-w-md">
+                    <td className="py-1 px-2.5 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                       <span className="font-semibold text-rose-600 dark:text-rose-400">
                         #{ev.no}.1→ {ev.shortAction}
                       </span>{' '}

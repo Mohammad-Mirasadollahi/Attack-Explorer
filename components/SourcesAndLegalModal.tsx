@@ -67,11 +67,11 @@ export function SourcesAndLegalContent({
               className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2"
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-xs font-mono">
-                  <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10px]">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                  <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-bold text-[10px] shrink-0">
                     {tech.id}
                   </span>
-                  <span className="font-semibold text-zinc-900 dark:text-white truncate">
+                  <span className="font-semibold text-zinc-900 dark:text-white break-words">
                     {tech.name}
                   </span>
                 </div>

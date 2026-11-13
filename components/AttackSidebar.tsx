@@ -141,7 +141,7 @@ export function AttackSidebar({
             <span>{sc.stages.length} steps</span>
           </div>
 
-          <div className="text-xs font-medium leading-snug line-clamp-2 w-full">
+          <div className="text-xs font-medium leading-snug break-words w-full">
             {sc.name}
           </div>
         </button>
@@ -214,11 +214,11 @@ export function AttackSidebar({
           })}
         </div>
 
-        {/* Sort & Categorize Controls Row */}
-        <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+        {/* Sort & Categorize Controls (Full-Width Non-Truncated Rows) */}
+        <div className="grid grid-cols-1 gap-1.5 pt-0.5">
           {/* Sort Selector */}
           <div className="relative flex items-center">
-            <ArrowUpDown className="w-3 h-3 text-zinc-400 absolute left-2 pointer-events-none" />
+            <ArrowUpDown className="w-3 h-3 text-zinc-400 absolute left-2.5 pointer-events-none" />
             <select
               aria-label="Sort scenarios"
               data-testid="sidebar-sort-select"
@@ -226,19 +226,19 @@ export function AttackSidebar({
               onChange={(e) =>
                 handleSortChange(e.target.value as ScenarioSortOption)
               }
-              className="w-full h-7 pl-6 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer truncate"
+              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
-              <option value="DEFAULT">Sort: Default</option>
+              <option value="DEFAULT">Sort: Default Order</option>
               <option value="NAME_ASC">Sort: Name (A–Z)</option>
               <option value="STAGES_DESC">Sort: Most Steps</option>
               <option value="STAGES_ASC">Sort: Fewest Steps</option>
-              <option value="MITRE_CODE">Sort: MITRE ID</option>
+              <option value="MITRE_CODE">Sort: MITRE Technique ID</option>
             </select>
           </div>
 
           {/* Categorize / Group-By Selector */}
           <div className="relative flex items-center">
-            <FolderTree className="w-3 h-3 text-zinc-400 absolute left-2 pointer-events-none" />
+            <FolderTree className="w-3 h-3 text-zinc-400 absolute left-2.5 pointer-events-none" />
             <select
               aria-label="Categorize scenarios"
               data-testid="sidebar-group-select"
@@ -246,9 +246,9 @@ export function AttackSidebar({
               onChange={(e) =>
                 handleGroupByChange(e.target.value as ScenarioGroupByMode)
               }
-              className="w-full h-7 pl-6 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer truncate"
+              className="w-full h-7 pl-7 pr-2 text-[11px] font-medium bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-zinc-700 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
-              <option value="CATEGORY">Group: Category</option>
+              <option value="CATEGORY">Group: Attack Category</option>
               <option value="MITRE_PHASE">Group: MITRE Tactic</option>
               <option value="FLAT">Group: Flat List</option>
             </select>
@@ -257,7 +257,7 @@ export function AttackSidebar({
       </div>
 
       {/* Categorized & Sorted Scenario List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-auto p-3 space-y-3">
         {sortedScenarios.length === 0 ? (
           <div className="py-8 text-center text-xs text-zinc-400">
             No matching attack scenarios.
@@ -280,15 +280,15 @@ export function AttackSidebar({
                   data-testid={`sidebar-group-header-${group.groupKey}`}
                   aria-expanded={!isCollapsed}
                   onClick={() => toggleGroupCollapse(group.groupKey)}
-                  className="w-full flex items-center justify-between gap-1.5 px-1.5 py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between gap-1.5 px-1.5 py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors cursor-pointer text-left"
                 >
-                  <span className="flex items-center gap-1 truncate">
+                  <span className="flex items-center gap-1 min-w-0">
                     {isCollapsed ? (
                       <ChevronRight className="w-3 h-3 shrink-0" />
                     ) : (
                       <ChevronDown className="w-3 h-3 shrink-0" />
                     )}
-                    <span className="truncate">{group.label}</span>
+                    <span className="break-words">{group.label}</span>
                   </span>
                   <span className="text-[10.5px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 shrink-0">
                     {group.scenarios.length}

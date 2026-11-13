@@ -63,7 +63,7 @@ export function ResponsiveMobileZonesView({
                 >
                   {zone.code}
                 </span>
-                <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-100 truncate">
+                <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-100 break-words">
                   {zone.title}
                 </span>
               </div>
@@ -111,16 +111,16 @@ export function ResponsiveMobileZonesView({
                         isCompromised={node.isCompromised}
                       />
 
-                      <div className="mt-0.5 text-[10px] font-semibold text-zinc-900 dark:text-white leading-tight truncate max-w-full">
+                      <div className="mt-0.5 text-[10px] font-semibold text-zinc-900 dark:text-white leading-snug break-words max-w-full">
                         {node.label}
                       </div>
-                      <div className="text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-tight truncate max-w-full">
+                      <div className="text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words max-w-full">
                         {node.sublabel}
                       </div>
                       {node.hostContext && (
                         <div
                           dir="ltr"
-                          className="mt-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[8px] font-medium text-zinc-700 dark:text-zinc-300 leading-tight truncate max-w-full"
+                          className="mt-0.5 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[8px] font-medium text-zinc-700 dark:text-zinc-300 leading-snug break-words max-w-full"
                         >
                           {node.hostContext}
                         </div>
@@ -128,7 +128,7 @@ export function ResponsiveMobileZonesView({
                       {node.activitySummary && (
                         <div
                           dir="ltr"
-                          className="mt-0.5 text-[7.5px] text-zinc-500 dark:text-zinc-400 leading-tight truncate max-w-full"
+                          className="mt-0.5 text-[7.5px] text-zinc-500 dark:text-zinc-400 leading-snug break-words max-w-full"
                         >
                           {node.activitySummary}
                         </div>

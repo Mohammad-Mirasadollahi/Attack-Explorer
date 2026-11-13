@@ -28,9 +28,9 @@ import { SourcesAndLegalContent } from './SourcesAndLegalModal';
 import { MitreStats } from './MitreStats';
 import { ThreatIntelCard } from './ThreatIntelCard';
 
-export const MIN_INSPECTOR_WIDTH = 240;
-export const MAX_INSPECTOR_WIDTH = 560;
-export const DEFAULT_INSPECTOR_WIDTH = 330;
+export const MIN_INSPECTOR_WIDTH = 260;
+export const MAX_INSPECTOR_WIDTH = 620;
+export const DEFAULT_INSPECTOR_WIDTH = 350;
 
 interface InspectorPanelProps {
   scenario: AttackScenario;
@@ -270,17 +270,17 @@ export function InspectorPanel({
       </div>
 
       {/* Scrollable Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4">
         {/* Active Environment Tag Strip */}
         <div
           data-testid="inspector-active-env-badge"
           data-environment-id={activeEnvironment}
-          className="px-2.5 py-1.5 rounded-lg bg-zinc-100/90 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2 text-[10px] font-mono"
+          className="px-2.5 py-1.5 rounded-lg bg-zinc-100/90 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono"
         >
-          <span className="font-bold text-indigo-600 dark:text-indigo-400 truncate">
+          <span className="font-bold text-indigo-600 dark:text-indigo-400 break-words">
             {envProfile.badgeLabel}
           </span>
-          <span className="text-zinc-500 dark:text-zinc-400 truncate">
+          <span className="text-zinc-500 dark:text-zinc-400 break-words">
             {envProfile.environmentTag}
           </span>
         </div>
@@ -354,19 +354,19 @@ export function InspectorPanel({
                 onClick={() => onSelectTelemetry?.(stagePacket)}
                 className="rounded-xl border border-rose-500/40 bg-zinc-950 text-white overflow-hidden shadow-sm cursor-pointer hover:border-rose-500 transition-colors"
               >
-                <div className="px-3 py-1.5 bg-rose-600 text-white flex items-center justify-between gap-2 text-[10.5px] font-mono">
-                  <span className="font-bold truncate">
+                <div className="px-3 py-1.5 bg-rose-600 text-white flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono">
+                  <span className="font-bold break-words">
                     #{currentStage.index}.1→ {stagePacket.shortAction}
                   </span>
-                  <span className="text-rose-100 truncate">
+                  <span className="text-rose-100 break-words">
                     {stagePacket.sourceLabel} → {stagePacket.targetLabel}
                   </span>
                 </div>
                 <div className="p-2.5 space-y-1.5">
-                  <div className="text-[11px] font-mono text-amber-300 leading-snug line-clamp-2 break-all">
+                  <div className="text-[11px] font-mono text-amber-300 leading-snug break-words">
                     {stagePacket.info}
                   </div>
-                  <div className="pt-1 border-t border-zinc-800 flex items-center justify-between text-[9.5px] font-mono text-zinc-400">
+                  <div className="pt-1 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-1 text-[9.5px] font-mono text-zinc-400">
                     <span>
                       PACKET {currentStage.index} OF {scenario.stages.length} ·{' '}
                       {stagePacket.protocolOrEventId}
@@ -430,15 +430,15 @@ export function InspectorPanel({
                       onClick={() => onSelectStage?.(st.index)}
                       className="w-full py-2.5 flex flex-col gap-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer text-left"
                     >
-                      <div className="flex items-center justify-between gap-2 w-full">
-                        <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      <div className="flex items-start justify-between gap-2 w-full">
+                        <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 break-words leading-snug">
                           {st.index}. {st.title}
                         </span>
                         <span className="text-[10.5px] font-mono text-zinc-400 shrink-0">
                           {st.mitreTechniqueId}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug break-words">
                         {st.subtitle}
                       </p>
                     </button>

@@ -58,7 +58,7 @@ export function SelectedTelemetryDetail({
       {resizeHandle}
       {/* Clean Header with Back Action */}
       <div className="h-12 flex items-center justify-between gap-2 px-4 border-b border-zinc-200/70 dark:border-zinc-800/80 shrink-0">
-        <h2 className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
+        <h2 className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
           Trace Detail
         </h2>
         <button
@@ -72,7 +72,7 @@ export function SelectedTelemetryDetail({
       </div>
 
       {/* Spacious Scrollable Detail Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
+      <div className="flex-1 overflow-auto p-4 space-y-5">
         {/* Title & Unboxed Metadata */}
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 tabular-nums">

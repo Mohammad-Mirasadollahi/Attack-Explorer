@@ -6,12 +6,14 @@ import { TelemetryEvent } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
-  getActiveEnvironmentProfile } from '@/lib/simulation-engine';
+  getActiveEnvironmentProfile,
+} from '@/lib/simulation-engine';
 import {
   NETWORK_ZONE_COLUMNS,
   NetworkBackboneLink,
   NetworkZoneColumn,
-  WhiteboardSketchFlow } from '@/lib/sketch-zones-and-drilldown';
+  WhiteboardSketchFlow,
+} from '@/lib/sketch-zones-and-drilldown';
 
 interface SketchWhiteboardSvgProps {
   zones?: NetworkZoneColumn[];
@@ -37,8 +39,12 @@ export function SketchWhiteboardSvg({
   onSelectZone,
   onStartZoneDrag,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
-  tacticalMode = false }: SketchWhiteboardSvgProps) {
+  tacticalMode = false,
+}: SketchWhiteboardSvgProps) {
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
+  const stampText = `${envProfile.architectureCode} · ${envProfile.badgeLabel.toUpperCase()} · ${envProfile.primaryHostname} (${envProfile.subnetBadge})`;
+  const stampWidth = Math.max(490, Math.round(stampText.length * 5.4 + 34));
+
   return (
     <svg
       viewBox="0 0 1480 650"
@@ -115,33 +121,33 @@ export function SketchWhiteboardSvg({
       {/* Subtle Dot Background */}
       <rect width="1480" height="650" fill="url(#excalidraw-dot-grid)" />
 
-      {/* Active Architecture Blueprint Watermark Stamp */}
+      {/* Active Architecture Blueprint Watermark Stamp (Top-Left Margin, Clear of Bottom HUDs) */}
       <g
-        transform="translate(740, 626)"
+        transform="translate(215, 13)"
         data-testid="svg-architecture-stamp"
         data-environment-id={activeEnvironment}
       >
         <rect
-          x={-245}
-          y={-14}
-          width={490}
-          height={20}
-          rx={6}
+          x={-stampWidth / 2}
+          y={-10}
+          width={stampWidth}
+          height={18}
+          rx={5}
           fill="#0F172A"
           fillOpacity={0.94}
           stroke={tacticalMode ? '#10B981' : envProfile.accentHex}
-          strokeWidth="1.4"
+          strokeWidth="1.2"
         />
         <text
           x={0}
-          y={-1}
+          y={1.5}
           textAnchor="middle"
           fill={tacticalMode ? '#6EE7B7' : '#F8FAFC'}
-          fontSize="8.2"
+          fontSize="7.6"
           fontFamily="monospace"
           fontWeight="800"
         >
-          {`${envProfile.architectureCode} · ${envProfile.badgeLabel.toUpperCase()} · ${envProfile.primaryHostname} (${envProfile.subnetBadge})`}
+          {stampText}
         </text>
       </g>
 
@@ -151,6 +157,15 @@ export function SketchWhiteboardSvg({
         const yTop = zone.yStart ?? 14;
         const yBottom = zone.yEnd ?? 636;
         const height = Math.max(180, yBottom - yTop);
+        const codePillW = Math.max(88, Math.round(zone.code.length * 5.2 + 14));
+        const headerBarW = Math.max(
+          width - 24,
+          Math.round(codePillW + zone.title.length * 5.4 + 22)
+        );
+        const subnetW = zone.subnetBadge
+          ? Math.max(148, Math.round(zone.subnetBadge.length * 5.0 + 20))
+          : 148;
+
         return (
           <g key={zone.id} data-testid={`network-zone-${zone.id}`}>
             {/* Architectural 2D Zone Box */}
@@ -193,7 +208,7 @@ export function SketchWhiteboardSvg({
               <rect
                 x={0}
                 y={0}
-                width={width - 24}
+                width={Math.min(width - 16, headerBarW)}
                 height={26}
                 rx={7}
                 fill={tacticalMode ? '#071324' : '#FFFFFF'}
@@ -205,27 +220,27 @@ export function SketchWhiteboardSvg({
               <rect
                 x={4}
                 y={4}
-                width={92}
+                width={codePillW}
                 height={18}
                 rx={4.5}
                 fill={zone.accentHex}
               />
               <text
-                x={50}
+                x={4 + codePillW / 2}
                 y={16.2}
                 textAnchor="middle"
                 fill="#FFFFFF"
-                fontSize="8.2"
+                fontSize="7.8"
                 fontFamily="monospace"
                 fontWeight="800"
               >
                 {zone.code}
               </text>
               <text
-                x={104}
-                y={16.8}
+                x={codePillW + 10}
+                y={16.5}
                 fill={tacticalMode ? '#E2E8F0' : '#0F172A'}
-                fontSize="9.8"
+                fontSize="8.8"
                 fontWeight="800"
                 fontFamily="sans-serif"
               >
@@ -235,11 +250,15 @@ export function SketchWhiteboardSvg({
 
             {/* Subnet / VLAN Architectural Badge at Bottom-Left of Zone */}
             {zone.subnetBadge && (
-              <g transform={`translate(${zone.xStart + 14}, ${yTop + height - 24})`}>
+              <g
+                transform={`translate(${zone.xStart + 14}, ${
+                  yTop + height - 24
+                })`}
+              >
                 <rect
                   x={0}
                   y={0}
-                  width={148}
+                  width={subnetW}
                   height={16}
                   rx={4.5}
                   fill="#0F172A"
@@ -248,11 +267,11 @@ export function SketchWhiteboardSvg({
                   strokeWidth="1"
                 />
                 <text
-                  x={74}
+                  x={subnetW / 2}
                   y={11}
                   textAnchor="middle"
                   fill="#F8FAFC"
-                  fontSize="7.6"
+                  fontSize="7.5"
                   fontFamily="monospace"
                   fontWeight="700"
                 >
@@ -275,11 +294,14 @@ export function SketchWhiteboardSvg({
         const midX = (link.x1 + link.x2) / 2;
         const midY = (link.y1 + link.y2) / 2;
         const linkSeq = link.sequenceCode || `L${bIdx + 1}`;
+        const fullLinkText = `${linkSeq} · ${link.label}`;
+        const linkPillW = Math.max(
+          98,
+          Math.round(fullLinkText.length * 4.4 + 16)
+        );
+
         return (
-          <g
-            key={link.id}
-            data-testid={`backbone-link-${link.id}`}
-          >
+          <g key={link.id} data-testid={`backbone-link-${link.id}`}>
             <line
               x1={link.x1}
               y1={link.y1}
@@ -290,21 +312,21 @@ export function SketchWhiteboardSvg({
               strokeWidth="2"
               strokeDasharray="4 6"
             />
-            {/* Subtle Numbered Trunk Link Badge (Preserves Hierarchical L{parent}.{idx} in Nested Views) */}
+            {/* Full-Text Numbered Trunk Link Badge (Zero Text Truncation) */}
             <g
               transform={`translate(${midX}, ${midY})`}
-              opacity={0.78}
+              opacity={0.85}
               data-testid={`backbone-badge-${bIdx + 1}`}
             >
               <rect
-                x={-48}
-                y={-7.5}
-                width={96}
-                height={15}
+                x={-linkPillW / 2}
+                y={-8}
+                width={linkPillW}
+                height={16}
                 rx={4}
                 fill="#F8FAFC"
                 stroke={strokeColor}
-                strokeOpacity={0.55}
+                strokeOpacity={0.65}
                 strokeWidth="1"
               />
               <text
@@ -312,11 +334,11 @@ export function SketchWhiteboardSvg({
                 y={2.5}
                 textAnchor="middle"
                 fill="#334155"
-                fontSize="6.8"
+                fontSize="6.9"
                 fontFamily="monospace"
                 fontWeight="700"
               >
-                {`${linkSeq} · ${link.label.slice(0, 11)}`}
+                {fullLinkText}
               </text>
             </g>
           </g>
@@ -341,7 +363,8 @@ export function SketchWhiteboardSvg({
                 transition={{
                   duration: 1.5,
                   repeat: Infinity,
-                  ease: 'easeOut' }}
+                  ease: 'easeOut',
+                }}
               />
               {/* Destination Arrival Impact Ring */}
               <motion.circle
@@ -356,7 +379,8 @@ export function SketchWhiteboardSvg({
                   duration: 1.5,
                   repeat: Infinity,
                   ease: 'easeOut',
-                  delay: 0.55 }}
+                  delay: 0.55,
+                }}
               />
             </g>
           ))}
@@ -371,10 +395,39 @@ export function SketchWhiteboardSvg({
         const startAnchor = flow.forwardArrows[0] || {
           x: (flow.fromX + flow.controlX) / 2,
           y: (flow.fromY + flow.controlY) / 2,
-          angleDeg: 0 };
+          angleDeg: 0,
+        };
         const seqCode = flow.sequenceCode || String(flow.stepNo);
         const isHierarchicalSeq = seqCode.includes('.');
-        const stepBadgeW = isHierarchicalSeq ? 26 : 19;
+        const stepBadgeW = Math.max(
+          isHierarchicalSeq ? 26 : 20,
+          Math.round(seqCode.length * 5.8 + 10)
+        );
+
+        // Dynamic widths for Forward Flow Badge and Return Flow Badge so text is NEVER cut off
+        const fwdSeqText = `#${flow.forwardSeq}→`;
+        const fwdSeqPillW = Math.max(
+          isHierarchicalSeq ? 44 : 36,
+          Math.round(fwdSeqText.length * 4.8 + 10)
+        );
+        const fwdLabelText = flow.label;
+        const fwdLabelW = Math.max(
+          86,
+          Math.round(fwdLabelText.length * 4.6 + 18)
+        );
+        const fwdTotalW = fwdSeqPillW + fwdLabelW + 8;
+
+        const retSeqText = `⇠#${flow.returnSeq}`;
+        const retSeqPillW = Math.max(
+          isHierarchicalSeq ? 42 : 34,
+          Math.round(retSeqText.length * 4.8 + 10)
+        );
+        const retLabelText = flow.returnLabel;
+        const retLabelW = Math.max(
+          78,
+          Math.round(retLabelText.length * 4.5 + 18)
+        );
+        const retTotalW = retSeqPillW + retLabelW + 8;
 
         return (
           <g key={flow.id} data-testid={`sketch-flow-${flow.stepNo}`}>
@@ -383,7 +436,9 @@ export function SketchWhiteboardSvg({
               d={flow.pathD}
               fill="none"
               stroke={strokeHex}
-              strokeOpacity={flow.isVisible ? (isHighlighted ? 0.22 : 0.1) : 0.04}
+              strokeOpacity={
+                flow.isVisible ? (isHighlighted ? 0.22 : 0.1) : 0.04
+              }
               strokeWidth={isHighlighted ? 5 : 2.2}
               strokeLinecap="round"
             />
@@ -401,7 +456,8 @@ export function SketchWhiteboardSvg({
                   transition={{
                     duration: 0.55,
                     ease: 'easeOut',
-                    delay: idx * 0.05 }}
+                    delay: idx * 0.05,
+                  }}
                   markerStart={
                     isHighlighted
                       ? 'url(#sketch-arrow-crimson)'
@@ -464,11 +520,13 @@ export function SketchWhiteboardSvg({
                   initial={{ pathLength: 0, opacity: 0.35 }}
                   animate={{
                     pathLength: 1,
-                    opacity: isHighlighted ? 0.94 : 0.68 }}
+                    opacity: isHighlighted ? 0.94 : 0.68,
+                  }}
                   transition={{
                     duration: 0.6,
                     ease: 'easeOut',
-                    delay: idx * 0.05 + 0.12 }}
+                    delay: idx * 0.05 + 0.12,
+                  }}
                   markerEnd={
                     isHighlighted
                       ? 'url(#sketch-arrow-return-active)'
@@ -521,15 +579,18 @@ export function SketchWhiteboardSvg({
                       opacity={0.48 - tIdx * 0.13}
                       initial={{
                         x: flow.xKeyframes[0],
-                        y: flow.yKeyframes[0] }}
+                        y: flow.yKeyframes[0],
+                      }}
                       animate={{
                         x: flow.xKeyframes,
-                        y: flow.yKeyframes }}
+                        y: flow.yKeyframes,
+                      }}
                       transition={{
                         duration: 2.2,
                         repeat: Infinity,
                         ease: 'linear',
-                        delay: lagSec }}
+                        delay: lagSec,
+                      }}
                     />
                   ))}
 
@@ -537,15 +598,18 @@ export function SketchWhiteboardSvg({
                 <motion.g
                   initial={{
                     x: flow.xKeyframes[0],
-                    y: flow.yKeyframes[0] }}
+                    y: flow.yKeyframes[0],
+                  }}
                   animate={{
                     x: flow.xKeyframes,
-                    y: flow.yKeyframes }}
+                    y: flow.yKeyframes,
+                  }}
                   transition={{
                     duration: isHighlighted ? 2.2 : 3.4,
                     repeat: Infinity,
                     ease: 'linear',
-                    delay: isHighlighted ? 0 : idx * 0.25 }}
+                    delay: isHighlighted ? 0 : idx * 0.25,
+                  }}
                 >
                   <circle
                     cx={0}
@@ -563,33 +627,18 @@ export function SketchWhiteboardSvg({
                     strokeWidth="1.6"
                   />
 
-                  {/* Protocol-Explorer Style Floating Packet Tag Card riding on the active packet */}
+                  {/* Glowing Active Packet Pulse Halo (Permanent Forward/Return Badges Display Full Text) */}
                   {isHighlighted && (
-                    <g
-                      transform="translate(0, -24)"
-                      data-testid={`active-flying-packet-tag-${flow.stepNo}`}
-                    >
-                      <rect
-                        x={-58}
-                        y={-18}
-                        width={116}
-                        height={18}
-                        rx={4}
-                        fill="#0F172A"
-                        stroke="#E11D48"
-                        strokeWidth="1.4"
+                    <g data-testid={`active-flying-packet-tag-${flow.stepNo}`}>
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={14}
+                        fill="none"
+                        stroke="#FDE047"
+                        strokeWidth="1.6"
+                        strokeDasharray="3 3"
                       />
-                      <text
-                        x={0}
-                        y={-6.5}
-                        textAnchor="middle"
-                        fill="#FDE047"
-                        fontSize="7.4"
-                        fontFamily="monospace"
-                        fontWeight="900"
-                      >
-                        {`PKT #${flow.forwardSeq} · ${flow.label.slice(0, 10)}`}
-                      </text>
                     </g>
                   )}
                 </motion.g>
@@ -601,15 +650,18 @@ export function SketchWhiteboardSvg({
               <motion.g
                 initial={{
                   x: flow.returnXKeyframes[0],
-                  y: flow.returnYKeyframes[0] }}
+                  y: flow.returnYKeyframes[0],
+                }}
                 animate={{
                   x: flow.returnXKeyframes,
-                  y: flow.returnYKeyframes }}
+                  y: flow.returnYKeyframes,
+                }}
                 transition={{
                   duration: isHighlighted ? 2.4 : 3.8,
                   repeat: Infinity,
                   ease: 'linear',
-                  delay: isHighlighted ? 0.9 : idx * 0.25 + 1.1 }}
+                  delay: isHighlighted ? 0.9 : idx * 0.25 + 1.1,
+                }}
               >
                 <circle
                   cx={0}
@@ -664,7 +716,7 @@ export function SketchWhiteboardSvg({
               </g>
             )}
 
-            {/* 6. Forward Communication Link Badge (#N.1 → or #P.N.1 → Action) — Always Numbered & Legible */}
+            {/* 6. Forward Communication Link Badge (#N.1 → Full Action Label) — Dynamic Width, Zero Cutoffs */}
             {flow.isVisible && (
               <g
                 transform={`translate(${flow.controlX}, ${flow.controlY})`}
@@ -676,9 +728,9 @@ export function SketchWhiteboardSvg({
                 className="cursor-pointer"
               >
                 <rect
-                  x={-70}
+                  x={-fwdTotalW / 2}
                   y={-10}
-                  width={140}
+                  width={fwdTotalW}
                   height={20}
                   rx={6}
                   fill={isHighlighted ? '#E11D48' : '#FFFFFF'}
@@ -686,39 +738,39 @@ export function SketchWhiteboardSvg({
                   strokeWidth="1.35"
                 />
                 <rect
-                  x={-67}
+                  x={-fwdTotalW / 2 + 3}
                   y={-7}
-                  width={isHierarchicalSeq ? 44 : 35}
+                  width={fwdSeqPillW}
                   height={14}
                   rx={4}
                   fill={isHighlighted ? '#9F1239' : '#0F172A'}
                 />
                 <text
-                  x={isHierarchicalSeq ? -45 : -49.5}
+                  x={-fwdTotalW / 2 + 3 + fwdSeqPillW / 2}
                   y={2.8}
                   textAnchor="middle"
                   fill="#FFFFFF"
-                  fontSize="7.3"
+                  fontSize="7.2"
                   fontFamily="monospace"
                   fontWeight="900"
                 >
-                  {`#${flow.forwardSeq}→`}
+                  {fwdSeqText}
                 </text>
                 <text
-                  x={isHierarchicalSeq ? 23 : 18}
+                  x={-fwdTotalW / 2 + 3 + fwdSeqPillW + fwdLabelW / 2 + 2}
                   y={2.8}
                   textAnchor="middle"
                   fill={isHighlighted ? '#FFFFFF' : '#0F172A'}
-                  fontSize="7.5"
+                  fontSize="7.3"
                   fontFamily="monospace"
                   fontWeight="800"
                 >
-                  {flow.label.slice(0, 12)}
+                  {fwdLabelText}
                 </text>
               </g>
             )}
 
-            {/* 7. Return / Response Communication Link Badge (⇠ #N.2 or ⇠ #P.N.2 Response) — Always Numbered */}
+            {/* 7. Return / Response Communication Link Badge (⇠ #N.2 Full Return Label) — Dynamic Width, Zero Cutoffs */}
             {flow.isBidirectional && flow.isVisible && (
               <g
                 transform={`translate(${flow.returnControlX}, ${flow.returnControlY})`}
@@ -730,9 +782,9 @@ export function SketchWhiteboardSvg({
                 className="cursor-pointer"
               >
                 <rect
-                  x={-60}
+                  x={-retTotalW / 2}
                   y={-9}
-                  width={120}
+                  width={retTotalW}
                   height={18}
                   rx={5.5}
                   fill={isHighlighted ? '#059669' : '#ECFDF5'}
@@ -740,34 +792,34 @@ export function SketchWhiteboardSvg({
                   strokeWidth="1.2"
                 />
                 <rect
-                  x={-57}
+                  x={-retTotalW / 2 + 3}
                   y={-6.5}
-                  width={isHierarchicalSeq ? 42 : 33}
+                  width={retSeqPillW}
                   height={13}
                   rx={3.5}
                   fill={isHighlighted ? '#064E3B' : '#059669'}
                 />
                 <text
-                  x={isHierarchicalSeq ? -36 : -40.5}
+                  x={-retTotalW / 2 + 3 + retSeqPillW / 2}
                   y={2.4}
                   textAnchor="middle"
                   fill="#FFFFFF"
-                  fontSize="7.1"
+                  fontSize="7.0"
                   fontFamily="monospace"
                   fontWeight="900"
                 >
-                  {`⇠#${flow.returnSeq}`}
+                  {retSeqText}
                 </text>
                 <text
-                  x={isHierarchicalSeq ? 23 : 18}
+                  x={-retTotalW / 2 + 3 + retSeqPillW + retLabelW / 2 + 2}
                   y={2.4}
                   textAnchor="middle"
                   fill={isHighlighted ? '#FFFFFF' : '#065F46'}
-                  fontSize="7.2"
+                  fontSize="7.1"
                   fontFamily="monospace"
                   fontWeight="800"
                 >
-                  {flow.returnLabel.slice(0, 10)}
+                  {retLabelText}
                 </text>
               </g>
             )}

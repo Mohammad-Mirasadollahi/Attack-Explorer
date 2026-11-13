@@ -57,30 +57,30 @@ export function DiagramLegendPanel({
               <div className="text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">
                 Node & Phase Color Semantics
               </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 shrink-0" />
-                  <span className="truncate">Origin / Foothold</span>
+                  <span className="whitespace-nowrap">Origin / Foothold</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-xs bg-teal-600 shrink-0" />
-                  <span className="truncate">Firewall / Relay</span>
+                  <span className="whitespace-nowrap">Firewall / Relay</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-xs bg-sky-600 shrink-0" />
-                  <span className="truncate">Victim Host / OS</span>
+                  <span className="whitespace-nowrap">Victim Host / OS</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-xs bg-rose-600 shrink-0" />
-                  <span className="truncate">Exploit / Payload</span>
+                  <span className="whitespace-nowrap">Exploit / Payload</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-xs bg-violet-600 shrink-0" />
-                  <span className="truncate">Core Server / SIEM</span>
+                  <span className="whitespace-nowrap">Core Server / SIEM</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full border-2 border-rose-500 shrink-0" />
-                  <span className="truncate">Active Stage Focus</span>
+                  <span className="whitespace-nowrap">Active Stage Focus</span>
                 </div>
               </div>
             </div>

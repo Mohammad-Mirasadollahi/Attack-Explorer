@@ -196,7 +196,7 @@ export function SequenceView({
 
                             <div className="h-0.5 w-full bg-rose-500/70 rounded-full" />
 
-                            <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
+                            <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 break-words leading-snug">
                               {ev.info}
                             </div>
                           </div>

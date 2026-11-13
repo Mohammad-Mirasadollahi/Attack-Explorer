@@ -950,7 +950,7 @@ export function AttackVisualizer({
                   </span>
                 </span>
 
-                <span className="font-semibold text-xs text-zinc-900 dark:text-white truncate">
+                <span className="font-semibold text-xs text-zinc-900 dark:text-white break-words">
                   {internalSubBoard.title}
                 </span>
               </div>
@@ -982,7 +982,7 @@ export function AttackVisualizer({
 
             <div
               data-testid="expanded-node-environment-breadcrumb"
-              className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border truncate ${
+              className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border break-words leading-snug ${
                 internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
                   ? 'bg-rose-50/80 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200 border-rose-200/80 dark:border-rose-800/70'
                   : internalSubBoard.currentScopeType === 'HOST_OS_ENVIRONMENT'
@@ -1023,7 +1023,7 @@ export function AttackVisualizer({
                   : `TOPOLOGY (${scenario.stages.length} STEPS)`}
               </span>
 
-              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate max-w-[440px]">
+              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 break-words leading-snug">
                 {stageLocationContext.whereWeAreSummary}
               </span>
             </div>
@@ -1033,8 +1033,8 @@ export function AttackVisualizer({
         )}
       </AnimatePresence>
 
-      {/* Maximum-Height Center Diagram Canvas with Scroll Zoom, Mouse Pan, Windows Marquee Selection & Object Dragging */}
-      <div className="relative flex-1 w-full h-full min-h-0 overflow-hidden">
+      {/* Maximum-Height Center Diagram Canvas with Scrollbars, Wheel Zoom, Mouse Pan, Windows Marquee Selection & Object Dragging */}
+      <div className="relative flex-1 w-full h-full min-h-0 overflow-hidden rounded-2xl">
         <div
           ref={boardContainerRef}
           onPointerDown={handleBoardPointerDown}
@@ -1053,7 +1053,7 @@ export function AttackVisualizer({
           data-pan-x={panOffset.x}
           data-pan-y={panOffset.y}
           data-selected-count={multiSelectedNodeIds.length}
-          className={`relative w-full h-full rounded-2xl border overflow-hidden transition-colors duration-300 ${
+          className={`excalidraw-board-bg relative w-full h-full rounded-2xl border overflow-auto transition-colors duration-300 ${
             isPanningCanvas
               ? 'cursor-grabbing'
               : interactionMode === 'PAN'
@@ -1129,10 +1129,10 @@ export function AttackVisualizer({
                     {scenario.code}
                   </span>
                 </div>
-                <div className="mt-1 text-xs sm:text-sm font-bold text-white truncate">
+                <div className="mt-1 text-xs sm:text-sm font-bold text-white break-words">
                   {scenario.name}
                 </div>
-                <div className="mt-0.5 text-[11px] text-slate-300 line-clamp-2 leading-snug">
+                <div className="mt-0.5 text-[11px] text-slate-300 leading-snug break-words">
                   {scenario.overview}
                 </div>
                 {director.originNode && director.finalNode && (
@@ -1293,7 +1293,7 @@ export function AttackVisualizer({
                 damping: 26,
                 mass: 0.8,
               }}
-              className="relative w-full h-full z-20"
+              className="relative w-full h-full min-w-[1380px] min-h-[660px] z-20"
             >
               {/* Mobile (< 640px) */}
               <div className="sm:hidden w-full h-full">
@@ -1342,7 +1342,7 @@ export function AttackVisualizer({
                 style={{
                   transformOrigin: '50% 50%',
                 }}
-                className="hidden sm:block relative w-full h-full"
+                className="hidden sm:block relative w-full h-full min-w-[1380px] min-h-[660px]"
               >
                 <SketchWhiteboardSvg
                   zones={activeZones}
@@ -1430,7 +1430,7 @@ export function AttackVisualizer({
                         left: `${(director.activeCallout.wx / 1480) * 100}%`,
                         top: `${(director.activeCallout.wy / 650) * 100}%`,
                       }}
-                      className={`pointer-events-none absolute -translate-x-1/2 z-30 w-56 rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
+                      className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
                         director.activeCallout.placement === 'TOP'
                           ? '-translate-y-[calc(100%+58px)]'
                           : 'translate-y-[58px]'
@@ -1442,17 +1442,17 @@ export function AttackVisualizer({
                           <span>{director.activeCallout.stepBadge}</span>
                         </span>
                       </div>
-                      <div className="mt-0.5 text-[11px] font-extrabold text-white leading-snug truncate">
+                      <div className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words">
                         {director.activeCallout.headline}
                       </div>
-                      <div className="mt-0.5 text-[10px] text-slate-300 leading-snug line-clamp-2">
+                      <div className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words">
                         {director.activeCallout.detail}
                       </div>
-                      <div className="mt-1.5 pt-1 border-t border-slate-800 flex items-center justify-between text-[9px] font-mono">
-                        <span className="text-rose-400 font-bold truncate max-w-[105px]">
+                      <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 text-[9px] font-mono">
+                        <span className="text-rose-400 font-bold break-all">
                           {director.activeCallout.forwardTag}
                         </span>
-                        <span className="text-emerald-400 font-bold truncate max-w-[95px]">
+                        <span className="text-emerald-400 font-bold break-all">
                           {director.activeCallout.returnTag}
                         </span>
                       </div>
@@ -1641,7 +1641,7 @@ export function AttackVisualizer({
                       />
 
                       <div
-                        className={`mt-0.5 px-2 py-1 border rounded-md shadow-xs transition-all max-w-[205px] ${
+                        className={`mt-0.5 px-2.5 py-1.5 border rounded-lg shadow-xs transition-all w-[198px] ${
                           tacticalMode
                             ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
                             : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'
@@ -1656,7 +1656,7 @@ export function AttackVisualizer({
                         }`}
                       >
                         <div
-                          className={`text-[9.5px] font-bold leading-tight truncate ${
+                          className={`text-[9.5px] font-bold leading-snug break-words whitespace-normal ${
                             tacticalMode
                               ? 'text-emerald-100'
                               : 'text-slate-900 dark:text-white'
@@ -1665,7 +1665,7 @@ export function AttackVisualizer({
                           {node.label}
                         </div>
                         <div
-                          className={`text-[7.6px] font-mono leading-tight truncate ${
+                          className={`text-[7.8px] font-mono leading-snug break-words whitespace-normal ${
                             tacticalMode
                               ? 'text-emerald-400/85'
                               : 'text-slate-500 dark:text-zinc-400'
@@ -1681,7 +1681,7 @@ export function AttackVisualizer({
                                 : `node-host-context-${node.id}`
                             }
                             title={node.hostContext}
-                            className={`mt-0.5 px-1.5 py-0.2 rounded text-[7.3px] font-medium leading-tight truncate border ${
+                            className={`mt-0.5 px-1.5 py-0.5 rounded text-[7.4px] font-medium leading-snug break-words whitespace-normal border ${
                               node.iconType === 'MALWARE_PAYLOAD' ||
                               node.iconType === 'KERNEL_MEMORY'
                                 ? 'bg-rose-50/90 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/70'
@@ -1702,7 +1702,7 @@ export function AttackVisualizer({
                                 : `node-activity-summary-${node.id}`
                             }
                             title={node.activitySummary}
-                            className={`mt-0.5 text-[7px] leading-tight truncate max-w-[190px] ${
+                            className={`mt-0.5 text-[7.2px] leading-snug break-words whitespace-normal ${
                               tacticalMode
                                 ? 'text-slate-300'
                                 : 'text-slate-500 dark:text-zinc-400'
@@ -1719,10 +1719,12 @@ export function AttackVisualizer({
             </motion.div>
           </AnimatePresence>
 
-          {/* Bottom-Left: Persistent Visual Semantics Legend Panel + Camera Status */}
+          </div>
+
+          {/* Bottom-Left: Persistent Visual Semantics Legend Panel + Camera Status (Pinned in Viewport) */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="hidden sm:flex flex-col items-start gap-2 absolute bottom-3 left-3 z-30"
+            className="hidden sm:flex flex-col items-start gap-2 absolute bottom-4 left-4 z-30"
           >
             {showLegend && (
               <DiagramLegendPanel
@@ -1737,21 +1739,21 @@ export function AttackVisualizer({
                 className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900/90 dark:bg-zinc-900/95 text-white border border-zinc-700/80 text-[10.5px] font-mono shadow-md backdrop-blur-xs"
               >
                 <span
-                  className={`w-2 h-2 rounded-full ${
+                  className={`w-2 h-2 rounded-full shrink-0 ${
                     isPlaying
                       ? 'bg-rose-500 animate-ping'
                       : 'bg-emerald-400'
                   }`}
                 />
-                <span className="font-semibold truncate max-w-[260px]">
+                <span className="font-semibold break-words">
                   {director.camera.frameTitle}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Bottom-Right: Play/Pause Sequence Control Bar with Framer Motion Camera Zoom & Focus */}
-          <div className="absolute bottom-3 right-3 z-30">
+          {/* Bottom-Right: Play/Pause Sequence Control Bar with Framer Motion Camera Zoom & Focus (Pinned in Viewport) */}
+          <div className="absolute bottom-4 right-4 z-30">
             <PlaybackControlBar
               isPlaying={isPlaying}
               onTogglePlay={
@@ -1786,7 +1788,6 @@ export function AttackVisualizer({
               onResetZoom={handleResetCanvasLayout}
             />
           </div>
-        </div>
       </div>
 
       {/* Bottom Dock when expanded inside a node */}
@@ -1849,8 +1850,7 @@ export function AttackVisualizer({
                     >
                       <span className="font-bold">#{fl.sequenceCode}</span>
                       <span>
-                        ({fl.forwardSeq}→ {fl.label.slice(0, 14)} · ⇠
-                        {fl.returnSeq})
+                        ({fl.forwardSeq}→ {fl.label} · ⇠{fl.returnSeq})
                       </span>
                     </button>
                   );

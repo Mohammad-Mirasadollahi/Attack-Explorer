@@ -36,7 +36,7 @@ export function AttackLibraryMatrix({
               <div className="text-[10px] font-mono opacity-75">
                 PHASE {tactic.phase} · {tactic.tacticCode}
               </div>
-              <div className="text-xs font-bold uppercase tracking-wide truncate">
+              <div className="text-xs font-bold uppercase tracking-wide break-words leading-snug">
                 {tactic.shortName}
               </div>
             </div>
@@ -64,10 +64,10 @@ export function AttackLibraryMatrix({
                         Step #{stage.index}
                       </span>
                     </div>
-                    <div className="text-[11px] font-semibold text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 leading-snug mb-1">
+                    <div className="text-[11px] font-semibold text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 leading-snug mb-1 break-words">
                       {stage.title}
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-500 truncate">
+                    <div className="text-[10px] font-mono text-zinc-500 break-words leading-snug">
                       {item.name}
                     </div>
                   </button>

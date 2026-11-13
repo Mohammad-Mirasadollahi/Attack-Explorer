@@ -225,7 +225,7 @@ export function RawTablesView({
                         <td className="py-3 px-4 text-rose-600 dark:text-rose-400 font-medium whitespace-nowrap">
                           {pkt.flagsOrSize}
                         </td>
-                        <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300 max-w-md truncate">
+                        <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300 break-words leading-relaxed min-w-[320px]">
                           {pkt.payloadPreview}
                         </td>
                       </tr>
@@ -355,7 +355,7 @@ export function RawTablesView({
                     <div className="text-[11px] font-mono text-zinc-400 tabular-nums">
                       PPID {pt.ppid} · {pt.integrity}
                     </div>
-                    <div className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 truncate pt-1">
+                    <div className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 break-all leading-snug pt-1">
                       {pt.commandLine}
                     </div>
                   </div>

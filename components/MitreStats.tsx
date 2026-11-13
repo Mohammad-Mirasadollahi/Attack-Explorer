@@ -65,10 +65,10 @@ export function MitreStats({
       aria-label="MITRE ATT&CK Coverage Statistics"
       className="p-3 rounded-xl bg-zinc-50/90 dark:bg-zinc-900/75 border border-zinc-200/90 dark:border-zinc-800 space-y-2.5"
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <BarChart3 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-          <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+          <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 break-words">
             MITRE ATT&CK Tactic Coverage
           </h4>
         </div>
@@ -102,7 +102,7 @@ export function MitreStats({
       </div>
 
       {/* Summary KPI Row */}
-      <div className="flex items-center justify-between text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
+      <div className="flex flex-wrap items-center justify-between gap-1 text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
         <span>
           Active Tactics: <strong className="text-zinc-900 dark:text-zinc-100">{activeTacticsCount}/7</strong>
         </span>
@@ -119,12 +119,12 @@ export function MitreStats({
       {/* Recharts BarChart of Tactic Frequency */}
       <div
         data-testid="mitre-stats-chart-container"
-        className="w-full h-40 pt-1"
+        className="w-full h-36 pt-1"
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={tacticData}
-            margin={{ top: 6, right: 6, left: -24, bottom: 4 }}
+            margin={{ top: 6, right: 8, left: -22, bottom: 2 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -132,9 +132,9 @@ export function MitreStats({
               stroke="rgba(148, 163, 184, 0.22)"
             />
             <XAxis
-              dataKey="shortName"
-              tick={{ fontSize: 8.5, fill: '#71717A', fontFamily: 'monospace' }}
-              tickFormatter={(val: string) => val.split(' ')[0].slice(0, 6)}
+              dataKey="phase"
+              tickFormatter={(val: number) => `TA0${val}`}
+              tick={{ fontSize: 9, fill: '#71717A', fontFamily: 'monospace' }}
               interval={0}
               axisLine={{ stroke: 'rgba(148, 163, 184, 0.3)' }}
               tickLine={false}
@@ -151,8 +151,8 @@ export function MitreStats({
                 if (!active || !payload || !payload.length) return null;
                 const item = payload[0].payload as MitreTacticFrequencyItem;
                 return (
-                  <div className="rounded-lg bg-zinc-950 text-white border border-zinc-800 px-2.5 py-2 shadow-xl text-[10px] font-mono space-y-1 max-w-[220px]">
-                    <div className="font-bold text-amber-300 truncate">
+                  <div className="rounded-lg bg-zinc-950 text-white border border-zinc-800 px-2.5 py-2 shadow-xl text-[10px] font-mono space-y-1 max-w-[260px]">
+                    <div className="font-bold text-amber-300 break-words">
                       {item.fullName}
                     </div>
                     <div className="flex items-center justify-between gap-3 text-zinc-300">
@@ -168,7 +168,7 @@ export function MitreStats({
                       </span>
                     </div>
                     {item.techniques.length > 0 && (
-                      <div className="pt-1 border-t border-zinc-800 text-indigo-300 truncate">
+                      <div className="pt-1 border-t border-zinc-800 text-indigo-300 break-words">
                         IDs: {item.techniques.join(', ')}
                       </div>
                     )}
@@ -216,6 +216,31 @@ export function MitreStats({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Full Tactic Names Breakdown Grid (No Clipped Labels) */}
+      <div className="grid grid-cols-2 gap-1 text-[9.5px] font-mono">
+        {tacticData.map((t) => {
+          const count =
+            metricMode === 'STAGES'
+              ? t.scenarioStageCount
+              : t.scenarioTelemetryCount;
+          return (
+            <div
+              key={t.phase}
+              className={`flex items-center justify-between gap-1 px-1.5 py-0.5 rounded border ${
+                count > 0
+                  ? 'bg-white dark:bg-zinc-950 border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold'
+                  : 'bg-zinc-100/50 dark:bg-zinc-900/40 border-transparent text-zinc-400 dark:text-zinc-500'
+              }`}
+            >
+              <span className="break-words leading-tight">
+                TA0{t.phase} · {t.shortName}
+              </span>
+              <span className="shrink-0 font-bold">{count}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Covered Technique Links */}

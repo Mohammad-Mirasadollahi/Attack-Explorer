@@ -144,7 +144,7 @@ export function buildInternalNodeSubBoard(
         sublabel: `${parentNode.sublabel.split('·')[0].trim()} · L2/L3 Parser`,
         actionBadge: 'INT ① · Frame Ingress',
         wx: 175,
-        wy: 230,
+        wy: 210,
         isCompromised: false,
         internalSummary: `Receives inbound packets for ${scenario.name} on physical/VLAN trunk interface and validates L2/L3 checksums.` },
       {
@@ -155,7 +155,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'Rule #104 PERMIT · Conntrack',
         actionBadge: 'INT ② · ACL Permit Match',
         wx: 520,
-        wy: 410,
+        wy: 360,
         isCompromised: true,
         internalSummary: 'Matches 5-tuple against allowed service rule (e.g., TCP :443, UDP :53, SMB :445, or Kerberos :88) and creates a stateful session entry.' },
       {
@@ -174,7 +174,7 @@ export function buildInternalNodeSubBoard(
         sublabel: `${scenario.telemetry[0]?.protocolOrEventId || 'L7 Stream'} · Evaded`,
         actionBadge: 'INT ③ · L7 Inspection / Relay',
         wx: 875,
-        wy: 235,
+        wy: 215,
         isCompromised: true,
         internalSummary: 'Processes application-layer header/query. Obfuscated payload evades static signature block and is queued for forwarding.' },
       {
@@ -185,7 +185,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'Next-Hop MAC Rewrite · TX',
         actionBadge: 'INT ④ · Egress Forwarding',
         wx: 1190,
-        wy: 215,
+        wy: 195,
         isCompromised: true,
         internalSummary: 'Rewrites L2 MAC header and VLAN tag, transmitting the packet onto the target internal subnet trunk.' },
       {
@@ -196,7 +196,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'Passive Copy -> IDS / SIEM',
         actionBadge: 'INT ⑤ · SPAN Telemetry Copy',
         wx: 1355,
-        wy: 485,
+        wy: 390,
         isCompromised: false,
         internalSummary: 'Mirrors raw packet frames via hardware SPAN port to NDR/IDS sensors (Suricata / Zeek / SIEM) for anomaly detection.' },
     ];
@@ -249,10 +249,10 @@ export function buildInternalNodeSubBoard(
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
-      { id: 'int-net-1', x1: 175, y1: 230, x2: 520, y2: 410, label: 'DMA RX Bus', linkType: 'INTERNAL_BUS' },
-      { id: 'int-net-2', x1: 520, y1: 410, x2: 875, y2: 235, label: 'Conntrack Pipe', linkType: 'INTERNAL_BUS' },
-      { id: 'int-net-3', x1: 875, y1: 235, x2: 1190, y2: 215, label: 'FIB Crossbar', linkType: 'INTERNAL_BUS' },
-      { id: 'int-net-4', x1: 1190, y1: 215, x2: 1355, y2: 485, label: 'SPAN Tap', linkType: 'SPAN_MIRROR' },
+      { id: 'int-net-1', x1: 175, y1: 210, x2: 520, y2: 360, label: 'DMA RX Bus', linkType: 'INTERNAL_BUS' },
+      { id: 'int-net-2', x1: 520, y1: 360, x2: 875, y2: 215, label: 'Conntrack Pipe', linkType: 'INTERNAL_BUS' },
+      { id: 'int-net-3', x1: 875, y1: 215, x2: 1190, y2: 195, label: 'FIB Crossbar', linkType: 'INTERNAL_BUS' },
+      { id: 'int-net-4', x1: 1190, y1: 195, x2: 1355, y2: 390, label: 'SPAN Tap', linkType: 'SPAN_MIRROR' },
     ];
 
     return materializeInternalBoard(
@@ -337,7 +337,7 @@ export function buildInternalNodeSubBoard(
         sublabel: p0?.user || 'CORP\\user · Ring-3',
         actionBadge: 'HOST ① · Parent Process',
         wx: 175,
-        wy: 230,
+        wy: 210,
         isCompromised: false,
         internalSummary: p0
             ? `Executes command line: ${p0.commandLine} and invokes ${p0.apiCalls.join(', ')}.`
@@ -350,7 +350,7 @@ export function buildInternalNodeSubBoard(
         sublabel: `${p1?.integrity || 'Medium'} Integrity · Child`,
         actionBadge: 'HOST ② · Spawned Child Process',
         wx: 520,
-        wy: 410,
+        wy: 360,
         isCompromised: true,
         internalSummary: p1
             ? `Child process (${p1.commandLine}) invoking ${p1.apiCalls.join(', ')}.`
@@ -363,7 +363,7 @@ export function buildInternalNodeSubBoard(
         sublabel: '0x00400000 · NTDLL Syscalls',
         actionBadge: 'HOST ③ · Memory & Syscall Space',
         wx: 875,
-        wy: 235,
+        wy: 215,
         isCompromised: true,
         internalSummary: p2?.memoryBlocks?.[0]?.description ||
             'Virtual Address Descriptor (VAD) region where code injection, hollowing, or in-memory execution takes place.' },
@@ -375,7 +375,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'LSASS / Winsock / Disk I/O',
         actionBadge: 'HOST ④ · Local Token / Socket',
         wx: 1190,
-        wy: 215,
+        wy: 195,
         isCompromised: true,
         internalSummary: 'Accesses host network sockets, Kerberos ticket cache, or local files to continue lateral movement or exfiltration.' },
       {
@@ -386,7 +386,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'EID 1 · 4688 · 25 · 4104',
         actionBadge: 'HOST ⑤ · Kernel Telemetry Hook',
         wx: 1355,
-        wy: 485,
+        wy: 390,
         isCompromised: false,
         internalSummary: 'Kernel callbacks (PsSetCreateProcessNotifyRoutineEx & ETW) record every process creation and memory anomaly.' },
     ];
@@ -439,10 +439,10 @@ export function buildInternalNodeSubBoard(
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
-      { id: 'int-host-1', x1: 175, y1: 230, x2: 520, y2: 410, label: 'Process Table', linkType: 'INTERNAL_BUS' },
-      { id: 'int-host-2', x1: 520, y1: 410, x2: 875, y2: 235, label: 'Syscall Gate', linkType: 'INTERNAL_BUS' },
-      { id: 'int-host-3', x1: 875, y1: 235, x2: 1190, y2: 215, label: 'Winsock Bus', linkType: 'INTERNAL_BUS' },
-      { id: 'int-host-4', x1: 875, y1: 235, x2: 1355, y2: 485, label: 'ETW Hook', linkType: 'SPAN_MIRROR' },
+      { id: 'int-host-1', x1: 175, y1: 210, x2: 520, y2: 360, label: 'Process Table', linkType: 'INTERNAL_BUS' },
+      { id: 'int-host-2', x1: 520, y1: 360, x2: 875, y2: 215, label: 'Syscall Gate', linkType: 'INTERNAL_BUS' },
+      { id: 'int-host-3', x1: 875, y1: 215, x2: 1190, y2: 195, label: 'Winsock Bus', linkType: 'INTERNAL_BUS' },
+      { id: 'int-host-4', x1: 875, y1: 215, x2: 1355, y2: 390, label: 'ETW Hook', linkType: 'SPAN_MIRROR' },
     ];
 
     return materializeInternalBoard(
@@ -522,7 +522,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'Decrypts Payload Buffer in RAM',
         actionBadge: 'MAL ① · Decryptor Stub',
         wx: 175,
-        wy: 395,
+        wy: 345,
         isCompromised: true,
         internalSummary: 'Walks the Process Environment Block (PEB) to resolve NTDLL/Kernel32 APIs dynamically and decrypts the embedded payload.' },
       {
@@ -539,7 +539,7 @@ export function buildInternalNodeSubBoard(
             : 'Carves Out Legitimate Image Base',
         actionBadge: 'MAL ② · Defense Evasion',
         wx: 520,
-        wy: 225,
+        wy: 205,
         isCompromised: true,
         internalSummary: 'Neutralizes host inspection or unmaps the legitimate executable section at 0x00400000 to prepare the hollow container.' },
       {
@@ -550,7 +550,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'VirtualAllocEx + WriteProcessMemory',
         actionBadge: 'MAL ③ · PE Section Injector',
         wx: 875,
-        wy: 410,
+        wy: 355,
         isCompromised: true,
         internalSummary: 'Allocates PAGE_EXECUTE_READWRITE memory and writes MZ/PE headers plus .text/.rdata/.data sections into memory.' },
       {
@@ -561,7 +561,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'SetThreadContext (RCX/RIP) + Resume',
         actionBadge: 'MAL ④ · Thread Hijack & Exec',
         wx: 1190,
-        wy: 205,
+        wy: 195,
         isCompromised: true,
         internalSummary: 'Updates the suspended thread register context to point to the injected entry point and calls ResumeThread.' },
       {
@@ -572,7 +572,7 @@ export function buildInternalNodeSubBoard(
         sublabel: 'Encrypted Beacon & Task Runner',
         actionBadge: 'MAL ⑤ · C2 & Post-Exploit',
         wx: 1355,
-        wy: 475,
+        wy: 390,
         isCompromised: true,
         internalSummary: 'Establishes the covert communication channel or executes post-exploitation tasks under the masqueraded process identity.' },
     ];
@@ -625,10 +625,10 @@ export function buildInternalNodeSubBoard(
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
-      { id: 'int-mal-1', x1: 175, y1: 395, x2: 520, y2: 225, label: 'PEB API Table', linkType: 'INTERNAL_BUS' },
-      { id: 'int-mal-2', x1: 520, y1: 225, x2: 875, y2: 410, label: 'VAD Page Table', linkType: 'INTERNAL_BUS' },
-      { id: 'int-mal-3', x1: 875, y1: 410, x2: 1190, y2: 205, label: 'ETHREAD Context', linkType: 'INTERNAL_BUS' },
-      { id: 'int-mal-4', x1: 1190, y1: 205, x2: 1355, y2: 475, label: 'C2 Task Bus', linkType: 'INTERNAL_BUS' },
+      { id: 'int-mal-1', x1: 175, y1: 345, x2: 520, y2: 205, label: 'PEB API Table', linkType: 'INTERNAL_BUS' },
+      { id: 'int-mal-2', x1: 520, y1: 205, x2: 875, y2: 355, label: 'VAD Page Table', linkType: 'INTERNAL_BUS' },
+      { id: 'int-mal-3', x1: 875, y1: 355, x2: 1190, y2: 195, label: 'ETHREAD Context', linkType: 'INTERNAL_BUS' },
+      { id: 'int-mal-4', x1: 1190, y1: 195, x2: 1355, y2: 390, label: 'C2 Task Bus', linkType: 'INTERNAL_BUS' },
     ];
 
     return materializeInternalBoard(
@@ -726,7 +726,7 @@ export function buildInternalNodeSubBoard(
       sublabel: `${parentNode.sublabel} · Listener`,
       actionBadge: 'INT ① · Service Ingress',
       wx: 175,
-      wy: 230,
+      wy: 210,
       isCompromised: isAttacker,
       internalSummary: `Accepts or dispatches initial network requests on ${parentNode.label} into the internal processing pipeline.` },
     {
@@ -741,7 +741,7 @@ export function buildInternalNodeSubBoard(
       sublabel: isSiem ? 'Extracts EID 1/4688/25/4769' : 'Handles Auth & Service Calls',
       actionBadge: 'INT ② · Core Handler Engine',
       wx: 520,
-      wy: 410,
+      wy: 360,
       isCompromised: true,
       internalSummary: 'Processes authentication tickets, remote service control commands, C2 staging, or telemetry normalization.' },
     {
@@ -756,7 +756,7 @@ export function buildInternalNodeSubBoard(
       sublabel: isSiem ? 'MITRE ATT&CK Rule Match' : 'Sensitive Hashes / Snapshots',
       actionBadge: 'INT ③ · Core Vault / Rule Engine',
       wx: 875,
-      wy: 235,
+      wy: 215,
       isCompromised: !isSiem,
       internalSummary: 'Reads or modifies high-value hashes, Volume Shadow Copies, exfiltrated chunks, or correlates multi-stage indicators.' },
     {
@@ -771,7 +771,7 @@ export function buildInternalNodeSubBoard(
       sublabel: 'Tier-0 Impact & Response',
       actionBadge: 'INT ④ · Execution / Response',
       wx: 1190,
-      wy: 215,
+      wy: 195,
       isCompromised: !isSiem,
       internalSummary: 'Completes privileged action on the server, dispatches operator commands, or constructs the correlated attack timeline.' },
     {
@@ -782,7 +782,7 @@ export function buildInternalNodeSubBoard(
       sublabel: 'EventID 4769 · 4624 · 7045',
       actionBadge: 'INT ⑤ · Forensic Audit Log',
       wx: 1355,
-      wy: 485,
+      wy: 390,
       isCompromised: false,
       internalSummary: 'Generates high-priority security audit records and telemetry traces for DFIR analysts.' },
   ];
@@ -837,10 +837,10 @@ export function buildInternalNodeSubBoard(
   ];
 
   const backboneLinks: NetworkBackboneLink[] = [
-    { id: 'int-srv-1', x1: 175, y1: 230, x2: 520, y2: 410, label: 'RPC Pipe', linkType: 'INTERNAL_BUS' },
-    { id: 'int-srv-2', x1: 520, y1: 410, x2: 875, y2: 235, label: 'Storage Bus', linkType: 'INTERNAL_BUS' },
-    { id: 'int-srv-3', x1: 875, y1: 235, x2: 1190, y2: 215, label: 'Exec Channel', linkType: 'INTERNAL_BUS' },
-    { id: 'int-srv-4', x1: 1190, y1: 215, x2: 1355, y2: 485, label: 'Audit Bus', linkType: 'SPAN_MIRROR' },
+    { id: 'int-srv-1', x1: 175, y1: 210, x2: 520, y2: 360, label: 'RPC Pipe', linkType: 'INTERNAL_BUS' },
+    { id: 'int-srv-2', x1: 520, y1: 360, x2: 875, y2: 215, label: 'Storage Bus', linkType: 'INTERNAL_BUS' },
+    { id: 'int-srv-3', x1: 875, y1: 215, x2: 1190, y2: 195, label: 'Exec Channel', linkType: 'INTERNAL_BUS' },
+    { id: 'int-srv-4', x1: 1190, y1: 195, x2: 1355, y2: 390, label: 'Audit Bus', linkType: 'SPAN_MIRROR' },
   ];
 
   return materializeInternalBoard(
@@ -965,8 +965,8 @@ function materializeInternalBoard(
       no: idx + 1,
       stageIndex: matchedScenarioEvent.stageIndex || idx + 1,
       sourceType: fb.sourceType,
-      sourceLabel: fromN.label.slice(0, 22),
-      targetLabel: toN.label.slice(0, 22),
+      sourceLabel: fromN.label,
+      targetLabel: toN.label,
       protocolOrEventId: fb.protocolOrEventId,
       shortAction: fb.shortAction,
       sizeOrCode: fb.sizeOrCode,

@@ -104,7 +104,7 @@ export function AttackStepProgressBar({
               data-testid={`visualizer-step-btn-${stage.index}`}
               onClick={() => onSelectStage(stage.index)}
               title={`Stage ${stage.index}: ${stage.title} (${stage.mitreTechniqueId})`}
-              className={`relative flex-1 min-w-[115px] px-2 py-1 rounded-md text-[10.5px] font-mono flex items-center justify-between gap-1.5 transition-all cursor-pointer whitespace-nowrap border ${
+              className={`relative shrink-0 px-2.5 py-1 rounded-md text-[10.5px] font-mono flex items-center justify-between gap-2 transition-all cursor-pointer whitespace-nowrap border ${
                 isCurrent
                   ? 'bg-indigo-600 text-white border-indigo-600 font-bold shadow-2xs'
                   : isCompleted
@@ -112,7 +112,7 @@ export function AttackStepProgressBar({
                   : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
               }`}
             >
-              <span className="flex items-center gap-1.5 min-w-0 truncate">
+              <span className="flex items-center gap-1.5">
                 <span
                   className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${
                     isCurrent
@@ -128,13 +128,13 @@ export function AttackStepProgressBar({
                     stage.index
                   )}
                 </span>
-                <span className="truncate">
+                <span>
                   S{stage.index}: {stage.title}
                 </span>
               </span>
 
               <span
-                className={`text-[9px] hidden xl:inline shrink-0 ${
+                className={`text-[9px] shrink-0 ${
                   isCurrent
                     ? 'text-indigo-100'
                     : 'text-zinc-400 dark:text-zinc-500'

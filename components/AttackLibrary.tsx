@@ -159,7 +159,7 @@ export function AttackLibrary({
         </div>
 
         {/* Spacious Content Grid */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-auto p-6">
           {libraryView === 'CARDS' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {data.items.map((item: AttackLibraryItem) => {
@@ -190,15 +190,15 @@ export function AttackLibrary({
                         {item.name}
                       </h3>
 
-                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed line-clamp-3">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
                         {item.overview}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
+                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
                       <span
                         dir="ltr"
-                        className="text-[11px] font-mono text-zinc-400 truncate"
+                        className="text-[11px] font-mono text-zinc-400 break-words"
                       >
                         {item.stageCount} steps · {item.logSources.join(' · ')}
                       </span>

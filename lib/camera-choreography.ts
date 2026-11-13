@@ -330,24 +330,14 @@ export function computeScenarioChoreography(
     ? {
         flowId: primaryFlow.id,
         stepCode: primaryFlow.sequenceCode,
-        forwardHeader: `#${primaryFlow.forwardSeq}→ ${primaryFlow.label.slice(
-          0,
-          16
-        )}`,
+        forwardHeader: `#${primaryFlow.forwardSeq}→ ${primaryFlow.label}`,
         forwardPayloadLines: [
           `${primaryFlow.telemetryEvent.sourceType} · ${primaryFlow.telemetryEvent.protocolOrEventId}`,
-          `${sourceNode?.label.slice(0, 12) || 'SRC'} → ${
-            targetNode?.label.slice(0, 12) || 'DST'
-          }`,
+          `${sourceNode?.label || 'SRC'} → ${targetNode?.label || 'DST'}`,
         ],
-        returnHeader: `⇠#${primaryFlow.returnSeq} ${primaryFlow.returnLabel.slice(
-          0,
-          14
-        )}`,
-        returnPayloadLine: (
-          primaryFlow.traceMeta?.returnDescription ||
-          primaryFlow.returnLabel
-        ).slice(0, 26),
+        returnHeader: `⇠#${primaryFlow.returnSeq} ${primaryFlow.returnLabel}`,
+        returnPayloadLine:
+          primaryFlow.traceMeta?.returnDescription || primaryFlow.returnLabel,
         sourceNodeX: primaryFlow.fromX,
         sourceNodeY: primaryFlow.fromY,
         targetNodeX: primaryFlow.toX,

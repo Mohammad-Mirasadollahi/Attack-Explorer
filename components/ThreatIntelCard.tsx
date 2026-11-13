@@ -88,7 +88,7 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <Globe className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
-          <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+          <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 break-words">
             Threat Intel & Search Grounding
           </h4>
         </div>
@@ -169,18 +169,18 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
               key={actor.name}
               className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-0.5"
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-100">
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <span className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-100 break-words">
                   {actor.name}
                 </span>
-                <span className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400 truncate max-w-[120px]">
+                <span className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400 break-words">
                   {actor.aliases}
                 </span>
               </div>
-              <div className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 truncate">
+              <div className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 break-words leading-snug">
                 Sectors: {actor.targetSectors}
               </div>
-              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug break-words">
                 {actor.notableCampaign}
               </p>
             </div>
@@ -202,10 +202,10 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
                 href={src.uri}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-between gap-1.5 px-2 py-1 rounded bg-white dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-[10px] font-mono text-indigo-600 dark:text-indigo-400 hover:underline truncate"
+                className="inline-flex items-start justify-between gap-1.5 px-2 py-1 rounded bg-white dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 text-[10px] font-mono text-indigo-600 dark:text-indigo-400 hover:underline break-words"
               >
-                <span className="truncate">{src.title}</span>
-                <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                <span className="break-words leading-snug">{src.title}</span>
+                <ExternalLink className="w-2.5 h-2.5 shrink-0 mt-0.5" />
               </a>
             ))}
           </div>
