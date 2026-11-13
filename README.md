@@ -1,6 +1,32 @@
 # Attack Explorer
 
+# [https://www.attackexplorer.com/](https://www.attackexplorer.com/)
+
+Live product: **[www.attackexplorer.com](https://www.attackexplorer.com/)**
+
 Interactive workbench for exploring cyber-attack scenarios: kill-chain visuals, Sysmon/SIEM-style telemetry, and MITRE ATT&CK mapping.
+
+## Screenshots
+
+### Workbench overview
+
+[![Attack Explorer workbench](./docs/screenshots/01-workbench-overview.png)](https://www.attackexplorer.com/)
+
+### Sequence view
+
+[![Chronological attack sequence](./docs/screenshots/02-sequence-view.png)](https://www.attackexplorer.com/)
+
+### Memory forensics
+
+[![Process memory & syscall view](./docs/screenshots/03-memory-view.png)](https://www.attackexplorer.com/)
+
+### Tables & packets
+
+[![Tables and packets view](./docs/screenshots/04-tables-packets.png)](https://www.attackexplorer.com/)
+
+### Scenarios sidebar
+
+[![Operational guide scenarios](./docs/screenshots/05-scenarios-sidebar.png)](https://www.attackexplorer.com/)
 
 ## Setup
 
