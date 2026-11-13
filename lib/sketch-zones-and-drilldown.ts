@@ -91,6 +91,8 @@ export interface WhiteboardSketchNode {
   iconType: SketchIconType;
   label: string;
   sublabel: string;
+  /** Human-readable network zone name for search / toolbar display */
+  zoneLabel?: string;
   actionBadge: string;
   /** Explicit Host / System / Appliance context answering "On which system / where is this running?" */
   hostContext: string;
