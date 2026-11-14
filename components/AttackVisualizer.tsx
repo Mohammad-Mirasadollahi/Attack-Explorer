@@ -352,32 +352,36 @@ export function AttackVisualizer({
     [scenario, sketchNodes, sketchFlows, activeStageIndex, activeEnvironment]
   );
 
+  // Selected for inspector/details (single-click). Does not expand the board.
   const selectedSketchNode: WhiteboardSketchNode | null = useMemo(
-    () =>
-      sketchNodes.find(
-        (n) => n.id === activeSketchNodeId || n.id === selectedNodeId
-      ) || null,
-    [sketchNodes, activeSketchNodeId, selectedNodeId]
+    () => sketchNodes.find((n) => n.id === selectedNodeId) || null,
+    [sketchNodes, selectedNodeId]
+  );
+
+  // Expanded into internal visual sub-board (double-click only).
+  const expandedSketchNode: WhiteboardSketchNode | null = useMemo(
+    () => sketchNodes.find((n) => n.id === activeSketchNodeId) || null,
+    [sketchNodes, activeSketchNodeId]
   );
 
   const companionSketchNode: WhiteboardSketchNode | null = useMemo(() => {
-    if (!selectedSketchNode?.companionHostOrProcessNodeId) return null;
+    if (!expandedSketchNode?.companionHostOrProcessNodeId) return null;
     return (
       sketchNodes.find(
-        (n) => n.id === selectedSketchNode.companionHostOrProcessNodeId
+        (n) => n.id === expandedSketchNode.companionHostOrProcessNodeId
       ) || null
     );
-  }, [selectedSketchNode, sketchNodes]);
+  }, [expandedSketchNode, sketchNodes]);
 
   const rawInternalSubBoard = useMemo(() => {
-    if (!selectedSketchNode) return null;
+    if (!expandedSketchNode) return null;
     return buildInternalNodeSubBoard(
       scenario,
-      selectedSketchNode,
+      expandedSketchNode,
       sketchFlows,
       activeStageIndex
     );
-  }, [scenario, selectedSketchNode, sketchFlows, activeStageIndex]);
+  }, [scenario, expandedSketchNode, sketchFlows, activeStageIndex]);
 
   // Apply user-dragged offsets to internal sub-board if active
   const internalSubBoard = useMemo(() => {
@@ -1193,29 +1197,40 @@ export function AttackVisualizer({
     [activeNodes, activeZones, boardScopeKey]
   );
 
-  const handleNodeClick = useCallback(
+  /** Single-click: select node for details / inspector. Does not expand. */
+  const handleNodeSelect = useCallback(
     (node: WhiteboardSketchNode) => {
-    const xPct = Math.round(((node.wx / 1480) * 100) * 10) / 10;
-    const yPct = Math.round(((node.wy / 650) * 100) * 10) / 10;
-    setPortalOrigin({ xPct, yPct });
-    setPortalAnim({
-      mode: 'EXPAND',
-      xPct,
-      yPct,
-      nodeLabel: node.label,
+      setLastReturnedNodeId(null);
+      onSelectNode(node.id);
+      setMultiSelectedNodeIds([]);
+    },
+    [onSelectNode]
+  );
+
+  /** Double-click: expand into the internal visual sub-board when available. */
+  const handleNodeExpand = useCallback(
+    (node: WhiteboardSketchNode) => {
+      const xPct = Math.round(((node.wx / 1480) * 100) * 10) / 10;
+      const yPct = Math.round(((node.wy / 650) * 100) * 10) / 10;
+      setPortalOrigin({ xPct, yPct });
+      setPortalAnim({
+        mode: 'EXPAND',
+        xPct,
+        yPct,
+        nodeLabel: node.label,
         seqKey: Date.now(),
       });
-    setLastReturnedNodeId(null);
-    setActiveSketchNodeId(node.id);
-    onSelectNode(node.id);
-    setSelectedInternalSubNodeId(null);
+      setLastReturnedNodeId(null);
+      setActiveSketchNodeId(node.id);
+      onSelectNode(node.id);
+      setSelectedInternalSubNodeId(null);
       setMultiSelectedNodeIds([]);
     },
     [onSelectNode]
   );
 
   const handleBackToMainTopology = () => {
-    const returningNode = selectedSketchNode;
+    const returningNode = expandedSketchNode;
     const xPct = returningNode
       ? Math.round(((returningNode.wx / 1480) * 100) * 10) / 10
       : portalOrigin.xPct;
@@ -1233,9 +1248,11 @@ export function AttackVisualizer({
     });
     if (returningNode) {
       setLastReturnedNodeId(returningNode.id);
+      onSelectNode(returningNode.id);
+    } else {
+      onSelectNode(null);
     }
     setActiveSketchNodeId(null);
-    onSelectNode(null);
     setSelectedInternalSubNodeId(null);
     setMultiSelectedNodeIds([]);
   };
@@ -1273,15 +1290,30 @@ export function AttackVisualizer({
           onSelectTelemetry(relatedFlow.telemetryEvent);
         }
       } else {
-        handleNodeClick(clickedNode);
+        handleNodeSelect(clickedNode);
       }
     },
     [
-      handleNodeClick,
+      handleNodeSelect,
       internalSubBoard,
       onSelectTelemetry,
       toggleNodeInMultiSelection,
     ]
+  );
+
+  const handleDiagramNodeDoubleClick = useCallback(
+    (clickedNode: WhiteboardSketchNode, e: React.MouseEvent<HTMLElement>) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setHoveredNodeId(null);
+      if (didDragObjectRef.current) {
+        didDragObjectRef.current = false;
+        return;
+      }
+      if (internalSubBoard) return;
+      handleNodeExpand(clickedNode);
+    },
+    [handleNodeExpand, internalSubBoard]
   );
 
   const handleSelectAllNodes = useCallback(() => {
@@ -1473,8 +1505,8 @@ export function AttackVisualizer({
   }, [executeShortcutCommand]);
 
   const boardMotionKey =
-    internalSubBoard && selectedSketchNode
-      ? `expanded-subboard-${selectedSketchNode.id}-${activeEnvironment}`
+    internalSubBoard && expandedSketchNode
+      ? `expanded-subboard-${expandedSketchNode.id}-${activeEnvironment}`
       : `main-topology-${scenario.id}-${activeEnvironment}`;
 
   const hoveredNode = useMemo(
@@ -1758,9 +1790,9 @@ export function AttackVisualizer({
       {/* Persistent Environment & Expandable Zone Sub-View Context Bar (Collapsible via topBarHidden) */}
       <AnimatePresence mode="wait" initial={false}>
         {!topBarHidden &&
-          (internalSubBoard && selectedSketchNode ? (
-          <motion.div
-            key={`subboard-header-${selectedSketchNode.id}`}
+          (internalSubBoard && expandedSketchNode ? (
+            <motion.div
+            key={`subboard-header-${expandedSketchNode.id}`}
             initial={{ opacity: 0, y: -12, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.99 }}
@@ -1785,7 +1817,7 @@ export function AttackVisualizer({
 
                   <WorkbenchIconTooltip
                     label={internalSubBoard.title}
-                    badge={`NODE #${selectedSketchNode.chainOrder}`}
+                    badge={`NODE #${expandedSketchNode.chainOrder}`}
                     detail={internalSubBoard.environmentBreadcrumb}
                     side="bottom"
                     align="left"
@@ -1793,8 +1825,8 @@ export function AttackVisualizer({
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10.5px] font-semibold cursor-default whitespace-nowrap">
                       <Maximize2 className="w-3 h-3 shrink-0" />
                       <span>
-                        Node #{selectedSketchNode.chainOrder} ·{' '}
-                        {selectedSketchNode.label}
+                        Node #{expandedSketchNode.chainOrder} ·{' '}
+                        {expandedSketchNode.label}
                 </span>
                 </span>
                   </WorkbenchIconTooltip>
@@ -1813,7 +1845,7 @@ export function AttackVisualizer({
                   <button
                     type="button"
                     data-testid="switch-companion-host-process-btn"
-                    onClick={() => handleNodeClick(companionSketchNode)}
+                    onClick={() => handleNodeExpand(companionSketchNode)}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
                           internalSubBoard.currentScopeType ===
                           'MALWARE_ON_HOST'
@@ -2283,7 +2315,12 @@ export function AttackVisualizer({
                     if (internalSubBoard) {
                       setSelectedInternalSubNodeId(node.id);
                     } else {
-                      handleNodeClick(node);
+                      handleNodeSelect(node);
+                    }
+                  }}
+                  onExpandNode={(node) => {
+                    if (!internalSubBoard) {
+                      handleNodeExpand(node);
                     }
                   }}
                   selectedTelemetryId={selectedTelemetryId}
@@ -2346,7 +2383,7 @@ export function AttackVisualizer({
                               (n) => n.zoneId === zoneId
                             );
                             if (targetNode) {
-                              handleNodeClick(targetNode);
+                              handleNodeSelect(targetNode);
                             }
                           }
                         : undefined
@@ -2445,7 +2482,7 @@ export function AttackVisualizer({
                 {activeNodes.map((node, nIdx) => {
                   const isSelected = internalSubBoard
                     ? activeInternalSubNode?.id === node.id
-                    : selectedSketchNode?.id === node.id;
+                    : selectedNodeId === node.id;
                     const isMultiSelected = multiSelectedNodeIds.includes(
                       node.id
                     );
@@ -2487,6 +2524,7 @@ export function AttackVisualizer({
                         onToggleMultiSelect={toggleNodeInMultiSelection}
                         onHoverChange={setHoveredNodeId}
                         onNodeClick={handleDiagramNodeClick}
+                        onNodeDoubleClick={handleDiagramNodeDoubleClick}
                       />
                   );
                 })}
@@ -2616,7 +2654,7 @@ export function AttackVisualizer({
       <AnimatePresence initial={false}>
         {internalSubBoard && activeInternalSubNode && !bottomDockHidden && (
           <motion.div
-            key={`subboard-dock-${selectedSketchNode?.id}`}
+            key={`subboard-dock-${expandedSketchNode?.id}`}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}

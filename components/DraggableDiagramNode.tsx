@@ -44,6 +44,10 @@ export interface DraggableDiagramNodeProps {
     node: WhiteboardSketchNode,
     e: React.MouseEvent<HTMLElement>
   ) => void;
+  onNodeDoubleClick?: (
+    node: WhiteboardSketchNode,
+    e: React.MouseEvent<HTMLElement>
+  ) => void;
   onHoverChange: (nodeId: string | null) => void;
 }
 
@@ -73,6 +77,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
   onStartNodeGroupDrag,
   onToggleMultiSelect,
   onNodeClick,
+  onNodeDoubleClick,
   onHoverChange,
 }: DraggableDiagramNodeProps) {
   const nodeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -153,9 +158,12 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       }}
       onBlur={() => onHoverChange(null)}
       onClick={(e) => onNodeClick(node, e)}
+      onDoubleClick={(e) => onNodeDoubleClick?.(node, e)}
       title={`${node.actionBadge} · ${node.label} (${node.sublabel})${
         node.hostContext ? ` — ${node.hostContext}` : ''
-      }${node.activitySummary ? ` | ${node.activitySummary}` : ''}`}
+      }${node.activitySummary ? ` | ${node.activitySummary}` : ''}${
+        isSubBoard ? '' : ' · Double-click to expand'
+      }`}
       style={{
         left: `${leftPct}%`,
         top: `${topPct}%`,

@@ -284,9 +284,6 @@ export function StepByStepGuidePanel({
 
           {/* Plain-Language Summary */}
           <div className="space-y-1">
-            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-              Plain-Language Attack Briefing (From Official Advisory):
-            </div>
             <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
               {briefing.plainSummary}
             </p>

@@ -18,6 +18,7 @@ interface ResponsiveMobileZonesViewProps {
   sketchFlows: WhiteboardSketchFlow[];
   selectedSketchNode: WhiteboardSketchNode | null;
   onSelectNode: (node: WhiteboardSketchNode) => void;
+  onExpandNode?: (node: WhiteboardSketchNode) => void;
   selectedTelemetryId: string | null;
   onSelectTelemetry: (event: TelemetryEvent) => void;
 }
@@ -28,6 +29,7 @@ export function ResponsiveMobileZonesView({
   sketchFlows,
   selectedSketchNode,
   onSelectNode,
+  onExpandNode,
   selectedTelemetryId,
   onSelectTelemetry }: ResponsiveMobileZonesViewProps) {
   return (
@@ -87,10 +89,15 @@ export function ResponsiveMobileZonesView({
                       whileTap={{ scale: 0.97 }}
                       title={`${node.actionBadge} · ${node.label} (${node.sublabel})${
                         node.hostContext ? ` | ${node.hostContext}` : ''
-                      }${node.activitySummary ? ` | ${node.activitySummary}` : ''}`}
+                      }${node.activitySummary ? ` | ${node.activitySummary}` : ''} · Double-tap to expand`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectNode(node);
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        onExpandNode?.(node);
                       }}
                       className={`flex flex-col items-center text-center p-1.5 rounded-lg bg-white/95 dark:bg-zinc-900/95 border transition-all cursor-pointer min-w-0 ${
                         isSelected
