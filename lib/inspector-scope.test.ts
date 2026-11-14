@@ -33,6 +33,9 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(mainScope.diagramScope, 'MAIN_SCENARIO');
     assert.equal(mainScope.effectiveScope, 'MAIN_SCENARIO');
     assert.equal(mainScope.scopeBadgeText, 'Scenario');
+    assert.equal(mainScope.scopeBadgeMeta.mode, 'MAIN_SCENARIO');
+    assert.equal(mainScope.scopeBadgeMeta.themeColor, 'emerald');
+    assert.equal(mainScope.subBoardStoryAnalogy, null);
     assert.equal(mainScope.internalSubBoard, null);
     assert.equal(mainScope.expandedNode, null);
     assert.equal(mainScope.selectedSubNode, null);
@@ -73,6 +76,12 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
 
     assert.equal(expandedScope.diagramScope, 'EXPANDED_NODE');
     assert.equal(expandedScope.effectiveScope, 'EXPANDED_NODE');
+    assert.equal(expandedScope.scopeBadgeMeta.mode, 'EXPANDED_NODE');
+    assert.equal(expandedScope.scopeBadgeMeta.themeColor, 'amber');
+    assert.ok(
+      expandedScope.subBoardStoryAnalogy &&
+        expandedScope.subBoardStoryAnalogy.length > 60
+    );
     assert.equal(
       expandedScope.scopeBadgeText,
       formatExpandedNodeScopeLabel(dnsResolverNode)
@@ -89,6 +98,9 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(expandedScope.internalSubBoard?.subNodes.length, 5);
     assert.equal(expandedScope.internalSubBoard?.subFlows.length, 4);
     assert.equal(expandedScope.internalSteps.length, 4);
+    assert.ok(
+      expandedScope.internalSteps.every((st) => st.storyAnalogy.length > 40)
+    );
 
     // Step guide in EXPANDED_NODE uses the 4 internal sub-flows with hierarchical sequence codes (e.g., 2.1..2.4)
     const stepGuide = buildScopedStepGuideModel(expandedScope, 'STAGE_ACTIVE');
@@ -133,6 +145,8 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
 
     assert.equal(subNodeScope.diagramScope, 'INTERNAL_SUBNODE');
     assert.equal(subNodeScope.effectiveScope, 'INTERNAL_SUBNODE');
+    assert.equal(subNodeScope.scopeBadgeMeta.mode, 'INTERNAL_SUBNODE');
+    assert.equal(subNodeScope.scopeBadgeMeta.themeColor, 'rose');
     assert.equal(
       subNodeScope.scopeBadgeText,
       formatInternalSubNodeScopeLabel(targetSubNode, malwareNode)

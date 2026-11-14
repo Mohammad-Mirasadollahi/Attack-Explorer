@@ -4,52 +4,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'ms-volt-typhoon-lotl': {
     scenarioId: 'ms-volt-typhoon-lotl',
     briefing: {
-      headline: 'Scenario Briefing: Volt Typhoon Living-off-the-Land (LotL) — Stealing Active Directory Using Only Built-In Windows Tools',
+      headline: 'Scenario Briefing: Volt Typhoon (CISA AA23-144A) — "Living off the Land" & Extracting ntds.dit Without Malware',
+      storyAnalogy:
+        'Imagine an infiltrator who enters a high-security facility carrying zero weapons or burglar tools in their pockets. Instead, they pick up the facility’s own maintenance clipboard (`wmic.exe`), use the building’s built-in port-forwarding intercom (`netsh interface portproxy`) to relay messages through retired home routers (KV Botnet), and ask the facility’s official backup machine (`ntdsutil.exe`) to print a full copy of the master key vault (`ntds.dit`). Because every single action is performed by an official, factory-installed Windows utility, file-based antivirus scanners see zero foreign malware.',
       plainSummary:
-        'Documented in Joint CISA/NSA/FBI Advisory AA23-144A and Microsoft Threat Intelligence, Volt Typhoon (Bronze Silhouette) avoids dropping custom malware that antivirus software might catch. Instead, they route their traffic through compromised small-office routers (KV Botnet) so their connections look local, and then use only legitimate tools already built into Windows (wmic.exe, vssadmin.exe, ntdsutil.exe, and netsh.exe) to copy the Domain Controller’s master password database (ntds.dit) and relay internal traffic.',
+        'Documented by Joint CISA/NSA/FBI/Microsoft Advisory AA23-144A, the Volt Typhoon APT group specializes in "Living off the Land" (LotL): compromising critical infrastructure networks and staying hidden for years without dropping custom malware binaries. Instead of using hacktools like Mimikatz that trigger antivirus immediately, Volt Typhoon routes traffic through a botnet of compromised SOHO routers ("KV Botnet"), runs built-in Windows administration commands (`wmic`, `ntdsutil`, `netsh`) that are already signed by Microsoft, creates a stealthy port-forwarding relay (`netsh interface portproxy`), and extracts the entire Active Directory password database (`ntds.dit`) using native backup utilities.',
       diagramTopologySummary:
-        'On the diagram: Node ① (KV Botnet SOHO Edge Router) proxies traffic through Node ② (Perimeter Firewall) to Node ③ (Domain Controller CORP-DC01). On the server, Node ④ (Built-in wmic / vssadmin / ntdsutil / netsh) snapshots and extracts Node ⑤ (NTDS.dit & SYSTEM hive), while Node ⑥ (Microsoft Sentinel SIEM) detects the LotL command sequence.',
-      documentedAdvisory: 'CISA/NSA/FBI Joint Advisory AA23-144A · Microsoft Volt Typhoon Report · MITRE ATT&CK T1003.003',
+        'On the diagram: Start at Node ①/② (KV Botnet SOHO Router Relay & Compromised Edge Appliance), pivot into Node ③ (Windows Jump Server via `wmic` / `netsh portproxy`), extract `ntds.dit` and `SYSTEM` hive on Node ④ (Active Directory Domain Controller via `ntdsutil`), and exfiltrate to Node ⑤ while Node ⑥ (SIEM / Defender for Identity) correlates the anomalous native-binary command lines.',
+      documentedAdvisory: 'CISA/NSA/FBI/Microsoft Joint Advisory AA23-144A · Microsoft Threat Intelligence Volt Typhoon · MITRE T1003.003 / T1090',
     },
     steps: [
       {
         stepNumber: 1,
-        mitreId: 'T1090.003',
-        plainTitle: 'Routing Commands Through a Compromised SOHO Edge Router (KV Botnet) & WMI Execution',
+        mitreId: 'T1090',
+        plainTitle: 'Routing Through SOHO Routers & Setting Up `netsh interface portproxy` Relays',
+        storyAnalogy:
+          'Rather than calling the target’s server from an overseas phone number that would raise an instant red flag, the operator routes the call through a neighborhood home router down the street (`KV Botnet`) and programs a compromised internal Windows server (`netsh portproxy`) to quietly forward every packet deeper into the vault.',
         simpleExplanation:
-          'Rather than connecting from a suspicious foreign IP address, the attacker routes their traffic through compromised small-office/home-office (SOHO) routers near the victim’s geographic region. Using stolen administrator credentials, they connect to WMI (Windows Management Instrumentation) on the target server to spawn cmd.exe via wmiprvse.exe.',
+          'Instead of connecting from a known datacenter IP, the attacker connects from a compromised small-office/home-office (SOHO) router in the same geographic region, and runs `netsh interface portproxy add v4tov4 listenport=8443 connectaddress=10.20.1.10 connectport=445` on a compromised Windows server to turn it into an internal traffic relay.',
         howItWorksInPractice:
-          'Because the connection comes from a residential/SOHO IP in the same region and uses built-in Windows WMI administration, it blends in with routine IT remote management unless defenders inspect the exact child commands spawned by wmiprvse.exe.',
+          '`netsh.exe` is a built-in Windows networking utility. Its `portproxy` feature creates a persistent kernel/service-level TCP forwarder stored in the registry (`HKLM\\SYSTEM\\CurrentControlSet\\Services\\PortProxy\\v4tov4`) so the attacker can reach the internal Domain Controller without installing any third-party proxy software.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ flows from Node ① (KV Botnet Router) through Node ② to Node ③ (Target Server wmiprvse.exe), with ⇠#1.2 confirming RPC/DCOM session establishment.',
+          'On the diagram, follow arrow #1.1→ from Node ①/② (KV Botnet SOHO Relay) to Node ③ (Windows Server configuring `netsh interface portproxy`), and return arrow ⇠#1.2 confirming the registry port-forwarding rule.',
         detectionAndEvidence:
-          'Documented in CISA AA23-144A: wmiprvse.exe spawning cmd.exe /c reconnaissance and credential commands following VPN/router login.',
+          'Documented in CISA AA23-144A: Sysmon EventID 1 (`netsh.exe interface portproxy add v4tov4`) and Registry EventID 13 under `Services\\PortProxy\\v4tov4\\tcp`.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1003.003',
-        plainTitle: 'Creating a Disk Snapshot (Shadow Copy) to Bypass Active Directory File Locks',
+        plainTitle: 'Using Built-in `ntdsutil.exe` ("create full") to Dump Every Domain Password Hash',
+        storyAnalogy:
+          'The Domain Controller keeps its master password book (`ntds.dit`) locked inside a glass case while Windows is running so nobody can copy the file directly. Instead of smashing the glass, the infiltrator asks the official Active Directory maintenance robot (`ntdsutil "ac i ntds" "ifm"`) to take a temporary backup snapshot and place an unlocked copy right into `C:\\Windows\\Temp\\`.',
         simpleExplanation:
-          'Windows keeps the Active Directory password database (C:\\Windows\\NTDS\\ntds.dit) permanently locked while the Domain Controller is running, so it cannot simply be copied. To get around this lock without installing any third-party tools, the attacker runs vssadmin create shadow /for=C: (or ntdsutil "ifm") to create a read-only point-in-time snapshot of the C: drive where ntds.dit is unlocked.',
+          'Active Directory locks `C:\\Windows\\NTDS\\ntds.dit` while the Domain Controller is running, so nobody can simply copy the file. To bypass that lock without dropping third-party dumping tools, the attacker runs `wmic process call create "cmd.exe /c ntdsutil \"ac i ntds\" \"ifm\" \"create full C:\\Windows\\Temp\\pro\" q q"`—telling Windows’ own AD maintenance tool to create a clean backup snapshot of `ntds.dit` and the `SYSTEM` registry hive.',
         howItWorksInPractice:
-          'The Volume Shadow Copy Service (VSS) creates a virtual device path (\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1) that contains a frozen, unlocked copy of every file on C:, including ntds.dit.',
+          'The `ifm` (Install From Media) option in `ntdsutil.exe` automatically creates a Volume Shadow Copy snapshot, copies `ntds.dit` (which contains the password hashes of every user and administrator in the company) plus the `SYSTEM` decryption bootkey into a temporary folder, and then deletes the shadow copy.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ shows Node ④ (vssadmin.exe / ntdsutil.exe) creating volume snapshot HarddiskVolumeShadowCopy1 on Node ⑤, with ⇠#2.2 returning the shadow volume path.',
+          'On the diagram, arrow #2.1→ pivots from Node ③ to Node ④ (Domain Controller running `ntdsutil "ac i ntds" "ifm"`), and ⇠#2.2 writes `Active Directory\\ntds.dit` and `registry\\SYSTEM` to `C:\\Windows\\Temp\\`.',
         detectionAndEvidence:
-          'Documented in Sysmon EventID 1: cmd.exe /c vssadmin create shadow /for=C: followed by accessing \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy*.',
+          'Documented in CISA AA23-144A: Sysmon EventID 1 showing `ntdsutil.exe` with `ifm` and `create full` arguments, plus Application EventID 325/326/327 (ESENT database creation in a temp folder).',
       },
       {
         stepNumber: 3,
-        mitreId: 'T1090.002',
-        plainTitle: 'Extracting ntds.dit + SYSTEM Hive & Setting Up a Built-in Windows Port Relay (netsh portproxy)',
+        mitreId: 'T1560.001',
+        plainTitle: 'Packing the Stolen AD Database With `makecab` / `7z` & Scrubbing Event Logs',
+        storyAnalogy:
+          'Finally, the infiltrator compresses the copied master password book into an ordinary-looking archive file, carries it back out through the `netsh` intercom relay, and uses the security office’s own log-cleaner (`wevtutil cl`) to erase the visitor log entries.',
         simpleExplanation:
-          'From the newly created shadow copy, the attacker copies both ntds.dit (which holds all domain password hashes) and the registry SYSTEM hive (which holds the boot key needed to decrypt ntds.dit) into C:\\Windows\\Temp\\. To maintain stealthy internal access, they configure Windows’ built-in network relay using netsh interface portproxy add v4tov4.',
+          'The attacker compresses the dumped `ntds.dit` and `SYSTEM` files into a password-protected archive, transfers it back out through the `netsh portproxy` relay tunnel, deletes the temporary staging folder, and runs `wevtutil cl Security` / `wevtutil cl System` to clear Windows Event Logs.',
         howItWorksInPractice:
-          'Using netsh portproxy turns the compromised Windows server itself into a covert TCP relay that forwards incoming traffic to deeper internal servers without installing any proxy malware.',
+          'Once the attacker has both `ntds.dit` and the `SYSTEM` registry hive offline, they can decrypt the NTLM hash of every user—including `krbtgt` and all Domain Admins—giving them total control of the domain.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ extracts Node ⑤ (ntds.dit + SYSTEM) via Node ④ and configures portproxy while Node ⑥ (SIEM) flags the registry/process telemetry.',
+          'On the diagram, arrow #3.1→ exfiltrates the compressed `ntds.dit` archive from Node ④ through Node ③ to Node ⑤ while Node ⑥ (SIEM) alerts on the `ntdsutil` + `wevtutil` LotL sequence.',
         detectionAndEvidence:
-          'Documented in CISA AA23-144A: reg save HKLM\\SYSTEM, ntds.dit copy from ShadowCopy, and Registry modification under HKLM\\SYSTEM\\CurrentControlSet\\Services\\PortProxy\\v4tov4.',
+          'Documented in CISA AA23-144A & Windows Security EventID 1102 (The audit log was cleared): `ntdsutil ifm` execution followed by archive creation and `wevtutil.exe cl`.',
       },
     ],
   },
@@ -57,52 +65,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'ms-midnight-blizzard-oauth': {
     scenarioId: 'ms-midnight-blizzard-oauth',
     briefing: {
-      headline: 'Scenario Briefing: Midnight Blizzard (APT29) — From Legacy Test Tenant to Full Exchange Email Access via OAuth',
+      headline: 'Scenario Briefing: Midnight Blizzard (NOBELIUM / APT29) — Legacy Test Tenant to OAuth `full_access_as_app` Exchange Takeover',
+      storyAnalogy:
+        'Imagine a burglar who finds a forgotten, dusty side cottage on a corporate estate (a legacy non-production test tenant) whose door still uses a simple single-key lock (no MFA). Inside that cottage, the burglar finds an old master maintenance badge (a legacy OAuth application) that happens to have cross-building authority in the main corporate headquarters. Using that badge, they mint new automated robot passes (`Service Principals`) granted the `full_access_as_app` stamp—letting them silently read any executive’s mailbox without ever needing any executive’s password.',
       plainSummary:
-        'Based on Microsoft Threat Intelligence’s investigation of the Midnight Blizzard (NOBELIUM / APT29) campaign, this scenario shows how attackers compromise cloud email without installing malware on any computer. First, they use slow password spraying through residential proxies to break into an old, forgotten non-production test tenant that lacked MFA. Second, they use an over-privileged account to register malicious OAuth applications in the corporate tenant and grant them the powerful full_access_as_app Exchange role. Third, they use those OAuth app tokens to bulk-read corporate mailboxes via Exchange Web Services (EWS).',
+        'Documented by Microsoft Security Response Center (MSRC) and Microsoft Threat Intelligence (January 2024), this scenario illustrates how Midnight Blizzard (APT29) compromised corporate Exchange Online mailboxes through an identity-and-OAuth chain. First, the attacker used a low-and-slow residential-proxy password spray to compromise a forgotten, non-production test tenant account that lacked MFA. From there, they abused an old OAuth application that had elevated permissions in the corporate environment, created additional malicious OAuth applications, granted them the powerful `full_access_as_app` Exchange Online role, and read corporate emails via EWS/Graph API without ever needing individual executives’ passwords.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Residential Proxy Network) sprays Node ② (Legacy Non-Prod OAuth Tenant). From there, the attacker pivots into Node ③ (Corporate Entra ID Tenant), registers malicious OAuth apps in Node ④ (OAuth Service Principal Engine), and exfiltrates mailboxes from Node ⑤ (Exchange Online EWS) while Node ⑥ (Sentinel SIEM) logs the audit trail.',
-      documentedAdvisory: 'Microsoft Threat Intelligence Midnight Blizzard Guidance (Jan 2024) · MITRE ATT&CK T1098.003 / T1114.002',
+        'On the diagram: Start at Node ①/② (Midnight Blizzard Residential Proxy Spray targeting the Legacy Test Tenant), pivot through the shared OAuth Service Principal into Node ③/④ (Corporate Entra ID & Malicious OAuth App Registration), and query mailboxes on Node ⑤ (Exchange Online `full_access_as_app`), detected by Node ⑥ (Entra Audit & Unified Audit Log SIEM).',
+      documentedAdvisory: 'Microsoft Threat Intelligence Midnight Blizzard Blog (Jan 2024) · MITRE ATT&CK T1110.003 / T1098.003 / T1114.002',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1110.003',
-        plainTitle: 'Low-Volume Password Spraying Against a Forgotten Legacy Test Account Without MFA',
+        plainTitle: 'Low-Volume Residential-Proxy Password Spray Against a Forgotten Legacy Test Account',
+        storyAnalogy:
+          'Instead of rattling the front door of the main corporate tower 1,000 times from one suspicious van, the attacker has dozens of local couriers (residential proxy IPs) try just one password at a time on a forgotten side-cottage test door that never had a two-factor keypad installed.',
         simpleExplanation:
-          'To avoid triggering cloud lockout or rate-limit alarms, the attacker distributes a slow password spray across a pool of residential proxy IPs, testing only a few password combinations per hour against a forgotten legacy test tenant account that did not have multi-factor authentication (MFA) enforced.',
+          'To avoid triggering automated IP lockouts, the attacker routes authentication requests through a rotating pool of residential proxy IPs and tries a small number of passwords against a legacy, non-production test tenant account that had not been enforced with Multi-Factor Authentication (MFA).',
         howItWorksInPractice:
-          'High-speed brute-force attacks from datacenter IPs are blocked automatically. Spreading a handful of tries across residential IPs targets one weak link: an old test account left over from a migration.',
+          'Because each residential proxy IP only sends a handful of login attempts per day, traditional rate-based brute-force rules do not fire, allowing the attacker to quietly log into the forgotten test account.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends low-and-slow authentication requests from Node ① to Node ② (Legacy Tenant), and ⇠#1.2 returns an OAuth 2.0 Bearer Token.',
+          'On the diagram, follow arrow #1.1→ from Node ①/② (Residential Proxy Pool) to Node ③ (Legacy Test Tenant Entra ID Sign-In), and return arrow ⇠#1.2 issuing the initial OAuth token.',
         detectionAndEvidence:
-          'Documented in Entra ID SignInLogs: Distributed ErrorCode 50126 failures across residential IPs followed by single-factor success (ResultType 0) on legacy test account.',
+          'Documented by Microsoft Threat Intelligence: Entra ID Sign-in Logs (`SigninLogs`) showing distributed password spray across residential proxy ASNs targeting single-factor legacy accounts.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1098.003',
-        plainTitle: 'Creating Malicious OAuth Apps & Granting Them "full_access_as_app" Exchange Permission',
+        plainTitle: 'Abusing a Legacy Cross-Tenant OAuth App to Register New Privileged Service Principals',
+        storyAnalogy:
+          'Once inside the side cottage, the intruder discovers an old "Universal Maintenance App" that was accidentally given admin rights over the main corporate tower. Using that app’s authority, they print brand-new client secret keys (`Add servicePrincipal credentials`) and stamp them with the highest mail-reading clearance (`full_access_as_app`).',
         simpleExplanation:
-          'Using a legacy cross-tenant synchronization service principal that still had high privileges in the production tenant, the attacker registers new OAuth applications (Service Principals), adds client secrets to them, and grants admin consent for the Office 365 Exchange Online role full_access_as_app.',
+          'Inside the test environment, the attacker discovers a legacy OAuth test application that had been granted privileged directory permissions (`AppRoleAssignment.ReadWrite.All`) inside the main corporate tenant. Using that OAuth app’s credentials, the attacker registers new OAuth Service Principals, adds client secrets (`Add servicePrincipal credentials`), and assigns the `full_access_as_app` Office 365 Exchange Online role.',
         howItWorksInPractice:
-          'The full_access_as_app permission is an application-level role that grants an OAuth app unrestricted access to every mailbox in the tenant without requiring any individual user’s password or MFA approval.',
+          'In Microsoft Entra ID, `AppRoleAssignment.ReadWrite.All` allows an application to grant *itself* or another application any application-level permission—including `full_access_as_app`—without requiring interactive approval from a human Global Administrator.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ moves from Node ③ to Node ④ (OAuth App Registration), assigning full_access_as_app, and ⇠#2.2 returns HTTP 201 AppRoleAssignment Created.',
+          'On the diagram, arrow #2.1→ uses the legacy OAuth app on Node ③ to create and privilege the rogue OAuth Service Principal on Node ④ (`Add app role assignment to service principal`), with ⇠#2.2 returning the OAuth2 `client_credentials` bearer token.',
         detectionAndEvidence:
-          'Documented in Entra ID AuditLogs: "Add service principal credentials" and "Add app role assignment to service principal" (Role: full_access_as_app / dc890d15-9560-4a4c-9b7f-a736ec74ec40).',
+          'Documented in Microsoft Entra Audit Logs: `Add servicePrincipal`, `Add servicePrincipal credentials`, and `Add app role assignment to service principal` for `full_access_as_app` (`dc890d15-9560-4a4c-9b7f-a736ec74ec40`).',
       },
       {
         stepNumber: 3,
         mitreId: 'T1114.002',
-        plainTitle: 'Using the OAuth App Token to Bulk-Read Executive Mailboxes via Exchange Web Services (EWS)',
+        plainTitle: 'Exfiltrating Corporate Mailboxes via Exchange Web Services (EWS) Using OAuth Bearer Tokens',
+        storyAnalogy:
+          'Holding the `full_access_as_app` robot pass, the attacker walks straight up to the Exchange mailroom window (`outlook.office365.com/EWS/Exchange.asmx`) and downloads executive inbox folders in bulk—never triggering a single phone MFA prompt on any executive’s device.',
         simpleExplanation:
-          'Because OAuth application tokens authenticate directly as a trusted app rather than a human user, they completely bypass interactive user MFA prompts. The attacker authenticates with the OAuth app’s client_credentials token and queries Exchange Online’s /EWS/Exchange.asmx endpoint (FindItem / GetItem) to download executive and security team emails.',
+          'Authenticating purely as the rogue OAuth application (`grant_type=client_credentials`), the attacker calls Exchange Web Services (`https://outlook.office365.com/EWS/Exchange.asmx`) and Microsoft Graph API from the same residential proxy infrastructure to search and download emails from targeted corporate mailboxes.',
         howItWorksInPractice:
-          'Defenders catch this phase by monitoring Exchange Unified Audit Logs (MailItemsAccessed) for OAuth AppIds accessing mailboxes from residential proxy networks.',
+          'Because `full_access_as_app` is an application-level permission rather than a delegated user login, the attacker can access any mailbox in the Exchange tenant without ever logging in as that user or triggering user MFA prompts.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ connects Node ④ to Node ⑤ (Exchange Online EWS) to exfiltrate mailboxes while Node ⑥ (Sentinel SIEM) alerts on anomalous EWS volume.',
+          'On the diagram, arrow #3.1→ queries Node ⑤ (Exchange Online EWS `/EWS/Exchange.asmx` `MailItemsAccessed`) from Node ④, while Node ⑥ (Microsoft Sentinel / SIEM) correlates the Entra role grant with EWS `MailItemsAccessed` telemetry.',
         detectionAndEvidence:
-          'Documented in Exchange Unified Audit Log (MailItemsAccessed) & EWS logs: High-volume SOAP GetItem requests authenticated via OAuth AppId from residential proxy IPs.',
+          'Documented in Microsoft Purview Unified Audit Log (`MailItemsAccessed` / `EWS`) correlated with Entra Service Principal sign-ins using `AppId` holding `full_access_as_app`.',
       },
     ],
   },
@@ -110,52 +126,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'ms-salt-typhoon-telecom': {
     scenarioId: 'ms-salt-typhoon-telecom',
     briefing: {
-      headline: 'Scenario Briefing: Salt Typhoon (GhostEmperor) — Telecom Core Router Rootkit & TACACS+ Credential Theft',
+      headline: 'Scenario Briefing: Salt Typhoon (GhostEmperor) — Telecom Core Router Compromise & Guest Shell Pivot',
+      storyAnalogy:
+        'Imagine a telephone company’s central switching building. Instead of bugging a single office phone, the attacker slips into the core highway router (`Cisco IOS XE`), enables a hidden Linux maintenance room built right inside the router (`Guest Shell`), and taps the core fiber backbone (`RADIUS` / `TACACS+` and packet capture pipes) so they can harvest network engineer credentials and silently copy traffic passing through the ISP.',
       plainSummary:
-        'Based on CISA/FBI/NSA joint guidance and Microsoft Threat Intelligence on Salt Typhoon, this scenario explains how nation-state actors infiltrate telecommunications and ISP backbone networks. After compromising an internet-facing Cisco IOS XE Provider Edge router and escaping into its underlying Linux Guest Shell container, the attacker loads a kernel module rootkit to hide their processes, captures network administrators’ TACACS+ authentication credentials in transit, and sets up covert GRE tunnels.',
+        'Documented by CISA, FBI, NSA, and Microsoft Threat Intelligence (2024), the Salt Typhoon APT campaign targeted major telecommunications and ISP core networks. Rather than attacking regular office workstations, Salt Typhoon compromised internet-facing edge and core routing appliances (such as Cisco IOS XE routers), abused the router’s built-in Linux container environment ("Guest Shell") to run persistent Linux implants and SSH tunnels, captured network administrator `TACACS+` / `RADIUS` credentials in transit, and accessed sensitive core routing and lawful-intercept management planes.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Salt Typhoon Operator) exploits Node ②/③ (Cisco IOS XE Provider Edge Router). Inside the router’s Linux environment, Node ④ (Guest Shell & Kernel Rootkit) sniffs TACACS+ credentials and configures GRE tunnels toward Node ⑤ (Core Telecom Backbone), monitored by Node ⑥ (NetFlow & Syslog SIEM).',
-      documentedAdvisory: 'CISA/FBI/NSA Joint Telecom Guidance · Cisco Talos IOS XE Advisory · MITRE ATT&CK T1014 / T1040',
+        'On the diagram: Start at Node ①/② (Salt Typhoon Operator & Edge Telecom Router), trace the IOS XE privilege escalation and Linux Guest Shell container activation on Node ③/④ (Core ISP Router & Guest Shell Container), and follow the credential capture and core network pivot to Node ⑤, monitored by Node ⑥ (Telecom SOC / NetFlow & Syslog SIEM).',
+      documentedAdvisory: 'Joint CISA/NSA/FBI Telecom Infrastructure Advisory (2024) · Microsoft Salt Typhoon · MITRE T1190 / T1610 / T1040',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1190',
-        plainTitle: 'Compromising the Provider Edge Router & Escaping the Linux Guest Shell',
+        plainTitle: 'Compromising the Edge Router Web UI & Creating a Level-15 Admin Account',
+        storyAnalogy:
+          'The intruder exploits a flaw in the router’s front management web desk (`webui_wsma_http`) to forge a "Privilege 15 Master Engineer" badge right inside the router’s local user roster.',
         simpleExplanation:
-          'The attacker exploits an exposed management interface on a Cisco IOS XE Provider Edge router to gain privilege level 15 administrative access. They immediately enable the router’s Linux-based Guest Shell container (guestshell enable) and escape container restrictions to obtain root access on the underlying Linux host OS that drives the router.',
+          'The attacker exploits an exposed management interface or stolen configuration credential on a telecom edge router (such as Cisco IOS XE Web UI `webui_wsma_http`) to execute privileged CLI commands (`privilege 15`) and create a hidden local administrator account.',
         howItWorksInPractice:
-          'Modern enterprise routers run a Linux operating system underneath the router CLI. Escaping into the underlying Linux shell lets the attacker run custom C programs that normal router administrators never see in the standard IOS CLI.',
+          'In Cisco IOS XE, Privilege Level 15 is the highest administrative tier (equivalent to `root`), allowing full modification of running configurations, routing tables (BGP/MPLS), and container services.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ compromises Node ②/③ (PE Router Management Plane) and spawns Node ④ (Linux Guest Shell), with ⇠#1.2 logging %SYS-5-CONFIG_I.',
+          'On the diagram, follow arrow #1.1→ from Node ①/② into Node ③ (Telecom Edge/Core Router IOS XE), and return arrow ⇠#1.2 granting Privilege 15 CLI execution.',
         detectionAndEvidence:
-          'Documented in Cisco IOS XE Syslog: Unexpected guestshell enable / app-hosting start commands and web UI local account creation.',
+          'Documented in CISA/Cisco IOS XE advisories: `%SYS-5-CONFIG_I: Configured from http by console` and unexpected `username ... privilege 15` entries in AAA accounting logs.',
       },
       {
         stepNumber: 2,
-        mitreId: 'T1014',
-        plainTitle: 'Loading a Kernel Rootkit & Sniffing Network Admin TACACS+ Logins (TCP Port 49)',
+        mitreId: 'T1610',
+        plainTitle: 'Activating the Router’s Linux "Guest Shell" Container to Hide Persistent Implants',
+        storyAnalogy:
+          'Inside the router, there is a legitimate, factory-built Linux workshop (`guestshell`) meant for automation scripts. When an admin inspects the normal router command line (`show processes`), they cannot see inside that Linux workshop—making it the perfect hidden room to run a covert SSH tunnel.',
         simpleExplanation:
-          'From the underlying Linux shell, the attacker loads a custom loadable kernel module (LKM rootkit) that hides specific process IDs and network sockets from standard router CLI commands (like show processes). Simultaneously, a packet sniffer captures TCP port 49 traffic to intercept TACACS+ authentication packets and extract the shared secret from router memory.',
+          'Instead of dropping files on the standard IOS flash where `dir flash:` would easily reveal them, the attacker enables `iox` and starts the router’s built-in **Guest Shell** (`guestshell enable`)—a full Linux container running inside the router—where they deploy an encrypted tunnel and packet-capture utilities.',
         howItWorksInPractice:
-          'Telecom engineers use centralized TACACS+ servers (TCP port 49) to log into core routers. By extracting the router’s TACACS+ key and sniffing port 49, the attacker decrypts admin logins across the ISP backbone.',
+          'Guest Shell is a legitimate Linux environment built into modern IOS XE routers for automated Python scripts. Standard router CLI commands (`show processes`) do not list processes running inside the Linux Guest Shell container, allowing the attacker’s tools to hide from routine router inspections.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ loads the kernel module and hooks TCP/49 TACACS+ traffic, with ⇠#2.2 confirming credential capture.',
+          'On the diagram, arrow #2.1→ enables `iox` / `guestshell` inside Node ④ (Router Linux Guest Shell Container), and ⇠#2.2 launches the persistent Linux C2 tunnel.',
         detectionAndEvidence:
-          'Documented in Telecom Threat Intelligence: Unauthorized kernel module taint flags in /proc/modules and anomalous raw socket listeners on TCP/49.',
+          'Documented in CISA Telecom Hardening Guide: IOS XE syslog `%IOX-6-GUESTSHELL_ENABLED` and unexpected `guestshell` NAT/VirtualPortGroup interfaces when Guest Shell is not used by operations.',
       },
       {
         stepNumber: 3,
-        mitreId: 'T1572',
-        plainTitle: 'Creating Covert GRE Tunnels (IP Protocol 47) & Clearing Router Logs',
+        mitreId: 'T1040',
+        plainTitle: 'Sniffing Core `TACACS+` / `RADIUS` Credentials & Pivoting Into Core Telecom Enclaves',
+        storyAnalogy:
+          'From their hidden room inside the highway router, the attacker clips a wiretap (`EPC` / `tcpdump`) onto the router’s management line, records the passwords of senior network engineers as they log in, and uses those keys to walk into the core switching center.',
         simpleExplanation:
-          'Using the stolen TACACS+ credentials to move across core routers, the attacker provisions Generic Routing Encapsulation (GRE, IP Protocol 47) tunnels and SPAN port-mirroring sessions to forward selected network traffic to external collection points, then clears router command history and syslog buffers.',
+          'From inside the compromised router, the attacker uses Embedded Packet Capture (EPC) or `tcpdump` inside Guest Shell to sniff management traffic, extracts `TACACS+`, `RADIUS`, and SNMP credentials belonging to senior network engineers, and uses those credentials to hop across core MPLS/BGP routers and sensitive internal enclaves.',
         howItWorksInPractice:
-          'GRE tunnels encapsulate internal network packets inside IP Protocol 47 so the router forwards mirrored traffic directly to an external endpoint.',
+          'Because core routers sit at the crossroads of administrative and subscriber traffic, compromising a single router allows passive credential harvesting (`MITRE T1040`) without generating noisy active scans.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ establishes the GRE tunnel between Node ④ and Node ⑤ (Core Backbone / External Collector) while Node ⑥ (NetFlow SIEM) flags IP Proto 47.',
+          'On the diagram, arrow #3.1→ captures credentials and pivots from Node ④ into Node ⑤ (Core Telecom Management & Routing Plane), while Node ⑥ (Telecom SIEM) correlates AAA and Guest Shell anomalies.',
         detectionAndEvidence:
-          'Documented in CISA Telecom Guidance: Unscheduled GRE tunnel interfaces (Tunnel0/Tunnel10, IP Protocol 47) in NetFlow and %SYS-5-LOG_CONFIG_CHANGE events.',
+          'Documented in CISA Telecom Advisory: unauthorized `monitor capture` (EPC) sessions, GRE/IPsec tunnel creation, and TACACS+ logins from router loopback addresses.',
       },
     ],
   },
@@ -163,52 +187,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'ms-forest-blizzard-gooseegg': {
     scenarioId: 'ms-forest-blizzard-gooseegg',
     briefing: {
-      headline: 'Scenario Briefing: Forest Blizzard (APT28) GooseEgg — Exploiting Windows Print Spooler to Gain SYSTEM Control',
+      headline: 'Scenario Briefing: Forest Blizzard (APT28 / Fancy Bear) — "GooseEgg" Print Spooler Elevation of Privilege (CVE-2022-38028)',
+      storyAnalogy:
+        'Imagine a building where the mailroom’s high-privilege Printer Robot (`spoolsv.exe`, running as `SYSTEM`) uses a shared ledger (`PnPData`) to look up which driver helper (`mpdwconstr.dll`) it should load. Because a flaw lets a regular visitor edit the folder path in that ledger, the attacker changes the ledger to point to their own locker (`wayzgoose.dll`). When the Printer Robot wakes up, it loads the attacker’s library with full `SYSTEM` master-key authority.',
       plainSummary:
-        'Published by Microsoft Threat Intelligence (April 2024), this scenario details how Forest Blizzard (APT28 / Fancy Bear) uses a custom post-exploitation tool named GooseEgg to exploit CVE-2022-38028 in the Windows Print Spooler service. Because spoolsv.exe runs with full SYSTEM permissions, GooseEgg modifies a JavaScript printer constraint file so that the Print Spooler registers a rogue driver package (wayzgoose.dll) and spawns a SYSTEM-level command shell for the attacker.',
+        'Documented by Microsoft Threat Intelligence (April 2024), the Forest Blizzard APT group (APT28 / STRONTIUM) used a custom post-exploitation tool named **GooseEgg** to escalate from a regular user account to `NT AUTHORITY\\SYSTEM` via CVE-2022-38028 in the Windows Print Spooler service (`spoolsv.exe`). GooseEgg modifies a JavaScript constraints file (`mpdw-constraints.js`) used by the Microsoft XPS Document Writer printer driver, triggers the Print Spooler to corrupt permissions so a custom driver DLL (`wayzgoose.dll`) can be planted, and forces `spoolsv.exe` (which runs as `SYSTEM`) to load that DLL and spawn a hidden backdoor.',
       diagramTopologySummary:
-        'On the diagram: From an initial foothold (Node ①/②), the attacker launches the GooseEgg batch/binary launcher on Node ③ (Windows Host). Inside the host, Node ④ (GooseEgg & spoolsv.exe) modifies the DriverStore JavaScript constraint file and loads Node ⑤ (wayzgoose.dll SYSTEM Backdoor), triggering alerts on Node ⑥ (Defender XDR / SIEM).',
-      documentedAdvisory: 'Microsoft Threat Intelligence Forest Blizzard GooseEgg Report · CVE-2022-38028 · MITRE ATT&CK T1068',
+        'On the diagram: Start at Node ①/② (Initial Low-Privilege Foothold), launch the GooseEgg launcher (`justice.bat` / `doit.bat`) on Node ③ (Windows Host), exploit the Print Spooler driver store (`spoolsv.exe` CVE-2022-38028) on Node ④ to load `wayzgoose.dll` as `SYSTEM`, and spawn the elevated backdoor toward Node ⑤ while Node ⑥ (Defender / SIEM) captures the driver-store write.',
+      documentedAdvisory: 'Microsoft Threat Intelligence Forest Blizzard "GooseEgg" Report (Apr 2024) · CVE-2022-38028 · MITRE T1068',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1068',
-        plainTitle: 'Running the GooseEgg Launcher (execute.bat / justice.exe) to Modify Printer Constraint Scripts',
+        plainTitle: 'GooseEgg Modifies the Print Driver Registry & `mpdw-constraints.js` to Trigger CVE-2022-38028',
+        storyAnalogy:
+          'The intruder runs a batch script (`doit.bat`) that edits the XPS Printer’s instruction sheet (`mpdw-constraints.js`) so the next time the Printer Service checks its settings, it accidentally unlocks its own protected driver cabinet.',
         simpleExplanation:
-          'Starting from a standard low-privilege user account, the attacker runs a batch script (execute.bat) that launches the compressed GooseEgg executable (justice.exe). GooseEgg exploits CVE-2022-38028 by modifying a PnP-X / v4 printer driver JavaScript constraints file (MPDW-constraints.js) inside the Windows DriverStore without requiring administrator permissions.',
+          'Starting from a standard low-privilege user session, the attacker runs a batch script (`doit.bat` / `justice.bat`) that launches the **GooseEgg** binary. GooseEgg creates a custom registry key under `HKLM\\SYSTEM\\CurrentControlSet\\Control\\Print\\Environments\\Windows x64\\Drivers` and crafts a malformed JavaScript constraints file (`mpdw-constraints.js`) for the built-in XPS Document Writer.',
         howItWorksInPractice:
-          'Normally, files inside C:\\Windows\\System32\\DriverStore\\FileRepository\\ cannot be edited by standard users. CVE-2022-38028 temporarily left the permissions on MPDW-constraints.js writable during a Print Spooler operation.',
+          'When `spoolsv.exe` (running as `NT AUTHORITY\\SYSTEM`) parses the crafted `mpdw-constraints.js` file via CVE-2022-38028, an out-of-bounds write allows the low-privilege user to redirect the printer driver’s `PnPData` / `DriverFile` path.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ shows Node ③ launching justice.exe into Node ④ (Windows DriverStore MPDW-constraints.js), with ⇠#1.2 logging Sysmon EventID 11 file modification.',
+          'On the diagram, follow arrow #1.1→ from Node ③ (GooseEgg Launcher `doit.bat`) to Node ④ (`spoolsv.exe` Print Spooler CVE-2022-38028), and return arrow ⇠#1.2 corrupting the driver descriptor as `SYSTEM`.',
         detectionAndEvidence:
-          'Documented by Microsoft Threat Intel: justice.exe modifying C:\\Windows\\System32\\DriverStore\\FileRepository\\...\\MPDW-constraints.js.',
+          'Documented by Microsoft Threat Intelligence: modification of `mpdw-constraints.js` in the `DriverStore\\FileRepository` and anomalous Print Spooler registry edits.',
       },
       {
         stepNumber: 2,
-        mitreId: 'T1547.012',
-        plainTitle: 'Forcing the Print Spooler (spoolsv.exe) to Register the Rogue Driver wayzgoose.dll as SYSTEM',
+        mitreId: 'T1574.001',
+        plainTitle: 'Forcing `spoolsv.exe` (SYSTEM) to Load the Rogue `wayzgoose.dll` Driver Module',
+        storyAnalogy:
+          'Now that the printer ledger points to `wayzgoose.dll`, GooseEgg sends a dummy print job—waking up `spoolsv.exe` (`SYSTEM`), which dutifully loads `wayzgoose.dll` into its own `SYSTEM`-privileged memory.',
         simpleExplanation:
-          'Next, GooseEgg triggers a print spooler COM operation that causes spoolsv.exe (running as NT AUTHORITY\\SYSTEM) to evaluate the modified JavaScript constraint file. This tricks the Print Spooler into creating a custom registry key under HKLM\\SYSTEM\\CurrentControlSet\\Control\\Print\\Environments and loading the attacker’s DLL (wayzgoose.dll) with full SYSTEM privileges.',
+          'GooseEgg copies its companion malicious DLL (`wayzgoose.dll`) into a staging folder and invokes a COM/RPC call to the Print Spooler service (`spoolsv.exe`). Because `spoolsv.exe` runs as `NT AUTHORITY\\SYSTEM`, when it loads the registered printer driver DLL, `wayzgoose.dll` executes immediately with full `SYSTEM` privileges.',
         howItWorksInPractice:
-          'Because spoolsv.exe executes the JavaScript constraint file under its own SYSTEM token, the injected script commands can write directly to protected HKLM registry keys and load custom DLLs.',
+          'Instead of injecting memory into `spoolsv.exe` from outside (which EDR hooks easily block), CVE-2022-38028 tricks `spoolsv.exe` into voluntarily calling `LoadLibrary()` on `wayzgoose.dll` as a printer driver.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ connects Node ④ (spoolsv.exe) to Node ⑤ (wayzgoose.dll), loading the DLL in SYSTEM context, with ⇠#2.2 logging Sysmon EventID 7 & 13.',
+          'On the diagram, arrow #2.1→ inside Node ④ loads `wayzgoose.dll` into `spoolsv.exe` (`NT AUTHORITY\\SYSTEM`), and ⇠#2.2 confirms `SYSTEM` token acquisition.',
         detectionAndEvidence:
-          'Documented in Sysmon EventID 7 & 13: spoolsv.exe loading unsigned wayzgoose.dll after registry Print\\Environments driver registration.',
+          'Documented in Sysmon EventID 7 (ImageLoaded): `C:\\Windows\\System32\\spoolsv.exe` loading an unsigned DLL (`wayzgoose*.dll`) outside standard signed Microsoft print drivers.',
       },
       {
         stepNumber: 3,
-        mitreId: 'T1059.003',
-        plainTitle: 'wayzgoose.dll Spawns a SYSTEM Command Shell (whoami / netstat / tasklist)',
+        mitreId: 'T1543.003',
+        plainTitle: 'Spawning a SYSTEM Command Shell (`who.bat`) & Installing a Persistent Service Backdoor',
+        storyAnalogy:
+          'Running inside the `SYSTEM` Printer Robot, `wayzgoose.dll` opens a master-key backdoor service and connects out to the operator’s command center.',
         simpleExplanation:
-          'Once loaded inside the SYSTEM context, wayzgoose.dll acts as a launcher application capable of spawning arbitrary processes (such as cmd.exe) with SYSTEM permissions, allowing Forest Blizzard to install backdoors, run reconnaissance (whoami, tasklist), and move laterally across the network.',
+          'Running inside `spoolsv.exe` as `SYSTEM`, `wayzgoose.dll` executes the command passed to GooseEgg (such as `who.bat`), registers a persistent Windows service or scheduled task, and opens an outbound C2 channel so Forest Blizzard can harvest credentials across the host.',
         howItWorksInPractice:
-          'A printer spooler service (spoolsv.exe) should never spawn cmd.exe or powershell.exe. That parent-child process tree is a high-confidence indicator of Print Spooler exploitation.',
+          'Any child process spawned by `spoolsv.exe` inherits its `NT AUTHORITY\\SYSTEM` security token—making `spoolsv.exe` spawning `cmd.exe` or `powershell.exe` one of the clearest high-severity detections in Windows forensics.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ shows Node ⑤ (wayzgoose.dll) spawning SYSTEM cmd.exe and triggering a critical alert on Node ⑥ (Defender XDR / SIEM).',
+          'On the diagram, arrow #3.1→ spawns the `SYSTEM` payload from Node ④ (`spoolsv.exe`) and connects to Node ⑤ (Forest Blizzard C2), while Node ⑥ (SIEM / Defender) triggers a critical alert.',
         detectionAndEvidence:
-          'Documented in Sysmon EventID 1: ParentImage C:\\Windows\\System32\\spoolsv.exe spawning C:\\Windows\\System32\\cmd.exe under NT AUTHORITY\\SYSTEM.',
+          'Documented in Sigma Rule `proc_creation_win_spoolsv_susp_child_processes` & Sysmon EventID 1: `ParentImage: C:\\Windows\\System32\\spoolsv.exe` spawning `cmd.exe` or `powershell.exe`.',
       },
     ],
   },
@@ -216,52 +248,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'unit42-star-blizzard-evilginx-aitm': {
     scenarioId: 'unit42-star-blizzard-evilginx-aitm',
     briefing: {
-      headline: 'Scenario Briefing: Star Blizzard (SEABORGIUM) — Evilginx Adversary-in-the-Middle (AiTM) Session Cookie Theft',
+      headline: 'Scenario Briefing: Star Blizzard (SEABORGIUM / COLDRIVER) — Evilginx Adversary-in-the-Middle (AiTM) Session Cookie Theft',
+      storyAnalogy:
+        'Imagine a fake ATM booth placed right in front of a real bank window with a two-way mirror between them. When you walk up and type your PIN and tap your 6-digit phone MFA code, the fake booth immediately types those exact digits into the real bank window behind the glass. The real bank says: "Welcome! Here is your golden VIP Day Pass (`ESTSAUTHPERSISTENT` cookie)." The fake booth photocopies your golden Day Pass as it hands it to you—and now the thief can walk into the bank all day using their copy of your pass without ever needing your phone again.',
       plainSummary:
-        'Documented by Microsoft Threat Intelligence, Palo Alto Unit 42, and CISA Advisory AA23-341A, this scenario shows how attackers bypass conventional multi-factor authentication (TOTP codes and SMS/Push approvals) using an Adversary-in-the-Middle (AiTM) reverse proxy framework like Evilginx2. When the victim clicks a spear-phishing link, Evilginx proxies the real Microsoft Entra ID login page live in real time. The victim enters their password and MFA code, Microsoft issues a valid session cookie (ESTSAUTHPERSISTENT), and Evilginx captures that cookie in transit—allowing the attacker to replay the authenticated session in their own browser.',
+        'Documented by Microsoft Threat Intelligence, CISA, and Palo Alto Networks Unit 42, this scenario explains how **Adversary-in-the-Middle (AiTM)** phishing frameworks like **Evilginx** defeat traditional Multi-Factor Authentication (MFA) such as SMS codes, authenticator apps (TOTP), and push notifications. Instead of hosting a static fake login page that only steals a password, the attacker’s Evilginx server acts as a live reverse proxy sitting between the victim’s browser and the real `login.microsoftonline.com` server. When the victim types their password and approves their MFA prompt, Evilginx forwards that traffic to Microsoft in real time, and intercepts the resulting `ESTSAUTHPERSISTENT` session cookie as Microsoft sends it back.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Victim User Browser) clicks the lure pointing to Node ②/③ (Evilginx2 AiTM Reverse Proxy). Node ③ relays the login and MFA challenge live to Node ④ (Genuine Microsoft Entra ID login.microsoftonline.com), captures the ESTSAUTHPERSISTENT cookie, and replays it against Node ⑤ (Outlook Web App) while Node ⑥ (Cloud SIEM) detects the session replay.',
-      documentedAdvisory: 'CISA Advisory AA23-341A · Microsoft Star Blizzard Report · MITRE ATT&CK T1539 / T1557',
+        'On the diagram: Start at Node ①/③ (Victim Browser clicking the spear-phishing link), trace the live reverse-proxy relay through Node ②/④ (Evilginx AiTM Proxy Server) to the real Node ⑤ (Microsoft Entra ID `login.microsoftonline.com`), and see how Evilginx captures the `ESTSAUTHPERSISTENT` cookie in transit while Node ⑥ (Entra Identity Protection / SIEM) flags the session replay.',
+      documentedAdvisory: 'Microsoft Threat Intelligence AiTM Phishing Report · CISA Star Blizzard Advisory · MITRE T1557 / T1539',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1566.002',
-        plainTitle: 'Victim Opens the Spear-Phishing Link & Connects Through the Evilginx Reverse Proxy',
+        plainTitle: 'Victim Opens the Spear-Phishing Link & Evilginx Proxies the Real Microsoft Login Page Live',
+        storyAnalogy:
+          'The victim clicks a link to view a PDF document and lands at the two-way-mirror booth (`Evilginx`). Because the booth is relaying the real Microsoft login screen live from behind the glass, every logo, font, and custom company banner looks 100% authentic.',
         simpleExplanation:
-          'After building rapport via email, the attacker sends a PDF link pointing to a lookalike domain running Evilginx2. Instead of hosting a fake static HTML page, Evilginx acts as a live reverse proxy: it fetches the real login.microsoftonline.com page from Microsoft, rewrites the domain links on the fly, and presents it to the victim.',
+          'After building rapport via email, the attacker sends a link to a lookalike domain (e.g., `login.micros0ft-auth-portal.com`). When the victim’s browser opens that link, the attacker’s **Evilginx** server fetches the real `login.microsoftonline.com` page live in the background, rewrites the domain links on the fly, and serves the genuine Microsoft login UI to the victim.',
         howItWorksInPractice:
-          'Because the victim is interacting with the real Microsoft sign-in page proxied through Evilginx, all custom company branding, password checks, and MFA prompts behave authentically.',
+          'Because Evilginx proxies the real identity provider in real time rather than serving a static HTML copy, company branding, custom backgrounds, and dynamic JavaScript challenges all work identically to the real login page.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ routes the victim’s HTTPS request through Node ②/③ (Evilginx Reverse Proxy) to Node ④ (Microsoft Login), and ⇠#1.2 returns the live login page.',
+          'On the diagram, follow arrow #1.1→ from Node ③ (Victim Browser) through Node ②/④ (Evilginx AiTM Reverse Proxy) to Node ⑤ (Real Identity Provider), and return arrow ⇠#1.2 rendering the live login page.',
         detectionAndEvidence:
-          'Documented in Proxy/DNS Telemetry: Newly registered lookalike domain resolving to VPS hosting Evilginx TLS termination.',
+          'Documented by Microsoft Threat Intelligence: Entra Sign-in Logs showing login initiation from an untrusted proxy IP/ASN shortly after an email link click in Defender for Office 365.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1557',
-        plainTitle: 'Relaying the MFA Code Live & Intercepting the "ESTSAUTHPERSISTENT" Session Cookie',
+        plainTitle: 'Relaying the Victim’s Password & Live MFA Code Through the Reverse Proxy',
+        storyAnalogy:
+          'The victim types their password and enters the 6-digit MFA code from their phone. The man-in-the-middle booth passes both straight through the window to Microsoft in milliseconds, and when Microsoft hands back the `Set-Cookie: ESTSAUTHPERSISTENT` VIP pass, the booth records a copy in its database.',
         simpleExplanation:
-          'When the victim enters their password and 6-digit Authenticator TOTP code, Evilginx forwards both directly to Microsoft Entra ID. Microsoft verifies the MFA code and responds with HTTP Set-Cookie headers containing ESTSAUTH and ESTSAUTHPERSISTENT. Because Evilginx terminates the TLS connection in the middle, it copies these decrypted session cookies into its database.',
+          'The victim enters their corporate password and completes their real MFA challenge (entering a 6-digit Authenticator code or tapping "Approve" on their phone). Evilginx forwards both requests straight to `login.microsoftonline.com`. Microsoft verifies the MFA and responds with `HTTP 200 OK` containing `Set-Cookie: ESTSAUTHPERSISTENT=...`—which passes right through Evilginx in plaintext.',
         howItWorksInPractice:
-          'Only hardware-bound FIDO2 WebAuthn keys (which cryptographically bind authentication to the exact domain name in the browser address bar) block this proxy relay; standard 6-digit codes and push approvals are forwarded transparently.',
+          'Because TLS terminates on the Evilginx server before being re-encrypted to Microsoft, Evilginx can read and log every HTTP header—including `Set-Cookie: ESTSAUTHPERSISTENT` and `ESTSAUTH`—the instant MFA succeeds.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ relays the TOTP MFA code through Node ③ to Node ④, and ⇠#2.2 shows Microsoft returning Set-Cookie: ESTSAUTHPERSISTENT captured by Evilginx.',
+          'On the diagram, arrow #2.1→ relays the credentials + MFA challenge through Node ④ (Evilginx Proxy) to Node ⑤, and return arrow ⇠#2.2 returns the `Set-Cookie: ESTSAUTHPERSISTENT` session token captured by Evilginx.',
         detectionAndEvidence:
-          'Documented in Entra ID SignInLogs: Interactive sign-in with MFA satisfied from Evilginx VPS IP address (Shared SessionId/CorrelationId).',
+          'Documented inMITRE T1539 & Microsoft Entra Identity Protection: high-risk AiTM sign-in alert where the TLS fingerprint (JA3) and IP of the MFA step belong to a reverse-proxy server.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1539',
-        plainTitle: 'Replaying the Stolen Cookie in a New Browser & Creating Hidden Inbox Forwarding Rules',
+        plainTitle: 'Injecting the Stolen `ESTSAUTHPERSISTENT` Cookie to Access Email Without MFA',
+        storyAnalogy:
+          'Minutes later, the attacker pastes that photocopied `ESTSAUTHPERSISTENT` VIP pass into their own browser in another country, walks straight into the victim’s Outlook inbox, and sets up a hidden mail-forwarding rule so they keep getting copies of every email.',
         simpleExplanation:
-          'The attacker imports the captured ESTSAUTHPERSISTENT cookie into their own browser on a completely different IP address, gaining instant access to Outlook Web App (OWA) without being asked for a password or MFA again. To maintain access, they create a hidden OWA Inbox rule that silently moves or forwards incoming security emails.',
+          'The attacker imports the captured `ESTSAUTHPERSISTENT` cookie into their own browser using a cookie editor and navigates to `outlook.office.com`. Because the session cookie proves that MFA was already completed, Outlook opens the victim’s mailbox immediately without asking for a password or MFA—and the attacker creates a hidden Inbox forwarding rule to maintain access.',
         howItWorksInPractice:
-          'Once a session cookie is issued, the server trusts the cookie as proof that both password and MFA were already verified. Replaying that cookie from a second IP address lets the attacker act as the user.',
+          'Only phishing-resistant FIDO2 / WebAuthn passkeys or Token Protection (binding the cookie cryptographically to the device’s TPM) prevent AiTM proxy attacks, because FIDO2 binds the signature to the exact domain name in the browser’s address bar.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ replays the stolen cookie from Node ③/④ into Node ⑤ (Outlook Web App) while Node ⑥ (Defender for Cloud Apps / SIEM) flags the IP/ASN jump.',
+          'On the diagram, arrow #3.1→ replays the stolen `ESTSAUTHPERSISTENT` cookie from Node ①/④ directly against Node ⑤ (Exchange Online / Outlook), while Node ⑥ (SIEM) detects the same session ID used from two different IP addresses and ASNs.',
         detectionAndEvidence:
-          'Documented in Exchange Audit Logs (New-InboxRule) and Entra ID Risk Detection: Same session cookie ID replayed across two distinct autonomous systems (ASNs) and User-Agents.',
+          'Documented in Microsoft Sentinel & Entra Sign-in Logs: identical `UniqueTokenIdentifier` / `SessionId` replayed from a second IP address followed by `New-InboxRule` creation in Unified Audit Logs.',
       },
     ],
   },
@@ -269,52 +309,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'talos-arcanedoor-asa': {
     scenarioId: 'talos-arcanedoor-asa',
     briefing: {
-      headline: 'Scenario Briefing: ArcaneDoor (UAT4356 / Storm-1849) — Line Dancer & Line Runner Implants on Cisco ASA Firewalls',
+      headline: 'Scenario Briefing: ArcaneDoor Campaign (UAT4356 / STORM-1849) — Cisco ASA Line Dancer & Line Runner Implants',
+      storyAnalogy:
+        'Imagine a border checkpoint guardhouse (a Cisco ASA VPN firewall) that has no security cameras inside its own booth. The attacker slips a hidden radio receiver (**Line Dancer**) into the guardhouse’s memory that listens for secret commands disguised inside regular traveler visa forms (`/CSCOSSLC/config-auth`), and welds a hidden spare key (**Line Runner**) into the checkpoint’s boot firmware (`disk0:`) so even if the building loses power and restarts, the backdoor comes right back to life.',
       plainSummary:
-        'Published by Cisco Talos and the UK NCSC (April 2024), ArcaneDoor targeted perimeter Cisco Adaptive Security Appliances (ASA). By sending crafted IPSec IKEv2 packets (CVE-2024-20353), the attacker deploys two cooperating implants: "Line Dancer", an in-memory shellcode interpreter that disables crash dumps and runs commands sent inside normal VPN packets, and "Line Runner", a persistent backdoor hidden inside the firewall’s boot-time flash configuration bundle so it survives reboots and firmware upgrades.',
+        'Documented by Cisco Talos, the UK NCSC, and CISA (April 2024), the **ArcaneDoor** espionage campaign targeted perimeter network devices—specifically Cisco Adaptive Security Appliances (ASA)—using two custom implants: **Line Dancer** (an in-memory shellcode interpreter that executes arbitrary commands sent inside legitimate-looking VPN post-authentication HTTP requests) and **Line Runner** (a persistent backdoor that survives reboots and firmware upgrades by modifying a legacy pre-configuration zip archive on `disk0:`).',
       diagramTopologySummary:
-        'On the diagram: Node ① (UAT4356 Attacker) sends crafted IKEv2/HTTPS payloads to Node ②/③ (Cisco ASA 5500-X Perimeter Firewall). Inside the ASA lina engine, Node ④ (Line Dancer In-Memory Interpreter) disables crash dumps and installs Node ⑤ (Line Runner Flash Persistence & Packet Capture), alerted by Node ⑥ (Talos / SIEM Integrity Monitor).',
-      documentedAdvisory: 'Cisco Talos ArcaneDoor Report · CVE-2024-20353 & CVE-2024-20359 · MITRE ATT&CK T1542.004',
+        'On the diagram: Start at Node ① (UAT4356 Operator), send crafted HTTPS requests to Node ②/③ (Cisco ASA Perimeter Firewall `/CSCOSSLC/config-auth`), trace the **Line Dancer** in-memory shellcode dispatcher and **Line Runner** boot persistence inside Node ④ (`lina` Process Memory & `disk0:`), and follow the silent packet capture and config exfiltration to Node ⑤ while Node ⑥ (NetFlow / Memory Integrity SIEM) detects the anomaly.',
+      documentedAdvisory: 'Cisco Talos "ArcaneDoor" Report · CVE-2024-20353 & CVE-2024-20359 · MITRE ATT&CK T1542 / T1059',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1190',
-        plainTitle: 'Exploiting the Cisco ASA IPSec/WebVPN Interface (CVE-2024-20353) to Inject Shellcode',
+        plainTitle: 'Delivering Base64-Encoded Shellcode Payloads Inside AnyConnect `/CSCOSSLC/config-auth` Requests',
+        storyAnalogy:
+          'Every day, thousands of remote employees send `<config-auth>` XML forms to the Cisco ASA VPN gate to log in. The attacker sends that exact same XML form, but tucks a 32-byte secret handshake and Base64 shellcode inside the `<host-scan-reply>` field.',
         simpleExplanation:
-          'The attacker sends specially crafted IPSec IKEv2 and HTTPS WebVPN requests to the Cisco ASA perimeter firewall, exploiting CVE-2024-20353 to corrupt memory inside the ASA’s core lina process and hook the AAA authentication handler.',
+          'To communicate with the compromised Cisco ASA firewall without opening any suspicious ports, the attacker sends standard HTTPS POST requests to the AnyConnect SSL VPN endpoint (`/CSCOSSLC/config-auth`) containing a 32-byte magic identifier and a Base64-encoded command payload inside the `<host-scan-reply>` XML tag.',
         howItWorksInPractice:
-          'The lina process handles all VPN termination and packet routing on a Cisco ASA appliance. Hooking its memory gives the attacker control over both management commands and transit network traffic.',
+          'Because `/CSCOSSLC/config-auth` is the normal URL that every remote employee’s AnyConnect VPN client connects to, the attacker’s C2 traffic blends into ordinary corporate VPN login traffic on port 443.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the crafted IKEv2/HTTPS payload from Node ① to Node ②/③ (Cisco ASA lina engine), and ⇠#1.2 confirms the memory hook.',
+          'On the diagram, follow arrow #1.1→ from Node ① (UAT4356 Operator) to Node ②/③ (Cisco ASA `/CSCOSSLC/config-auth`), and return arrow ⇠#1.2 passing the XML body to the hooked `lina` handler.',
         detectionAndEvidence:
-          'Documented by Cisco Talos: Anomalous IKEv2 fragmentation payloads and memory text-segment modification detected via show memory region / verify /md5.',
+          'Documented by Cisco Talos (CVE-2024-20353): anomalous POST requests to `/CSCOSSLC/config-auth` with oversized `<host-scan-reply>` payloads from non-VPN client IPs.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1562.001',
-        plainTitle: 'Line Dancer Runs in Memory, Disables Crash Dumps & Executes Commands Hidden in VPN Packets',
+        plainTitle: '"Line Dancer" In-Memory Implant Disables Syslog & Executes Arbitrary CLI Commands',
+        storyAnalogy:
+          'When the **Line Dancer** implant inside the firewall’s `lina` process spots that 32-byte secret handshake, its first move is to unplug the guardhouse’s alarm bell (disabling Syslog and crash dumps) before silently running the attacker’s router commands.',
         simpleExplanation:
-          'The injected "Line Dancer" implant acts as an in-memory shellcode interpreter. Its first action is patching the lina_monitor watchdog in memory so the firewall will never write a forensic crashinfo dump if an exploit fails. After that, whenever the attacker sends an IKEv2 packet containing a specific 16-byte magic header, Line Dancer silently executes the embedded command (such as disabling syslog or exporting configuration) without creating any CLI session.',
+          'Inside the ASA’s core `lina` process, the **Line Dancer** memory-only implant intercepts the `<host-scan-reply>` buffer, verifies the 16-byte hash, and executes arbitrary position-independent shellcode—allowing the attacker to temporarily disable `syslog` logging, suppress crash dumps, and run privileged ASA CLI commands without generating log entries.',
         howItWorksInPractice:
-          'Because commands arrive disguised as standard IKEv2 VPN negotiation packets and are processed directly in memory before CLI logging, no SSH or console login event ever appears in the firewall logs.',
+          'Because perimeter firewalls do not run traditional Windows/Linux EDR agents, an implant that hooks the `lina` executable in RAM and suppresses outbound syslog messages can operate invisibly unless administrators verify `lina` memory integrity (`verify /md5 system:memory/text`).',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ activates Node ④ (Line Dancer Interpreter) and patches lina_monitor, with ⇠#2.2 returning covert command output.',
+          'On the diagram, arrow #2.1→ inside Node ④ (`lina` Process Memory) invokes the Line Dancer shellcode dispatcher, and ⇠#2.2 returns the command output inside the HTTPS VPN response.',
         detectionAndEvidence:
-          'Documented by Cisco Talos: In-memory patching of crashinfo generation and hook in IKEv2/WebVPN packet parser.',
+          'Documented in Cisco Talos ArcaneDoor IOC Guide: `verify /md5 system:memory/text` hash mismatch on the running ASA `lina` text segment and unexpected gaps in ASA syslog sequence numbers.',
       },
       {
         stepNumber: 3,
-        mitreId: 'T1542.004',
-        plainTitle: 'Installing Line Runner in Boot Flash (CVE-2024-20359) & Exfiltrating Packet Captures',
+        mitreId: 'T1542',
+        plainTitle: '"Line Runner" Abuses `vpn_dessert.zip` (CVE-2024-20359) to Survive Firewall Reboots',
+        storyAnalogy:
+          'Every time a Cisco ASA firewall boots up, it automatically unzips and runs an old factory setup archive (`disk0:/.private/startup-config`) if one exists. **Line Runner** plants a booby-trapped zip file in that exact spot so every reboot automatically re-installs the backdoor.',
         simpleExplanation:
-          'To survive reboots, the attacker exploits CVE-2024-20359 by placing a malicious script inside a legacy pre-login client bundle on the firewall’s flash drive (disk0:/csco_config.lua). Every time the ASA boots up, it unzips and runs this script ("Line Runner"), which also silently captures network packets flowing through the firewall and sends them to the attacker.',
+          'To ensure the backdoor survives even if the firewall is rebooted, the attacker exploits CVE-2024-20359: planting a maliciously crafted archive on the flash drive (`disk0:`) that the ASA’s legacy boot script automatically unzips and executes as `root` every time the appliance starts up (**Line Runner**).',
         howItWorksInPractice:
-          'Cisco’s forensic verification command (verify /sha-512 system:memory/text) compares the running lina code in RAM against the clean signed image on flash to expose Line Dancer and Line Runner modifications.',
+          'By combining **Line Runner** (disk boot persistence via CVE-2024-20359) with **Line Dancer** (volatile RAM command execution), the attacker achieves both stealthy runtime operation and persistence across reboots.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ writes persistence to Node ⑤ (disk0: Flash & Packet Capture Buffer) and triggers Node ⑥ (SIEM / Integrity Verification Alert).',
+          'On the diagram, arrow #3.1→ persists Line Runner on Node ④ (`disk0:`) and exfiltrates captured VPN sessions and configs to Node ⑤, while Node ⑥ (SIEM / Forensic Check) detects the `.private` boot archive and `memory/text` hash divergence.',
         detectionAndEvidence:
-          'Documented in Cisco Advisory: Unexpected files or modified Lua scripts on disk0: and mismatch in verify /sha-512 system:memory/text.',
+          'Documented in Cisco Advisory CVE-2024-20359 & NCSC Guidance: unauthorized files on `disk0:` boot paths and `system:memory/text` integrity verification failure.',
       },
     ],
   },
@@ -322,52 +370,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'talos-fortinet-coathanger-apt': {
     scenarioId: 'talos-fortinet-coathanger-apt',
     briefing: {
-      headline: 'Scenario Briefing: COATHANGER RAT (CVE-2024-21762) — Stealthy FortiGate Firewall Implant That Survives Firmware Upgrades',
+      headline: 'Scenario Briefing: COATHANGER RAT (CVE-2022-42475 / CVE-2023-27997) — FortiGate SSL-VPN Rootkit & `ld.so.preload` Hijack',
+      storyAnalogy:
+        'Imagine a fortress gate (a FortiGate firewall) where a burglar uses an oversized battering ram (`Heap Overflow` in `sslvpnd`) to slip inside. Once inside, the burglar hooks a tiny invisible coat hanger (`ld.so.preload` rootkit) onto the fortress’s coat rack so that every time an administrator runs the inspection command (`ps` or `ls`) to check if anyone is hiding in the room, the coat hanger intercepts the administrator’s glasses and erases the burglar from their field of view—and even hides a spare copy inside the emergency recovery partition (`flatkc`) to survive firmware updates.',
       plainSummary:
-        'Documented by the Dutch Military Intelligence and Security Service (MIVD), NCSC-NL, and Cisco Talos (February 2024), COATHANGER is a stealthy remote access trojan designed specifically for FortiGate firewalls. The attacker exploits an out-of-bounds memory write flaw in the FortiOS SSL-VPN daemon (CVE-2024-21762) without authentication. Once inside, COATHANGER injects an LD_PRELOAD library hook to hide its files from administrators and replaces the legitimate disk-health binary (/bin/smartctl) so the backdoor automatically re-infects the system even after a firmware update.',
+        'Documented by the Dutch Military Intelligence and Security Service (MIVD), NCTV, and Fortinet (February 2024), **COATHANGER** is a stealthy Remote Access Trojan (RAT) designed specifically for Fortinet FortiGate firewalls. After gaining initial entry via a heap buffer overflow in the FortiOS SSL-VPN daemon (`sslvpnd`, CVE-2022-42475 or CVE-2023-27997), COATHANGER hooks Linux userland libraries via `/etc/ld.so.preload` to hide its own files and processes from administrators, intercepts the `init` / `flatkc` boot sequence so it survives firmware upgrades, and opens a covert backdoor on the firewall.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Threat Actor) sends malformed HTTP chunked requests to Node ②/③ (FortiGate SSL-VPN sslvpnd). Inside FortiOS, Node ④ (COATHANGER Preload Hook & /bin/smartctl Injector) hooks Node ⑤ (nvram / Firmware Reboot Handler & Admin Auth), monitored by Node ⑥ (FortiAnalyzer / SIEM).',
-      documentedAdvisory: 'NCSC-NL / MIVD Advisory (Feb 2024) · CVE-2024-21762 · MITRE ATT&CK T1574.006 / T1542',
+        'On the diagram: Start at Node ① (APT Operator), send the heap-overflow payload to Node ②/③ (FortiGate SSL-VPN `/remote/logincheck` `sslvpnd`), trace the `/data2` filesystem implant and `ld.so.preload` system-call hooking inside Node ④ (COATHANGER Rootkit), and follow the hidden C2 channel to Node ⑤ while Node ⑥ (SIEM / Out-of-Band Forensics) detects the `sslvpnd` crash and preload hook.',
+      documentedAdvisory: 'Dutch MIVD / NCTV Technical Report on COATHANGER (Feb 2024) · CVE-2022-42475 & CVE-2023-27997 · MITRE T1574.006',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1190',
-        plainTitle: 'Exploiting FortiOS SSL-VPN Chunked Transfer Encoding (CVE-2024-21762)',
+        plainTitle: 'Heap Buffer Overflow in FortiOS `sslvpnd` (`CVE-2022-42475` / `CVE-2023-27997`)',
+        storyAnalogy:
+          'The attacker sends an HTTPS request to the FortiGate VPN login gate with a falsified `Content-Length` label, causing the `sslvpnd` gatekeeper to pour extra bytes past the end of its memory bucket (`Heap Overflow`) and overwrite its own instruction pointer.',
         simpleExplanation:
-          'The attacker sends crafted HTTPS requests with malformed HTTP Transfer-Encoding: chunked length headers to the FortiGate SSL-VPN daemon (/remote/login). This triggers an out-of-bounds write in the sslvpnd process (CVE-2024-21762), allowing unauthenticated remote code execution on the appliance.',
+          'The attacker sends a specially crafted HTTPS request with a manipulated `Content-Length` or `enc` parameter to the FortiGate SSL-VPN web endpoint (`/remote/logincheck` or `/remote/hostcheck_validate`). A heap-based buffer overflow in the `sslvpnd` binary allows the attacker to overwrite function pointers on the heap and execute arbitrary code on the firewall.',
         howItWorksInPractice:
-          'Because the bug sits in the pre-authentication HTTP chunk parser of sslvpnd, any FortiGate appliance with SSL-VPN exposed to the internet could be exploited without valid user credentials.',
+          'Because FortiOS compiles `sslvpnd` and nearly all system utilities into a single large multi-call binary (`/bin/init`), exploiting `sslvpnd` gives the attacker immediate access to the underlying Linux environment of the firewall.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the malformed chunked HTTP stream from Node ① to Node ②/③ (FortiGate sslvpnd), and ⇠#1.2 confirms shellcode execution.',
+          'On the diagram, follow arrow #1.1→ from Node ① (APT Operator) to Node ②/③ (FortiGate `/remote/logincheck` `sslvpnd`), and return arrow ⇠#1.2 triggering the ROP chain and shell execution.',
         detectionAndEvidence:
-          'Documented in NCSC-NL COATHANGER Report: Malformed chunked transfer requests to SSL-VPN endpoints and sslvpnd crash/fork anomalies.',
+          'Documented in Fortinet FG-IR-22-398 & MIVD Report: `Application sslvpnd crashed` entries in FortiOS crash logs (`diagnose debug crashlog read`) and anomalous requests to `/remote/logincheck`.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1574.006',
-        plainTitle: 'Hooking System Libraries (preload.so) & Replacing /bin/smartctl to Hide inside FortiOS',
+        plainTitle: 'Hooking System Calls via `/etc/ld.so.preload` (`smartctl` / `preload.so`) to Hide From Admins',
+        storyAnalogy:
+          'Once inside, COATHANGER places a filter lens (`preload.so`) in `/etc/ld.so.preload`. Whenever any program on the firewall asks Linux "What files are in `/data2`?" or "What processes are running?", the filter lens intercepts the answer and deletes COATHANGER’s name before showing the list.',
         simpleExplanation:
-          'COATHANGER creates a hidden directory (/data/lib/) containing preload.so and sh2. It replaces the legitimate /bin/smartctl utility with a trojanized binary that injects preload.so into running FortiOS daemons (including the HTTPS administrative daemon httpsd and cli). The preload library hooks standard C functions (like readdir and open) so the hidden files never appear in directory listings.',
+          'COATHANGER writes its files into the hidden `/data2/` partition and injects a malicious shared library (`preload.so`) into `/etc/ld.so.preload`. This forces every dynamically linked program on the FortiGate to load COATHANGER’s library first, hooking system calls so the implant’s files and network connections are invisible to standard diagnostic commands.',
         howItWorksInPractice:
-          'Whenever FortiOS runs /bin/smartctl during boot or health checks, the trojanized binary re-injects preload.so into userland processes, hiding COATHANGER from standard CLI inspection.',
+          'By intercepting `readdir`, `open`, and process-listing calls in user space via `ld.so.preload`, even if an administrator runs CLI diagnostics on the FortiGate, the operating system lies to them and hides the `/data2` backdoor files.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ shows Node ④ replacing /bin/smartctl and injecting preload.so into httpsd/init, with ⇠#2.2 confirming userland syscall hooks active.',
+          'On the diagram, arrow #2.1→ inside Node ④ writes the implant to `/data2` and hooks `/etc/ld.so.preload`, with ⇠#2.2 intercepting userland `libc` calls.',
         detectionAndEvidence:
-          'Documented by MIVD/NCSC-NL: Presence of /data/lib/preload.so, modified /bin/smartctl hash, and /proc/<pid>/maps referencing preload.so.',
+          'Documented by Dutch MIVD: presence of `/etc/ld.so.preload` hooks and unauthorized binaries inside `/data2/` or `/bin/smartctl` when inspected via offline disk/memory forensics.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1542',
-        plainTitle: 'Intercepting Admin Passwords in Memory & Surviving Firmware Reboots',
+        plainTitle: 'Patching the `flatkc` Reboot Binary to Survive FortiOS Firmware Upgrades',
+        storyAnalogy:
+          'Even if the IT team installs a brand-new FortiOS firmware update, COATHANGER has already tucked a backup copy of itself inside the emergency kernel unpacker (`flatkc`) so that as soon as the newly updated firewall reboots, it re-infects itself on startup.',
         simpleExplanation:
-          'Because preload.so hooks the authentication functions inside httpsd and sshd, it captures plaintext administrator passwords whenever an admin logs into the FortiGate. Furthermore, it hooks the reboot and firmware-upgrade routines so that right before the firewall restarts into a newly installed firmware image, COATHANGER copies itself into the new partition.',
+          'To survive even when an administrator reboots or upgrades the FortiGate firmware, COATHANGER modifies `/bin/smartctl` and hooks the `flatkc` kernel/init unpacking process so the backdoor automatically re-injects itself into the newly booted filesystem and beacons out over TLS.',
         howItWorksInPractice:
-          'Because COATHANGER hooks the firmware installer itself, simply upgrading FortiOS does not remove an existing infection—full reformatting and credential rotation are required.',
+          'Standard firmware patches replace the main root filesystem image, but because COATHANGER hides a copy of itself in persistent flash storage (`/data2`) and hooks the boot sequence, simply patching FortiOS without a full factory format leaves the backdoor active.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ connects Node ④ to Node ⑤ (Firmware Partition & Auth Hook) and triggers Node ⑥ (SIEM File Integrity Alert).',
+          'On the diagram, arrow #3.1→ persists across boot inside Node ④ and opens the TLS C2 channel to Node ⑤, while Node ⑥ (SIEM / Out-of-Band NetFlow) detects the undocumented outbound TLS sessions from the firewall’s external interface.',
         detectionAndEvidence:
-          'Documented in NCSC-NL Technical Annex: Outbound TLS connection using custom certificate pinning and filesystem modifications across /data2/ partitions.',
+          'Documented in MIVD COATHANGER Advisory: outbound TLS traffic initiated by the FortiGate appliance itself to unknown external IPs and modified hashes on `/bin/smartctl`.',
       },
     ],
   },
@@ -375,52 +431,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'f5-bigip-request-smuggling': {
     scenarioId: 'f5-bigip-request-smuggling',
     briefing: {
-      headline: 'Scenario Briefing: F5 BIG-IP TMUI Request Smuggling (CVE-2023-46747) — Bypassing Auth via Internal AJP Proxy',
+      headline: 'Scenario Briefing: F5 BIG-IP TMUI Auth Bypass & AJP Request Smuggling (CVE-2023-46747)',
+      storyAnalogy:
+        'Imagine a building with a strict front-door security guard (`Apache httpd`) and a trusting back-office clerk (`Apache Tomcat`) who talk to each other over an internal pneumatic tube (`AJP protocol`). A visitor sends a single long envelope whose outer label says it is just a public login-page check—so the front-door guard lets it through. Inside the pneumatic tube, however, the oversized message spills over and creates a brand-new second internal work order marked `REMOTE_USER = admin`. The back-office clerk reads that second forged work order and believes the front guard already verified the visitor as the building’s master administrator.',
       plainSummary:
-        'Based on F5 Security Advisory K000137353 and ProjectDiscovery research, this scenario demonstrates how HTTP/AJP Request Smuggling on an F5 BIG-IP load balancer allows unauthenticated remote code execution. On a BIG-IP appliance, external requests to the Traffic Management User Interface (TMUI) first pass through Apache httpd (which checks authentication) and are then forwarded over the binary Apache JServ Protocol (AJP) to an internal Apache Tomcat server. By sending an oversized HTTP header, the attacker smuggles fake AJP attributes (remote_user=admin) straight to Tomcat, creates an admin user, and executes root bash commands via the iControl REST API.',
+        'Documented by ProjectDiscovery, Praetorian, and CISA (October–November 2023), CVE-2023-46747 is a critical unauthenticated Remote Code Execution vulnerability in the F5 BIG-IP Traffic Management User Interface (TMUI). The BIG-IP management web interface uses a two-tier architecture: a front-end **Apache httpd** server checks authentication and forwards requests over the binary **Apache JServ Protocol (AJP)** to a back-end **Apache Tomcat** server. By sending an HTTP request with an oversized header to a public `.jsp` page, the attacker triggers an AJP buffer boundary flaw (**AJP Request Smuggling**)—injecting a forged second AJP request straight into Tomcat with `REMOTE_USER=admin` to create an admin user and run `bash` commands as `root`.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Attacker) sends the smuggled AJP request to Node ②/③ (F5 BIG-IP Apache TMUI Front-End). Inside the appliance, Node ④ (Internal AJP/Tomcat & iControl REST Daemon) processes the forged admin session and accesses Node ⑤ (SSL Private Keys & Traffic Plane), monitored by Node ⑥ (F5 ASM / SIEM).',
-      documentedAdvisory: 'F5 Advisory K000137353 · CISA KEV CVE-2023-46747 · MITRE ATT&CK T1190 / T1059.004',
+        'On the diagram: Start at Node ① (Attacker), send the crafted HTTP request to Node ②/③ (F5 BIG-IP TMUI Front-End Apache `:443`), trace the smuggled AJP packet (`0x1234` prefix + `SC_A_REMOTE_USER = admin`) entering Node ④ (Back-End Tomcat & `tmsh` Engine), and watch the `tmsh` root command execution on Node ⑤ detected by Node ⑥ (BIG-IP Audit & SIEM).',
+      documentedAdvisory: 'F5 Security Advisory K000137353 · ProjectDiscovery CVE-2023-46747 Analysis · CISA KEV · MITRE T1190',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1190',
-        plainTitle: 'Smuggling Forged "remote_user=admin" AJP Attributes Past Apache into Internal Tomcat',
+        plainTitle: 'Smuggling a Forged Second AJP Request Past Front-End Apache via `CVE-2023-46747`',
+        storyAnalogy:
+          'The attacker sends a request to a public login helper page (`/tmui/Control/jspmap/tmui/locallb/workspace/tmshCmd.jsp`) with a precisely sized HTTP header that overflows the internal AJP pneumatic tube packet—sneaking a hidden second AJP message (`REMOTE_USER=admin`) right behind it.',
         simpleExplanation:
-          'The attacker sends a POST request to /tmui/login.jsp on the BIG-IP management port with carefully crafted Transfer-Encoding and oversized headers. When mod_proxy_ajp translates the request into binary AJP packets for the internal Tomcat server (127.0.0.1:8009), buffer misalignment causes Tomcat to interpret the attacker’s payload as a second, pre-authenticated AJP request with attribute remote_user="admin" targeting /tmui/Control/form.',
+          'The attacker sends an unauthenticated HTTPS POST request to a publicly reachable TMUI endpoint (`/tmui/Control/jspmap/tmui/locallb/workspace/tmshCmd.jsp`). By carefully sizing the HTTP headers inside the request body, `mod_proxy_ajp` on the front-end Apache server miscalculates the AJP packet boundary and forwards the attacker’s raw bytes as a brand-new, separate AJP request to the back-end Tomcat server—with the AJP attribute `SC_A_REMOTE_USER` set to `admin`.',
         howItWorksInPractice:
-          'Internal Tomcat trusts Apache httpd to tell it which user is logged in via the AJP remote_user attribute. By smuggling bytes into the AJP stream, the attacker tricks Tomcat into thinking Apache already authenticated them as "admin".',
+          'Back-end Apache Tomcat implicitly trusts the `SC_A_REMOTE_USER` attribute inside an AJP packet because it assumes only the front-end Apache server could have set it after verifying the user’s password. Smuggling a raw AJP header (`0x12 0x34`) lets the attacker spoof `REMOTE_USER=admin` without ever logging in.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the smuggled payload from Node ① through Node ②/③ (Apache mod_proxy_ajp) into Node ④ (Tomcat :8009), and ⇠#1.2 creates a local admin account.',
+          'On the diagram, follow arrow #1.1→ from Node ① to Node ②/③ (F5 BIG-IP Apache `mod_proxy_ajp`), and return arrow ⇠#1.2 smuggling the forged `REMOTE_USER=admin` AJP packet into Node ④ (Tomcat `:8009`).',
         detectionAndEvidence:
-          'Documented in F5 Advisory K000137353: Anomalous POST requests to /tmui/Control/form and unexpected user creation in /var/log/audit.',
+          'Documented by ProjectDiscovery & F5 K000137353: `/var/log/httpd/httpd_errors` and Tomcat logs showing anomalous AJP header parsing and unauthenticated hits to `/tmui/Control/jspmap/`.',
       },
       {
         stepNumber: 2,
-        mitreId: 'T1059.004',
-        plainTitle: 'Using the Forged Admin Account to Run Root Commands via iControl REST (/mgmt/tm/util/bash)',
+        mitreId: 'T1098',
+        plainTitle: 'Using the Smuggled Admin Context to Create a Rogue BIG-IP Administrator via `form_page`',
+        storyAnalogy:
+          'Fooled by the forged `REMOTE_USER=admin` stamp on the smuggled work order, the back-end Tomcat clerk opens the internal `UserCreate` ledger and registers a brand-new administrator account with full bash terminal access.',
         simpleExplanation:
-          'Having used the smuggled AJP request to create a temporary administrator account in the BIG-IP database, the attacker authenticates to the local iControl REST API (/mgmt/tm/util/bash) and sends JSON command payloads ({"command":"run","utilCmdArgs":"-c id"}) that execute directly as root.',
+          'Executing inside Tomcat as the forged `admin` user, the smuggled request invokes the internal TMUI `UserCreate` handler (`/tmui/Control/form`) to create a new local BIG-IP administrator account with full `Advanced Shell (bash)` privileges.',
         howItWorksInPractice:
-          'While the Tomcat web process runs as a restricted user, F5’s iControl REST endpoint (/mgmt/tm/util/bash) allows valid administrators to run arbitrary bash commands with full root privileges.',
+          'Because the smuggled AJP request never passes back through Apache’s outer authentication filter, the attacker can invoke internal TMUI administrative handlers directly.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ invokes /mgmt/tm/util/bash on Node ④ (icrd_child / bash), and ⇠#2.2 returns uid=0(root) command output.',
+          'On the diagram, arrow #2.1→ inside Node ④ invokes the TMUI `UserCreate` handler as `admin`, and ⇠#2.2 registers the rogue administrator in `/config/bigip_user.conf`.',
         detectionAndEvidence:
-          'Documented in /var/log/restjavad-audit.0.log and /var/log/ltm: POST /mgmt/tm/util/bash spawning icrd_child -> /bin/bash as root.',
+          'Documented in `/var/log/audit` & `/var/log/ltm`: creation of a new user account with `role=admin` and `shell=bash` without a preceding interactive web login.',
       },
       {
         stepNumber: 3,
-        mitreId: 'T1552.004',
-        plainTitle: 'Extracting SSL/TLS Private Keys (/config/filestore) & Deleting Audit Trails',
+        mitreId: 'T1059.004',
+        plainTitle: 'Executing Arbitrary `root` Commands via `tmshCmd.jsp` (`util bash -c`)',
+        storyAnalogy:
+          'With their newly minted administrator account, the attacker calls the `tmsh` command runner to launch `bash -c` as `root` and extract all SSL private keys and internal server credentials managed by the load balancer.',
         simpleExplanation:
-          'Because F5 BIG-IP terminates HTTPS encryption for enterprise web applications, the root attacker reads the SSL/TLS private keys stored under /config/filestore/files_d/Common_d/certificate_key_d/ and extracts the master configuration (/config/bigip.conf) before deleting their temporary admin user.',
+          'Using the newly created account (or directly via a smuggled `tmshCmd.jsp` call), the attacker executes `tmsh run /util bash -c "..."` to gain an interactive `root` shell on the BIG-IP appliance, harvesting SSL private keys and backend server credentials.',
         howItWorksInPractice:
-          'Stealing TLS private keys and bigip.conf gives the attacker both the certificates for public domains and the credentials for backend load-balanced servers.',
+          'Because F5 BIG-IP load balancers terminate TLS and hold SSL certificates for the organization’s most critical web applications, root access on the BIG-IP allows the attacker to decrypt traffic and pivot into backend application servers.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ reads SSL keys from Node ⑤ (/config/filestore) via Node ④ while Node ⑥ (SIEM) alerts on restjavad and audit events.',
+          'On the diagram, arrow #3.1→ executes `tmsh run /util bash` on Node ⑤ (BIG-IP Root OS & SSL Vault) while Node ⑥ (SIEM) alerts on `auditd` `tmsh` bash execution.',
         detectionAndEvidence:
-          'Documented in F5 Forensics Guidance: Access to /config/filestore/.../certificate_key_d/ and audit log entries for temporary admin account deletion.',
+          'Documented in F5 K000137353 (`/var/log/audit`): `mcpd` / `tmsh` audit log entries showing `run /util bash -c` executed from `tmui` / `tomcat`.',
       },
     ],
   },
@@ -428,52 +492,60 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
   'splunk-ivanti-connect-secure': {
     scenarioId: 'splunk-ivanti-connect-secure',
     briefing: {
-      headline: 'Scenario Briefing: Ivanti Connect Secure Zero-Day Chain (CVE-2023-46805 & CVE-2024-21887) — VPN Takeover & Key Theft',
+      headline: 'Scenario Briefing: Ivanti Connect Secure Zero-Day Chain (CVE-2023-46805 & CVE-2024-21887) — "WIREFIRE" Webshell',
+      storyAnalogy:
+        'Imagine a secure government building where visitors must show an ID badge at the outer checkpoint before reaching any internal office. However, a hallway shortcut (`../` path traversal) lets anyone walk around the outer checkpoint straight to the Python maintenance office (`/api/v1/license/keys-status/`). Once at the maintenance office window, the visitor hands over a form containing `; shell_command #`—and the clerk types it straight into the building’s `root` terminal and installs a hidden translator (**WIREFIRE**) inside the public login page.',
       plainSummary:
-        'Based on Volexity (UTA0178), Mandiant (UNC5221), and Splunk SURGe research, this scenario shows how attackers chained two flaws in Ivanti Connect Secure VPN appliances. First, they use a path-traversal URL (/api/v1/totp/user-backup-code/../../license/keys-status/) to bypass authentication (CVE-2023-46805) and reach a command-injection flaw (CVE-2024-21887). Second, they modify Python scripts on the appliance (wirefilter.py) while patching the built-in Integrity Checker Tool (ICT) so the appliance reports "0 modified files". Third, they deploy the GLASSTOKEN webshell and steal cryptographic keys.',
+        'Documented by Volexity, Mandiant, CISA (Emergency Directive 24-01), and Splunk SURGe (January 2024), this scenario traces the two-bug zero-day chain used by UTA0178 to compromise Ivanti Connect Secure (formerly Pulse Connect Secure) VPN appliances. By combining **CVE-2023-46805** (an authentication bypass using `../` path traversal in `/api/v1/totp/user-backup-code/../../license/keys-status/`) with **CVE-2024-21887** (an authenticated command injection flaw in the Python `keys-status` handler), an unauthenticated attacker executes arbitrary `root` commands and implants the **WIREFIRE** Python webshell directly inside the VPN’s web interface.',
       diagramTopologySummary:
-        'On the diagram: Node ① (UTA0178 / UNC5221 Attacker) sends the chained path-traversal + command-injection request to Node ②/③ (Ivanti Connect Secure REST API). Inside the VPN appliance, Node ④ (Python Web Server & Modified wirefilter.py) disables the Integrity Checker and accesses Node ⑤ (Session Store & Cavium Crypto Keys), alerted by Node ⑥ (Splunk SIEM).',
-      documentedAdvisory: 'CISA Emergency Directive ED 24-01 · Volexity / Mandiant / Splunk SURGe CVE-2024-21887 · MITRE T1190',
+        'On the diagram: Start at Node ① (UTA0178 Operator), send the path-traversal + command-injection request to Node ②/③ (Ivanti Connect Secure `/api/v1/totp/user-backup-code/../../license/keys-status/`), trace the `popen()` root execution and **WIREFIRE** webshell injection inside Node ④ (`web` REST Daemon & `visits.py`), and follow the VPN credential harvesting on Node ⑤ monitored by Node ⑥ (Splunk SIEM).',
+      documentedAdvisory: 'CISA Emergency Directive 24-01 · Volexity & Mandiant Ivanti Zero-Day Analysis · CVE-2023-46805 & CVE-2024-21887',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1190',
-        plainTitle: 'Chaining Path Traversal (CVE-2023-46805) with License-Key Command Injection (CVE-2024-21887)',
+        plainTitle: 'Bypassing Authentication With `../../` Traversal Through `/api/v1/totp/user-backup-code/` (CVE-2023-46805)',
+        storyAnalogy:
+          'The outer door guard (`web` daemon) has a checklist that says: "Anyone walking down the `/api/v1/totp/user-backup-code/` hallway does not need to be logged in yet." The attacker starts down that hallway, but immediately takes two `../../` steps backward into the restricted `/license/keys-status/` room—slipping right past the outer guard.',
         simpleExplanation:
-          'On Ivanti Connect Secure, the endpoint /api/v1/totp/user-backup-code/ does not require prior authentication. By appending ../../license/keys-status/;python3%20-c%20..., the attacker traverses out of the unauthenticated TOTP folder into the authenticated license status handler, which passes the semicolon-separated URL parameter directly to popen() as root.',
+          'In Ivanti Connect Secure, the REST API gateway checked whether a URL started with `/api/v1/totp/user-backup-code/`—an endpoint that is intentionally unauthenticated so users can enter backup codes during login. By requesting `/api/v1/totp/user-backup-code/../../license/keys-status/`, the outer gateway allows the request through without authentication, while the internal router resolves `../../` and hands the request to the restricted administrative `/api/v1/license/keys-status/` endpoint.',
         howItWorksInPractice:
-          'Neither bug alone was enough for unauthenticated RCE: CVE-2023-46805 opened the door past the login check via "../..", and CVE-2024-21887 executed the shell command inside the protected admin endpoint.',
+          'This classic prefix-whitelist vs. path-normalization mismatch (CVE-2023-46805) turns every authenticated administrative REST endpoint on the VPN appliance into an unauthenticated endpoint.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the traversal + command injection URI from Node ① to Node ②/③ (Ivanti REST API), and ⇠#1.2 executes python3 via popen().',
+          'On the diagram, follow arrow #1.1→ from Node ① (Attacker) to Node ②/③ (Ivanti VPN Gateway `/api/v1/totp/user-backup-code/../../license/keys-status/`), and return arrow ⇠#1.2 bypassing the auth filter.',
         detectionAndEvidence:
-          'Documented by Volexity & Splunk SURGe: HTTP requests containing /api/v1/totp/user-backup-code/../../license/keys-status/ or /api/v1/configuration/users/user-roles/.',
+          'Documented in CISA ED 24-01 & Splunk SURGe: HTTP requests containing `/api/v1/totp/user-backup-code/..` or `/api/v1/cav/client/status/..`.',
       },
       {
         stepNumber: 2,
-        mitreId: 'T1562.001',
-        plainTitle: 'Injecting a Webshell into wirefilter.py & Tampering with the Integrity Checker Tool (ICT)',
+        mitreId: 'T1059.004',
+        plainTitle: 'Injecting Shell Commands Into `keys-status` URL Parameters (CVE-2024-21887)',
+        storyAnalogy:
+          'Now standing at the restricted `/license/keys-status/` counter without ever logging in, the attacker writes `;python -c ... #` in the node-name field. The Python clerk pastes that string straight into a `popen()` shell command and runs it as `root`.',
         simpleExplanation:
-          'After remounting the read-only root filesystem as read-write (mount -o remount,rw /), the attacker injects a backdoor handler into /home/venv3/lib/python3.6/site-packages/jnpr/hippo/wirefilter.py. To stop administrators from noticing the modified file, they also patch Ivanti’s built-in Integrity Checker Tool (scanner.py) so it always reports a clean snapshot.',
+          'Once the traversal reaches `/api/v1/license/keys-status/;python%20-c%20...`, the backend Python handler takes the URL path parameter and passes it directly into a shell command (`popen()`) without sanitization (CVE-2024-21887)—executing the attacker’s shell command with `root` privileges.',
         howItWorksInPractice:
-          'Because the internal Integrity Checker Tool was running on the same compromised operating system, the attacker simply edited the checker script to skip or forge the hash check for wirefilter.py.',
+          'Neither bug alone is an unauthenticated RCE: CVE-2023-46805 is an auth bypass, and CVE-2024-21887 is an authenticated command injection. Chaining them together in a single HTTP GET/POST request yields instant unauthenticated `root` code execution.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ modifies wirefilter.py and scanner.py inside Node ④, with ⇠#2.2 returning a forged "0 modified files" ICT report.',
+          'On the diagram, arrow #2.1→ triggers `popen()` inside Node ④ (Ivanti Python REST Backend), and ⇠#2.2 executes the stage-1 payload as `root`.',
         detectionAndEvidence:
-          'Documented by Mandiant (UNC5221): External ICT snapshot comparison showing modified wirefilter.py / visit.py and unscheduled syslog forwarding pauses.',
+          'Documented by Volexity & Mandiant: Ivanti unallocated log / syslog entries showing `/api/v1/license/keys-status/;` followed by unexpected child processes of the `web` daemon.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1505.003',
-        plainTitle: 'Stealing Active VPN Session Cookies, LDAP Credentials & Cavium Crypto Keys',
+        plainTitle: 'Implanting the "WIREFIRE" Webshell in `visits.py` & Harvesting Plaintext VPN Credentials',
+        storyAnalogy:
+          'To stay inside permanently, the attacker remounts the read-only floor tiles as writable and slips the **WIREFIRE** webshell directly into the appliance’s legitimate `/api/v1/cav/client/visits` Python handler—so they can send encrypted commands and steal every employee’s plaintext VPN password as they log in.',
         simpleExplanation:
-          'Through the implanted webshell (GLASSTOKEN / ZIPLINE), the attacker reads active DSID VPN session cookies and cached Active Directory LDAP bind credentials from memory, extracts private keys from the Cavium cryptographic module, and pivots into internal corporate servers.',
+          'With `root` access, the attacker temporarily remounts the read-only filesystem as read-write (`mount -o remount,rw /`), injects the **WIREFIRE** Python webshell directly into `/home/venv3/lib/python3.6/site-packages/cav-0.1-py3.6.egg/cav/api/resources/visits.py`, and hooks the authentication daemon to capture plaintext Active Directory credentials of employees logging into the VPN.',
         howItWorksInPractice:
-          'Stealing active DSID VPN cookies lets the attacker hijack existing employee VPN tunnels without triggering any new login or MFA prompt.',
+          'Modifying an existing legitimate Python API file (`visits.py`) in-place means the attacker does not create any new `.php` or `.jsp` file that a simple file-count check would notice, and then runs `/pkg/do-ict` with modified exclusions to hide from the built-in Integrity Checker Tool.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ harvests credentials from Node ⑤ (Cavium Crypto & Session Store) via Node ④ while Node ⑥ (Splunk SIEM) correlates the post-VPN lateral movement.',
+          'On the diagram, arrow #3.1→ implants WIREFIRE on Node ④ and harvests VPN user credentials on Node ⑤, while Node ⑥ (Splunk SIEM / External ICT) detects the `visits.py` modification and outbound traffic.',
         detectionAndEvidence:
-          'Documented in CISA ED 24-01 & Splunk SURGe: DSID session hijacking from mismatched source IPs and unexpected LDAP/SMB binds originating from the VPN internal interface.',
+          'Documented by Mandiant (UNC5221): modification of `visits.py` and `ComponentIntegrity.pm` discovered via external Integrity Checker Tool (ICT) snapshots.',
       },
     ],
   },
@@ -482,10 +554,12 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
     scenarioId: 'splunk-citrix-bleed-session-hijack',
     briefing: {
       headline: 'Scenario Briefing: Citrix Bleed (CVE-2023-4966) — Leaking Session Tokens from NetScaler Memory to Bypass MFA',
+      storyAnalogy:
+        'Imagine asking a hotel clerk to write your name on six lines of a 1-page welcome form, and then photocopy that page for you. Instead of giving a normal 10-letter name, you hand the clerk a 24,000-letter name (`Host:` header). The clerk’s 1-page form runs out of space after line 5, so the clerk stops writing—but when they walk over to the photocopier, they tell the machine: "Copy 147,000 letters worth of paper from my desk!" The photocopier copies the 1-page welcome form PLUS the confidential ledger sitting right next to it on the desk—which contains the active VIP room key (`NSC_AAAC` session cookie) of an administrator who already passed MFA.',
       plainSummary:
-        'Documented by CISA Advisory AA23-325A, Mandiant, and Splunk SURGe, "Citrix Bleed" (CVE-2023-4966) is a memory over-read flaw in Citrix NetScaler ADC and Gateway appliances. When an attacker sends an HTTP GET request to the OpenID Connect configuration page with an abnormally long Host header (around 24,000+ characters), the appliance constructs a JSON response using snprintf() without checking that the buffer overflowed—causing it to dump raw adjacent server memory back in the HTTP response. Inside that leaked memory sits the plaintext NSC_AAAC session cookie of an already logged-in administrator.',
+        'Documented by CISA Advisory AA23-325A, Mandiant, and Splunk SURGe, "Citrix Bleed" (CVE-2023-4966) is a memory over-read flaw in Citrix NetScaler ADC and Gateway appliances. When an attacker sends an HTTP GET request to the OpenID Connect configuration page with an abnormally long `Host` header (around 24,000+ characters), the appliance constructs a JSON response using `snprintf()` without checking that the buffer overflowed—causing it to dump raw adjacent server memory back in the HTTP response. Inside that leaked memory sits the plaintext `NSC_AAAC` session cookie of an already logged-in administrator.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Attacker) sends the oversized Host header request to Node ②/③ (Citrix NetScaler Gateway nsppe). Node ④ (nsppe Memory Buffer & Session Replay) leaks the 65-byte NSC_AAAC token, allowing the attacker to hijack a Virtual Desktop session and pivot via DCOM to Node ⑤ (Internal Domain Server), alerted by Node ⑥ (Splunk SIEM).',
+        'On the diagram: Node ① (Attacker) sends the oversized `Host` header request to Node ②/③ (Citrix NetScaler Gateway `nsppe`). Node ④ (`nsppe` Memory Buffer & Session Replay) leaks the 65-byte `NSC_AAAC` token, allowing the attacker to hijack a Virtual Desktop session and pivot via DCOM to Node ⑤ (Internal Domain Server), alerted by Node ⑥ (Splunk SIEM).',
       documentedAdvisory: 'CISA Advisory AA23-325A · Splunk SURGe Citrix Bleed Analysis · CVE-2023-4966 · MITRE T1539',
     },
     steps: [
@@ -493,40 +567,46 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         stepNumber: 1,
         mitreId: 'T1190',
         plainTitle: 'Sending an Oversized HTTP "Host" Header to Leak Adjacent NetScaler RAM (CVE-2023-4966)',
+        storyAnalogy:
+          'The attacker asks the public OpenID info desk (`/oauth/idp/.well-known/openid-configuration`) for its standard welcome sheet while supplying a 24,576-byte `Host` name. Because `snprintf()` reports how many bytes it *wanted* to write (147 KB) rather than the size of the 131 KB paper sheet, the server sends back 16 KB of raw adjacent RAM right after the welcome sheet.',
         simpleExplanation:
-          'The attacker sends an unauthenticated HTTPS GET request to /oauth/idp/.well-known/openid-configuration on the Citrix NetScaler Gateway. Normally, the server inserts the HTTP Host header into six fields of a JSON template using snprintf() and uses the return value to send the response. By sending a 24,576-byte Host header, snprintf() returns the theoretical length (~147 KB) rather than the actual buffer size (131 KB), causing the server to transmit ~16 KB of raw adjacent heap memory.',
+          'The attacker sends an unauthenticated HTTPS GET request to `/oauth/idp/.well-known/openid-configuration` on the Citrix NetScaler Gateway. Normally, the server inserts the HTTP `Host` header into six fields of a JSON template using `snprintf()` and uses the return value to send the response. By sending a 24,576-byte `Host` header, `snprintf()` returns the theoretical length (~147 KB) rather than the actual buffer size (131 KB), causing the server to transmit ~16 KB of raw adjacent heap memory.',
         howItWorksInPractice:
-          'In C programming, snprintf() returns the number of bytes that *would* have been written if the buffer were big enough. Passing that unchecked number to the HTTP response writer tricks NetScaler into sending whatever sensitive data was sitting next to the buffer in RAM.',
+          'In C programming, `snprintf()` returns the number of bytes that *would* have been written if the buffer were big enough. Passing that unchecked number to the HTTP response writer tricks NetScaler into sending whatever sensitive data was sitting next to the buffer in RAM.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the 24 KB Host header from Node ① to Node ②/③ (Citrix NetScaler /oauth/idp/), and ⇠#1.2 returns HTTP 200 OK leaking 131 KB of memory.',
+          'On the diagram, arrow #1.1→ sends the 24 KB `Host` header from Node ① to Node ②/③ (Citrix NetScaler `/oauth/idp/`), and ⇠#1.2 returns HTTP 200 OK leaking 131 KB of memory.',
         detectionAndEvidence:
-          'Documented in CISA AA23-325A & Suricata SID 2048918: GET /oauth/idp/.well-known/openid-configuration with oversized Host header and >130 KB HTTP 200 response.',
+          'Documented in CISA AA23-325A & Suricata SID 2048918: `GET /oauth/idp/.well-known/openid-configuration` with oversized `Host` header and >130 KB HTTP 200 response.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1539',
         plainTitle: 'Extracting the 65-Character "NSC_AAAC" Cookie & Hijacking an Active MFA Session',
+        storyAnalogy:
+          'Scanning the accidentally photocopied desk pages, the attacker spots a 65-digit hexadecimal VIP wristband (`NSC_AAAC`) belonging to an administrator who is currently logged in. Clipping that wristband onto their own browser lets the attacker step straight into the admin’s active Citrix Virtual Desktop without any password or MFA prompt.',
         simpleExplanation:
-          'Scanning the leaked raw memory bytes with a regular expression ([0-9a-f]{32,65}), the attacker extracts a live NSC_AAAC session token belonging to an administrator who had already completed multi-factor authentication. By setting Cookie: NSC_AAAC=<leaked_token> in their own client, the attacker steps directly into the authenticated Citrix VDI session.',
+          'Scanning the leaked raw memory bytes with a regular expression (`[0-9a-f]{32,65}`), the attacker extracts a live `NSC_AAAC` session token belonging to an administrator who had already completed multi-factor authentication. By setting `Cookie: NSC_AAAC=<leaked_token>` in their own client, the attacker steps directly into the authenticated Citrix VDI session.',
         howItWorksInPractice:
-          'Because the NSC_AAAC token represents an already-authenticated session, replaying it bypasses both password verification and MFA completely, even surviving a password reset unless active sessions are explicitly terminated on the NetScaler.',
+          'Because the `NSC_AAAC` token represents an already-authenticated session, replaying it bypasses both password verification and MFA completely, even surviving a password reset unless active sessions are explicitly terminated (`kill aaa session`) on the NetScaler.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ replays the leaked NSC_AAAC cookie on Node ③/④ (NetScaler Session Engine), and ⇠#2.2 grants VDI ICA desktop access without MFA.',
+          'On the diagram, arrow #2.1→ replays the leaked `NSC_AAAC` cookie on Node ③/④ (NetScaler Session Engine), and ⇠#2.2 grants VDI ICA desktop access without MFA.',
         detectionAndEvidence:
-          'Documented in NetScaler AAA Syslog: Same NSC_AAAC session identifier active across two different client IP addresses without a new authentication event.',
+          'Documented in NetScaler AAA Syslog: Same `NSC_AAAC` session identifier active across two different client IP addresses without a new authentication event.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1021.003',
         plainTitle: 'Pivoting from the Hijacked Citrix VDI Desktop into Internal Servers via DCOM/RPC',
+        storyAnalogy:
+          'Now sitting at the administrator’s virtual desk inside the building, the attacker uses the internal intercom (`DCOM MMC20.Application` over port 135) to command neighboring Windows servers to run commands on their behalf.',
         simpleExplanation:
-          'Inside the hijacked virtual desktop session, the attacker runs reconnaissance tools (netscan, adfind), dumps credentials from memory, and uses Distributed COM (DCOM / MMC20.Application over RPC port 135) to execute commands laterally on internal Windows servers.',
+          'Inside the hijacked virtual desktop session, the attacker runs reconnaissance tools (`netscan`, `adfind`), dumps credentials from memory, and uses Distributed COM (`DCOM` / `MMC20.Application` over RPC port 135) to execute commands laterally on internal Windows servers.',
         howItWorksInPractice:
-          'Executing commands via DCOM MMC20.Application causes the remote server to spawn mmc.exe -Embedding, allowing lateral movement without creating a new Windows service.',
+          'Executing commands via DCOM `MMC20.Application` causes the remote server to spawn `mmc.exe -Embedding`, allowing lateral movement without creating a new Windows service.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ pivots from Node ④ (VDI Session) to Node ⑤ (Internal Server via DCOM :135) while Node ⑥ (Splunk SIEM) correlates the session hijack.',
+          'On the diagram, arrow #3.1→ pivots from Node ④ (VDI Session) to Node ⑤ (Internal Server via DCOM `:135`) while Node ⑥ (Splunk SIEM) correlates the session hijack.',
         detectionAndEvidence:
-          'Documented in CISA AA23-325A: mmc.exe -Embedding spawned on remote servers via DCOM following Citrix ICA session IP change.',
+          'Documented in CISA AA23-325A: `mmc.exe -Embedding` spawned on remote servers via DCOM following Citrix ICA session IP change.',
       },
     ],
   },
@@ -535,10 +615,12 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
     scenarioId: 'kaspersky-operation-triangulation',
     briefing: {
       headline: 'Scenario Briefing: Operation Triangulation — Zero-Click iMessage Font Exploit & Undocumented Hardware DMA Bypass',
+      storyAnalogy:
+        'Imagine someone slips an invisible envelope under a locked door (`Zero-Click iMessage`), and the automatic mail-sorting machine (`IMAgent`) jams on a rigged font instruction (`ADJUST`, CVE-2023-41990) before the homeowner even knows a letter arrived. Once inside, the intruder discovers that the vault’s memory walls are protected by an unbreakable software lock (`Apple PPL`). Instead of fighting the software guard, the intruder walks over to a secret, undocumented maintenance panel wired directly into the silicon chip (`MMIO DMA Registers`, CVE-2023-38606) and orders the hardware’s own Direct Memory Access crane to lift the vault roof from the outside.',
       plainSummary:
-        'Discovered and documented by Kaspersky GReAT (2023–2024), Operation Triangulation is one of the most sophisticated zero-click mobile exploit chains ever analyzed. The victim receives an invisible iMessage attachment that triggers a memory corruption bug in Apple’s TrueType font parser (ADJUST instruction, CVE-2023-41990) without the user ever opening or seeing the message. Next, to bypass Apple’s hardware-enforced page protection (PPL), the exploit writes directly to undocumented CPU Memory-Mapped I/O (MMIO) hardware registers (CVE-2023-38606) using Direct Memory Access (DMA) to plant the TriangleDB memory-only implant.',
+        'Discovered and documented by Kaspersky GReAT (2023–2024), Operation Triangulation is one of the most sophisticated zero-click mobile exploit chains ever analyzed. The victim receives an invisible iMessage attachment that triggers a memory corruption bug in Apple’s TrueType font parser (`ADJUST` instruction, CVE-2023-41990) without the user ever opening or seeing the message. Next, to bypass Apple’s hardware-enforced page protection (PPL), the exploit writes directly to undocumented CPU Memory-Mapped I/O (MMIO) hardware registers (CVE-2023-38606) using Direct Memory Access (DMA) to plant the `TriangleDB` memory-only implant.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Triangulation Delivery Server) sends the invisible iMessage attachment through Node ② (APNs Push Gateway) to Node ③ (iOS IMAgent Process). Inside the device, Node ④ (FontParser CVE-2023-41990 & Hardware MMIO DMA CVE-2023-38606) patches kernel memory and launches Node ⑤ (TriangleDB In-Memory Implant), detected via forensic traces on Node ⑥ (Kaspersky Mobile Forensics / SIEM).',
+        'On the diagram: Node ① (Triangulation Delivery Server) sends the invisible iMessage attachment through Node ② (APNs Push Gateway) to Node ③ (iOS `IMAgent` Process). Inside the device, Node ④ (`FontParser` CVE-2023-41990 & Hardware MMIO DMA CVE-2023-38606) patches kernel memory and launches Node ⑤ (`TriangleDB` In-Memory Implant), detected via forensic traces on Node ⑥ (Kaspersky Mobile Forensics / SIEM).',
       documentedAdvisory: 'Kaspersky GReAT Operation Triangulation Series · CVE-2023-41990 & CVE-2023-38606 · MITRE T1068',
     },
     steps: [
@@ -546,19 +628,23 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         stepNumber: 1,
         mitreId: 'T1203',
         plainTitle: 'Zero-Click iMessage Attachment Triggers the TrueType Font "ADJUST" Bug (CVE-2023-41990)',
+        storyAnalogy:
+          'An invisible iMessage arrives while the phone is sitting untouched on a table. As the background mail-preview clerk (`IMAgent`) tries to render a custom font inside the attachment, an obsolete 1990s font command (`ADJUST`) tricks the clerk into writing outside the page boundary.',
         simpleExplanation:
-          'The target device receives an iMessage containing a disguised archive/PDF with an embedded TrueType font. Background process IMAgent automatically previews the attachment without displaying any notification to the user. Inside libFontParser.dylib, a legacy TrueType bytecode instruction named ADJUST (opcode 0x8F/0x90) causes an out-of-bounds write, giving the attacker initial code execution inside IMAgent.',
+          'The target device receives an iMessage containing a disguised archive/PDF with an embedded TrueType font. Background process `IMAgent` automatically previews the attachment without displaying any notification to the user. Inside `libFontParser.dylib`, a legacy TrueType bytecode instruction named `ADJUST` (opcode `0x8F`/`0x90`) causes an out-of-bounds write, giving the attacker initial code execution inside `IMAgent`.',
         howItWorksInPractice:
-          'Because IMAgent parses attachment previews automatically in the background as soon as the push payload arrives, the victim never has to tap or view anything ("Zero-Click").',
+          'Because `IMAgent` parses attachment previews automatically in the background as soon as the push payload arrives, the victim never has to tap or view anything ("Zero-Click").',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ delivers the zero-click iMessage payload from Node ①/② to Node ③ (IMAgent FontParser), and ⇠#1.2 triggers RCE in userland.',
+          'On the diagram, arrow #1.1→ delivers the zero-click iMessage payload from Node ①/② to Node ③ (`IMAgent` FontParser), and ⇠#1.2 triggers RCE in userland.',
         detectionAndEvidence:
-          'Documented by Kaspersky GReAT: MobileBackup/Sysdiagnose artifacts showing anomalous IMAgent attachment processing followed by immediate message deletion.',
+          'Documented by Kaspersky GReAT: MobileBackup/Sysdiagnose artifacts showing anomalous `IMAgent` attachment processing followed by immediate message deletion.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1068',
         plainTitle: 'Bypassing Hardware Memory Protection via Undocumented MMIO Registers (CVE-2023-38606)',
+        storyAnalogy:
+          'Even after taking over the kernel, the chip’s hardware Page Protection Layer (`PPL`) blocks any software from altering protected memory pages. So the exploit talks directly to an undocumented hardware controller on the Apple Silicon die (`0x206040000`) and commands its hardware DMA engine to overwrite the protected RAM directly—going completely around the CPU’s software guard.',
         simpleExplanation:
           'Even after exploiting the kernel, modern Apple silicon chips prevent software—even the kernel itself—from modifying protected page tables (PPL). To bypass this hardware lock, the exploit writes directly to undocumented physical Memory-Mapped I/O (MMIO) addresses belonging to an on-chip hardware block (CVE-2023-38606), instructing the chip’s own Direct Memory Access (DMA) engine to overwrite protected kernel memory.',
         howItWorksInPractice:
@@ -566,20 +652,22 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         diagramAlignment:
           'On the diagram, arrow #2.1→ inside Node ④ writes to physical MMIO DMA registers to overwrite kernel memory, with ⇠#2.2 granting full kernel read/write.',
         detectionAndEvidence:
-          'Documented by Kaspersky GReAT (37C3 presentation): Physical MMIO range writes at 0x206040000 bypassing PPL page table restrictions.',
+          'Documented by Kaspersky GReAT (37C3 presentation): Physical MMIO range writes at `0x206040000` bypassing PPL page table restrictions.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1620',
         plainTitle: 'Deleting Message Traces & Running the Memory-Only "TriangleDB" Implant',
+        storyAnalogy:
+          'Once inside the vault, the exploit shreds the incoming iMessage from `sms.db` so the user never sees a trace, and runs the **TriangleDB** spyware strictly in volatile RAM—leaving behind only subtle water-meter readings (`DataUsage.sqlite` network byte counters) that forensic investigators can spot.',
         simpleExplanation:
-          'With full kernel privileges, the validator stage erases all forensic traces of the incoming iMessage from sms.db and launches the Mach-O implant "TriangleDB" strictly in volatile RAM. TriangleDB monitors microphone, location, and keychain data until the phone is rebooted.',
+          'With full kernel privileges, the validator stage erases all forensic traces of the incoming iMessage from `sms.db` and launches the Mach-O implant `TriangleDB` strictly in volatile RAM. `TriangleDB` monitors microphone, location, and keychain data until the phone is rebooted.',
         howItWorksInPractice:
-          'Although TriangleDB leaves no executable file on flash storage, forensic analysts detect the compromise by spotting orphaned network data usage entries in DataUsage.sqlite and modification timestamp gaps in iOS backup files.',
+          'Although `TriangleDB` leaves no executable file on flash storage, forensic analysts detect the compromise by spotting orphaned network data usage entries in `DataUsage.sqlite` and modification timestamp gaps in iOS backup files.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ deploys Node ⑤ (TriangleDB in RAM) and beacons out while Node ⑥ (Kaspersky MVT / SIEM) detects the DataUsage.sqlite & OSAnalytics anomalies.',
+          'On the diagram, arrow #3.1→ deploys Node ⑤ (`TriangleDB` in RAM) and beacons out while Node ⑥ (Kaspersky MVT / SIEM) detects the `DataUsage.sqlite` & `OSAnalytics` anomalies.',
         detectionAndEvidence:
-          'Documented in Kaspersky triangle_check tool: Orphaned network usage records in DataUsage.sqlite for system processes and timestamp gaps in OSAnalytics.',
+          'Documented in Kaspersky `triangle_check` tool: Orphaned network usage records in `DataUsage.sqlite` for system processes and timestamp gaps in `OSAnalytics`.',
       },
     ],
   },
@@ -588,51 +676,59 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
     scenarioId: 'kaspersky-toddycat-eset-dll',
     briefing: {
       headline: 'Scenario Briefing: ToddyCat APT (CVE-2024-11859) — Abusing an ESET Command-Line Scanner for DLL Search-Order Hijacking',
+      storyAnalogy:
+        'Imagine a thief who brings a genuine, uniformed security officer (`ESET Command Line Scanner ecls.exe`) into a building, knowing that the officer has a habit of picking up whichever walkie-talkie (`version.dll`) is sitting on the nearest table before checking the official equipment locker (`System32`). The thief places a rigged walkie-talkie (`version.dll`) on the table right next to the officer; when the officer turns it on, the rigged walkie-talkie still forwards normal radio calls to headquarters so the officer doesn’t suspect a thing, while secretly running ToddyCat’s **TCESB** spy radio inside the officer’s own uniform.',
       plainSummary:
-        'Documented by Kaspersky GReAT and ESET Security Advisory (CVE-2024-11859), this scenario illustrates how the ToddyCat APT group abused a legitimate, digitally signed security tool: the ESET Command Line Scanner (ecls.exe). Due to a DLL search-order hijacking vulnerability in older versions of ecls.exe, placing a malicious DLL named version.dll in the same directory caused the trusted antivirus scanner itself to load and execute the attacker’s TCESB / Samurai loader in memory.',
+        'Documented by Kaspersky GReAT and ESET Security Advisory (CVE-2024-11859), this scenario illustrates how the ToddyCat APT group abused a legitimate, digitally signed security tool: the ESET Command Line Scanner (`ecls.exe`). Due to a DLL search-order hijacking vulnerability in older versions of `ecls.exe`, placing a malicious DLL named `version.dll` in the same directory caused the trusted antivirus scanner itself to load and execute the attacker’s **TCESB** / **Samurai** loader in memory.',
       diagramTopologySummary:
-        'On the diagram: Node ①/② stages the signed ecls.exe binary and malicious version.dll on Node ③ (Target Workstation/Server). Running ecls.exe on Node ③ loads Node ④ (Trojanized version.dll & TCESB Loader), which decrypts the C2 implant communicating with Node ⑤ while Node ⑥ (SIEM / EDR) detects the unsigned DLL load.',
+        'On the diagram: Node ①/② stages the signed `ecls.exe` binary and malicious `version.dll` on Node ③ (Target Workstation/Server). Running `ecls.exe` on Node ③ loads Node ④ (Trojanized `version.dll` & TCESB Loader), which decrypts the C2 implant communicating with Node ⑤ while Node ⑥ (SIEM / EDR) detects the unsigned DLL load.',
       documentedAdvisory: 'Kaspersky GReAT ToddyCat Report · ESET Advisory CVE-2024-11859 · MITRE ATT&CK T1574.001',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1574.001',
-        plainTitle: 'Launching the Signed ESET Scanner (ecls.exe) Alongside a Malicious version.dll',
+        plainTitle: 'Launching the Signed ESET Scanner (`ecls.exe`) Alongside a Malicious `version.dll`',
+        storyAnalogy:
+          'The attacker places a real, digitally signed ESET scanner (`ecls.exe`) and a forged helper library (`version.dll`) in the same folder (`C:\\ProgramData\\ESET\\`). Because of CVE-2024-11859, the moment `ecls.exe` starts, it grabs the `version.dll` sitting right next to it instead of the real Windows `System32\\version.dll`.',
         simpleExplanation:
-          'The attacker copies a standalone, validly signed copy of ESET Command Line Scanner (ecls.exe) into a staging directory such as C:\\ProgramData\\ESET\\ alongside a malicious version.dll. Because of CVE-2024-11859, when ecls.exe starts, it loads version.dll from its current directory before checking C:\\Windows\\System32\\.',
+          'The attacker copies a standalone, validly signed copy of ESET Command Line Scanner (`ecls.exe`) into a staging directory such as `C:\\ProgramData\\ESET\\` alongside a malicious `version.dll`. Because of CVE-2024-11859, when `ecls.exe` starts, it loads `version.dll` from its current directory before checking `C:\\Windows\\System32\\`.',
         howItWorksInPractice:
           'Using a genuine antivirus scanner binary as the host process helps the attacker blend in on enterprise systems where security binaries are common.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ shows Node ③ (Signed ecls.exe) loading Node ④ (Malicious version.dll via CVE-2024-11859), with ⇠#1.2 logging Sysmon EventID 7.',
+          'On the diagram, arrow #1.1→ shows Node ③ (Signed `ecls.exe`) loading Node ④ (Malicious `version.dll` via CVE-2024-11859), with ⇠#1.2 logging Sysmon EventID 7.',
         detectionAndEvidence:
-          'Documented in Sysmon EventID 7 & ESET Advisory CVE-2024-11859: ecls.exe loading unsigned version.dll from outside System32.',
+          'Documented in Sysmon EventID 7 & ESET Advisory CVE-2024-11859: `ecls.exe` loading unsigned `version.dll` from outside `System32`.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1140',
         plainTitle: 'Proxying Legitimate DLL Exports While Decrypting the ToddyCat TCESB Payload in Memory',
+        storyAnalogy:
+          'If the rigged `version.dll` didn’t know how to answer normal version-check questions, `ecls.exe` would crash immediately. So the rigged DLL acts as a middleman ("Export Proxying"): it forwards every real question to `C:\\Windows\\System32\\version.dll` while quietly decrypting ToddyCat’s **TCESB** backdoor in the background.',
         simpleExplanation:
-          'To prevent ecls.exe from crashing with missing-function errors, the malicious version.dll forwards normal API calls to the real C:\\Windows\\System32\\version.dll while its DllMain function reads an encrypted payload file from disk and decrypts the ToddyCat TCESB loader in memory.',
+          'To prevent `ecls.exe` from crashing with missing-function errors, the malicious `version.dll` forwards normal API calls to the real `C:\\Windows\\System32\\version.dll` while its `DllMain` function reads an encrypted payload file from disk and decrypts the ToddyCat **TCESB** loader in memory.',
         howItWorksInPractice:
           'DLL Export Proxying ensures that the host application continues to function normally while the attacker’s code runs on a background thread inside the same process.',
         diagramAlignment:
           'On the diagram, arrow #2.1→ inside Node ④ decrypts the TCESB payload into executable memory while proxying exports, and ⇠#2.2 confirms stage 2 initialization.',
         detectionAndEvidence:
-          'Documented by Kaspersky GReAT: Dual loading of version.dll (both local unsigned and System32 signed) inside ecls.exe process memory.',
+          'Documented by Kaspersky GReAT: Dual loading of `version.dll` (both local unsigned and `System32` signed) inside `ecls.exe` process memory.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1071.001',
         plainTitle: 'Establishing an Encrypted C2 Channel From Inside the Trusted ESET Process',
+        storyAnalogy:
+          'The malware now phones home from inside the signed `ecls.exe` process. However, defenders catch the trick because `ecls.exe` is an *offline* command-line file scanner—it has zero reason to ever open an outbound HTTPS connection to the internet!',
         simpleExplanation:
-          'Running inside the memory space of the signed ecls.exe binary, the TCESB backdoor opens an outbound HTTPS tunnel to ToddyCat’s command-and-control infrastructure and harvests local browser and domain credentials.',
+          'Running inside the memory space of the signed `ecls.exe` binary, the TCESB backdoor opens an outbound HTTPS tunnel to ToddyCat’s command-and-control infrastructure and harvests local browser and domain credentials.',
         howItWorksInPractice:
-          'Because ecls.exe is an offline command-line file scanner, it should never open outbound HTTPS connections to external web servers—making Sysmon EventID 3 network telemetry a clear detection signal.',
+          'Because `ecls.exe` is an offline command-line file scanner, it should never open outbound HTTPS connections to external web servers—making Sysmon EventID 3 network telemetry a clear detection signal.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ connects Node ④ (ecls.exe / TCESB) to Node ⑤ (External C2) and triggers an alert on Node ⑥ (SIEM / EDR).',
+          'On the diagram, arrow #3.1→ connects Node ④ (`ecls.exe` / TCESB) to Node ⑤ (External C2) and triggers an alert on Node ⑥ (SIEM / EDR).',
         detectionAndEvidence:
-          'Documented in Sysmon EventID 3 (NetworkConnect): Standalone command-line scanner ecls.exe initiating outbound TCP/443 connections.',
+          'Documented in Sysmon EventID 3 (NetworkConnect): Standalone command-line scanner `ecls.exe` initiating outbound TCP/443 connections.',
       },
     ],
   },
@@ -641,51 +737,59 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
     scenarioId: 'kaspersky-lazarus-byovd-fudmodule',
     briefing: {
       headline: 'Scenario Briefing: Lazarus Group FudModule Rootkit — Admin-to-Kernel Zero-Day (CVE-2024-21338) Blinding Windows EDR',
+      storyAnalogy:
+        'In the past, attackers who wanted to cut the security cameras inside the Windows kernel had to smuggle an old, flawed third-party security guard (`Bring Your Own Vulnerable Driver`) into the building—which modern Windows blocklists immediately spot at the gate. In this scenario, Lazarus Group found a zero-day flaw (`CVE-2024-21338`) in a guard who is *already* hired and pre-installed inside every Windows building (`appid.sys`, the built-in AppLocker driver). By whispering a forged instruction (`IOCTL 0x22A018`) to `appid.sys`, the attacker tricks the driver into flipping their own clearance badge from "Visitor (`UserMode = 1`)" to "Supreme Kernel Architect (`KernelMode = 0`)"—and then quietly unplugs the EDR security agent’s cameras (`Kernel Callbacks` & `ETW`) without turning the EDR light off.',
       plainSummary:
-        'Discovered by Avast and analyzed by Kaspersky and Microsoft (February 2024), this scenario shows how the Lazarus Group upgraded their "FudModule" rootkit. Previously, attackers had to drop a vulnerable third-party driver onto the system (Bring Your Own Vulnerable Driver). Here, Lazarus exploited a zero-day flaw inside Windows’ own built-in AppLocker driver (appid.sys, CVE-2024-21338). By sending a crafted IOCTL control code from a local service to appid.sys, the attacker achieves arbitrary kernel memory read/write and zeroes out the kernel callback tables and ETW sensors that EDR agents rely on.',
+        'Discovered by Avast and analyzed by Kaspersky and Microsoft (February 2024), this scenario shows how the Lazarus Group upgraded their **FudModule** rootkit. Previously, attackers had to drop a vulnerable third-party driver onto the system (Bring Your Own Vulnerable Driver). Here, Lazarus exploited a zero-day flaw inside Windows’ own built-in AppLocker driver (`appid.sys`, CVE-2024-21338). By sending a crafted IOCTL control code from a local service to `appid.sys`, the attacker achieves arbitrary kernel memory read/write and zeroes out the kernel callback tables and ETW sensors that EDR agents rely on.',
       diagramTopologySummary:
-        'On the diagram: From a local admin/service foothold (Node ①/②), the attacker runs the FudModule DLL on Node ③ (Windows Host). Node ④ (FudModule IOCTL Exploit) targets the built-in Windows driver appid.sys (CVE-2024-21338) to overwrite Node ⑤ (Kernel PspCreateProcessNotifyRoutine & ETW Ti-Sensor), detected via pre-blind telemetry on Node ⑥ (SIEM).',
+        'On the diagram: From a local admin/service foothold (Node ①/②), the attacker runs the FudModule DLL on Node ③ (Windows Host). Node ④ (FudModule IOCTL Exploit) targets the built-in Windows driver `appid.sys` (CVE-2024-21338) to overwrite Node ⑤ (Kernel `PspCreateProcessNotifyRoutine` & ETW Ti-Sensor), detected via pre-blind telemetry on Node ⑥ (SIEM).',
       documentedAdvisory: 'Avast / Kaspersky Lazarus FudModule Report · Microsoft CVE-2024-21338 · MITRE ATT&CK T1068 / T1562.001',
     },
     steps: [
       {
         stepNumber: 1,
         mitreId: 'T1068',
-        plainTitle: 'Opening a Handle to the Built-in Windows AppLocker Driver (\\\\.\\ahcache / appid.sys)',
+        plainTitle: 'Opening a Handle to the Built-in Windows AppLocker Driver (`\\\\.\\ahcache` / `appid.sys`)',
+        storyAnalogy:
+          'Instead of sneaking an untrusted third-party driver file onto the disk, the attacker simply walks up to the office door of Windows’ own pre-installed AppLocker driver (`\\Device\\AppId` / `appid.sys`) using a `LOCAL SERVICE` badge.',
         simpleExplanation:
-          'Because Windows blocks untrusted kernel drivers via Driver Signature Enforcement (DSE) and vulnerable-driver blocklists, the attacker elevates a userland process to LOCAL SERVICE privileges and opens a device handle to Windows’ own digitally signed AppLocker driver (C:\\Windows\\System32\\drivers\\appid.sys).',
+          'Because Windows blocks untrusted kernel drivers via Driver Signature Enforcement (DSE) and vulnerable-driver blocklists, the attacker elevates a userland process to `LOCAL SERVICE` privileges and opens a device handle to Windows’ own digitally signed AppLocker driver (`C:\\Windows\\System32\\drivers\\appid.sys`).',
         howItWorksInPractice:
-          'Because appid.sys is a native, inbox Windows kernel driver present on every modern Windows installation, the attacker does not have to drop or load any external .sys driver file.',
+          'Because `appid.sys` is a native, inbox Windows kernel driver present on every modern Windows installation, the attacker does not have to drop or load any external `.sys` driver file.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ shows Node ③ (Userland Service Loader) opening a device handle to Node ④ (appid.sys Kernel Driver), with ⇠#1.2 returning the valid driver handle.',
+          'On the diagram, arrow #1.1→ shows Node ③ (Userland Service Loader) opening a device handle to Node ④ (`appid.sys` Kernel Driver), with ⇠#1.2 returning the valid driver handle.',
         detectionAndEvidence:
-          'Documented in Avast & Microsoft CVE-2024-21338 Analysis: Non-standard service process opening device handle to \\Device\\AppId and issuing IOCTL 0x22A018.',
+          'Documented in Avast & Microsoft CVE-2024-21338 Analysis: Non-standard service process opening device handle to `\\Device\\AppId` and issuing IOCTL `0x22A018`.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1068',
-        plainTitle: 'Sending a Crafted IOCTL (0x22A018) to Flip Kernel PreviousMode to 0',
+        plainTitle: 'Sending a Crafted IOCTL (`0x22A018`) to Flip Kernel `PreviousMode` to `0`',
+        storyAnalogy:
+          'Every thread in Windows wears a tag (`KTHREAD.PreviousMode`) that says `1` (User Mode: check all permissions) or `0` (Kernel Mode: trust everything). By passing a forged pointer in `IOCTL 0x22A018`, FudModule tricks `appid.sys` into reaching over and flipping the attacker thread’s tag from `1` to `0`.',
         simpleExplanation:
-          'FudModule calls DeviceIoControl with IOCTL code 0x22A018 (AipSmartHashImageFile) and passes carefully forged kernel structure pointers. Because appid.sys trusts the caller’s pointer in CVE-2024-21338, it invokes a kernel gadget that flips the current thread’s KTHREAD.PreviousMode field from UserMode (1) to KernelMode (0).',
+          'FudModule calls `DeviceIoControl` with IOCTL code `0x22A018` (`AipSmartHashImageFile`) and passes carefully forged kernel structure pointers. Because `appid.sys` trusts the caller’s pointer in CVE-2024-21338, it invokes a kernel gadget that flips the current thread’s `KTHREAD.PreviousMode` field from `UserMode (1)` to `KernelMode (0)`.',
         howItWorksInPractice:
-          'When a thread’s PreviousMode is set to 0 (KernelMode), Windows system calls like NtReadVirtualMemory and NtWriteVirtualMemory skip user-mode address checks and allow the thread to read and write anywhere in ring-0 kernel memory.',
+          'When a thread’s `PreviousMode` is set to `0` (`KernelMode`), Windows system calls like `NtReadVirtualMemory` and `NtWriteVirtualMemory` skip user-mode address checks and allow the thread to read and write anywhere in Ring-0 kernel memory.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ sends IOCTL 0x22A018 inside Node ④ (appid.sys!AipSmartHashImageFile), and ⇠#2.2 flips KTHREAD.PreviousMode = 0.',
+          'On the diagram, arrow #2.1→ sends IOCTL `0x22A018` inside Node ④ (`appid.sys!AipSmartHashImageFile`), and ⇠#2.2 flips `KTHREAD.PreviousMode = 0`.',
         detectionAndEvidence:
-          'Documented in Kernel Crash/ETW Telemetry: IOCTL 0x22A018 targeting appid.sys followed by KTHREAD PreviousMode modification.',
+          'Documented in Kernel Crash/ETW Telemetry: IOCTL `0x22A018` targeting `appid.sys` followed by `KTHREAD PreviousMode` modification.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1562.001',
         plainTitle: 'Zeroing Out Kernel EDR Callbacks & Disabling Windows Threat-Intelligence ETW',
+        storyAnalogy:
+          'If a burglar shoots out a security camera, the guard desk immediately sees a "CAMERA OFFLINE" alarm. Instead, FudModule leaves the EDR security program running happily so its green status light stays on, while erasing its phone number from the kernel’s notification list (`PspCreateProcessNotifyRoutine`) so the kernel never tells the EDR about new malware.',
         simpleExplanation:
-          'With full kernel read/write access (Direct Kernel Object Manipulation — DKOM), FudModule walks the Windows kernel’s PspCreateProcessNotifyRoutine, PspCreateThreadNotifyRoutine, and ObRegisterCallbacks arrays, zeroing out the callback pointers registered by the endpoint’s EDR security agent, and disables the EtwThreatIntProvRegHandle provider so the EDR agent goes completely blind.',
+          'With full kernel read/write access (Direct Kernel Object Manipulation — DKOM), FudModule walks the Windows kernel’s `PspCreateProcessNotifyRoutine`, `PspCreateThreadNotifyRoutine`, and `ObRegisterCallbacks` arrays, zeroing out the callback pointers registered by the endpoint’s EDR security agent, and disables the `EtwThreatIntProvRegHandle` provider so the EDR agent goes completely blind.',
         howItWorksInPractice:
           'Instead of terminating the EDR service (which would immediately alert the SOC that the agent stopped running), FudModule leaves the EDR process running normally while unhooking its kernel eyes and ears.',
         diagramAlignment:
           'On the diagram, arrow #3.1→ overwrites Node ⑤ (Kernel Callback Arrays & ETW Handle) from Node ④ while Node ⑥ (SIEM) logs the sudden telemetry heartbeat drop.',
         detectionAndEvidence:
-          'Documented by Kaspersky & Avast: Kernel Patch Protection (PatchGuard) / Defender Kernel Integrity alert on PspCreateProcessNotifyRoutine and EtwThreatIntProvRegHandle tampering.',
+          'Documented by Kaspersky & Avast: Kernel Patch Protection (PatchGuard) / Defender Kernel Integrity alert on `PspCreateProcessNotifyRoutine` and `EtwThreatIntProvRegHandle` tampering.',
       },
     ],
   },
@@ -694,10 +798,12 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
     scenarioId: 'mandiant-apt29-teamcity-jetstream',
     briefing: {
       headline: 'Scenario Briefing: APT29 JetBrains TeamCity Exploitation (CVE-2023-42793) — CI/CD Build Server Takeover',
+      storyAnalogy:
+        'Imagine a high-security software factory (a JetBrains TeamCity CI/CD server) where the security gate has a sloppy rule written on its clipboard: "Anyone walking to a door whose name ends with `/RPC2` doesn’t need to show an ID badge." The attacker walks up to the Super-Admin Key Minting machine (`/app/rest/users/id:1/tokens/`) and asks it to print a new master key named `RPC2` (`/app/rest/users/id:1/tokens/RPC2`). Because the URL ends with `/RPC2`, the gate lets them right through, and the machine prints a permanent Super-Admin Bearer Token on the spot!',
       plainSummary:
-        'Documented by Joint CISA/FBI/NSA/NCSC Advisory and Mandiant (October 2023), this scenario shows how APT29 (Midnight Blizzard) exploited CVE-2023-42793 in on-premises JetBrains TeamCity CI/CD servers. Because an authentication wildcard flaw allowed anyone to reach internal REST paths that ended with /RPC2, the attacker sent a single unauthenticated POST request to mint a permanent administrator bearer token, enabled the hidden internal debug command endpoint, and abused the CI/CD server’s high privileges to compromise software build pipelines and Active Directory.',
+        'Documented by Joint CISA/FBI/NSA/NCSC Advisory and Mandiant (October 2023), this scenario shows how APT29 (Midnight Blizzard) exploited CVE-2023-42793 in on-premises JetBrains TeamCity CI/CD servers. Because an authentication wildcard flaw allowed anyone to reach internal REST paths that ended with `/RPC2`, the attacker sent a single unauthenticated POST request to mint a permanent administrator bearer token, enabled the hidden internal debug command endpoint, and abused the CI/CD server’s high privileges to compromise software build pipelines and Active Directory.',
       diagramTopologySummary:
-        'On the diagram: Node ① (APT29 Operator) sends the unauthenticated /app/rest/users/id:1/tokens/RPC2 request through Node ② (Reverse Proxy) to Node ③ (TeamCity CI/CD Server). Inside TeamCity, Node ④ (REST Token Minter & debug/processes Executor) spawns commands and steals build secrets from Node ⑤ (Signing Keys & AD Vault), monitored by Node ⑥ (SIEM).',
+        'On the diagram: Node ① (APT29 Operator) sends the unauthenticated `/app/rest/users/id:1/tokens/RPC2` request through Node ② (Reverse Proxy) to Node ③ (TeamCity CI/CD Server). Inside TeamCity, Node ④ (REST Token Minter & `debug/processes` Executor) spawns commands and steals build secrets from Node ⑤ (Signing Keys & AD Vault), monitored by Node ⑥ (SIEM).',
       documentedAdvisory: 'CISA/FBI/NSA/NCSC Joint Advisory (Oct 2023) · Mandiant CVE-2023-42793 · MITRE ATT&CK T1190',
     },
     steps: [
@@ -705,32 +811,38 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         stepNumber: 1,
         mitreId: 'T1190',
         plainTitle: 'Appending "/RPC2" to Mint an Admin Bearer Token Without Logging In (CVE-2023-42793)',
+        storyAnalogy:
+          'The developer meant to exempt only the root `/RPC2` path from login checks, but wrote `/**/RPC2`—accidentally exempting *every* URL in the entire server that ends with `/RPC2`. Requesting `/app/rest/users/id:1/tokens/RPC2` tricks TeamCity into creating a new admin token named `"RPC2"` for User ID 1 without asking for a password.',
         simpleExplanation:
-          'In vulnerable TeamCity versions, an authentication interceptor rule excluded any URL matching /**/RPC2 from login checks. The attacker exploits this by sending an unauthenticated HTTP POST request to /app/rest/users/id:1/tokens/RPC2. TeamCity treats "/RPC2" as the name of the new token for user ID 1 (the primary super-admin) and immediately returns the newly generated secret bearer token in the HTTP 200 response.',
+          'In vulnerable TeamCity versions, an authentication interceptor rule excluded any URL matching `/**/RPC2` from login checks. The attacker exploits this by sending an unauthenticated HTTP POST request to `/app/rest/users/id:1/tokens/RPC2`. TeamCity treats `"/RPC2"` as the name of the new token for user ID 1 (the primary super-admin) and immediately returns the newly generated secret bearer token in the HTTP 200 response.',
         howItWorksInPractice:
-          'The developer intended /**/RPC2 to only exempt the legacy XML-RPC endpoint at the root path, but the wildcard accidentally exempted every REST API path that ended with "/RPC2".',
+          'The developer intended `/**/RPC2` to only exempt the legacy XML-RPC endpoint at the root path, but the wildcard accidentally exempted every REST API path that ended with `"/RPC2"`.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends POST /app/rest/users/id:1/tokens/RPC2 from Node ①/② to Node ③ (TeamCity Server), and ⇠#1.2 returns the plaintext admin Bearer token.',
+          'On the diagram, arrow #1.1→ sends `POST /app/rest/users/id:1/tokens/RPC2` from Node ①/② to Node ③ (TeamCity Server), and ⇠#1.2 returns the plaintext admin Bearer token.',
         detectionAndEvidence:
-          'Documented in TeamCity teamcity-javaLogging / access logs: POST /app/rest/users/id:1/tokens/RPC2 returning HTTP 200 followed by DELETE /app/rest/users/id:1/tokens/RPC2.',
+          'Documented in TeamCity `teamcity-javaLogging` / access logs: `POST /app/rest/users/id:1/tokens/RPC2` returning HTTP 200 followed by `DELETE /app/rest/users/id:1/tokens/RPC2`.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1059',
-        plainTitle: 'Using the Admin Token to Unlock the Internal Debug Process Executor (/app/rest/debug/processes)',
+        plainTitle: 'Using the Admin Token to Unlock the Internal Debug Process Executor (`/app/rest/debug/processes`)',
+        storyAnalogy:
+          'Holding the freshly minted Super-Admin token, the attacker flips on a hidden "Developer Debug Terminal" switch (`rest.debug.processes.enable=true`), runs their operating-system commands, and then immediately shreds the `RPC2` token so admins checking the active token list see nothing.',
         simpleExplanation:
-          'Authenticating with Authorization: Bearer <token>, the attacker first modifies the internal server property rest.debug.processes.enable=true, and then sends POST requests to /app/rest/debug/processes?exePath=cmd.exe&params=/c+... to execute arbitrary OS commands under the TeamCity service account—immediately deleting the RPC2 token afterward to hide how they got in.',
+          'Authenticating with `Authorization: Bearer <token>`, the attacker first modifies the internal server property `rest.debug.processes.enable=true`, and then sends POST requests to `/app/rest/debug/processes?exePath=cmd.exe&params=/c+...` to execute arbitrary OS commands under the TeamCity service account—immediately deleting the `RPC2` token afterward to hide how they got in.',
         howItWorksInPractice:
-          'Deleting the RPC2 token seconds after running commands removes it from the active token list, though the creation/deletion events remain in teamcity-activities.log.',
+          'Deleting the `RPC2` token seconds after running commands removes it from the active token list, though the creation/deletion events remain in `teamcity-activities.log`.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ invokes /app/rest/debug/processes on Node ④ (TeamCity JVM Process Spawner), and ⇠#2.2 spawns the child shell process.',
+          'On the diagram, arrow #2.1→ invokes `/app/rest/debug/processes` on Node ④ (TeamCity JVM Process Spawner), and ⇠#2.2 spawns the child shell process.',
         detectionAndEvidence:
-          'Documented by Mandiant: POST /app/rest/debug/processes in teamcity-server.log and java.exe spawning whoami / nltest / curl.',
+          'Documented by Mandiant: `POST /app/rest/debug/processes` in `teamcity-server.log` and `java.exe` spawning `whoami` / `nltest` / `curl`.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1552.001',
         plainTitle: 'Harvesting CI/CD Build Secrets, Code-Signing Keys & Pivoting into Active Directory',
+        storyAnalogy:
+          'Because the CI/CD build server is the automated assembly line that deploys software to every cloud and server in the company, taking over this one room hands the attacker the master keys to cloud deployments, source code, and code-signing certificates.',
         simpleExplanation:
           'Because CI/CD build servers store credentials for cloud deployments, source-code repositories, and code-signing certificates, APT29 extracts the TeamCity encryption keys and database credentials, creates a backdoor admin account, and deploys a persistent beacon.',
         howItWorksInPractice:
@@ -738,7 +850,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         diagramAlignment:
           'On the diagram, arrow #3.1→ extracts secrets from Node ⑤ (CI/CD Vault & AD) via Node ④ while Node ⑥ (SIEM) triggers on TeamCity child process and token anomalies.',
         detectionAndEvidence:
-          'Documented in Joint CISA Advisory: Creation of new TeamCity admin accounts in teamcity-activities.log and outbound C2 beacon from TeamCity server.',
+          'Documented in Joint CISA Advisory: Creation of new TeamCity admin accounts in `teamcity-activities.log` and outbound C2 beacon from TeamCity server.',
       },
     ],
   },
@@ -747,10 +859,12 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
     scenarioId: 'splunk-screenconnect-slashandgrab',
     briefing: {
       headline: 'Scenario Briefing: ConnectWise ScreenConnect "SlashAndGrab" (CVE-2024-1709) — Trailing-Slash Setup Wizard Reset',
+      storyAnalogy:
+        'Imagine a smart-lock system on an office building where the "First-Time Factory Setup Screen" (`/SetupWizard.aspx`) is supposed to be permanently locked after Day 1. However, the guard only checks if the visitor’s request *ends* with the exact letters `/SetupWizard.aspx`. By simply adding one extra forward slash at the end (`/SetupWizard.aspx/`), the guard says "That doesn’t end with `.aspx`, go right ahead!" while the web server behind the guard still opens `/SetupWizard.aspx`—letting any stranger on the internet re-run the Day-1 Factory Setup Wizard, overwrite the building’s master administrator database (`User.xml`), and broadcast commands to every computer managed by the IT team.',
       plainSummary:
-        'Documented by Huntress ("SlashAndGrab"), CISA, and Splunk SURGe (February 2024), CVE-2024-1709 is one of the simplest yet most devastating authentication bypass bugs ever found in remote monitoring and management (RMM) software. On ConnectWise ScreenConnect servers, the initial installation wizard (/SetupWizard.aspx) is supposed to be blocked once the server is configured. However, appending a trailing slash or path suffix (/SetupWizard.aspx/anything) confused the ASP.NET URL path handler into reopening the setup wizard—allowing anyone on the internet to overwrite the server’s primary administrator account and push commands to all connected customer endpoints.',
+        'Documented by Huntress ("SlashAndGrab"), CISA, and Splunk SURGe (February 2024), CVE-2024-1709 is one of the simplest yet most devastating authentication bypass bugs ever found in remote monitoring and management (RMM) software. On ConnectWise ScreenConnect servers, the initial installation wizard (`/SetupWizard.aspx`) is supposed to be blocked once the server is configured. However, appending a trailing slash or path suffix (`/SetupWizard.aspx/anything`) confused the ASP.NET URL path handler into reopening the setup wizard—allowing anyone on the internet to overwrite the server’s primary administrator account and push commands to all connected customer endpoints.',
       diagramTopologySummary:
-        'On the diagram: Node ① (Threat Actor) sends the /SetupWizard.aspx/ request through Node ② (Edge Firewall :8040/:443) to Node ③ (ScreenConnect RMM Server). Inside the server, Node ④ (SetupWizard User.xml Overwrite & Extension Engine) resets the admin account and pushes remote PowerShell/MSI payloads to Node ⑤ (Managed Client Endpoints), alerted by Node ⑥ (Splunk SIEM).',
+        'On the diagram: Node ① (Threat Actor) sends the `/SetupWizard.aspx/` request through Node ② (Edge Firewall `:8040`/`:443`) to Node ③ (ScreenConnect RMM Server). Inside the server, Node ④ (SetupWizard `User.xml` Overwrite & Extension Engine) resets the admin account and pushes remote PowerShell/MSI payloads to Node ⑤ (Managed Client Endpoints), alerted by Node ⑥ (Splunk SIEM).',
       documentedAdvisory: 'CISA KEV CVE-2024-1709 · Splunk SURGe & Huntress SlashAndGrab Analysis · MITRE ATT&CK T1190 / T1219',
     },
     steps: [
@@ -758,40 +872,46 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         stepNumber: 1,
         mitreId: 'T1190',
         plainTitle: 'Accessing "/SetupWizard.aspx/anything" to Reopen the Initial Installation Wizard (CVE-2024-1709)',
+        storyAnalogy:
+          'Adding `/anything` after `/SetupWizard.aspx` fools the security filter into thinking you are visiting a different page, while ASP.NET treats `/anything` as harmless `PathInfo` metadata and opens the First-Time Setup Wizard anyway.',
         simpleExplanation:
-          'The ScreenConnect authentication module checked whether the requested URL exactly ended with /SetupWizard.aspx to block access on already-configured servers. By requesting GET /SetupWizard.aspx/anything, the check fails to match, while ASP.NET still routes the request to SetupWizard.aspx with PathInfo="/anything", presenting the unauthenticated initial setup form.',
+          'The ScreenConnect authentication module checked whether the requested URL *exactly ended* with `/SetupWizard.aspx` to block access on already-configured servers. By requesting `GET /SetupWizard.aspx/anything`, the check fails to match, while ASP.NET still routes the request to `SetupWizard.aspx` with `PathInfo="/anything"`, presenting the unauthenticated initial setup form.',
         howItWorksInPractice:
-          'This classic path-normalization mismatch between a custom security filter and the underlying ASP.NET web framework allowed anyone to reach the first-time setup wizard with a single extra "/" character.',
+          'This classic path-normalization mismatch between a custom security filter and the underlying ASP.NET web framework allowed anyone to reach the first-time setup wizard with a single extra `"/"` character.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends GET /SetupWizard.aspx/anything from Node ①/② to Node ③ (ScreenConnect Server), and ⇠#1.2 returns HTTP 200 SetupWizard form.',
+          'On the diagram, arrow #1.1→ sends `GET /SetupWizard.aspx/anything` from Node ①/② to Node ③ (ScreenConnect Server), and ⇠#1.2 returns HTTP 200 SetupWizard form.',
         detectionAndEvidence:
-          'Documented by Splunk SURGe & Huntress: HTTP GET/POST requests matching /SetupWizard.aspx/* returning status 200 on an already provisioned server.',
+          'Documented by Splunk SURGe & Huntress: HTTP GET/POST requests matching `/SetupWizard.aspx/*` returning status 200 on an already provisioned server.',
       },
       {
         stepNumber: 2,
         mitreId: 'T1098',
         plainTitle: 'Submitting the Setup Form to Overwrite the Server’s "User.xml" Administrator Database',
+        storyAnalogy:
+          'With the Day-1 Setup Wizard open in their browser, the attacker types in their own username and password and clicks "Finish"—wiping out the company’s real IT administrators in `App_Data\\User.xml` and making the attacker the sole super-admin.',
         simpleExplanation:
-          'The attacker submits a POST request to /SetupWizard.aspx/anything with a new administrator username and password. ScreenConnect overwrites C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml, replacing all existing administrator accounts with the attacker’s new super-admin credential.',
+          'The attacker submits a POST request to `/SetupWizard.aspx/anything` with a new administrator username and password. ScreenConnect overwrites `C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml`, replacing all existing administrator accounts with the attacker’s new super-admin credential.',
         howItWorksInPractice:
-          'Overwriting User.xml immediately locks out the legitimate IT administrators while logging the attacker directly into the ScreenConnect administrative console.',
+          'Overwriting `User.xml` immediately locks out the legitimate IT administrators while logging the attacker directly into the ScreenConnect administrative console.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ overwrites App_Data\\User.xml with the rogue admin account, and ⇠#2.2 returns an authenticated admin session cookie.',
+          'On the diagram, arrow #2.1→ inside Node ④ overwrites `App_Data\\User.xml` with the rogue admin account, and ⇠#2.2 returns an authenticated admin session cookie.',
         detectionAndEvidence:
-          'Documented in Sysmon EventID 11 & ScreenConnect Audit Logs: Modification of C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml by ScreenConnect.Service.exe.',
+          'Documented in Sysmon EventID 11 & ScreenConnect Audit Logs: Modification of `C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml` by `ScreenConnect.Service.exe`.',
       },
       {
         stepNumber: 3,
         mitreId: 'T1219',
         plainTitle: 'Abusing the RMM Console to Push SYSTEM Commands to Connected Client Machines',
+        storyAnalogy:
+          'Because ScreenConnect is the official remote-support tool installed on every employee laptop and server in the company (`ScreenConnect.ClientService.exe` running as `SYSTEM`), the attacker simply clicks "Run Command on All Machines" in their new admin console to deploy payloads everywhere at once.',
         simpleExplanation:
-          'Because ScreenConnect agents (ScreenConnect.ClientService.exe) run as SYSTEM on every managed workstation and server in the organization, the attacker uses their new admin console to broadcast PowerShell scripts and ransomware payloads simultaneously across all connected endpoints via C:\\Windows\\Temp\\ScreenConnect\\.',
+          'Because ScreenConnect agents (`ScreenConnect.ClientService.exe`) run as `SYSTEM` on every managed workstation and server in the organization, the attacker uses their new admin console to broadcast PowerShell scripts and ransomware payloads simultaneously across all connected endpoints via `C:\\Windows\\Temp\\ScreenConnect\\`.',
         howItWorksInPractice:
-          'When an RMM command is sent from the server, the client agent writes a temporary .cmd or .ps1 script into C:\\Windows\\Temp\\ScreenConnect\\<version>\\ and executes it as NT AUTHORITY\\SYSTEM.',
+          'When an RMM command is sent from the server, the client agent writes a temporary `.cmd` or `.ps1` script into `C:\\Windows\\Temp\\ScreenConnect\\<version>\\` and executes it as `NT AUTHORITY\\SYSTEM`.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ pushes remote commands from Node ④ to Node ⑤ (Managed Endpoints running ScreenConnect.ClientService.exe) while Node ⑥ (Splunk SIEM) alerts.',
+          'On the diagram, arrow #3.1→ pushes remote commands from Node ④ to Node ⑤ (Managed Endpoints running `ScreenConnect.ClientService.exe`) while Node ⑥ (Splunk SIEM) alerts.',
         detectionAndEvidence:
-          'Documented by Huntress & Splunk SURGe: ScreenConnect.ClientService.exe spawning cmd.exe / powershell.exe from C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd.',
+          'Documented by Huntress & Splunk SURGe: `ScreenConnect.ClientService.exe` spawning `cmd.exe` / `powershell.exe` from `C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd`.',
       },
     ],
   },

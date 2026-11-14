@@ -22,3 +22,18 @@ To prevent visual regressions, clipped text (`...`), or overlapping HUD controls
   - **Canvas Top Context & Tool Bar**: `hide-canvas-top-bar-btn` / `show-canvas-top-bar-btn`
   - **Bottom-Right Playback Control Bar**: `hide-playback-bar-btn` / `show-playback-bar-btn`
   - **Bottom Internal Sub-Node Details Bar**: `hide-bottom-dock-btn` / `show-bottom-dock-btn`
+
+## 4. Context-Aware Inspector Scope & Dynamic Scope Badge Standard
+
+- The right `InspectorPanel` (`components/InspectorPanel.tsx`) must always reflect the current diagram scope (`lib/inspector-scope.ts`) across all tabs (`Overview`, `Steps`, `SIEM Logs`, `Sources`):
+  1. **`MAIN_SCENARIO`**: Active on the main 6-node network topology (or when `Scenario View` override is toggled). Displays an **Emerald** Scope Badge (`"Scenario"`, `data-scope-mode="MAIN_SCENARIO"`).
+  2. **`EXPANDED_NODE`**: Active when a parent node (`①..⑥`) is expanded into its internal sub-board (`buildInternalNodeSubBoard`). Displays an **Amber** Scope Badge (`"Expanded: Node #N · Label"`, `data-scope-mode="EXPANDED_NODE"`).
+  3. **`INTERNAL_SUBNODE`**: Active when a specific internal sub-node (`#N.1..#N.5`) is selected inside an expanded sub-board. Displays a **Rose/Crimson** Scope Badge (`"Internal: #N.M · SubNode Label"`, `data-scope-mode="INTERNAL_SUBNODE"`).
+
+## 5. 3-Layer "Story-to-Spec" Explanation Standard
+
+- All 26+ attack scenarios (`lib/step-guides/*`, `lib/scenario-step-guides.ts`) and expanded internal sub-boards (`lib/inspector-scope.ts`) must follow the **3-Layer Story-to-Spec Method** documented in detail in [`docs/story-to-spec-explanation-standard.md`](./story-to-spec-explanation-standard.md):
+  1. **Layer 1 — Real-World Story Analogy (`storyAnalogy`)**: Intuitive everyday metaphor explaining *why* the trick works.
+  2. **Layer 2 — Story ↔ Scenario Technical Bridge (`simpleExplanation` / `plainSummary`)**: Pairs the story directly with the exact `PID`, `API`, `IP:Port`, `CVE`, `MITRE ID`, and `Node ①..⑥` in the scenario.
+  3. **Layer 3 — Under the Hood & SIEM Forensic Catch (`howItWorksInPractice` + `detectionAndEvidence`)**: Explains the deep OS/kernel/protocol mechanism and the exact SIEM/Sysmon/EDR evidence that detects it.
+

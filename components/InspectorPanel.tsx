@@ -22,6 +22,7 @@ import {
   InspectorScopeContext,
   InspectorScopeMode,
 } from '@/lib/inspector-scope';
+import { getRawScenarioStepGuide } from '@/lib/scenario-step-guides';
 import {
   ArrowLeft,
   ArrowRight,
@@ -114,6 +115,10 @@ export function InspectorPanel({
   const activeStageIndex = currentStage ? currentStage.index : 0;
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
   const attribution = getScenarioAttribution(scenario);
+  const rawGuide = getRawScenarioStepGuide(scenario.id);
+  const activeStepGuide = currentStage
+    ? rawGuide?.steps.find((s) => s.stepNumber === currentStage.index) || null
+    : null;
 
   const effectiveScope: InspectorScopeMode =
     scopeContext?.effectiveScope ?? 'MAIN_SCENARIO';
@@ -211,6 +216,7 @@ export function InspectorPanel({
         onClearTelemetrySelection={onClearTelemetrySelection}
         activeEnvironment={activeEnvironment}
         scopeBadgeText={scopeBadgeText}
+        effectiveScope={effectiveScope}
         width={width}
         resizeHandle={resizeHandleNode}
       />
@@ -354,29 +360,38 @@ export function InspectorPanel({
           </button>
         </div>
 
-        {/* Context-Aware Scope Indicator & Scope Navigation Bar */}
+        {/* Context-Aware Scope Indicator & Dynamic Scope Badge Bar */}
         <div
           data-testid="inspector-scope-bar"
-          className={`px-2.5 py-1.5 rounded-lg border flex flex-col gap-1.5 text-[10px] font-mono ${
+          data-scope-mode={effectiveScope}
+          className={`px-2.5 py-1.5 rounded-lg border flex flex-col gap-1.5 text-[10px] font-mono transition-colors ${
             effectiveScope === 'INTERNAL_SUBNODE'
               ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200/90 dark:border-rose-800/75'
               : effectiveScope === 'EXPANDED_NODE'
-              ? 'bg-indigo-50/80 dark:bg-indigo-950/30 border-indigo-200/90 dark:border-indigo-800/75'
-              : 'bg-zinc-50 dark:bg-zinc-900/70 border-zinc-200/80 dark:border-zinc-800'
+              ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-300/90 dark:border-amber-800/75'
+              : 'bg-emerald-50/60 dark:bg-emerald-950/25 border-emerald-200/80 dark:border-emerald-800/70'
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-1.5 min-w-0">
-            <span className="text-[9.5px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0">
-              Scope
+            <span className="inline-flex items-center gap-1 text-[9.5px] uppercase tracking-wider font-bold text-zinc-600 dark:text-zinc-300 shrink-0">
+              {effectiveScope === 'INTERNAL_SUBNODE' ? (
+                <Cpu className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
+              ) : effectiveScope === 'EXPANDED_NODE' ? (
+                <Layers className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+              ) : (
+                <Compass className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              )}
+              <span>{effectiveScope}</span>
             </span>
             <span
               data-testid="inspector-scope-badge"
-              className={`px-1.5 py-0.5 rounded font-bold leading-snug break-words ${
+              data-scope-mode={effectiveScope}
+              className={`px-2 py-0.5 rounded-md font-bold leading-snug break-words shadow-2xs transition-colors ${
                 effectiveScope === 'INTERNAL_SUBNODE'
                   ? 'bg-rose-600 text-white'
                   : effectiveScope === 'EXPANDED_NODE'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-zinc-200/90 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200'
+                  ? 'bg-amber-500 text-slate-950'
+                  : 'bg-emerald-600 text-white'
               }`}
             >
               {scopeBadgeText}
@@ -572,62 +587,79 @@ export function InspectorPanel({
                 </div>
 
                 <div className="space-y-2.5">
-                  {scopeContext.relatedSubFlows.map((fl) => (
-                    <div
-                      key={fl.id}
-                      data-testid={`inspector-subnode-flow-card-${fl.stepNo}`}
-                      className="p-3 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 space-y-2"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono">
-                        <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold">
-                          {`#${fl.sequenceCode} · ${fl.protocolBadge}`}
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold">
-                          {fl.telemetryEvent.mitreId}
-                        </span>
-                      </div>
-
-                      <div className="text-xs font-bold text-zinc-900 dark:text-white leading-snug break-words">
-                        {fl.label}
-                      </div>
-                      <div className="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400 leading-snug break-words">
-                        {`${fl.initiatorLabel} → ${fl.targetLabel}`}
-                      </div>
-
-                      <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
-                        {fl.telemetryEvent.explanation}
-                      </p>
-
-                      <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1 text-[10px] font-mono">
-                        <div className="text-emerald-700 dark:text-emerald-400 font-semibold leading-snug break-words">
-                          {`⇠#${fl.returnSeq} · ${fl.returnLabel}`}
+                  {scopeContext.relatedSubFlows.map((fl) => {
+                    const matchedInternalStep = scopeContext.internalSteps.find(
+                      (st) => st.flow.id === fl.id
+                    );
+                    return (
+                      <div
+                        key={fl.id}
+                        data-testid={`inspector-subnode-flow-card-${fl.stepNo}`}
+                        className="p-3 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 space-y-2"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold">
+                            {`#${fl.sequenceCode} · ${fl.protocolBadge}`}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold">
+                            {fl.telemetryEvent.mitreId}
+                          </span>
                         </div>
-                        <div className="text-zinc-600 dark:text-zinc-300 leading-snug break-words font-sans text-[11px]">
-                          {fl.traceMeta.returnDescription}
+
+                        <div className="text-xs font-bold text-zinc-900 dark:text-white leading-snug break-words">
+                          {fl.label}
                         </div>
+                        <div className="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400 leading-snug break-words">
+                          {`${fl.initiatorLabel} → ${fl.targetLabel}`}
+                        </div>
+
+                        {matchedInternalStep?.storyAnalogy && (
+                          <div className="p-2 rounded-lg bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-0.5">
+                            <div className="flex items-center gap-1 text-[9.5px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                              <Sparkles className="w-2.5 h-2.5 shrink-0" />
+                              <span>Story Analogy:</span>
+                            </div>
+                            <p className="text-[11px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                              {matchedInternalStep.storyAnalogy}
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
+                          {fl.telemetryEvent.explanation}
+                        </p>
+
+                        <div className="p-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200/70 dark:border-zinc-800 space-y-1 text-[10px] font-mono">
+                          <div className="text-emerald-700 dark:text-emerald-400 font-semibold leading-snug break-words">
+                            {`⇠#${fl.returnSeq} · ${fl.returnLabel}`}
+                          </div>
+                          <div className="text-zinc-600 dark:text-zinc-300 leading-snug break-words font-sans text-[11px]">
+                            {fl.traceMeta.returnDescription}
+                          </div>
+                        </div>
+
+                        {fl.traceMeta.continuationHint && (
+                          <div className="text-[10px] font-mono text-amber-700 dark:text-amber-300 leading-snug break-words">
+                            {fl.traceMeta.continuationHint}
+                          </div>
+                        )}
+
+                        {onSelectTelemetry && (
+                          <div className="pt-1 flex justify-end">
+                            <button
+                              type="button"
+                              data-testid={`inspector-subnode-inspect-flow-${fl.stepNo}`}
+                              onClick={() => onSelectTelemetry(fl.telemetryEvent)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-mono font-bold cursor-pointer transition-colors"
+                            >
+                              <FileSearch className="w-3 h-3 shrink-0" />
+                              <span>Inspect Packet</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
-
-                      {fl.traceMeta.continuationHint && (
-                        <div className="text-[10px] font-mono text-amber-700 dark:text-amber-300 leading-snug break-words">
-                          {fl.traceMeta.continuationHint}
-                        </div>
-                      )}
-
-                      {onSelectTelemetry && (
-                        <div className="pt-1 flex justify-end">
-                          <button
-                            type="button"
-                            data-testid={`inspector-subnode-inspect-flow-${fl.stepNo}`}
-                            onClick={() => onSelectTelemetry(fl.telemetryEvent)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-mono font-bold cursor-pointer transition-colors"
-                          >
-                            <FileSearch className="w-3 h-3 shrink-0" />
-                            <span>Inspect Packet</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -723,14 +755,30 @@ export function InspectorPanel({
                   </div>
                 </div>
 
-                {/* Architecture Note from buildInternalNodeSubBoard */}
+                {/* Layer 1: Story-to-Spec Analogy for Expanded Node */}
+                {scopeContext.subBoardStoryAnalogy && (
+                  <div
+                    data-testid="inspector-expanded-story-analogy"
+                    className="p-3 rounded-xl bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
+                  >
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                      <Sparkles className="w-3 h-3 shrink-0" />
+                      <span>1. Real-World Story Analogy (Sub-Board Scope)</span>
+                    </div>
+                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                      {scopeContext.subBoardStoryAnalogy}
+                    </p>
+                  </div>
+                )}
+
+                {/* Layer 2: Architecture Note from buildInternalNodeSubBoard */}
                 <div
                   data-testid="inspector-expanded-architecture-note"
                   className="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-800/70 space-y-1"
                 >
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
                     <Compass className="w-3 h-3 shrink-0" />
-                    <span>Internal Architecture & Telemetry Scope</span>
+                    <span>2. Internal Architecture & Telemetry Scope</span>
                   </div>
                   <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
                     {scopeContext.internalSubBoard.architectureNote}
@@ -1017,8 +1065,8 @@ export function InspectorPanel({
                 </div>
               )}
 
-              {/* Narrative Section */}
-              <div className="space-y-2">
+              {/* Narrative Section with 3-Layer Story-to-Spec Breakdown */}
+              <div className="space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
                   <div
                     title={
@@ -1056,19 +1104,71 @@ export function InspectorPanel({
                 </div>
 
                 {currentStage ? (
-                  <>
+                  <div
+                    data-testid="inspector-overview-story-to-spec-card"
+                    className="space-y-2.5"
+                  >
                     <h3
                       title={currentStage.title}
                       className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug break-words"
                     >
-                      {currentStage.title}
+                      {activeStepGuide?.plainTitle || currentStage.title}
                     </h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
-                      {currentStage.description}
-                    </p>
-                  </>
+
+                    {activeStepGuide ? (
+                      <>
+                        {/* Layer 1: Story Analogy */}
+                        <div
+                          data-testid="inspector-overview-story-analogy"
+                          className="p-2.5 rounded-xl bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
+                        >
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                            <Sparkles className="w-3 h-3 shrink-0" />
+                            <span>1. Real-World Story Analogy</span>
+                          </div>
+                          <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                            {activeStepGuide.storyAnalogy}
+                          </p>
+                        </div>
+
+                        {/* Layer 2: Story ↔ Scenario Technical Bridge */}
+                        <div
+                          data-testid="inspector-overview-technical-bridge"
+                          className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
+                        >
+                          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                            2. Story ↔ Scenario Technical Bridge
+                          </div>
+                          <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
+                            {activeStepGuide.simpleExplanation}
+                          </p>
+                        </div>
+
+                        {/* Layer 3: Under the Hood & SIEM Detection */}
+                        <div
+                          data-testid="inspector-overview-under-the-hood"
+                          className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1"
+                        >
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                            <Cpu className="w-3 h-3 shrink-0" />
+                            <span>3. Under the Hood & SIEM Evidence</span>
+                          </div>
+                          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
+                            {activeStepGuide.howItWorksInPractice}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
+                        {currentStage.description}
+                      </p>
+                    )}
+                  </div>
                 ) : (
-                  <>
+                  <div
+                    data-testid="inspector-overview-story-to-spec-card"
+                    className="space-y-2.5"
+                  >
                     <div>
                       <h3
                         title={scenario.name}
@@ -1083,10 +1183,56 @@ export function InspectorPanel({
                         {scenario.shortSubtitle}
                       </p>
                     </div>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-1 break-words">
-                      {scenario.overview}
-                    </p>
-                  </>
+
+                    {rawGuide ? (
+                      <>
+                        {/* Layer 1: Story Analogy */}
+                        <div
+                          data-testid="inspector-overview-story-analogy"
+                          className="p-2.5 rounded-xl bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
+                        >
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                            <Sparkles className="w-3 h-3 shrink-0" />
+                            <span>1. Real-World Story Analogy</span>
+                          </div>
+                          <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                            {rawGuide.briefing.storyAnalogy}
+                          </p>
+                        </div>
+
+                        {/* Layer 2: Story ↔ Scenario Technical Bridge */}
+                        <div
+                          data-testid="inspector-overview-technical-bridge"
+                          className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
+                        >
+                          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                            2. Story ↔ Scenario Technical Bridge
+                          </div>
+                          <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
+                            {rawGuide.briefing.plainSummary}
+                          </p>
+                        </div>
+
+                        {/* Layer 3: Diagram Topology Alignment */}
+                        <div
+                          data-testid="inspector-overview-under-the-hood"
+                          className="p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1"
+                        >
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                            <Compass className="w-3 h-3 shrink-0" />
+                            <span>3. How This Aligns With the Diagram</span>
+                          </div>
+                          <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
+                            {rawGuide.briefing.diagramTopologySummary}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-1 break-words">
+                        {scenario.overview}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {/* Quick CTA to open the numbered Step-by-Step Diagram Walkthrough */}
@@ -1098,7 +1244,7 @@ export function InspectorPanel({
                 >
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-indigo-900 dark:text-indigo-200 min-w-0 leading-snug">
                     <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span>Plain-Language Step-by-Step Guide</span>
+                    <span>Story-to-Spec Step-by-Step Guide</span>
                   </span>
                   <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-mono font-bold shrink-0">
                     {scenario.stages.length} STEPS

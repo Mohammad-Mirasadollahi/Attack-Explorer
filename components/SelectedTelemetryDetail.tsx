@@ -13,6 +13,7 @@ import { ChevronLeft } from 'lucide-react';
 import {
   buildCorrelatedRawLog,
   tokenizeLogLineForHighlight } from '@/lib/log-inspector-utils';
+import { InspectorScopeMode } from '@/lib/inspector-scope';
 import { buildBidirectionalTraceMeta } from '@/lib/sketch-zones-and-drilldown';
 
 interface SelectedTelemetryDetailProps {
@@ -21,6 +22,7 @@ interface SelectedTelemetryDetailProps {
   onClearTelemetrySelection: () => void;
   activeEnvironment?: ActiveEnvironmentId;
   scopeBadgeText?: string;
+  effectiveScope?: InspectorScopeMode;
   width?: number;
   resizeHandle?: React.ReactNode;
 }
@@ -31,6 +33,7 @@ export function SelectedTelemetryDetail({
   onClearTelemetrySelection,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   scopeBadgeText,
+  effectiveScope = 'MAIN_SCENARIO',
   width = 300,
   resizeHandle }: SelectedTelemetryDetailProps) {
   const [artifactTab, setArtifactTab] = useState<'RAW_LOG' | 'DETECTION_RULE'>(
@@ -49,6 +52,7 @@ export function SelectedTelemetryDetail({
     <motion.aside
       data-testid="inspector-panel"
       data-panel-width={width}
+      data-inspector-scope={effectiveScope}
       initial={{ width: 0, opacity: 0, x: 20 }}
       animate={{ width, opacity: 1, x: 0 }}
       exit={{ width: 0, opacity: 0, x: 20 }}
@@ -60,14 +64,21 @@ export function SelectedTelemetryDetail({
       {resizeHandle}
       {/* Clean Header with Back Action */}
       <div className="min-h-12 py-2 flex items-center justify-between gap-2 px-4 border-b border-zinc-200/70 dark:border-zinc-800/80 shrink-0">
-        <div className="min-w-0 flex flex-col gap-0.5">
+        <div className="min-w-0 flex flex-col gap-1">
           <h2 className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             Trace Detail
           </h2>
           {scopeBadgeText && (
             <span
               data-testid="inspector-scope-badge"
-              className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 leading-snug break-words"
+              data-scope-mode={effectiveScope}
+              className={`inline-flex self-start px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold leading-snug break-words ${
+                effectiveScope === 'INTERNAL_SUBNODE'
+                  ? 'bg-rose-600 text-white'
+                  : effectiveScope === 'EXPANDED_NODE'
+                  ? 'bg-amber-500 text-slate-950'
+                  : 'bg-emerald-600 text-white'
+              }`}
             >
               {scopeBadgeText}
             </span>

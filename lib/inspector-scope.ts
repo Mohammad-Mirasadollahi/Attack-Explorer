@@ -33,6 +33,13 @@ export type InspectorScopeMode =
   | 'EXPANDED_NODE'
   | 'INTERNAL_SUBNODE';
 
+export interface ScopeBadgeVisualMeta {
+  mode: InspectorScopeMode;
+  badgeText: string;
+  shortModeLabel: 'MAIN_SCENARIO' | 'EXPANDED_NODE' | 'INTERNAL_SUBNODE';
+  themeColor: 'emerald' | 'amber' | 'rose';
+}
+
 export interface ScopedInternalStepItem {
   stepNumber: number;
   sequenceCode: string;
@@ -45,6 +52,7 @@ export interface ScopedInternalStepItem {
   toSubNode: WhiteboardSketchNode;
   forwardFlowBadge: string;
   returnFlowBadge: string;
+  storyAnalogy: string;
   explanation: string;
   returnDescription: string;
   continuationHint: string;
@@ -66,10 +74,14 @@ export interface InspectorScopeContext {
   isScenarioOverrideActive: boolean;
   /** Concise scope indicator label for the active Inspector scope ("Scenario" | "Expanded: Node #N · Label" | "Internal: #N.M · Label") */
   scopeBadgeText: string;
+  /** Visual metadata (mode, label, theme color) for the Inspector Header Scope Badge */
+  scopeBadgeMeta: ScopeBadgeVisualMeta;
   /** Concise scope indicator label for the underlying diagram scope */
   diagramScopeBadgeText: string;
   /** Documented location summary answering "Where am I right now?" */
   whereAmISummary: string;
+  /** Story-to-Spec analogy for the currently expanded internal sub-board */
+  subBoardStoryAnalogy: string | null;
   stageLocationContext: StageLocationContext;
   selectedMainNode: WhiteboardSketchNode | null;
   expandedNode: WhiteboardSketchNode | null;
@@ -110,6 +122,62 @@ export function formatInternalSubNodeScopeLabel(
       ? `${parentCode}.${subNode.chainOrder}`
       : String(subNode.chainOrder));
   return `Internal: #${subCode} · ${subNode.label}`;
+}
+
+export function buildScopeBadgeVisualMeta(
+  effectiveScope: InspectorScopeMode,
+  scopeBadgeText: string
+): ScopeBadgeVisualMeta {
+  if (effectiveScope === 'INTERNAL_SUBNODE') {
+    return {
+      mode: 'INTERNAL_SUBNODE',
+      badgeText: scopeBadgeText,
+      shortModeLabel: 'INTERNAL_SUBNODE',
+      themeColor: 'rose',
+    };
+  }
+  if (effectiveScope === 'EXPANDED_NODE') {
+    return {
+      mode: 'EXPANDED_NODE',
+      badgeText: scopeBadgeText,
+      shortModeLabel: 'EXPANDED_NODE',
+      themeColor: 'amber',
+    };
+  }
+  return {
+    mode: 'MAIN_SCENARIO',
+    badgeText: scopeBadgeText,
+    shortModeLabel: 'MAIN_SCENARIO',
+    themeColor: 'emerald',
+  };
+}
+
+export function buildInternalSubBoardStoryAnalogy(
+  subBoard: InternalSubBoardSchematic,
+  expandedNode: WhiteboardSketchNode
+): string {
+  const firstNode = subBoard.subNodes[0]?.label || 'Entry Stage';
+  const lastNode =
+    subBoard.subNodes[subBoard.subNodes.length - 1]?.label || 'Telemetry Sink';
+
+  switch (subBoard.currentScopeType) {
+    case 'MALWARE_ON_HOST':
+      return `Think of expanding "${expandedNode.label}" like putting a high-powered microscope directly over the running process’s memory: you are watching how the code enters at "${firstNode}", manipulates threads and memory buffers across ${subBoard.subFlows.length} internal transitions (${subBoard.sequenceLineage.internalSeqChain.join(' → ')}), and triggers sensor telemetry at "${lastNode}".`;
+    case 'HOST_OS_ENVIRONMENT':
+      return `Think of expanding "${expandedNode.label}" like opening the chassis of the operating system itself: instead of viewing the machine as a single box on the network, you are tracing the exact handoff from user-mode processes ("${firstNode}") through OS subsystems and kernel interfaces down to "${lastNode}" (${subBoard.sequenceLineage.internalSeqChain.join(' → ')}).`;
+    case 'NETWORK_APPLIANCE':
+      return `Think of expanding "${expandedNode.label}" like stepping inside a border checkpoint’s internal sorting rooms: packets arrive at the outer interface ("${firstNode}"), pass through protocol parsers and inspection engines across ${subBoard.subFlows.length} internal hops (${subBoard.sequenceLineage.internalSeqChain.join(' → ')}), and exit or log at "${lastNode}".`;
+    default:
+      return `Think of expanding "${expandedNode.label}" like opening the blueprint of this infrastructure node: you are following the request from "${firstNode}" through ${subBoard.subFlows.length} internal processing stages (${subBoard.sequenceLineage.internalSeqChain.join(' → ')}) to "${lastNode}".`;
+  }
+}
+
+export function buildInternalStepStoryAnalogy(
+  flow: WhiteboardSketchFlow,
+  fromSubNode: WhiteboardSketchNode,
+  toSubNode: WhiteboardSketchNode
+): string {
+  return `Inside this node’s internal pipeline (Step #${flow.sequenceCode}), think of "${fromSubNode.label}" handing a direct work order (${flow.protocolBadge}: ${flow.label}) to "${toSubNode.label}", which replies on return channel ⇠#${flow.returnSeq} with "${flow.returnLabel}".`;
 }
 
 /**
@@ -210,6 +278,16 @@ export function resolveInspectorScopeContext(params: {
   const scopeBadgeText =
     effectiveScope === 'MAIN_SCENARIO' ? 'Scenario' : diagramScopeBadgeText;
 
+  const scopeBadgeMeta = buildScopeBadgeVisualMeta(
+    effectiveScope,
+    scopeBadgeText
+  );
+
+  const subBoardStoryAnalogy =
+    internalSubBoard && expandedNode
+      ? buildInternalSubBoardStoryAnalogy(internalSubBoard, expandedNode)
+      : null;
+
   const whereAmISummary =
     effectiveScope === 'INTERNAL_SUBNODE' &&
     selectedSubNode &&
@@ -260,6 +338,11 @@ export function resolveInspectorScopeContext(params: {
           toSubNode,
           forwardFlowBadge: `#${flow.forwardSeq}→ ${flow.label}`,
           returnFlowBadge: `⇠#${flow.returnSeq} ${flow.returnLabel}`,
+          storyAnalogy: buildInternalStepStoryAnalogy(
+            flow,
+            fromSubNode,
+            toSubNode
+          ),
           explanation: flow.telemetryEvent.explanation,
           returnDescription: flow.traceMeta.returnDescription,
           continuationHint: flow.traceMeta.continuationHint,
@@ -292,8 +375,10 @@ export function resolveInspectorScopeContext(params: {
     effectiveScope,
     isScenarioOverrideActive,
     scopeBadgeText,
+    scopeBadgeMeta,
     diagramScopeBadgeText,
     whereAmISummary,
+    subBoardStoryAnalogy,
     stageLocationContext,
     selectedMainNode,
     expandedNode,

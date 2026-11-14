@@ -30,6 +30,7 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
       assert.ok(rawGuide, `Missing guide for ${scenario.id}`);
 
       assert.ok(rawGuide.briefing.headline.length > 20, `${scenario.id} briefing headline too short`);
+      assert.ok(rawGuide.briefing.storyAnalogy.length > 100, `${scenario.id} briefing storyAnalogy too short`);
       assert.ok(rawGuide.briefing.plainSummary.length > 80, `${scenario.id} briefing plainSummary too short`);
       assert.ok(rawGuide.briefing.diagramTopologySummary.length > 40, `${scenario.id} diagramTopologySummary too short`);
       assert.ok(rawGuide.briefing.documentedAdvisory.length > 10, `${scenario.id} documentedAdvisory too short`);
@@ -38,6 +39,7 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
       rawGuide.steps.forEach((step, idx) => {
         assert.equal(step.stepNumber, idx + 1);
         assert.ok(step.plainTitle.length > 15, `${scenario.id} step ${step.stepNumber} plainTitle too short`);
+        assert.ok(step.storyAnalogy.length > 60, `${scenario.id} step ${step.stepNumber} storyAnalogy too short`);
         assert.ok(step.simpleExplanation.length > 60, `${scenario.id} step ${step.stepNumber} simpleExplanation too short`);
         assert.ok(step.howItWorksInPractice.length > 40, `${scenario.id} step ${step.stepNumber} howItWorksInPractice too short`);
         assert.ok(step.diagramAlignment.includes(`#${step.stepNumber}.1`), `${scenario.id} step ${step.stepNumber} diagramAlignment must reference #${step.stepNumber}.1`);

@@ -257,11 +257,27 @@ export function StepByStepGuidePanel({
               </span>
             </div>
 
-            {/* Architecture Note */}
+            {/* Layer 1: Real-World Story Analogy for Expanded Sub-Board */}
+            {scopeContext.subBoardStoryAnalogy && (
+              <div
+                data-testid="step-guide-briefing-story-analogy"
+                className="p-2.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/70 space-y-1"
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                  <Sparkles className="w-3 h-3 shrink-0" />
+                  <span>1. Real-World Story Analogy (Sub-Board Scope):</span>
+                </div>
+                <p className="text-[11.5px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                  {scopeContext.subBoardStoryAnalogy}
+                </p>
+              </div>
+            )}
+
+            {/* Layer 2 & 3: Architecture Note */}
             <div className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-950/80 border border-zinc-200/80 dark:border-zinc-800/80 space-y-1">
               <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
                 <Compass className="w-3 h-3 shrink-0" />
-                <span>{subBoard.environmentBreadcrumb}</span>
+                <span>{`2. Technical Architecture (${subBoard.environmentBreadcrumb}):`}</span>
               </div>
               <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
                 {subBoard.architectureNote}
@@ -350,6 +366,20 @@ export function StepByStepGuidePanel({
 
                 {/* Internal Step Card Content */}
                 <div className="p-3 space-y-2.5">
+                  {/* Layer 1: Story Analogy for Internal Transition */}
+                  <div
+                    data-testid={`step-guide-story-analogy-${step.stepNumber}`}
+                    className="p-2.5 rounded-lg bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
+                  >
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                      <Sparkles className="w-3 h-3 shrink-0" />
+                      <span>1. Real-World Story Analogy:</span>
+                    </div>
+                    <p className="text-[11.5px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                      {step.storyAnalogy}
+                    </p>
+                  </div>
+
                   {/* Sub-node to Sub-node connection box */}
                   <div className="p-2.5 rounded-lg bg-zinc-100/90 dark:bg-zinc-950/90 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5">
                     <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400">
@@ -385,21 +415,27 @@ export function StepByStepGuidePanel({
                     </div>
                   </div>
 
-                  {/* Documented Internal Flow Explanation */}
-                  <div className="space-y-1">
+                  {/* Layer 2: Story-to-Scenario Technical Bridge */}
+                  <div
+                    data-testid={`step-guide-technical-bridge-${step.stepNumber}`}
+                    className="space-y-1"
+                  >
                     <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                      Documented Sub-Flow Activity:
+                      2. Story ↔ Scenario Technical Bridge:
                     </div>
                     <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
                       {step.explanation}
                     </p>
                   </div>
 
-                  {/* Documented Return Channel */}
-                  <div className="p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1">
+                  {/* Layer 3: Return Channel & Under the Hood */}
+                  <div
+                    data-testid={`step-guide-under-the-hood-${step.stepNumber}`}
+                    className="p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1"
+                  >
                     <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
                       <Cpu className="w-3 h-3 shrink-0" />
-                      <span>Return / Response Channel:</span>
+                      <span>3. Under the Hood & Return Channel:</span>
                     </div>
                     <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
                       {step.returnDescription}
@@ -632,18 +668,38 @@ export function StepByStepGuidePanel({
             </span>
           </div>
 
-          {/* Plain-Language Summary */}
-          <div className="space-y-1">
+          {/* Layer 1: Real-World Story Analogy */}
+          <div
+            data-testid="step-guide-briefing-story-analogy"
+            className="p-2.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/70 space-y-1"
+          >
+            <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+              <Sparkles className="w-3 h-3 shrink-0" />
+              <span>1. Real-World Story Analogy:</span>
+            </div>
+            <p className="text-[11.5px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+              {briefing.storyAnalogy}
+            </p>
+          </div>
+
+          {/* Layer 2: Story ↔ Scenario Technical Summary */}
+          <div
+            data-testid="step-guide-briefing-plain-summary"
+            className="space-y-1"
+          >
+            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              2. Story ↔ Scenario Technical Bridge:
+            </div>
             <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
               {briefing.plainSummary}
             </p>
           </div>
 
-          {/* Diagram Layout Explanation */}
+          {/* Layer 3: Diagram Layout Explanation */}
           <div className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-950/80 border border-zinc-200/80 dark:border-zinc-800/80 space-y-1">
             <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
               <Compass className="w-3 h-3 shrink-0" />
-              <span>How This Aligns With the Diagram:</span>
+              <span>3. How This Aligns With the Diagram:</span>
             </div>
             <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
               {briefing.diagramTopologySummary}
@@ -739,21 +795,41 @@ export function StepByStepGuidePanel({
                   {step.plainTitle}
                 </h5>
 
-                {/* Plain-Language Explanation */}
-                <div className="space-y-1">
+                {/* Layer 1: Real-World Story Analogy */}
+                <div
+                  data-testid={`step-guide-story-analogy-${step.stepNumber}`}
+                  className="p-2.5 rounded-lg bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
+                >
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                    <Sparkles className="w-3 h-3 shrink-0" />
+                    <span>1. Real-World Story Analogy:</span>
+                  </div>
+                  <p className="text-[11.5px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                    {step.storyAnalogy}
+                  </p>
+                </div>
+
+                {/* Layer 2: Story ↔ Scenario Technical Bridge */}
+                <div
+                  data-testid={`step-guide-technical-bridge-${step.stepNumber}`}
+                  className="space-y-1"
+                >
                   <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    In Plain Language (Grounded in Official Docs):
+                    2. Story ↔ Scenario Technical Bridge:
                   </div>
                   <p className="text-xs text-zinc-700 dark:text-zinc-200 leading-relaxed break-words">
                     {step.simpleExplanation}
                   </p>
                 </div>
 
-                {/* Practical Under-the-Hood Explanation */}
-                <div className="p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1">
+                {/* Layer 3: Practical Under-the-Hood Explanation */}
+                <div
+                  data-testid={`step-guide-under-the-hood-${step.stepNumber}`}
+                  className="p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1"
+                >
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
                     <Cpu className="w-3 h-3 shrink-0" />
-                    <span>Why & How This Mechanism Works:</span>
+                    <span>3. Under the Hood (Why & How It Works):</span>
                   </div>
                   <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
                     {step.howItWorksInPractice}

@@ -10,6 +10,7 @@ import { MS_CISCO_KASPERSKY_STEP_GUIDES } from './step-guides/ms-cisco-kaspersky
 
 export interface RawScenarioBriefingGuide {
   headline: string;
+  storyAnalogy: string;
   plainSummary: string;
   diagramTopologySummary: string;
   documentedAdvisory: string;
@@ -19,6 +20,7 @@ export interface RawScenarioStepGuideItem {
   stepNumber: number;
   mitreId: string;
   plainTitle: string;
+  storyAnalogy: string;
   simpleExplanation: string;
   howItWorksInPractice: string;
   diagramAlignment: string;
@@ -79,7 +81,7 @@ export function getRawScenarioStepGuide(
 
 /**
  * Enhances a scenario's overview, stage descriptions, and telemetry explanations
- * with fluent, easy-to-understand, plain-language narratives strictly grounded
+ * with fluent, easy-to-understand, Story-to-Spec narratives strictly grounded
  * in the scenario's documented advisory while preserving all technical identifiers.
  */
 export function applyReadableStepGuidesToScenario(
@@ -93,7 +95,7 @@ export function applyReadableStepGuidesToScenario(
     if (!stepGuide) return stage;
     return {
       ...stage,
-      description: `${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} ${stepGuide.diagramAlignment}`,
+      description: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} ${stepGuide.diagramAlignment}`,
     };
   });
 
@@ -102,13 +104,13 @@ export function applyReadableStepGuidesToScenario(
     if (!stepGuide) return event;
     return {
       ...event,
-      explanation: `${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} (${stepGuide.detectionAndEvidence})`,
+      explanation: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} (${stepGuide.detectionAndEvidence})`,
     };
   });
 
   return {
     ...scenario,
-    overview: `${guide.briefing.plainSummary} ${guide.briefing.diagramTopologySummary}`,
+    overview: `${guide.briefing.storyAnalogy} ${guide.briefing.plainSummary} ${guide.briefing.diagramTopologySummary}`,
     stages: enhancedStages,
     telemetry: enhancedTelemetry,
   };
@@ -152,6 +154,9 @@ export function buildDiagramStepGuideModel(
     headline:
       rawGuide?.briefing.headline ||
       `Scenario Briefing: ${scenario.name}`,
+    storyAnalogy:
+      rawGuide?.briefing.storyAnalogy ||
+      scenario.shortSubtitle,
     plainSummary: rawGuide?.briefing.plainSummary || scenario.overview,
     diagramTopologySummary:
       rawGuide?.briefing.diagramTopologySummary ||
@@ -209,6 +214,7 @@ export function buildDiagramStepGuideModel(
       stepNumber: stage.index,
       mitreId: rawStep?.mitreId || stage.mitreTechniqueId,
       plainTitle: rawStep?.plainTitle || stage.title,
+      storyAnalogy: rawStep?.storyAnalogy || stage.subtitle,
       simpleExplanation: rawStep?.simpleExplanation || stage.description,
       howItWorksInPractice: rawStep?.howItWorksInPractice || stage.subtitle,
       diagramAlignment:
