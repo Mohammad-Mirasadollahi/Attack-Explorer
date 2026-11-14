@@ -121,6 +121,10 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       data-wx={node.wx}
       data-wy={node.wy}
       initial={false}
+      // 2D transforms only — translate3d compositor tiles blur under parent zoom.
+      transformTemplate={({ x, y, scale }) =>
+        `translate(-50%, calc(-50% + ${y ?? 0}px)) scale(${scale ?? 1})`
+      }
       animate={{
         opacity: effectiveOpacity,
         scale: effectiveScale,
@@ -167,9 +171,11 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       style={{
         left: `${leftPct}%`,
         top: `${topPct}%`,
-        willChange: skipSpring ? 'left, top, transform' : 'transform',
+        // Only promote a layer while actively dragging — permanent
+        // will-change makes zoomed-in node text/icons blurry.
+        willChange: isDraggingNodes ? 'left, top, transform' : 'auto',
       }}
-      className={`canvas-interactive-node nopan group absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center focus:outline-none ${
+      className={`canvas-interactive-node nopan group absolute flex flex-col items-center text-center focus:outline-none ${
         isSearchFiltering && isSearchMatch ? 'z-30' : 'z-20'
       } ${
         isAutoLayoutAnimating && !skipSpring

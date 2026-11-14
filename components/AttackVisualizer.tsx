@@ -2342,13 +2342,22 @@ export function AttackVisualizer({
                 data-testid="cinematic-camera-rig"
                 data-camera-frame={director.camera.frameCode}
                 data-camera-scale={effectiveScale}
+                // Prefer 2D matrix (no translate3d) so zoom stays vector-sharp.
+                transformTemplate={({ x, y, scale }) =>
+                  `translate(${x ?? 0}, ${y ?? 0}) scale(${scale ?? 1})`
+                }
                 animate={{
                   x: `${effectiveTxPct}%`,
                   y: `${effectiveTyPct}%`,
-                    scale: autoCameraEnabled ? director.camera.scale : 1,
+                    // Avoid nested CSS scale while the user is manually zoomed —
+                    // double scale layers are a common blur source.
+                    scale:
+                      autoCameraEnabled && Math.abs(manualZoom - 1) < 0.02
+                        ? director.camera.scale
+                        : 1,
                   }}
                   transition={
-                    isPanningCanvas
+                    isPanningCanvas || isCanvasInteracting
                       ? { duration: 0 }
                       : {
                   type: 'spring',
@@ -2362,6 +2371,7 @@ export function AttackVisualizer({
                     aspectRatio: `${WHITEBOARD_WIDTH} / ${WHITEBOARD_HEIGHT}`,
                     width: `min(100cqw, calc(100cqh * ${WHITEBOARD_WIDTH} / ${WHITEBOARD_HEIGHT}))`,
                     height: `min(100cqh, calc(100cqw * ${WHITEBOARD_HEIGHT} / ${WHITEBOARD_WIDTH}))`,
+                    willChange: 'auto',
                   }}
                   className="relative overflow-visible"
               >

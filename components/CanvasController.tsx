@@ -50,9 +50,9 @@ export interface CanvasControllerProps {
 
 /**
  * CanvasController wraps the AttackExplorerWorkbench diagram workspace with
- * `react-zoom-pan-pinch` to provide hardware-accelerated 2D transform matrices
- * (`translate3d` + `scale`) without competing pointer/wheel listeners or
- * per-frame React state thrashing.
+ * `react-zoom-pan-pinch` using 2D `translate() scale()` matrices. Avoids
+ * compositor-tile tricks (`translate3d` / `will-change` / `backface-hidden`)
+ * so SVG text and icons stay sharp while zooming.
  */
 export const CanvasController = forwardRef<
   CanvasControllerHandle,
@@ -183,19 +183,25 @@ export const CanvasController = forwardRef<
         }
       >
         <TransformComponent
-          wrapperClass="!w-full !h-full !overflow-visible"
-          contentClass="!w-full !h-full !overflow-visible"
+          wrapperClass="ae-zoom-wrapper !w-full !h-full !overflow-visible"
+          contentClass="ae-zoom-content !w-full !h-full !overflow-visible"
           wrapperStyle={{
             width: '100%',
             height: '100%',
             overflow: 'visible',
+            // Kill library translate3d(0,0,0) — it promotes a 1× compositor
+            // bitmap that bilinear-upscales (blur) when the child scales.
+            transform: 'none',
           }}
           contentStyle={{
             width: '100%',
             height: '100%',
             overflow: 'visible',
-            willChange: 'transform',
-            backfaceVisibility: 'hidden',
+            // Keep 2D translate()+scale() painting vectors/text at the live
+            // zoom resolution instead of stretching a cached GPU tile.
+            willChange: 'auto',
+            backfaceVisibility: 'visible',
+            WebkitBackfaceVisibility: 'visible',
           }}
         >
           {children}

@@ -213,3 +213,36 @@ html.layout-responsive body {
   touch-action: manipulation;
 }
 
+/*
+ * Crisp diagram zoom: react-zoom-pan-pinch's wrapper ships with
+ * translate3d(0,0,0), which caches a 1× GPU bitmap. Zoom then
+ * bilinear-upscales that tile and makes SVG text/icons look soft.
+ */
+[data-testid='canvas-controller'] .ae-zoom-wrapper {
+  transform: none !important;
+}
+
+[data-testid='canvas-controller'] .ae-zoom-content {
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+  will-change: auto !important;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-testid='canvas-controller'] svg {
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+}
+
+[data-testid='canvas-controller'] .canvas-interactive-node,
+[data-testid='canvas-controller'] .canvas-interactive-node span {
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-testid='canvas-controller'] img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+}
+
