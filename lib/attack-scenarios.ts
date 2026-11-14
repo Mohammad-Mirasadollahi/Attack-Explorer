@@ -11,8 +11,9 @@ import { APT_PALOALTO_ELASTIC_SCENARIOS } from './scenarios/apt-paloalto-elastic
 import { APT_MICROSOFT_THREAT_INTEL_SCENARIOS } from './scenarios/apt-microsoft-threat-intel';
 import { APT_CISCO_F5_SPLUNK_SCENARIOS } from './scenarios/apt-cisco-f5-splunk';
 import { APT_KASPERSKY_MANDIANT_CISA_SCENARIOS } from './scenarios/apt-kaspersky-mandiant-cisa';
+import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
 
-export const ATTACK_SCENARIOS: AttackScenario[] = [
+const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   PROCESS_HOLLOWING_SCENARIO,
   LOG4SHELL_SCENARIO,
   AMSI_REFLECTIVE_DLL_SCENARIO,
@@ -24,3 +25,8 @@ export const ATTACK_SCENARIOS: AttackScenario[] = [
   ...APT_CISCO_F5_SPLUNK_SCENARIOS,
   ...APT_KASPERSKY_MANDIANT_CISA_SCENARIOS,
 ];
+
+export const ATTACK_SCENARIOS: AttackScenario[] = RAW_ATTACK_SCENARIOS.map(
+  applyReadableStepGuidesToScenario
+);
+

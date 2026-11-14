@@ -49,7 +49,7 @@ Include:
 Keep the summary under 110 words in clear, technical DFIR prose.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],

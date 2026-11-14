@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo } from 'react';
 import { TelemetryEvent } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
@@ -40,36 +40,13 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
   onStartZoneDrag,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   tacticalMode = false,
-  isInteracting = false,
 }: SketchWhiteboardSvgProps) {
-  const svgRef = useRef<SVGSVGElement | null>(null);
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
   const stampText = `${envProfile.architectureCode} · ${envProfile.badgeLabel.toUpperCase()} · ${envProfile.primaryHostname} (${envProfile.subnetBadge})`;
   const stampWidth = Math.max(490, Math.round(stampText.length * 5.4 + 34));
 
-  // Pause continuous SVG SMIL animations during active pan/drag so the browser compositor
-  // caches the 1480x650 schematic as a static GPU texture tile (locked 60/120fps)
-  useEffect(() => {
-    const svgEl = svgRef.current;
-    if (!svgEl) return;
-    try {
-      if (isInteracting) {
-        if (typeof svgEl.pauseAnimations === 'function') {
-          svgEl.pauseAnimations();
-        }
-      } else {
-        if (typeof svgEl.unpauseAnimations === 'function') {
-          svgEl.unpauseAnimations();
-        }
-      }
-    } catch {
-      // Ignore in environments without SMIL pauseAnimations support
-    }
-  }, [isInteracting]);
-
   return (
     <svg
-      ref={svgRef}
       viewBox="0 0 1480 650"
       preserveAspectRatio="xMidYMid meet"
       overflow="visible"
@@ -733,12 +710,13 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
             {flow.isVisible && (
               <g
                 transform={`translate(${startAnchor.x}, ${startAnchor.y - 12})`}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectTelemetry(flow.telemetryEvent);
                 }}
                 data-testid={`flow-step-circle-${flow.stepNo}`}
-                className="cursor-pointer"
+                className="canvas-interactive-control nopan cursor-pointer"
               >
                 <rect
                   x={-stepBadgeW / 2}
@@ -768,12 +746,13 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
             {flow.isVisible && (
               <g
                 transform={`translate(${flow.controlX}, ${flow.controlY})`}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectTelemetry(flow.telemetryEvent);
                 }}
                 data-testid={`flow-forward-badge-${flow.stepNo}`}
-                className="cursor-pointer"
+                className="canvas-interactive-control nopan cursor-pointer"
               >
                 <rect
                   x={-fwdTotalW / 2}
@@ -822,12 +801,13 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
             {flow.isBidirectional && flow.isVisible && (
               <g
                 transform={`translate(${flow.returnControlX}, ${flow.returnControlY})`}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectTelemetry(flow.telemetryEvent);
                 }}
                 data-testid={`flow-return-badge-${flow.stepNo}`}
-                className="cursor-pointer"
+                className="canvas-interactive-control nopan cursor-pointer"
               >
                 <rect
                   x={-retTotalW / 2}

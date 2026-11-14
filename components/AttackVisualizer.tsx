@@ -662,33 +662,36 @@ export function AttackVisualizer({
   }, [internalSubBoard]);
 
   // Canvas Empty Space Pointer Down:
-  // - Left-Click & Hold (`button === 0`) -> Switches to Pan Page ('PAN') mode and pans canvas at 60/120fps without React re-renders
-  // - Right-Click & Hold (`button === 2`) -> Switches to Box Select ('SELECT') mode and draws marquee selection box
+  // - Left-Click & Drag (`button === 0`) -> Pans canvas at 60/120fps without React re-renders
+  // - Right-Click & Drag (`button === 2`) -> Draws marquee selection box
+  // - Simple Left-Click / Right-Click without dragging -> Zero state thrashing or timer freezes
   const handleBoardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0 && e.button !== 2) return;
       // Secondary touch fingers belong to pinch-zoom — do not start pan/select.
       if (e.pointerType === 'touch' && e.isPrimary === false) return;
 
-      const targetEl = e.target as HTMLElement;
+      const targetEl = e.target instanceof Element ? e.target : null;
+      if (!targetEl) return;
+
       if (
         targetEl.closest('[data-testid="canvas-interaction-toolbar"]') ||
         targetEl.closest('[data-testid="diagram-legend-panel"]') ||
         targetEl.closest('[data-testid="playback-control-bar"]') ||
         targetEl.closest('[data-testid="show-playback-bar-btn"]') ||
         targetEl.closest('[data-testid="show-canvas-top-bar-btn"]') ||
-        targetEl.closest('[data-testid="show-bottom-dock-btn"]')
+        targetEl.closest('[data-testid="show-bottom-dock-btn"]') ||
+        targetEl.closest('.canvas-interactive-node') ||
+        targetEl.closest('.canvas-interactive-zone') ||
+        targetEl.closest('.canvas-interactive-control') ||
+        targetEl.closest('button') ||
+        targetEl.closest('a') ||
+        targetEl.closest('input') ||
+        targetEl.closest('select')
       ) {
-        return;
-      }
-
-      if (
-        e.button === 0 &&
-        (targetEl.closest('.canvas-interactive-node') ||
-          targetEl.closest('.canvas-interactive-zone') ||
-          targetEl.closest('.canvas-interactive-control') ||
-          targetEl.closest('button'))
-      ) {
+        if (e.button === 2) {
+          e.preventDefault();
+        }
         return;
       }
 
@@ -696,13 +699,8 @@ export function AttackVisualizer({
         e.preventDefault();
       }
 
-      // Keep touch drags locked to this gesture (phones in forced-desktop layout).
-      try {
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-      } catch {
-        // Older browsers may reject capture on some targets
-      }
-
+      const currentBoardEl = e.currentTarget as HTMLElement;
+      const pointerId = e.pointerId;
       const startClientX = e.clientX;
       const startClientY = e.clientY;
       const startPanX = panOffsetRef.current.x;
@@ -727,8 +725,6 @@ export function AttackVisualizer({
 
       const startWb = fastClientToWb(startClientX, startClientY);
 
-      // Mouse left-hold always pans (even after a sticky toolbar SELECT from
-      // right-click). Touch/pen may still use toolbar SELECT for marquee.
       const holdResolution = resolveCanvasHoldInteractionMode({
         button: e.button,
         shiftKey: e.shiftKey,
@@ -749,6 +745,11 @@ export function AttackVisualizer({
         if (holdActivated) return;
         holdActivated = true;
         setInteractionMode(holdResolution.mode);
+        try {
+          currentBoardEl.setPointerCapture(pointerId);
+        } catch {
+          // Ignore if pointer capture is unavailable on target
+        }
         if (useMarqueeMode) {
           setIsBoxSelectHoldActive(true);
           setIsPanningCanvas(false);
@@ -765,12 +766,6 @@ export function AttackVisualizer({
           setIsBoxSelectHoldActive(false);
         }
       };
-
-      // Touch should arm pan/select immediately; mouse keeps a short hold delay.
-      const holdTimer = window.setTimeout(
-        activateHoldMode,
-        e.pointerType === 'touch' ? 0 : 110
-      );
 
       const applyPanFrame = () => {
         panRafId = null;
@@ -803,39 +798,7 @@ export function AttackVisualizer({
         }
       };
 
-      const handleWindowPointerMove = (moveEvent: PointerEvent) => {
-        const dx = moveEvent.clientX - startClientX;
-        const dy = moveEvent.clientY - startClientY;
-        const dist = Math.hypot(dx, dy);
-
-        if (!hasMoved && dist >= 2) {
-          hasMoved = true;
-          activateHoldMode();
-        }
-
-        if (!useMarqueeMode && hasMoved) {
-          const nextX = Math.round(startPanX + dx);
-          const nextY = Math.round(startPanY + dy);
-          panOffsetRef.current = { x: nextX, y: nextY };
-          if (panRafId === null) {
-            panRafId = window.requestAnimationFrame(applyPanFrame);
-          }
-        } else if (useMarqueeMode && (hasMoved || holdActivated)) {
-          const curWb = fastClientToWb(moveEvent.clientX, moveEvent.clientY);
-          latestMarquee = {
-            startWx: startWb.wx,
-            startWy: startWb.wy,
-            currentWx: curWb.wx,
-            currentWy: curWb.wy,
-          };
-          if (marqueeRafId === null) {
-            marqueeRafId = window.requestAnimationFrame(applyMarqueeFrame);
-          }
-        }
-      };
-
-      const handleWindowPointerUp = () => {
-        window.clearTimeout(holdTimer);
+      function handleWindowPointerUp() {
         if (panRafId !== null) {
           window.cancelAnimationFrame(panRafId);
           applyPanFrame();
@@ -847,28 +810,77 @@ export function AttackVisualizer({
         window.removeEventListener('pointermove', handleWindowPointerMove);
         window.removeEventListener('pointerup', handleWindowPointerUp);
         window.removeEventListener('pointercancel', handleWindowPointerUp);
+        window.removeEventListener('blur', handleWindowPointerUp);
 
-        if (!useMarqueeMode && hasMoved) {
-          setPanOffset({ ...panOffsetRef.current });
+        try {
+          if (currentBoardEl.hasPointerCapture?.(pointerId)) {
+            currentBoardEl.releasePointerCapture(pointerId);
+          }
+        } catch {
+          // Ignore release errors
         }
-        setIsPanningCanvas(false);
-        setIsBoxSelectHoldActive(false);
-        setMarqueeBox(null);
 
-        if (
+        if (holdActivated) {
+          if (!useMarqueeMode && hasMoved) {
+            const nextPan = panOffsetRef.current;
+            setPanOffset((prev) =>
+              prev.x === nextPan.x && prev.y === nextPan.y
+                ? prev
+                : { ...nextPan }
+            );
+          }
+          setIsPanningCanvas(false);
+          setIsBoxSelectHoldActive(false);
+          setMarqueeBox(null);
+        } else if (
           e.button === 0 &&
-          !hasMoved &&
           !e.shiftKey &&
           !e.ctrlKey &&
           !e.metaKey
         ) {
-          setMultiSelectedNodeIds([]);
+          setMultiSelectedNodeIds((prev) => (prev.length === 0 ? prev : []));
         }
-      };
+      }
+
+      function handleWindowPointerMove(moveEvent: PointerEvent) {
+        if (moveEvent.pointerType === 'mouse' && moveEvent.buttons === 0) {
+          handleWindowPointerUp();
+          return;
+        }
+        const dx = moveEvent.clientX - startClientX;
+        const dy = moveEvent.clientY - startClientY;
+        const dist = Math.hypot(dx, dy);
+
+        if (!hasMoved && dist >= 3) {
+          hasMoved = true;
+          activateHoldMode();
+        }
+
+        if (!useMarqueeMode && hasMoved) {
+          const nextX = Math.round(startPanX + dx);
+          const nextY = Math.round(startPanY + dy);
+          panOffsetRef.current = { x: nextX, y: nextY };
+          if (panRafId === null) {
+            panRafId = window.requestAnimationFrame(applyPanFrame);
+          }
+        } else if (useMarqueeMode && hasMoved) {
+          const curWb = fastClientToWb(moveEvent.clientX, moveEvent.clientY);
+          latestMarquee = {
+            startWx: startWb.wx,
+            startWy: startWb.wy,
+            currentWx: curWb.wx,
+            currentWy: curWb.wy,
+          };
+          if (marqueeRafId === null) {
+            marqueeRafId = window.requestAnimationFrame(applyMarqueeFrame);
+          }
+        }
+      }
 
       window.addEventListener('pointermove', handleWindowPointerMove);
       window.addEventListener('pointerup', handleWindowPointerUp);
       window.addEventListener('pointercancel', handleWindowPointerUp);
+      window.addEventListener('blur', handleWindowPointerUp);
     },
     [activeNodes, interactionMode]
   );
@@ -926,7 +938,25 @@ export function AttackVisualizer({
         });
       };
 
-      const handleWindowPointerMove = (moveEvent: PointerEvent) => {
+      function handleWindowPointerUp() {
+        if (dragRafId !== null) {
+          window.cancelAnimationFrame(dragRafId);
+          flushNodeDragDelta();
+        }
+        window.removeEventListener('pointermove', handleWindowPointerMove);
+        window.removeEventListener('pointerup', handleWindowPointerUp);
+        window.removeEventListener('pointercancel', handleWindowPointerUp);
+        window.removeEventListener('blur', handleWindowPointerUp);
+        if (startedDrag) {
+          setIsDraggingNodes(false);
+        }
+      }
+
+      function handleWindowPointerMove(moveEvent: PointerEvent) {
+        if (moveEvent.pointerType === 'mouse' && moveEvent.buttons === 0) {
+          handleWindowPointerUp();
+          return;
+        }
         const totalDist = Math.hypot(
           moveEvent.clientX - startClientX,
           moveEvent.clientY - startClientY
@@ -955,20 +985,12 @@ export function AttackVisualizer({
             dragRafId = window.requestAnimationFrame(flushNodeDragDelta);
           }
         }
-      };
-
-      const handleWindowPointerUp = () => {
-        if (dragRafId !== null) {
-          window.cancelAnimationFrame(dragRafId);
-          flushNodeDragDelta();
-        }
-        window.removeEventListener('pointermove', handleWindowPointerMove);
-        window.removeEventListener('pointerup', handleWindowPointerUp);
-        setIsDraggingNodes(false);
-      };
+      }
 
       window.addEventListener('pointermove', handleWindowPointerMove);
       window.addEventListener('pointerup', handleWindowPointerUp);
+      window.addEventListener('pointercancel', handleWindowPointerUp);
+      window.addEventListener('blur', handleWindowPointerUp);
     },
     [boardScopeKey, multiSelectedNodeIds]
   );
@@ -1041,7 +1063,26 @@ export function AttackVisualizer({
         }
       };
 
-      const handleWindowPointerMove = (moveEvent: PointerEvent) => {
+      function handleWindowPointerUp() {
+        if (zoneDragRafId !== null) {
+          window.cancelAnimationFrame(zoneDragRafId);
+          flushZoneDragDelta();
+        }
+        window.removeEventListener('pointermove', handleWindowPointerMove);
+        window.removeEventListener('pointerup', handleWindowPointerUp);
+        window.removeEventListener('pointercancel', handleWindowPointerUp);
+        window.removeEventListener('blur', handleWindowPointerUp);
+        if (startedDrag) {
+          setIsDraggingNodes(false);
+          setDraggingZoneTitle(null);
+        }
+      }
+
+      function handleWindowPointerMove(moveEvent: PointerEvent) {
+        if (moveEvent.pointerType === 'mouse' && moveEvent.buttons === 0) {
+          handleWindowPointerUp();
+          return;
+        }
         const totalDist = Math.hypot(
           moveEvent.clientX - startClientX,
           moveEvent.clientY - startClientY
@@ -1068,21 +1109,12 @@ export function AttackVisualizer({
             zoneDragRafId = window.requestAnimationFrame(flushZoneDragDelta);
           }
         }
-      };
-
-      const handleWindowPointerUp = () => {
-        if (zoneDragRafId !== null) {
-          window.cancelAnimationFrame(zoneDragRafId);
-          flushZoneDragDelta();
-        }
-        window.removeEventListener('pointermove', handleWindowPointerMove);
-        window.removeEventListener('pointerup', handleWindowPointerUp);
-        setIsDraggingNodes(false);
-        setDraggingZoneTitle(null);
-      };
+      }
 
       window.addEventListener('pointermove', handleWindowPointerMove);
       window.addEventListener('pointerup', handleWindowPointerUp);
+      window.addEventListener('pointercancel', handleWindowPointerUp);
+      window.addEventListener('blur', handleWindowPointerUp);
     },
     [activeNodes, activeZones, boardScopeKey]
   );
@@ -2117,19 +2149,29 @@ export function AttackVisualizer({
             wheelZoomEnabled={true}
             onTransformChange={({ scale, positionX, positionY }) => {
               // Keep refs in sync for pinch-zoom on touch / forced-desktop phones.
+              const rx = Math.round(positionX);
+              const ry = Math.round(positionY);
               manualZoomRef.current = scale;
-              panOffsetRef.current = { x: positionX, y: positionY };
-              setManualZoom(scale);
-              setPanOffset({ x: positionX, y: positionY });
+              panOffsetRef.current = { x: rx, y: ry };
+              setManualZoom((prev) =>
+                Math.abs(prev - scale) < 0.002 ? prev : scale
+              );
+              setPanOffset((prev) =>
+                prev.x === rx && prev.y === ry ? prev : { x: rx, y: ry }
+              );
             }}
             onPanningStart={() => setIsPanningCanvas(true)}
             onPanningStop={(offset) => {
-              panOffsetRef.current = offset;
+              const rx = Math.round(offset.x);
+              const ry = Math.round(offset.y);
+              panOffsetRef.current = { x: rx, y: ry };
               setIsPanningCanvas(false);
-              setPanOffset(offset);
+              setPanOffset((prev) =>
+                prev.x === rx && prev.y === ry ? prev : { x: rx, y: ry }
+              );
             }}
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence initial={false}>
             <motion.div
               key={boardMotionKey}
               style={{
@@ -2138,29 +2180,19 @@ export function AttackVisualizer({
               initial={
                 portalAnim
                   ? internalSubBoard
-                    ? { opacity: 0, scale: 0.74, filter: 'blur(6px)' }
-                    : { opacity: 0, scale: 1.32, filter: 'blur(5px)' }
-                    : { opacity: 0.92, scale: 0.995, filter: 'blur(0px)' }
+                    ? { opacity: 0, scale: 0.92 }
+                    : { opacity: 0, scale: 1.06 }
+                  : false
               }
               animate={{
                 opacity: 1,
                 scale: 1,
-                  filter: 'blur(0px)',
-                }}
-              exit={
-                portalAnim
-                  ? internalSubBoard
-                    ? { opacity: 0, scale: 0.7, filter: 'blur(5px)' }
-                    : { opacity: 0, scale: 1.42, filter: 'blur(6px)' }
-                    : { opacity: 0.85, scale: 0.99, filter: 'blur(0px)' }
-              }
+              }}
               transition={{
-                type: 'spring',
-                stiffness: 320,
-                damping: 26,
-                  mass: 0.8,
-                }}
-                className="relative w-full h-full overflow-visible z-20"
+                duration: 0.18,
+                ease: 'easeOut',
+              }}
+              className="relative w-full h-full overflow-visible z-20"
             >
               {/* Compact mobile board — skipped when Desktop layout is forced */}
               {!forceDesktopCanvas && (

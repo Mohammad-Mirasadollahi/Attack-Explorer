@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { AttackScenario } from '@/lib/attack-scenarios';
 import {
   getCuratedThreatIntel,
@@ -33,11 +33,15 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
   const fetchGroundedIntel = useCallback(async (scenarioId: string) => {
     setIsLoading(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 7000);
       const res = await fetch('/api/threat-intel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scenarioId }),
+        signal: controller.signal,
       });
+      window.clearTimeout(timeoutId);
       if (res.ok) {
         const data = (await res.json()) as ThreatIntelContextData;
         if (data && data.scenarioId === scenarioId) {
@@ -53,30 +57,6 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       setIsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/threat-intel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenarioId: scenario.id }),
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: ThreatIntelContextData | null) => {
-        if (active && data && data.scenarioId === scenario.id) {
-          setLiveIntelByScenario((prev) => ({
-            ...prev,
-            [scenario.id]: data,
-          }));
-        }
-      })
-      .catch(() => {
-        // Retain curated fallback intelligence on offline/network errors
-      });
-    return () => {
-      active = false;
-    };
-  }, [scenario.id]);
 
   return (
     <section

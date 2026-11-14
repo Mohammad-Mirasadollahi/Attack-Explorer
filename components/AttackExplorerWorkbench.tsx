@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ATTACK_SCENARIOS,
@@ -55,6 +55,10 @@ export function AttackExplorerWorkbench() {
   const [layoutMode, setLayoutMode] =
     useState<WorkbenchLayoutMode>(DEFAULT_LAYOUT_MODE);
 
+  const handleCompleteIntro = useCallback(() => {
+    setShowIntro(false);
+  }, []);
+
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
       if (shouldSkipIntroFromSearch(window.location.search)) {
@@ -65,9 +69,12 @@ export function AttackExplorerWorkbench() {
   }, []);
 
   useEffect(() => {
-    const stored = readStoredLayoutMode();
-    setLayoutMode(stored);
-    applyWorkbenchLayoutMode(stored);
+    const rafId = window.requestAnimationFrame(() => {
+      const stored = readStoredLayoutMode();
+      setLayoutMode(stored);
+      applyWorkbenchLayoutMode(stored);
+    });
+    return () => window.cancelAnimationFrame(rafId);
   }, []);
 
   useEffect(() => {
@@ -142,11 +149,11 @@ export function AttackExplorerWorkbench() {
   // Responsive chrome: only auto-toggle side panels in true responsive mode
   useEffect(() => {
     if (layoutMode === 'DESKTOP') {
-      // Keep side drawers closed by default so the dense desktop canvas has room;
-      // users can reopen them from the header while scrolling/pinching the page.
-      setSidebarOpen(false);
-      setInspectorOpen(false);
-      return;
+      const desktopRafId = window.requestAnimationFrame(() => {
+        setSidebarOpen(false);
+        setInspectorOpen(false);
+      });
+      return () => window.cancelAnimationFrame(desktopRafId);
     }
 
     let wasDesktop = window.innerWidth >= 1024;
@@ -429,7 +436,7 @@ export function AttackExplorerWorkbench() {
           {showIntro && (
             <AnimeIntroLoader
               key="anime-intro-loader"
-              onComplete={() => setShowIntro(false)}
+              onComplete={handleCompleteIntro}
             />
           )}
         </AnimatePresence>
@@ -444,21 +451,14 @@ export function AttackExplorerWorkbench() {
             showIntro
               ? {
                   opacity: 0,
-                  y: 28,
-                  scale: 0.985,
-                  filter: 'blur(8px)',
                 }
               : {
                   opacity: 1,
-                  y: 0,
-                  scale: 1,
-                  filter: 'blur(0px)',
                 }
           }
           transition={{
-            duration: 0.7,
-            ease: [0.16, 1, 0.3, 1],
-            delay: showIntro ? 0 : 0.12,
+            duration: 0.35,
+            ease: 'easeOut',
           }}
           className={`flex flex-col flex-1 min-h-0 origin-center ${
             showIntro ? 'pointer-events-none' : 'pointer-events-auto'
@@ -585,17 +585,21 @@ export function AttackExplorerWorkbench() {
                 forceDesktopCanvas={layoutMode === 'DESKTOP'}
               />
 
-              {/* Right Collapsible & Resizable Story, SIEM & Sources Inspector Panel */}
+              {/* Right Collapsible & Resizable Story, Steps, SIEM & Sources Inspector Panel */}
               <AnimatePresence initial={false}>
                 {inspectorOpen && (
                   <InspectorPanel
                     scenario={activeScenario}
                     currentStage={stageView.currentStage}
+                    cinematicPhase={cinematicPhase}
+                    isPlaying={isPlaying}
                     activeEnvironment={activeEnvironment}
                     selectedTelemetry={selectedTelemetry}
                     onSelectTelemetry={handleSelectTelemetry}
                     onSelectStage={handleSelectStage}
                     onStartWalkthrough={handleStartGuidedWalkthrough}
+                    onTogglePlay={handleTogglePlay}
+                    onResetWalkthrough={handleReset}
                     onClearTelemetrySelection={() => setSelectedTelemetryId(null)}
                     onOpenSourcesModal={() => setSourcesModalOpen(true)}
                     width={inspectorWidth}

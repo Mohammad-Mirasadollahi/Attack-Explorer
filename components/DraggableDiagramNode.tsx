@@ -1,7 +1,7 @@
 'use client';
 
 import React, { memo, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { SketchNodeIcon } from './SketchNodeIcons';

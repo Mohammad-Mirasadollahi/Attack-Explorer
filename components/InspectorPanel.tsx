@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   AttackScenario,
@@ -14,19 +14,24 @@ import {
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT } from '@/lib/attack-sources-and-legal';
+import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import {
   ArrowLeft,
+  BookOpen,
   ExternalLink,
   FileTerminal,
   GripVertical,
   Layers,
+  ListOrdered,
   Scale,
-  ShieldCheck } from 'lucide-react';
+  ShieldCheck,
+  Sparkles } from 'lucide-react';
 import { LogInspector } from './LogInspector';
 import { SelectedTelemetryDetail } from './SelectedTelemetryDetail';
 import { SourcesAndLegalContent } from './SourcesAndLegalModal';
 import { MitreStats } from './MitreStats';
 import { ThreatIntelCard } from './ThreatIntelCard';
+import { StepByStepGuidePanel } from './StepByStepGuidePanel';
 
 export const MIN_INSPECTOR_WIDTH = 260;
 export const MAX_INSPECTOR_WIDTH = 620;
@@ -35,10 +40,14 @@ export const DEFAULT_INSPECTOR_WIDTH = 350;
 interface InspectorPanelProps {
   scenario: AttackScenario;
   currentStage: AttackStage | null;
+  cinematicPhase?: CinematicPhase | null;
+  isPlaying?: boolean;
   selectedTelemetry: TelemetryEvent | null;
   onSelectTelemetry?: (event: TelemetryEvent) => void;
   onSelectStage?: (stageIndex: number) => void;
   onStartWalkthrough?: () => void;
+  onTogglePlay?: () => void;
+  onResetWalkthrough?: () => void;
   onClearTelemetrySelection: () => void;
   onOpenSourcesModal?: () => void;
   activeEnvironment?: ActiveEnvironmentId;
@@ -49,18 +58,32 @@ interface InspectorPanelProps {
 export function InspectorPanel({
   scenario,
   currentStage,
+  cinematicPhase = 'OVERVIEW',
+  isPlaying = false,
   selectedTelemetry,
   onSelectTelemetry,
   onSelectStage,
+  onStartWalkthrough,
+  onTogglePlay,
+  onResetWalkthrough,
   onClearTelemetrySelection,
   onOpenSourcesModal,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   width = DEFAULT_INSPECTOR_WIDTH,
   onResizeWidth }: InspectorPanelProps) {
   const [panelMode, setPanelMode] = useState<
-    'STORY_AND_SPECS' | 'FULL_LOGS' | 'SOURCES_AND_LEGAL'
-  >('STORY_AND_SPECS');
+    'STORY_AND_SPECS' | 'STEP_GUIDE' | 'FULL_LOGS' | 'SOURCES_AND_LEGAL'
+  >(isPlaying ? 'STEP_GUIDE' : 'STORY_AND_SPECS');
   const [isDragging, setIsDragging] = useState(false);
+
+  // Automatically reveal the Step-by-Step Guide in the Right Panel when Auto-Play starts
+  useEffect(() => {
+    if (!isPlaying) return;
+    const rafId = window.requestAnimationFrame(() => {
+      setPanelMode('STEP_GUIDE');
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [isPlaying]);
 
   const activeStageIndex = currentStage ? currentStage.index : 0;
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
@@ -179,12 +202,12 @@ export function InspectorPanel({
       className="absolute lg:relative inset-y-0 lg:inset-y-auto right-0 z-50 lg:z-20 max-w-[90vw] shrink-0 bg-white dark:bg-zinc-950 border-l border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-full shadow-2xl lg:shadow-none overflow-hidden"
     >
       {resizeHandleNode}
-      {/* 3-Tab Segmented Mode Header: Overview | SIEM Logs | Sources */}
+      {/* 4-Tab Segmented Mode Header: Overview | Steps | SIEM Logs | Sources */}
       <div className="p-3 border-b border-zinc-200/70 dark:border-zinc-800/80 shrink-0">
         <div
           role="tablist"
           aria-label="Inspector Mode"
-          className="grid grid-cols-3 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900"
+          className="grid grid-cols-4 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900"
         >
           <button
             type="button"
@@ -192,7 +215,7 @@ export function InspectorPanel({
             data-testid="inspector-tab-overview"
             aria-selected={panelMode === 'STORY_AND_SPECS'}
             onClick={() => setPanelMode('STORY_AND_SPECS')}
-            className="relative flex items-center justify-center gap-1 py-1 px-1.5 text-[10.5px] font-medium rounded-md transition-colors cursor-pointer"
+            className="relative flex items-center justify-center gap-1 py-1 px-1 text-[10px] font-medium rounded-md transition-colors cursor-pointer"
           >
             {panelMode === 'STORY_AND_SPECS' && (
               <motion.span
@@ -216,10 +239,38 @@ export function InspectorPanel({
           <button
             type="button"
             role="tab"
+            data-testid="inspector-tab-step-guide"
+            aria-selected={panelMode === 'STEP_GUIDE'}
+            onClick={() => setPanelMode('STEP_GUIDE')}
+            title="Step-by-Step Diagram Walkthrough & Scenario Briefing"
+            className="relative flex items-center justify-center gap-1 py-1 px-1 text-[10px] font-medium rounded-md transition-colors cursor-pointer"
+          >
+            {panelMode === 'STEP_GUIDE' && (
+              <motion.span
+                layoutId="inspectorMainModePill"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                className="absolute inset-0 rounded-md bg-white dark:bg-zinc-800 shadow-2xs"
+              />
+            )}
+            <span
+              className={`relative z-10 flex items-center gap-1 ${
+                panelMode === 'STEP_GUIDE'
+                  ? 'text-indigo-600 dark:text-indigo-300 font-semibold'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+              }`}
+            >
+              <ListOrdered className="w-3 h-3 shrink-0" />
+              <span className="whitespace-nowrap">Steps</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
             data-testid="inspector-tab-logs"
             aria-selected={panelMode === 'FULL_LOGS'}
             onClick={() => setPanelMode('FULL_LOGS')}
-            className="relative flex items-center justify-center gap-1 py-1 px-1.5 text-[10.5px] font-medium rounded-md transition-colors cursor-pointer"
+            className="relative flex items-center justify-center gap-1 py-1 px-1 text-[10px] font-medium rounded-md transition-colors cursor-pointer"
           >
             {panelMode === 'FULL_LOGS' && (
               <motion.span
@@ -246,7 +297,7 @@ export function InspectorPanel({
             data-testid="inspector-tab-sources"
             aria-selected={panelMode === 'SOURCES_AND_LEGAL'}
             onClick={() => setPanelMode('SOURCES_AND_LEGAL')}
-            className="relative flex items-center justify-center gap-1 py-1 px-1.5 text-[10.5px] font-medium rounded-md transition-colors cursor-pointer"
+            className="relative flex items-center justify-center gap-1 py-1 px-1 text-[10px] font-medium rounded-md transition-colors cursor-pointer"
           >
             {panelMode === 'SOURCES_AND_LEGAL' && (
               <motion.span
@@ -301,14 +352,14 @@ export function InspectorPanel({
                   title={
                     currentStage
                       ? `Stage ${currentStage.index} of ${scenario.stages.length} · ${currentStage.mitreTechniqueId}`
-                      : `Scenario Overview · ${scenario.code}`
+                      : `Scenario Briefing · ${scenario.code}`
                   }
                   className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 tabular-nums min-w-0"
                 >
                   <span>
                     {currentStage
                       ? `Stage ${currentStage.index} of ${scenario.stages.length}`
-                      : 'Scenario Overview'}
+                      : 'Scenario Briefing'}
                   </span>
                   <span aria-hidden="true">·</span>
                   <span className="shrink-0">
@@ -323,11 +374,11 @@ export function InspectorPanel({
                     type="button"
                     data-testid="inspector-back-to-overview-btn"
                     onClick={() => onSelectStage(0)}
-                    title="Return to full scenario overview"
+                    title="Return to full scenario briefing"
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-[10.5px] font-mono font-semibold text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer shrink-0"
                   >
                     <ArrowLeft className="w-3 h-3" />
-                    <span>OVERVIEW</span>
+                    <span>BRIEFING</span>
                   </button>
                 )}
               </div>
@@ -365,6 +416,22 @@ export function InspectorPanel({
                   </p>
                 </>
               )}
+
+              {/* Quick CTA to open the numbered Step-by-Step Diagram Walkthrough */}
+              <button
+                type="button"
+                data-testid="inspector-open-step-guide-btn"
+                onClick={() => setPanelMode('STEP_GUIDE')}
+                className="w-full mt-1.5 px-3 py-2 rounded-lg bg-indigo-50/90 hover:bg-indigo-100/90 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-between gap-2 text-left transition-colors cursor-pointer"
+              >
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-indigo-900 dark:text-indigo-200 min-w-0 leading-snug">
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span>Plain-Language Step-by-Step Guide</span>
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-mono font-bold shrink-0">
+                  {scenario.stages.length} STEPS
+                </span>
+              </button>
             </div>
 
             {/* Live Packet Card when in a Stage */}
@@ -461,13 +528,34 @@ export function InspectorPanel({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                    Attack Chain Stages
+                    Scenario Briefing & Attack Chain Stages
                   </h4>
                   <span className="text-[11px] font-mono text-zinc-400 tabular-nums">
                     {scenario.stages.length}
                   </span>
                 </div>
                 <div className="divide-y divide-zinc-100 dark:divide-zinc-800/70">
+                  {/* Step 0: Scenario Briefing right at the start of the stages list */}
+                  <button
+                    type="button"
+                    data-testid="overview-stage-briefing-btn"
+                    onClick={() => setPanelMode('STEP_GUIDE')}
+                    className="w-full py-2.5 flex flex-col gap-0.5 bg-amber-50/50 hover:bg-amber-100/60 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 rounded-lg px-2 -mx-2 transition-colors cursor-pointer text-left min-w-0"
+                  >
+                    <div className="flex items-start justify-between gap-2 w-full min-w-0">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 dark:text-amber-300 min-w-0 leading-snug break-words">
+                        <Sparkles className="w-3 h-3 shrink-0" />
+                        <span>0. Scenario Briefing (Full Topology Survey)</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 shrink-0">
+                        BRIEFING
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug break-words w-full">
+                      {scenario.shortSubtitle}
+                    </p>
+                  </button>
+
                   {scenario.stages.map((st) => (
                     <button
                       key={st.index}
@@ -555,6 +643,19 @@ export function InspectorPanel({
               </p>
             </div>
           </>
+        ) : panelMode === 'STEP_GUIDE' ? (
+          <StepByStepGuidePanel
+            scenario={scenario}
+            activeStageIndex={activeStageIndex}
+            cinematicPhase={cinematicPhase}
+            isPlaying={isPlaying}
+            activeEnvironment={activeEnvironment}
+            onSelectStage={onSelectStage}
+            onSelectTelemetry={onSelectTelemetry}
+            onStartWalkthrough={onStartWalkthrough}
+            onTogglePlay={onTogglePlay}
+            onResetWalkthrough={onResetWalkthrough}
+          />
         ) : panelMode === 'FULL_LOGS' ? (
           <LogInspector
             scenario={scenario}

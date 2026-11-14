@@ -1091,6 +1091,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       'components/AttackVisualizer.tsx',
       'components/DraggableDiagramNode.tsx',
       'components/InspectorPanel.tsx',
+      'components/StepByStepGuidePanel.tsx',
       'components/MitreStats.tsx',
       'components/ThreatIntelCard.tsx',
       'components/canvas/ProcessMemoryView.tsx',

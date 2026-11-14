@@ -85,13 +85,12 @@ export function AnimeIntroLoader({
       data-testid="anime-intro-loader"
       data-intro-phase={seq.phase.id}
       data-intro-progress={seq.progressPct}
-      initial={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+      initial={{ opacity: 1, scale: 1 }}
       exit={{
         opacity: 0,
-        scale: 1.06,
-        y: -28,
-        filter: 'blur(10px)',
-        transition: { duration: 0.62, ease: [0.16, 1, 0.3, 1] },
+        scale: 1.03,
+        y: -16,
+        transition: { duration: 0.32, ease: 'easeOut' },
       }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-between p-6 sm:p-10 excalidraw-board-bg text-zinc-900 dark:text-zinc-100 select-none overflow-hidden"
     >
