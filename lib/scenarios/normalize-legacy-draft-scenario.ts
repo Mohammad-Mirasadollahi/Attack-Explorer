@@ -8,6 +8,7 @@ import {
   TelemetryEvent,
   TelemetrySourceType,
 } from './types';
+import { formatAttackCategoryLabel } from '../attack-category-labels';
 
 /**
  * Draft/legacy scenario shape used by incomplete Batch 6–9 files.
@@ -418,7 +419,7 @@ export function normalizeLegacyDraftScenario(
     id: draft.id,
     code: techniqueId,
     name: draft.title,
-    shortSubtitle: `${draft.category.replace(/_/g, ' ')} · ${techniqueId}`,
+    shortSubtitle: `${formatAttackCategoryLabel(draft.category)} · ${techniqueId}`,
     category: draft.category,
     severity: 'CRITICAL',
     primaryMitrePhase: stages[0]?.mitreTacticPhase || 1,

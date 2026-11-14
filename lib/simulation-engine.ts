@@ -5,6 +5,12 @@ import {
   AttackStage,
   TelemetryEvent,
   TelemetrySourceType } from './attack-scenarios';
+import {
+  formatAttackCategoryLabel,
+  getAttackCategoryGroupMeta,
+} from './attack-category-labels';
+
+export { formatAttackCategoryLabel };
 
 export type ActiveEnvironmentId = 'WORKSTATION' | 'SERVER' | 'CLOUD';
 
@@ -251,13 +257,6 @@ export function sortScenarios(
   }
 }
 
-const CATEGORY_GROUP_META: Record<string, { label: string; order: number }> = {
-  MALWARE: { label: 'Malware & Process Execution', order: 1 },
-  LOG_ANALYSIS: { label: 'DFIR & Log Forensics', order: 2 },
-  ACTIVE_DIRECTORY: { label: 'Active Directory & Identity', order: 3 },
-  NETWORK_WEB: { label: 'Network & C2 Exfiltration', order: 4 },
-};
-
 function getMitreTacticGroupMeta(phase: number): {
   key: string;
   label: string;
@@ -336,10 +335,7 @@ export function categorizeScenarios(
     { label: string; order: number; list: AttackScenario[] }
   >();
   for (const sc of scenarios) {
-    const meta = CATEGORY_GROUP_META[sc.category] || {
-      label: sc.category,
-      order: 99,
-    };
+    const meta = getAttackCategoryGroupMeta(sc.category);
     const existing = map.get(sc.category);
     if (existing) {
       existing.list.push(sc);
