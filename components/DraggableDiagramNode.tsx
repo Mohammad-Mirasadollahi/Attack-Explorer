@@ -163,11 +163,6 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       onBlur={() => onHoverChange(null)}
       onClick={(e) => onNodeClick(node, e)}
       onDoubleClick={(e) => onNodeDoubleClick?.(node, e)}
-      title={`${node.actionBadge} · ${node.label} (${node.sublabel})${
-        node.hostContext ? ` — ${node.hostContext}` : ''
-      }${node.activitySummary ? ` | ${node.activitySummary}` : ''}${
-        isSubBoard ? '' : ' · Double-click to expand'
-      }`}
       style={{
         left: `${leftPct}%`,
         top: `${topPct}%`,
@@ -203,12 +198,12 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       <span
         role="checkbox"
         aria-checked={isMultiSelected}
-        data-testid={`node-multiselect-toggle-${node.id}`}
-        title={
+        aria-label={
           isMultiSelected
             ? 'Selected in group (Shift+Click or click checkbox to deselect, or drag to move group)'
             : 'Shift+Click node or click checkbox to add to multi-selection group'
         }
+        data-testid={`node-multiselect-toggle-${node.id}`}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => onToggleMultiSelect(node.id, e)}
         className={`canvas-interactive-control nopan absolute -top-2 -right-2 z-30 w-4 h-4 rounded-md border flex items-center justify-center transition-all cursor-pointer ${
@@ -253,7 +248,6 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       )}
 
       <span
-        title={node.actionBadge}
         className={`mb-0.5 px-2 py-0.5 text-[7.5px] font-mono font-bold border rounded-full shadow-2xs transition-transform group-hover:scale-105 whitespace-nowrap ${
           node.isNetworkDevice
             ? 'bg-teal-600 text-white border-teal-800'
@@ -301,7 +295,6 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         }`}
       >
         <div
-          title={node.label}
           className={`text-[9.5px] font-bold leading-snug whitespace-nowrap ${
             tacticalMode
               ? 'text-emerald-100'
@@ -311,7 +304,6 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
           {node.label}
         </div>
         <div
-          title={node.sublabel}
           className={`text-[8px] font-mono leading-snug whitespace-nowrap ${
             tacticalMode
               ? 'text-emerald-400/85'

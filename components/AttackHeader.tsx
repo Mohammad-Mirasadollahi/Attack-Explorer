@@ -207,7 +207,14 @@ export function AttackHeader({
       >
         {/* Left Zone: Animated Logo + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <AnimeBrandLogo size="sm" showWordmark onClick={onReplayIntro} />
+          <WorkbenchIconTooltip
+            label="Attack Explorer"
+            badge="INTRO"
+            detail="Click to replay anime entrance sequence"
+            align="left"
+          >
+            <AnimeBrandLogo size="sm" showWordmark onClick={onReplayIntro} />
+          </WorkbenchIconTooltip>
 
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
 

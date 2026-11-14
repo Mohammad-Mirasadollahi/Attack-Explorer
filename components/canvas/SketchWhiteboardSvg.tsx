@@ -213,7 +213,6 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
               }}
               className="canvas-interactive-zone nopan cursor-grab active:cursor-grabbing"
             >
-              <title>{`Drag "${zone.title}" to reposition this Network Zone`}</title>
               <rect
                 x={0}
                 y={0}

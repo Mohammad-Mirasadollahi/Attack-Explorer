@@ -254,6 +254,54 @@ export function AttackVisualizer({
   );
 
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [diagramTooltipsEnabled, setDiagramTooltipsEnabled] =
+    useState<boolean>(true);
+  const [diagramTooltipCollapsed, setDiagramTooltipCollapsed] =
+    useState<boolean>(false);
+  const hoverClearTimeoutRef = useRef<number | null>(null);
+
+  const clearHoverTimeout = useCallback(() => {
+    if (hoverClearTimeoutRef.current !== null) {
+      window.clearTimeout(hoverClearTimeoutRef.current);
+      hoverClearTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleNodeHoverChange = useCallback(
+    (nextNodeId: string | null) => {
+      clearHoverTimeout();
+      if (nextNodeId !== null) {
+        setHoveredNodeId(nextNodeId);
+      } else {
+        hoverClearTimeoutRef.current = window.setTimeout(() => {
+          setHoveredNodeId(null);
+          hoverClearTimeoutRef.current = null;
+        }, 185);
+      }
+    },
+    [clearHoverTimeout]
+  );
+
+  const handleTooltipMouseEnter = useCallback(() => {
+    clearHoverTimeout();
+  }, [clearHoverTimeout]);
+
+  const handleTooltipMouseLeave = useCallback(() => {
+    clearHoverTimeout();
+    hoverClearTimeoutRef.current = window.setTimeout(() => {
+      setHoveredNodeId(null);
+      hoverClearTimeoutRef.current = null;
+    }, 140);
+  }, [clearHoverTimeout]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverClearTimeoutRef.current !== null) {
+        window.clearTimeout(hoverClearTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const [portalOrigin, setPortalOrigin] = useState<{
     xPct: number;
     yPct: number;
@@ -1547,10 +1595,16 @@ export function AttackVisualizer({
 
   const hoveredNode = useMemo(
     () =>
-      !isDraggingNodes && !isBoxSelectHoldActive
+      diagramTooltipsEnabled && !isDraggingNodes && !isBoxSelectHoldActive
         ? activeNodes.find((n) => n.id === hoveredNodeId) || null
         : null,
-    [activeNodes, hoveredNodeId, isBoxSelectHoldActive, isDraggingNodes]
+    [
+      activeNodes,
+      diagramTooltipsEnabled,
+      hoveredNodeId,
+      isBoxSelectHoldActive,
+      isDraggingNodes,
+    ]
   );
 
   const envBadgeColorClass =
@@ -1741,6 +1795,40 @@ export function AttackVisualizer({
             {multiSelectedNodeIds.length === activeNodes.length
               ? 'Deselect All'
               : 'Select All'}
+          </span>
+        </button>
+      </WorkbenchIconTooltip>
+
+      {/* Diagram Node Tooltips Show / Hide Toggle Button */}
+      <WorkbenchIconTooltip
+        label={
+          diagramTooltipsEnabled
+            ? 'Diagram Tooltips: Shown'
+            : 'Diagram Tooltips: Hidden'
+        }
+        badge={diagramTooltipsEnabled ? 'SHOW' : 'HIDE'}
+        detail="Toggle hover inspection tooltips on diagram nodes (or use Hide/Show inside any diagram tooltip)"
+        side="bottom"
+        isDiagramTooltip={true}
+      >
+        <button
+          type="button"
+          data-testid="canvas-toggle-diagram-tooltips-btn"
+          aria-pressed={diagramTooltipsEnabled}
+          onClick={() => setDiagramTooltipsEnabled((prev) => !prev)}
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+            diagramTooltipsEnabled
+              ? 'bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
+              : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
+          }`}
+        >
+          {diagramTooltipsEnabled ? (
+            <Eye className="w-3 h-3 text-emerald-500 shrink-0" />
+          ) : (
+            <EyeOff className="w-3 h-3 shrink-0" />
+          )}
+          <span className="hidden xl:inline">
+            {diagramTooltipsEnabled ? 'Tooltips: Show' : 'Tooltips: Hide'}
           </span>
         </button>
       </WorkbenchIconTooltip>
@@ -2122,14 +2210,7 @@ export function AttackVisualizer({
                 className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-xl min-w-[260px] rounded-xl bg-slate-950/92 text-white border border-rose-500/50 shadow-2xl px-4 py-2.5 backdrop-blur-md"
               >
                 <div className="flex items-center justify-between gap-2 min-w-0 text-[10px] font-mono text-rose-400 uppercase tracking-wider">
-                  <span
-                    title={
-                      director.phase === 'INTRO_SURVEY'
-                        ? 'SCENARIO BRIEFING · FULL TOPOLOGY SURVEY'
-                        : 'CAMERA LOCKING ON ATTACK ORIGIN'
-                    }
-                    className="inline-flex items-center gap-1.5 font-bold min-w-0"
-                  >
+                  <span className="inline-flex items-center gap-1.5 font-bold min-w-0">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     <span className="leading-snug break-words">
                       {director.phase === 'INTRO_SURVEY'
@@ -2137,40 +2218,25 @@ export function AttackVisualizer({
                         : 'CAMERA LOCKING ON ATTACK ORIGIN'}
                     </span>
                   </span>
-                  <span
-                    title={scenario.code}
-                    className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0"
-                  >
+                  <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
                     {scenario.code}
                   </span>
                 </div>
-                <div
-                  title={scenario.name}
-                  className="mt-1 text-xs sm:text-sm font-bold text-white leading-snug break-words"
-                >
+                <div className="mt-1 text-xs sm:text-sm font-bold text-white leading-snug break-words">
                   {scenario.name}
                 </div>
-                <div
-                  title={scenario.overview}
-                  className="mt-0.5 text-[11px] text-slate-300 leading-snug break-words"
-                >
+                <div className="mt-0.5 text-[11px] text-slate-300 leading-snug break-words">
                   {scenario.overview}
                 </div>
                 {director.originNode && director.finalNode && (
                   <div className="mt-1.5 pt-1.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 min-w-0 text-[10px] font-mono text-amber-300">
-                    <span
-                      title={`START: ${director.originNode.label}`}
-                      className="min-w-0 leading-snug"
-                    >
+                    <span className="min-w-0 leading-snug">
                       START: {director.originNode.label}
                     </span>
                     <span className="text-rose-400 shrink-0">
                       ── {scenario.stages.length} STAGES ──▶
                     </span>
-                    <span
-                      title={`END: ${director.finalNode.label}`}
-                      className="text-emerald-400 min-w-0 leading-snug"
-                    >
+                    <span className="text-emerald-400 min-w-0 leading-snug">
                       END: {director.finalNode.label}
                     </span>
                   </div>
@@ -2455,17 +2521,6 @@ export function AttackVisualizer({
                     style={{ left: '0%', top: '0%', width: '0%', height: '0%' }}
                   />
 
-                  {/* Hover-Based Technical Summary Tooltip for Network Nodes */}
-                  <AnimatePresence>
-                    {hoveredNode && (
-                      <NodeHoverTooltip
-                        key={`hover-tooltip-${hoveredNode.id}`}
-                        node={hoveredNode}
-                        isSubBoard={Boolean(internalSubBoard)}
-                      />
-                    )}
-                  </AnimatePresence>
-
                 {/* Floating Speech-Bubble Callout */}
                 <AnimatePresence mode="wait">
                   {director.activeCallout && (
@@ -2478,52 +2533,37 @@ export function AttackVisualizer({
                       transition={{
                         type: 'spring',
                         stiffness: 380,
-                          damping: 24,
-                        }}
+                        damping: 24,
+                      }}
                       style={{
                         left: `${(director.activeCallout.wx / 1480) * 100}%`,
-                          top: `${(director.activeCallout.wy / 650) * 100}%`,
-                        }}
-                        className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 min-w-[240px] max-w-[300px] rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
+                        top: `${(director.activeCallout.wy / 650) * 100}%`,
+                      }}
+                      className={`pointer-events-none absolute -translate-x-1/2 z-30 w-72 min-w-[240px] max-w-[300px] rounded-xl bg-slate-950/95 text-white border border-rose-500/70 shadow-[0_10px_28px_rgba(15,23,42,0.55)] px-3 py-2 ${
                         director.activeCallout.placement === 'TOP'
                           ? '-translate-y-[calc(100%+58px)]'
                           : 'translate-y-[58px]'
                       }`}
                     >
-                        <div className="flex items-center justify-between gap-1.5 min-w-0 text-[9.5px] font-mono">
-                          <span
-                            title={director.activeCallout.stepBadge}
-                            className="inline-flex items-center gap-1 font-bold text-amber-300 min-w-0"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
-                            <span className="leading-snug break-words">
-                              {director.activeCallout.stepBadge}
-                            </span>
+                      <div className="flex items-center justify-between gap-1.5 min-w-0 text-[9.5px] font-mono">
+                        <span className="inline-flex items-center gap-1 font-bold text-amber-300 min-w-0">
+                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
+                          <span className="leading-snug break-words">
+                            {director.activeCallout.stepBadge}
+                          </span>
                         </span>
                       </div>
-                        <div
-                          title={director.activeCallout.headline}
-                          className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words"
-                        >
+                      <div className="mt-0.5 text-[11px] font-extrabold text-white leading-snug break-words">
                         {director.activeCallout.headline}
                       </div>
-                        <div
-                          title={director.activeCallout.detail}
-                          className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words"
-                        >
+                      <div className="mt-0.5 text-[10px] text-slate-300 leading-snug break-words">
                         {director.activeCallout.detail}
                       </div>
-                        <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 min-w-0 text-[9px] font-mono">
-                          <span
-                            title={director.activeCallout.forwardTag}
-                            className="text-rose-400 font-bold leading-snug break-words"
-                          >
+                      <div className="mt-1.5 pt-1 border-t border-slate-800 flex flex-wrap items-center justify-between gap-1 min-w-0 text-[9px] font-mono">
+                        <span className="text-rose-400 font-bold leading-snug break-words">
                           {director.activeCallout.forwardTag}
                         </span>
-                          <span
-                            title={director.activeCallout.returnTag}
-                            className="text-emerald-400 font-bold leading-snug break-words"
-                          >
+                        <span className="text-emerald-400 font-bold leading-snug break-words">
                           {director.activeCallout.returnTag}
                         </span>
                       </div>
@@ -2575,7 +2615,7 @@ export function AttackVisualizer({
                         tacticalMode={tacticalMode}
                         onStartNodeGroupDrag={handleNodePointerDown}
                         onToggleMultiSelect={toggleNodeInMultiSelection}
-                        onHoverChange={setHoveredNodeId}
+                        onHoverChange={handleNodeHoverChange}
                         onNodeClick={handleDiagramNodeClick}
                         onNodeDoubleClick={handleDiagramNodeDoubleClick}
                       />
@@ -2586,6 +2626,25 @@ export function AttackVisualizer({
             </motion.div>
           </AnimatePresence>
           </CanvasController>
+
+          {/* Viewport-Clamped, Collision-Aware Diagram Node Hover Tooltip (Rendered at Board Container Scope) */}
+          <AnimatePresence>
+            {hoveredNode && (
+              <NodeHoverTooltip
+                key={`hover-tooltip-${hoveredNode.id}`}
+                node={hoveredNode}
+                allNodes={activeNodes}
+                isSubBoard={Boolean(internalSubBoard)}
+                boardContainerRef={boardContainerRef}
+                isCollapsed={diagramTooltipCollapsed}
+                onToggleCollapsed={() =>
+                  setDiagramTooltipCollapsed((prev) => !prev)
+                }
+                onTooltipMouseEnter={handleTooltipMouseEnter}
+                onTooltipMouseLeave={handleTooltipMouseLeave}
+              />
+            )}
+          </AnimatePresence>
 
           {/* Bottom-Center Floating "Show Details" Pill when Inside SubBoard and Bottom Dock is Hidden */}
           {internalSubBoard && activeInternalSubNode && bottomDockHidden && (
@@ -2824,10 +2883,7 @@ export function AttackVisualizer({
               </div>
             </div>
 
-            <p
-              title={activeInternalSubNode.internalSummary}
-              className="w-full text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words"
-            >
+            <p className="w-full text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
               {activeInternalSubNode.internalSummary}
             </p>
           </motion.div>

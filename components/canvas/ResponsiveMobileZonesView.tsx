@@ -60,16 +60,12 @@ export function ResponsiveMobileZonesView({
               {/* Compact Zone Header Badge */}
               <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 bg-white/95 dark:bg-zinc-900/95 px-2 py-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800">
                 <span
-                  title={zone.code}
                   style={{ backgroundColor: zone.accentHex }}
                   className="px-1.5 py-0.5 text-[9px] font-mono font-bold text-white rounded uppercase shrink-0"
                 >
                   {zone.code}
                 </span>
-                <span
-                  title={zone.title}
-                  className="text-[10px] font-bold text-zinc-800 dark:text-zinc-100 min-w-0 leading-snug break-words"
-                >
+                <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-100 min-w-0 leading-snug break-words">
                   {zone.title}
                 </span>
               </div>
@@ -87,9 +83,6 @@ export function ResponsiveMobileZonesView({
                       key={node.id}
                       type="button"
                       whileTap={{ scale: 0.97 }}
-                      title={`${node.actionBadge} · ${node.label} (${node.sublabel})${
-                        node.hostContext ? ` | ${node.hostContext}` : ''
-                      }${node.activitySummary ? ` | ${node.activitySummary}` : ''} · Double-tap to expand`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectNode(node);
@@ -106,7 +99,6 @@ export function ResponsiveMobileZonesView({
                       }`}
                     >
                       <span
-                        title={node.actionBadge}
                         className={`mb-0.5 px-1.5 py-0.2 text-[8.5px] font-medium border rounded-full leading-snug break-words max-w-full ${
                           node.iconType === 'MALWARE_PAYLOAD'
                             ? 'bg-rose-50 dark:bg-rose-950/90 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700'
@@ -126,16 +118,10 @@ export function ResponsiveMobileZonesView({
                         isCompromised={node.isCompromised}
                       />
 
-                      <div
-                        title={node.label}
-                        className="mt-0.5 text-[10px] font-semibold text-zinc-900 dark:text-white leading-snug break-words w-full"
-                      >
+                      <div className="mt-0.5 text-[10px] font-semibold text-zinc-900 dark:text-white leading-snug break-words w-full">
                         {node.label}
                       </div>
-                      <div
-                        title={node.sublabel}
-                        className="text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words w-full"
-                      >
+                      <div className="text-[8.5px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words w-full">
                         {node.sublabel}
                       </div>
                     </motion.button>
@@ -153,7 +139,6 @@ export function ResponsiveMobileZonesView({
                       <button
                         key={flow.id}
                         type="button"
-                        title={`#${flow.sequenceCode || flow.stepNo} [S${flow.stageIndex}] · ${flow.initiatorLabel} ⇄ ${flow.targetLabel} | ${flow.forwardSeq}→ ${flow.label} · ⇠${flow.returnSeq} ${flow.returnLabel}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectTelemetry(flow.telemetryEvent);

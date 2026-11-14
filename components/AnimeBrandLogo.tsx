@@ -46,7 +46,6 @@ export function AnimeBrandLogo({
       whileTap={{ scale: 0.96 }}
       data-testid="anime-brand-logo"
       data-hovered={isHovered ? 'true' : 'false'}
-      title={onClick ? 'Attack Explorer — Click to replay anime entrance sequence' : undefined}
       className="inline-flex items-center gap-2.5 select-none group cursor-pointer shrink-0 py-0.5"
     >
       {/* Free-Standing Cel-Shaded Anime Vector Mark */}
