@@ -153,14 +153,21 @@ export const CanvasController = forwardRef<
         doubleClick={{
           disabled: true,
         }}
-        onPinching={(ref) => {
+        onTransform={(_ref, state) => {
+          onTransformChange?.({
+            scale: state.scale,
+            positionX: state.positionX,
+            positionY: state.positionY,
+          });
+        }}
+        onPinch={(ref) => {
           onTransformChange?.({
             scale: ref.state.scale,
             positionX: ref.state.positionX,
             positionY: ref.state.positionY,
           });
         }}
-        onPinchingStop={(ref) => {
+        onPinchStop={(ref) => {
           onTransformChange?.({
             scale: ref.state.scale,
             positionX: ref.state.positionX,

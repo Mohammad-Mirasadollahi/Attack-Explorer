@@ -235,8 +235,36 @@ export function AttackVisualizer({
   const panOffsetRef = useRef<Point2D>({ x: 0, y: 0 });
   const manualZoomRef = useRef<number>(1);
   const panHudTextRef = useRef<HTMLSpanElement | null>(null);
+  const marqueeElRef = useRef<HTMLDivElement | null>(null);
   const didDragObjectRef = useRef<boolean>(false);
   const spacePressedRef = useRef<boolean>(false);
+  const boardGestureActiveRef = useRef<boolean>(false);
+
+  const hideMarqueeEl = useCallback(() => {
+    const el = marqueeElRef.current;
+    if (!el) return;
+    el.hidden = true;
+    el.style.left = '0%';
+    el.style.top = '0%';
+    el.style.width = '0%';
+    el.style.height = '0%';
+  }, []);
+
+  const paintMarqueeEl = useCallback((box: MarqueeBoxCoords) => {
+    const el = marqueeElRef.current;
+    if (!el) return;
+    const left = (Math.min(box.startWx, box.currentWx) / WHITEBOARD_WIDTH) * 100;
+    const top = (Math.min(box.startWy, box.currentWy) / WHITEBOARD_HEIGHT) * 100;
+    const width =
+      (Math.abs(box.currentWx - box.startWx) / WHITEBOARD_WIDTH) * 100;
+    const height =
+      (Math.abs(box.currentWy - box.startWy) / WHITEBOARD_HEIGHT) * 100;
+    el.hidden = false;
+    el.style.left = `${left}%`;
+    el.style.top = `${top}%`;
+    el.style.width = `${width}%`;
+    el.style.height = `${height}%`;
+  }, []);
 
   const isCanvasInteracting =
     isPanningCanvas || isDraggingNodes || isBoxSelectHoldActive;
@@ -249,6 +277,7 @@ export function AttackVisualizer({
       } else if (e.key === 'Escape') {
         setMultiSelectedNodeIds([]);
         setMarqueeBox(null);
+        hideMarqueeEl();
       }
     };
     const onKeyUp = (e: KeyboardEvent) => {
@@ -262,7 +291,7 @@ export function AttackVisualizer({
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, []);
+  }, [hideMarqueeEl]);
 
   const {
     zones: scenarioZones,
@@ -475,6 +504,7 @@ export function AttackVisualizer({
     canvasControllerRef.current?.resetTransform();
     setMultiSelectedNodeIds([]);
     setMarqueeBox(null);
+    hideMarqueeEl();
     setNodeOffsetsByScenario((prev) => {
       const next = { ...prev };
       delete next[boardScopeKey];
@@ -490,7 +520,7 @@ export function AttackVisualizer({
       delete next[boardScopeKey];
       return next;
     });
-  }, [boardScopeKey]);
+  }, [boardScopeKey, hideMarqueeEl]);
 
   const handleAutoLayoutNodes = useCallback(() => {
     const baseNodes = rawInternalSubBoard
@@ -662,14 +692,15 @@ export function AttackVisualizer({
   }, [internalSubBoard]);
 
   // Canvas Empty Space Pointer Down:
-  // - Left-Click & Drag (`button === 0`) -> Pans canvas at 60/120fps without React re-renders
-  // - Right-Click & Drag (`button === 2`) -> Draws marquee selection box
-  // - Simple Left-Click / Right-Click without dragging -> Zero state thrashing or timer freezes
+  // - Left-Click & Drag (`button === 0`) -> Pans canvas without remounting motion HUD nodes
+  // - Right-Click & Drag (`button === 2`) -> Imperative marquee box + commit selection on up
+  // Avoid AnimatePresence mount/unmount during the gesture (fixes removeChild crashes).
   const handleBoardPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0 && e.button !== 2) return;
       // Secondary touch fingers belong to pinch-zoom — do not start pan/select.
       if (e.pointerType === 'touch' && e.isPrimary === false) return;
+      if (boardGestureActiveRef.current) return;
 
       const targetEl = e.target instanceof Element ? e.target : null;
       if (!targetEl) return;
@@ -701,6 +732,14 @@ export function AttackVisualizer({
 
       const currentBoardEl = e.currentTarget as HTMLElement;
       const pointerId = e.pointerId;
+      // Capture before any React state update so the board node stays stable.
+      try {
+        currentBoardEl.setPointerCapture(pointerId);
+      } catch {
+        // Ignore if pointer capture is unavailable on target
+      }
+
+      boardGestureActiveRef.current = true;
       const startClientX = e.clientX;
       const startClientY = e.clientY;
       const startPanX = panOffsetRef.current.x;
@@ -737,38 +776,35 @@ export function AttackVisualizer({
       const useMarqueeMode = holdResolution.useMarqueeSelection;
       let hasMoved = false;
       let holdActivated = false;
+      let cleanedUp = false;
       let panRafId: number | null = null;
       let marqueeRafId: number | null = null;
       let latestMarquee: MarqueeBoxCoords | null = null;
 
       const activateHoldMode = () => {
-        if (holdActivated) return;
+        if (holdActivated || cleanedUp) return;
         holdActivated = true;
         setInteractionMode(holdResolution.mode);
-        try {
-          currentBoardEl.setPointerCapture(pointerId);
-        } catch {
-          // Ignore if pointer capture is unavailable on target
-        }
         if (useMarqueeMode) {
           setIsBoxSelectHoldActive(true);
           setIsPanningCanvas(false);
-          setMarqueeBox((prev) =>
-            prev ?? {
-              startWx: startWb.wx,
-              startWy: startWb.wy,
-              currentWx: startWb.wx,
-              currentWy: startWb.wy,
-            }
-          );
+          latestMarquee = {
+            startWx: startWb.wx,
+            startWy: startWb.wy,
+            currentWx: startWb.wx,
+            currentWy: startWb.wy,
+          };
+          paintMarqueeEl(latestMarquee);
         } else {
           setIsPanningCanvas(true);
           setIsBoxSelectHoldActive(false);
+          hideMarqueeEl();
         }
       };
 
       const applyPanFrame = () => {
         panRafId = null;
+        if (cleanedUp) return;
         const { x, y } = panOffsetRef.current;
         canvasControllerRef.current?.setTransform(
           x,
@@ -787,26 +823,36 @@ export function AttackVisualizer({
 
       const applyMarqueeFrame = () => {
         marqueeRafId = null;
-        if (!latestMarquee) return;
-        setMarqueeBox(latestMarquee);
-        if (hasMoved) {
-          const hitIds = computeMarqueeSelectedNodeIds(
-            activeNodes,
-            latestMarquee
-          );
-          setMultiSelectedNodeIds(hitIds);
-        }
+        if (cleanedUp || !latestMarquee) return;
+        paintMarqueeEl(latestMarquee);
       };
 
       function handleWindowPointerUp() {
+        if (cleanedUp) return;
+        boardGestureActiveRef.current = false;
+
         if (panRafId !== null) {
           window.cancelAnimationFrame(panRafId);
-          applyPanFrame();
+          panRafId = null;
         }
         if (marqueeRafId !== null) {
           window.cancelAnimationFrame(marqueeRafId);
-          applyMarqueeFrame();
+          marqueeRafId = null;
         }
+        // Flush last paint before the cleanedUp latch so the final frame applies.
+        if (!useMarqueeMode && hasMoved) {
+          const { x, y } = panOffsetRef.current;
+          canvasControllerRef.current?.setTransform(
+            x,
+            y,
+            manualZoomRef.current,
+            0
+          );
+        } else if (useMarqueeMode && latestMarquee) {
+          paintMarqueeEl(latestMarquee);
+        }
+        cleanedUp = true;
+
         window.removeEventListener('pointermove', handleWindowPointerMove);
         window.removeEventListener('pointerup', handleWindowPointerUp);
         window.removeEventListener('pointercancel', handleWindowPointerUp);
@@ -821,7 +867,13 @@ export function AttackVisualizer({
         }
 
         if (holdActivated) {
-          if (!useMarqueeMode && hasMoved) {
+          if (useMarqueeMode && latestMarquee && hasMoved) {
+            const hitIds = computeMarqueeSelectedNodeIds(
+              activeNodes,
+              latestMarquee
+            );
+            setMultiSelectedNodeIds(hitIds);
+          } else if (!useMarqueeMode && hasMoved) {
             const nextPan = panOffsetRef.current;
             setPanOffset((prev) =>
               prev.x === nextPan.x && prev.y === nextPan.y
@@ -829,20 +881,30 @@ export function AttackVisualizer({
                 : { ...nextPan }
             );
           }
-          setIsPanningCanvas(false);
-          setIsBoxSelectHoldActive(false);
-          setMarqueeBox(null);
-        } else if (
-          e.button === 0 &&
-          !e.shiftKey &&
-          !e.ctrlKey &&
-          !e.metaKey
-        ) {
-          setMultiSelectedNodeIds((prev) => (prev.length === 0 ? prev : []));
+          // Defer HUD teardown one frame so Motion/React do not fight
+          // pointer-capture release (avoids removeChild NotFoundError).
+          window.requestAnimationFrame(() => {
+            setIsPanningCanvas(false);
+            setIsBoxSelectHoldActive(false);
+            hideMarqueeEl();
+            setMarqueeBox(null);
+          });
+        } else {
+          hideMarqueeEl();
+          if (
+            e.button === 0 &&
+            !e.shiftKey &&
+            !e.ctrlKey &&
+            !e.metaKey
+          ) {
+            setMultiSelectedNodeIds((prev) => (prev.length === 0 ? prev : []));
+          }
         }
       }
 
       function handleWindowPointerMove(moveEvent: PointerEvent) {
+        if (cleanedUp) return;
+        if (moveEvent.pointerId !== pointerId) return;
         if (moveEvent.pointerType === 'mouse' && moveEvent.buttons === 0) {
           handleWindowPointerUp();
           return;
@@ -882,7 +944,7 @@ export function AttackVisualizer({
       window.addEventListener('pointercancel', handleWindowPointerUp);
       window.addEventListener('blur', handleWindowPointerUp);
     },
-    [activeNodes, interactionMode]
+    [activeNodes, hideMarqueeEl, interactionMode, paintMarqueeEl]
   );
 
   // Dragging Single or Multiple Selected Nodes Simultaneously Across the Workspace (rAF-batched, cached rect)
@@ -938,7 +1000,11 @@ export function AttackVisualizer({
         });
       };
 
+      let cleanedUp = false;
+
       function handleWindowPointerUp() {
+        if (cleanedUp) return;
+        cleanedUp = true;
         if (dragRafId !== null) {
           window.cancelAnimationFrame(dragRafId);
           flushNodeDragDelta();
@@ -948,11 +1014,12 @@ export function AttackVisualizer({
         window.removeEventListener('pointercancel', handleWindowPointerUp);
         window.removeEventListener('blur', handleWindowPointerUp);
         if (startedDrag) {
-          setIsDraggingNodes(false);
+          window.requestAnimationFrame(() => setIsDraggingNodes(false));
         }
       }
 
       function handleWindowPointerMove(moveEvent: PointerEvent) {
+        if (cleanedUp) return;
         if (moveEvent.pointerType === 'mouse' && moveEvent.buttons === 0) {
           handleWindowPointerUp();
           return;
@@ -1063,7 +1130,11 @@ export function AttackVisualizer({
         }
       };
 
+      let cleanedUp = false;
+
       function handleWindowPointerUp() {
+        if (cleanedUp) return;
+        cleanedUp = true;
         if (zoneDragRafId !== null) {
           window.cancelAnimationFrame(zoneDragRafId);
           flushZoneDragDelta();
@@ -1073,12 +1144,15 @@ export function AttackVisualizer({
         window.removeEventListener('pointercancel', handleWindowPointerUp);
         window.removeEventListener('blur', handleWindowPointerUp);
         if (startedDrag) {
-          setIsDraggingNodes(false);
-          setDraggingZoneTitle(null);
+          window.requestAnimationFrame(() => {
+            setIsDraggingNodes(false);
+            setDraggingZoneTitle(null);
+          });
         }
       }
 
       function handleWindowPointerMove(moveEvent: PointerEvent) {
+        if (cleanedUp) return;
         if (moveEvent.pointerType === 'mouse' && moveEvent.buttons === 0) {
           handleWindowPointerUp();
           return;
@@ -1265,6 +1339,7 @@ export function AttackVisualizer({
       if (commandId === 'ESCAPE') {
         setMultiSelectedNodeIds([]);
         setMarqueeBox(null);
+        hideMarqueeEl();
         onCloseShortcutsModal?.();
         return;
       }
@@ -1342,6 +1417,7 @@ export function AttackVisualizer({
       handleResetCanvasLayout,
       handleSelectAllNodes,
       handleZoomByStep,
+      hideMarqueeEl,
       onCloseShortcutsModal,
       onOpenShortcutsModal,
       onStartWalkthrough,
@@ -1403,10 +1479,10 @@ export function AttackVisualizer({
 
   const hoveredNode = useMemo(
     () =>
-      !isDraggingNodes && !marqueeBox
+      !isDraggingNodes && !isBoxSelectHoldActive
         ? activeNodes.find((n) => n.id === hoveredNodeId) || null
         : null,
-    [activeNodes, hoveredNodeId, isDraggingNodes, marqueeBox]
+    [activeNodes, hoveredNodeId, isBoxSelectHoldActive, isDraggingNodes]
   );
 
   const envBadgeColorClass =
@@ -1923,42 +1999,39 @@ export function AttackVisualizer({
             )}
           </AnimatePresence>
 
-          {/* Panning, Box Selecting, or Zone Moving Active Indicator Pill */}
-          <AnimatePresence>
-            {(isPanningCanvas || isBoxSelectHoldActive || draggingZoneTitle) && (
-              <motion.div
-                key="panning-active-hud"
-                data-testid="canvas-panning-hud"
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-mono font-bold shadow-lg flex items-center gap-1.5 max-w-[90%]"
-              >
-                {draggingZoneTitle ? (
-                  <>
-                    <Move className="w-3.5 h-3.5 shrink-0" />
-                    <span className="whitespace-nowrap">
-                      Moving Zone: {draggingZoneTitle}
-                    </span>
-                  </>
-                ) : isBoxSelectHoldActive ? (
-                  <>
-                    <MousePointer className="w-3.5 h-3.5 shrink-0" />
-                    <span className="whitespace-nowrap">
-                      Box Select ({multiSelectedNodeIds.length} selected)
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Hand className="w-3.5 h-3.5 shrink-0" />
-                    <span ref={panHudTextRef} className="whitespace-nowrap">
-                      Panning Canvas ({panOffset.x}px, {panOffset.y}px)
-                    </span>
-                  </>
-                )}
-              </motion.div>
+          {/* Stable HUD (no AnimatePresence) — avoids removeChild races during pan/select */}
+          <div
+            data-testid="canvas-panning-hud"
+            aria-hidden={
+              !(isPanningCanvas || isBoxSelectHoldActive || draggingZoneTitle)
+            }
+            className={`pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-mono font-bold shadow-lg flex items-center gap-1.5 max-w-[90%] transition-opacity duration-150 ${
+              isPanningCanvas || isBoxSelectHoldActive || draggingZoneTitle
+                ? 'opacity-100'
+                : 'opacity-0'
+            }`}
+          >
+            {draggingZoneTitle ? (
+              <>
+                <Move className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">
+                  Moving Zone: {draggingZoneTitle}
+                </span>
+              </>
+            ) : isBoxSelectHoldActive ? (
+              <>
+                <MousePointer className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Box Select</span>
+              </>
+            ) : (
+              <>
+                <Hand className="w-3.5 h-3.5 shrink-0" />
+                <span ref={panHudTextRef} className="whitespace-nowrap">
+                  Panning Canvas
+                </span>
+              </>
             )}
-          </AnimatePresence>
+          </div>
 
           {/* 1. SCENARIO BRIEFING OVERLAY BANNER */}
           <AnimatePresence>
@@ -2283,35 +2356,14 @@ export function AttackVisualizer({
                     isInteracting={isCanvasInteracting}
                   />
 
-                  {/* Windows-Style Marquee Rubber-Band Selection Box */}
-                  {marqueeBox && (
-                    <div
-                      data-testid="windows-marquee-selection-box"
-                      style={{
-                        left: `${
-                          (Math.min(marqueeBox.startWx, marqueeBox.currentWx) /
-                            WHITEBOARD_WIDTH) *
-                          100
-                        }%`,
-                        top: `${
-                          (Math.min(marqueeBox.startWy, marqueeBox.currentWy) /
-                            WHITEBOARD_HEIGHT) *
-                          100
-                        }%`,
-                        width: `${
-                          (Math.abs(marqueeBox.currentWx - marqueeBox.startWx) /
-                            WHITEBOARD_WIDTH) *
-                          100
-                        }%`,
-                        height: `${
-                          (Math.abs(marqueeBox.currentWy - marqueeBox.startWy) /
-                            WHITEBOARD_HEIGHT) *
-                          100
-                        }%`,
-                      }}
-                      className="pointer-events-none absolute z-40 rounded-md bg-indigo-500/18 border-2 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.35)]"
-                    />
-                  )}
+                  {/* Persistent marquee node — painted imperatively during drag */}
+                  <div
+                    ref={marqueeElRef}
+                    hidden
+                    data-testid="windows-marquee-selection-box"
+                    className="pointer-events-none absolute z-40 rounded-md bg-indigo-500/18 border-2 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.35)]"
+                    style={{ left: '0%', top: '0%', width: '0%', height: '0%' }}
+                  />
 
                   {/* Hover-Based Technical Summary Tooltip for Network Nodes */}
                   <AnimatePresence>
