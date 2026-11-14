@@ -1,6 +1,6 @@
-import { ScenarioStepGuide } from '../scenario-step-guides';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
 
-export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioStepGuide> = {
+export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   'blackbasta-qakbot-backstab-ransomware': {
     scenarioId: 'blackbasta-qakbot-backstab-ransomware',
     briefing: {
@@ -18,9 +18,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1566.004',
         plainTitle: 'Email Bombing, External Microsoft Teams Vishing & QuickAssist.exe Abuse',
-        technicalTitle: 'Stage 1: Email Bombing, External Microsoft Teams Vishing & QuickAssist.exe Abuse',
-        mitreTactic: 'Initial Access (T1566.004 - Spearphishing Voice / T1219 - Remote Access Software)',
         storyAnalogy:
           'First the scammer jams the victim’s mailbox with thousands of magazines to create panic, then calls on the internal intercom pretending to be the mailroom technician offering to clean it up.',
         simpleExplanation:
@@ -34,9 +33,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1562.001',
         plainTitle: 'Backstab EDR Handle Killer & SoftPerfect / Rclone Lateral Staging',
-        technicalTitle: 'Stage 2: Backstab EDR Handle Killer & SoftPerfect / Rclone Lateral Staging',
-        mitreTactic: 'Defense Evasion & Discovery (T1562.001 / T1046)',
         storyAnalogy:
           'Once inside via the remote-support screen, the intruder runs a tool that pries open the fingers of the security guards so they drop their weapons, maps the floorplan, and bags up the files.',
         simpleExplanation:
@@ -50,9 +48,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1486',
         plainTitle: 'vssadmin Shadow Wipe & Black Basta ChaCha20/RSA-4096 Encryption (.basta)',
-        technicalTitle: 'Stage 3: vssadmin Shadow Wipe & Black Basta ChaCha20/RSA-4096 Encryption (.basta)',
-        mitreTactic: 'Impact (T1486 - Data Encrypted for Impact / T1490)',
         storyAnalogy:
           'After deleting the building’s backup snapshots, the encryptor races through every shared folder, scrambling 64 bytes out of every 192 bytes so files are ruined in seconds.',
         simpleExplanation:
@@ -83,9 +80,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1133',
         plainTitle: 'Cisco ASA / AnyConnect Single-Factor VPN Breach (CVE-2023-20269 / CVE-2020-3259)',
-        technicalTitle: 'Stage 1: Cisco ASA / AnyConnect Single-Factor VPN Breach (CVE-2023-20269 / CVE-2020-3259)',
-        mitreTactic: 'Initial Access (T1133 - External Remote Services / T1190)',
         storyAnalogy:
           'Even if the main employee VPN entrance requires a smartphone push code, the firewall still has a hidden default entrance (`DefaultWEBVPNGroup`) that accepts a password alone.',
         simpleExplanation:
@@ -99,9 +95,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1555',
         plainTitle: 'Chisel SOCKS Tunneling, Veeam Credential Dumping & SSH Pivot to ESXi',
-        technicalTitle: 'Stage 2: Chisel SOCKS Tunneling, Veeam Credential Dumping & SSH Pivot to ESXi',
-        mitreTactic: 'Credential Access & Command and Control (T1555 / T1572)',
         storyAnalogy:
           'Landing on a Windows server, the attacker sets up a hidden proxy pipe and raids the backup server’s database, which conveniently holds the root password to the VMware hypervisors.',
         simpleExplanation:
@@ -115,9 +110,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1489',
         plainTitle: 'esxcli vm process kill & Rust-Based Akira ESXi Hypervisor Encryption',
-        technicalTitle: 'Stage 3: esxcli vm process kill & Rust-Based Akira ESXi Hypervisor Encryption',
-        mitreTactic: 'Impact (T1489 - Service Stop / T1486 - Data Encrypted for Impact)',
         storyAnalogy:
           'Instead of breaking into 100 individual virtual servers, the attacker logs into the single physical host running all 100 of them, yanks their power cords (`esxcli vm process kill`), and encrypts their virtual hard drive files.',
         simpleExplanation:
@@ -148,9 +142,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1046',
         plainTitle: 'Deploying Custom Grixba .NET Reconnaissance Scanner (inf_g.exe)',
-        technicalTitle: 'Stage 1: Deploying Custom Grixba .NET Reconnaissance Scanner (inf_g.exe)',
-        mitreTactic: 'Discovery & Collection (T1046 / T1560.001)',
         storyAnalogy:
           'Dressed in a fake security guard vest (`SentinelOne Icon`), an automated scout walks every hallway in the building and writes down which rooms have alarms and where the safes are kept.',
         simpleExplanation:
@@ -164,9 +157,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1006',
         plainTitle: 'AlphaVSS .NET Shadow Copy Mounting for Locked Database Exfiltration',
-        technicalTitle: 'Stage 2: AlphaVSS .NET Shadow Copy Mounting for Locked Database Exfiltration',
-        mitreTactic: 'Collection & Defense Evasion (T1006 - Direct Volume Access / T1490)',
         storyAnalogy:
           'Instead of using the noisy public command-line tool (`vssadmin.exe`) that every security camera watches, the thief uses a direct programming interface (`AlphaVSS`) to quietly clone and steal locked files.',
         simpleExplanation:
@@ -180,9 +172,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1486',
         plainTitle: 'WinPE APIUnhooking & Intermittent 0x100000-Byte Chunk Encryption (.play)',
-        technicalTitle: 'Stage 3: WinPE APIUnhooking & Intermittent 0x100000-Byte Chunk Encryption (.play)',
-        mitreTactic: 'Impact (T1486 - Data Encrypted for Impact)',
         storyAnalogy:
           'To lock huge files before anyone can react, the encryptor only scrambles two or three 1-megabyte slices out of each giant file and stamps `deadbeef` at the bottom.',
         simpleExplanation:
@@ -213,9 +204,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1562.004',
         plainTitle: 'PortStarter Golang Backdoor & Windows Firewall Rule Tampering',
-        technicalTitle: 'Stage 1: PortStarter Golang Backdoor & Windows Firewall Rule Tampering',
-        mitreTactic: 'Persistence & Defense Evasion (T1562.004 - Disable or Modify System Firewall)',
         storyAnalogy:
           'The intruder installs a disguised service that punches a custom hole in the Windows Firewall so their command server can connect directly into a high port.',
         simpleExplanation:
@@ -229,9 +219,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1562.001',
         plainTitle: 'SilentKill PowerShell Script (g.ps1) Disabling 200+ Services & Unhooking AMSI',
-        technicalTitle: 'Stage 2: SilentKill PowerShell Script (g.ps1) Disabling 200+ Services & Unhooking AMSI',
-        mitreTactic: 'Defense Evasion & Service Stop (T1562.001 / T1489)',
         storyAnalogy:
           'A single master PowerShell script blinds the script scanner, shuts down over 200 security and database services so no files are locked, and flips on pass-the-hash RDP.',
         simpleExplanation:
@@ -245,9 +234,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1486',
         plainTitle: 'Multi-Threaded LibTomCrypt AES-256-CTR Encryption & Desktop Wallpaper Lock (.rhysida)',
-        technicalTitle: 'Stage 3: Multi-Threaded LibTomCrypt AES-256-CTR Encryption & Desktop Wallpaper Lock (.rhysida)',
-        mitreTactic: 'Impact (T1486 - Data Encrypted for Impact / T1491.001 - Internal Defacement)',
         storyAnalogy:
           'Using PsExec to launch simultaneously on every machine, the encryptor scrambles files with military-grade AES-256-CTR, drops a PDF ransom note, and replaces every employee’s desktop wallpaper.',
         simpleExplanation:
@@ -278,9 +266,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1573.002',
         plainTitle: 'Deploying Custom Golang mTLS Backdoor with Hardcoded X.509 Pinning',
-        technicalTitle: 'Stage 1: Deploying Custom Golang mTLS Backdoor with Hardcoded X.509 Pinning',
-        mitreTactic: 'Command and Control (T1573.002 - Asymmetric Cryptography / mTLS)',
         storyAnalogy:
           'For each target company, the attacker compiles a fresh, one-of-a-kind Go program that only talks to a single hardcoded IP address using a pair of matching digital passports (`mTLS`).',
         simpleExplanation:
@@ -294,9 +281,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1090.001',
         plainTitle: 'In-Memory Yamux Multiplexing & Built-In go-socks5 Lateral Pivot',
-        technicalTitle: 'Stage 2: In-Memory Yamux Multiplexing & Built-In go-socks5 Lateral Pivot',
-        mitreTactic: 'Command and Control (T1090.001 - Internal Proxy / SOCKS5)',
         storyAnalogy:
           'Rather than installing malware on twenty different servers, the single Go program turns itself into an invisible switchboard (`go-socks5`), letting the attacker browse the whole network from the outside.',
         simpleExplanation:
@@ -310,9 +296,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1567.002',
         plainTitle: 'Pure Data-Exfiltration Extortion via Rclone & FTP (Zero Encryption)',
-        technicalTitle: 'Stage 3: Pure Data-Exfiltration Extortion via Rclone & FTP (Zero Encryption)',
-        mitreTactic: 'Exfiltration (T1567.002 - Exfiltration to Cloud Storage / T1048)',
         storyAnalogy:
           'Instead of locking the files—which would trip ransomware alarms—the thief disguises a cloud-sync tool as `Win.exe`, copies the crown jewels to Mega.io, and leaves a ransom note.',
         simpleExplanation:
@@ -343,9 +328,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1068',
         plainTitle: 'Extracting & Registering Signed EaseUS Driver (empntdrv.sys) from RCDATA',
-        technicalTitle: 'Stage 1: Extracting & Registering Signed EaseUS Driver (empntdrv.sys) from RCDATA',
-        mitreTactic: 'Privilege Escalation & Defense Evasion (T1068 / T1543.003)',
         storyAnalogy:
           'To bypass Windows protections on active disk partitions, the wiper unpacks a genuine, Microsoft-signed disk-partitioning driver hidden inside its own resource pocket.',
         simpleExplanation:
@@ -359,9 +343,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1490',
         plainTitle: 'Disabling Volume Shadow Copy (vss), Crash Dumps & Fragmenting NTFS Metadata',
-        technicalTitle: 'Stage 2: Disabling Volume Shadow Copy (vss), Crash Dumps & Fragmenting NTFS Metadata',
-        mitreTactic: 'Inhibit System Recovery & Defense Evasion (T1490 / T1070)',
         storyAnalogy:
           'Before destroying the master index, the saboteur turns off the backup camera (`vss`), disables the black-box flight recorder (`CrashControl`), and maps out every page of the NTFS file table.',
         simpleExplanation:
@@ -375,9 +358,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1561.002',
         plainTitle: 'Raw \\\\.\\PhysicalDrive0..100 MBR & NTFS $MFT Overwrite with CSPRNG Bytes',
-        technicalTitle: 'Stage 3: Raw \\\\.\\PhysicalDrive0..100 MBR & NTFS $MFT Overwrite with CSPRNG Bytes',
-        mitreTactic: 'Impact (T1561.002 - Disk Structure Wipe)',
         storyAnalogy:
           'Finally, the wiper overwrites the front door (`MBR`) and the master card catalog (`$MFT`) of every hard drive with cryptographic noise and forces an immediate reboot.',
         simpleExplanation:
@@ -408,9 +390,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1199',
         plainTitle: 'Management Plane Compromise & TR-069 CWMP Push of MIPS ELF Binary (ukrop)',
-        technicalTitle: 'Stage 1: Management Plane Compromise & TR-069 CWMP Push of MIPS ELF Binary (ukrop)',
-        mitreTactic: 'Initial Access & Execution (T1199 - Trusted Relationship / TR-069 Management Plane)',
         storyAnalogy:
           'Rather than hacking 40,000 modems over the air one by one, the attackers hijack the central ground station that every modem trusts for remote management commands.',
         simpleExplanation:
@@ -424,9 +405,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1561.002',
         plainTitle: 'Block Device Enumeration (/dev/sda, /dev/mmcblk) & Sequential Overwrite',
-        technicalTitle: 'Stage 2: Block Device Enumeration (/dev/sda, /dev/mmcblk) & Sequential Overwrite',
-        mitreTactic: 'Impact (T1561.002 - Disk Structure Wipe)',
         storyAnalogy:
           'First, the wiper walks through every possible hard drive, SD card, and flash partition name in the Linux dictionary and scrambles their contents.',
         simpleExplanation:
@@ -440,9 +420,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1495',
         plainTitle: 'Raw SPI Flash /dev/mtd0..99 Destruction via MEMUNLOCK, MEMERASE & MEMWRITEOOB',
-        technicalTitle: 'Stage 3: Raw SPI Flash /dev/mtd0..99 Destruction via MEMUNLOCK, MEMERASE & MEMWRITEOOB',
-        mitreTactic: 'Impact (T1495 - Firmware Corruption / T1561.001)',
         storyAnalogy:
           'Finally, the wiper unlocks the raw silicon flash chip holding the modem’s bootloader (`U-Boot`), erases every sector, and reboots—leaving the modem unable to ever turn back on.',
         simpleExplanation:
@@ -473,9 +452,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1053.005',
         plainTitle: 'GPO Mass Deployment & ArguePatch Patched Debugger Loader Execution',
-        technicalTitle: 'Stage 1: GPO Mass Deployment & ArguePatch Patched Debugger Loader Execution',
-        mitreTactic: 'Execution & Defense Evasion (T1053.005 - Scheduled Task / T1574)',
         storyAnalogy:
           'Using the company’s own Group Policy loudspeaker, the attacker pushes out a legitimate-looking programmer’s debugging tool (`win32_remote.exe`) whose startup code has been secretly rewired to unpack a wiper in RAM.',
         simpleExplanation:
@@ -489,9 +467,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 2,
+        mitreId: 'T1082',
         plainTitle: 'DsRoleGetPrimaryDomainInformation Check to Spare Domain Controllers',
-        technicalTitle: 'Stage 2: DsRoleGetPrimaryDomainInformation Check to Spare Domain Controllers',
-        mitreTactic: 'Discovery & Execution Guardrails (T1082 / T1480 - Execution Guardrails)',
         storyAnalogy:
           'Before lighting the fuse, the wiper checks the machine’s job title—and if the machine is the Primary Domain Controller, the wiper walks away so the Domain Controller stays alive to infect everyone else.',
         simpleExplanation:
@@ -505,9 +482,8 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, ScenarioSte
       },
       {
         stepNumber: 3,
+        mitreId: 'T1561.001',
         plainTitle: 'TakeOwnership Recursive File Zeroing & IOCTL_DISK_SET_DRIVE_LAYOUT_EX Wipe',
-        technicalTitle: 'Stage 3: TakeOwnership Recursive File Zeroing & IOCTL_DISK_SET_DRIVE_LAYOUT_EX Wipe',
-        mitreTactic: 'Impact (T1561.001 - Disk Content Wipe / T1561.002 - Disk Structure Wipe)',
         storyAnalogy:
           'On every non-DC computer, the wiper legally transfers ownership of every file to itself, overwrites them with zeros, and then sends a single disk-layout command that erases the drive’s partition map.',
         simpleExplanation:

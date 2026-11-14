@@ -15,6 +15,12 @@ import { APT_BATCH1_SUPPLYCHAIN_MFT_SCENARIOS } from './scenarios/apt-batch1-sup
 import { APT_BATCH2_AD_EXCHANGE_WINDOWS_SCENARIOS } from './scenarios/apt-batch2-ad-exchange-windows';
 import { APT_BATCH3_VIRTUALIZATION_APPLIANCES_SCENARIOS } from './scenarios/apt-batch3-virtualization-appliances';
 import { APT_BATCH4_ENTERPRISE_OS_ZERODAYS_SCENARIOS } from './scenarios/apt-batch4-enterprise-os-zerodays';
+import { APT_BATCH5_CLOUD_SAAS_SCENARIOS } from './scenarios/apt-batch5-cloud-saas';
+import { APT_BATCH6_SUPPLYCHAIN_CICD_SCENARIOS } from './scenarios/apt-batch6-supplychain-cicd';
+import { APT_BATCH7_ZERODAY_APPLIANCES_SCENARIOS } from './scenarios/apt-batch7-zeroday-appliances';
+import { APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS } from './scenarios/apt-batch8-kernel-firmware-byovd';
+import { APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS } from './scenarios/apt-batch9-ransomware-extortion';
+import { normalizeLegacyDraftScenario } from './scenarios/normalize-legacy-draft-scenario';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
 
 const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
@@ -32,9 +38,24 @@ const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   ...APT_BATCH2_AD_EXCHANGE_WINDOWS_SCENARIOS,
   ...APT_BATCH3_VIRTUALIZATION_APPLIANCES_SCENARIOS,
   ...APT_BATCH4_ENTERPRISE_OS_ZERODAYS_SCENARIOS,
+  ...APT_BATCH5_CLOUD_SAAS_SCENARIOS,
+  ...APT_BATCH6_SUPPLYCHAIN_CICD_SCENARIOS.map(normalizeLegacyDraftScenario),
+  // Batch 7 drafts overlap three richer Batch 3 appliance scenarios — keep first.
+  ...APT_BATCH7_ZERODAY_APPLIANCES_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS.map(normalizeLegacyDraftScenario),
 ];
 
-export const ATTACK_SCENARIOS: AttackScenario[] = RAW_ATTACK_SCENARIOS.map(
-  applyReadableStepGuidesToScenario
-);
+function dedupeScenariosById(scenarios: AttackScenario[]): AttackScenario[] {
+  const seen = new Set<string>();
+  return scenarios.filter((scenario) => {
+    if (seen.has(scenario.id)) return false;
+    seen.add(scenario.id);
+    return true;
+  });
+}
+
+export const ATTACK_SCENARIOS: AttackScenario[] = dedupeScenariosById(
+  RAW_ATTACK_SCENARIOS
+).map(applyReadableStepGuidesToScenario);
 

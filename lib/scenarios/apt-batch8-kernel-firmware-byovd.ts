@@ -1,6 +1,6 @@
-import { AttackScenario } from './types';
+import { LegacyDraftScenario } from './normalize-legacy-draft-scenario';
 
-export const APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS: AttackScenario[] = [
+export const APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'blacklotus-uefi-bootkit-cve-2022-21894',
     title: 'BlackLotus UEFI Bootkit Baton Drop Secure Boot Bypass (CVE-2022-21894)',

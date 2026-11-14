@@ -1,6 +1,6 @@
-import { AttackScenario } from './types';
+import { LegacyDraftScenario } from './normalize-legacy-draft-scenario';
 
-export const APT_BATCH6_SUPPLYCHAIN_CICD_SCENARIOS: AttackScenario[] = [
+export const APT_BATCH6_SUPPLYCHAIN_CICD_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'solarwinds-sunburst-orion-supply-chain',
     title: 'SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29)',

@@ -1,6 +1,6 @@
-import { ScenarioStepGuide } from '../scenario-step-guides';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
 
-export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioStepGuide> = {
+export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   'blacklotus-uefi-bootkit-cve-2022-21894': {
     scenarioId: 'blacklotus-uefi-bootkit-cve-2022-21894',
     briefing: {
@@ -18,9 +18,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1542.003',
         plainTitle: 'EFI System Partition Staging & MOK NVRAM Variable Tampering',
-        technicalTitle: 'Stage 1: EFI System Partition Staging & MOK NVRAM Variable Tampering',
-        mitreTactic: 'Persistence (T1542.003 - Bootkit)',
         storyAnalogy:
           'The installer unlocks the hidden boot closet on the hard drive, places older signed boot guards inside, and registers its own key in a special firmware drawer that becomes invisible as soon as Windows finishes starting.',
         simpleExplanation:
@@ -34,9 +33,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1562.001',
         plainTitle: '"Baton Drop" BCD Argument Truncation Exploit (CVE-2022-21894)',
-        technicalTitle: 'Stage 2: "Baton Drop" BCD Argument Truncation Exploit (CVE-2022-21894)',
-        mitreTactic: 'Defense Evasion (T1562.001 - Disable or Modify Tools)',
         storyAnalogy:
           'During reboot, the older signed guard reads a deliberately cut-off instruction line on the boot clipboard, causing them to overwrite their own rulebook in memory.',
         simpleExplanation:
@@ -50,9 +48,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1068',
         plainTitle: 'Disabling BitLocker / HVCI & Deploying Unsigned Ring-0 Kernel Driver',
-        technicalTitle: 'Stage 3: Disabling BitLocker / HVCI & Deploying Unsigned Ring-0 Kernel Driver',
-        mitreTactic: 'Privilege Escalation & Command and Control (T1068 / T1055)',
         storyAnalogy:
           'Before waking up the main Windows operating system, the bootkit cuts the wires to the hypervisor shield and slips an invisible bodyguard into the kernel.',
         simpleExplanation:
@@ -83,9 +80,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1543.003',
         plainTitle: 'Dropping & Registering Vulnerable Signed PROCEXP152.SYS v16.32',
-        technicalTitle: 'Stage 1: Dropping & Registering Vulnerable Signed PROCEXP152.SYS v16.32',
-        mitreTactic: 'Privilege Escalation (T1543.003 - Windows Service / BYOVD)',
         storyAnalogy:
           'Because the front gate only lets in tools carrying a genuine Microsoft signature, the attacker unpacks an older, Microsoft-signed diagnostic driver that has no caller check.',
         simpleExplanation:
@@ -99,9 +95,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1562.001',
         plainTitle: 'Opening \\\\.\\PROCEXP152 & Issuing IOCTL 0x8335003C / 0x83350004',
-        technicalTitle: 'Stage 2: Opening \\\\.\\PROCEXP152 & Issuing IOCTL 0x8335003C / 0x83350004',
-        mitreTactic: 'Defense Evasion (T1562.001 - Disable or Modify Tools)',
         storyAnalogy:
           'Once the maintenance robot is switched on in the kernel room, the attacker’s program sends rapid-fire remote control codes telling it which security guard badges to grab and tear up.',
         simpleExplanation:
@@ -115,9 +110,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1486',
         plainTitle: 'Ring-0 Termination of PPL EDR Sensors & Ransomware Detonation',
-        technicalTitle: 'Stage 3: Ring-0 Termination of PPL EDR Sensors & Ransomware Detonation',
-        mitreTactic: 'Impact (T1486 - Data Encrypted for Impact)',
         storyAnalogy:
           'With every camera and alarm ripped out from the inside, the ransomware crew walks in and locks every file server in silence.',
         simpleExplanation:
@@ -148,9 +142,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1553.002',
         plainTitle: 'Loading Custom Malicious Driver POORTRY Signed via Abused WHQL Account',
-        technicalTitle: 'Stage 1: Loading Custom Malicious Driver POORTRY Signed via Abused WHQL Account',
-        mitreTactic: 'Defense Evasion (T1553.002 - Code Signing / Attestation Abuse)',
         storyAnalogy:
           'The attacker presents a brand-new, custom-written rootkit that carries a genuine Microsoft hardware certification stamp obtained through a fraudulent developer account.',
         simpleExplanation:
@@ -164,9 +157,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1562.001',
         plainTitle: 'Authenticated IOCTL Handshake & Kernel Notify Callback Array Wiping',
-        technicalTitle: 'Stage 2: Authenticated IOCTL Handshake & Kernel Notify Callback Array Wiping',
-        mitreTactic: 'Defense Evasion (T1562.001 - Blind Kernel Telemetry Callbacks)',
         storyAnalogy:
           'To stop researchers from analyzing the robot, it refuses to act until its controller whispers a secret cryptographic password—and then it erases the kernel’s notification phonebook so security tools never hear about new programs starting.',
         simpleExplanation:
@@ -180,9 +172,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1003.001',
         plainTitle: 'EPROCESS Protection Bit Stripping, EDR Termination & LSASS Credential Dump',
-        technicalTitle: 'Stage 3: EPROCESS Protection Bit Stripping, EDR Termination & LSASS Credential Dump',
-        mitreTactic: 'Credential Access (T1003.001 - LSASS Memory)',
         storyAnalogy:
           'Finally, the rootkit reaches into the kernel’s ID badge table, erases the "Protected" stamp next to the password vault (`lsass.exe`) and the security guards, kills the guards, and empties the vault.',
         simpleExplanation:
@@ -213,9 +204,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1036.004',
         plainTitle: 'In-Memory /dev/shm/kdmtmpflush Execution, Unlinking & Process Masquerading',
-        technicalTitle: 'Stage 1: In-Memory /dev/shm/kdmtmpflush Execution, Unlinking & Process Masquerading',
-        mitreTactic: 'Defense Evasion (T1036.004 - Masquerade Task or Service / T1070.004)',
         storyAnalogy:
           'The spy copies their disguise into temporary RAM memory, burns the original file on disk, changes their file timestamp to 2008, and puts on a nametag reading "Linux Power Management Daemon."',
         simpleExplanation:
@@ -229,9 +219,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1205.002',
         plainTitle: 'Attaching Kernel Berkeley Packet Filter via setsockopt(SO_ATTACH_FILTER)',
-        technicalTitle: 'Stage 2: Attaching Kernel Berkeley Packet Filter via setsockopt(SO_ATTACH_FILTER)',
-        mitreTactic: 'Persistence & Defense Evasion (T1205.002 - Socket Filters)',
         storyAnalogy:
           'Instead of opening a numbered door that shows up on the building directory (`netstat`), the spy installs a tiny sieve inside the main network pipe that only lets through packets carrying the secret watermark.',
         simpleExplanation:
@@ -245,9 +234,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1205.001',
         plainTitle: 'Magic Packet Activation, iptables Port Redirection & Memory-Only PTY Shell',
-        technicalTitle: 'Stage 3: Magic Packet Activation, iptables Port Redirection & Memory-Only PTY Shell',
-        mitreTactic: 'Command and Control (T1205.001 - Traffic Signaling)',
         storyAnalogy:
           'When the secret postcard arrives, the spy checks the password written on it, temporarily bends the front-door mail tube (`SSH Port 22`) straight to their hidden room for the attacker’s IP address only, and erases the bend when finished.',
         simpleExplanation:
@@ -278,9 +266,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1542.001',
         plainTitle: 'Motherboard SPI Flash Infection of CSMCORE DXE Driver (HandleProtocol Hook)',
-        technicalTitle: 'Stage 1: Motherboard SPI Flash Infection of CSMCORE DXE Driver (HandleProtocol Hook)',
-        mitreTactic: 'Persistence (T1542.001 - System Firmware)',
         storyAnalogy:
           'Before the computer even knows what a hard drive is, a modified chip on the motherboard wakes up and places a tap on the firmware’s main telephone switchboard (`HandleProtocol`).',
         simpleExplanation:
@@ -294,9 +281,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1542.003',
         plainTitle: 'Multi-Hop Boot Hooking Relay (bootmgfw.efi -> winload.efi)',
-        technicalTitle: 'Stage 2: Multi-Hop Boot Hooking Relay (bootmgfw.efi -> winload.efi)',
-        mitreTactic: 'Defense Evasion (T1542.003 - Bootkit Hooking Relay)',
         storyAnalogy:
           'Like a baton passed in a relay race entirely in RAM, each boot component patches the next component in memory right before handing over control, without ever touching a file on the hard drive.',
         simpleExplanation:
@@ -310,9 +296,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1014',
         plainTitle: 'PatchGuard Neutralization, ntoskrnl.exe ZwCreateSection Hook & Kernel C2',
-        technicalTitle: 'Stage 3: PatchGuard Neutralization, ntoskrnl.exe ZwCreateSection Hook & Kernel C2',
-        mitreTactic: 'Command and Control & Privilege Escalation (T1014 - Rootkit)',
         storyAnalogy:
           'Right before the Windows kernel takes its first breath, the relay runner disables the kernel’s self-inspection alarm (`PatchGuard`) and plants a hidden radio inside the kernel’s own code pages.',
         simpleExplanation:
@@ -343,9 +328,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1068',
         plainTitle: 'Dropping Randomized Signed Zemana Driver (zam64.sys) into System32\\drivers',
-        technicalTitle: 'Stage 1: Dropping Randomized Signed Zemana Driver (zam64.sys) into System32\\drivers',
-        mitreTactic: 'Privilege Escalation & Defense Evasion (T1068 / T1036.005)',
         storyAnalogy:
           'To avoid being recognized by name at the door, the attacker paints a random 8-letter name onto the side of the signed Zemana driver before loading it.',
         simpleExplanation:
@@ -359,9 +343,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1068',
         plainTitle: 'Self-Allowlisting Caller PID via Unauthenticated IOCTL 0x80002010 (CVE-2021-31728)',
-        technicalTitle: 'Stage 2: Self-Allowlisting Caller PID via Unauthenticated IOCTL 0x80002010 (CVE-2021-31728)',
-        mitreTactic: 'Privilege Escalation (T1068 - Exploitation for Privilege Escalation)',
         storyAnalogy:
           'The driver checks an internal VIP list before running dangerous commands—but leaves the "Add Me to the VIP List" button completely unguarded.',
         simpleExplanation:
@@ -375,9 +358,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1562.001',
         plainTitle: 'Continuous Ring-0 Termination Loop via IOCTL 0x80002048',
-        technicalTitle: 'Stage 3: Continuous Ring-0 Termination Loop via IOCTL 0x80002048',
-        mitreTactic: 'Defense Evasion (T1562.001 - Disable or Modify Tools)',
         storyAnalogy:
           'Now recognized as a VIP by the kernel driver, the attacker’s program runs an endless loop telling the driver to shoot down every security process that appears.',
         simpleExplanation:
@@ -408,9 +390,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1574.006',
         plainTitle: 'Global Dynamic Linker Injection via /etc/ld.so.preload',
-        technicalTitle: 'Stage 1: Global Dynamic Linker Injection via /etc/ld.so.preload',
-        mitreTactic: 'Persistence & Privilege Escalation (T1574.006 - Dynamic Linker Hijacking)',
         storyAnalogy:
           'By adding its name to the master startup list of the Linux library loader, the恶意 shared library forces every program on the server to load it first before doing anything else.',
         simpleExplanation:
@@ -424,9 +405,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1556.003',
         plainTitle: 'PAM Backdoor Authentication & ssh/scp libc_read Keystroke Harvesting',
-        technicalTitle: 'Stage 2: PAM Backdoor Authentication & ssh/scp libc_read Keystroke Harvesting',
-        mitreTactic: 'Credential Access & Persistence (T1556.003 - Pluggable Authentication Modules)',
         storyAnalogy:
           'Because the parasite is already inside the SSH server and client programs, it listens as administrators type passwords to other servers and unlocks the front door whenever its own secret password is used.',
         simpleExplanation:
@@ -440,9 +420,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1014',
         plainTitle: 'libpcap Function Hooking & Kernel BPF Bytecode Scrubbing Against tcpdump',
-        technicalTitle: 'Stage 3: libpcap Function Hooking & Kernel BPF Bytecode Scrubbing Against tcpdump',
-        mitreTactic: 'Defense Evasion (T1014 - Rootkit / Network Capture Blindfolding)',
         storyAnalogy:
           'When a forensic investigator plugs in a stethoscope (`tcpdump`) to listen to network traffic on the server, the parasite secretly rewrites the stethoscope’s filter so it goes deaf whenever the parasite speaks.',
         simpleExplanation:
@@ -473,9 +452,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1068',
         plainTitle: 'Dropping Standalone Signed mhyprot2.sys on Enterprise Domain Controller',
-        technicalTitle: 'Stage 1: Dropping Standalone Signed mhyprot2.sys on Enterprise Domain Controller',
-        mitreTactic: 'Privilege Escalation & Defense Evasion (T1068 - Exploitation for Privilege Escalation)',
         storyAnalogy:
           'An attacker logs into a corporate Domain Controller that has never had a video game installed and unpacks a standalone, validly signed gaming anti-cheat driver.',
         simpleExplanation:
@@ -489,9 +467,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 2,
+        mitreId: 'T1027',
         plainTitle: 'Opening \\\\.\\mhyprot2 & Initializing MT19937-64 Encryption Seed (IOCTL 0x80034000)',
-        technicalTitle: 'Stage 2: Opening \\\\.\\mhyprot2 & Initializing MT19937-64 Encryption Seed (IOCTL 0x80034000)',
-        mitreTactic: 'Defense Evasion (T1027 - Obfuscated IOCTL Payloads)',
         storyAnalogy:
           'To talk to the anti-cheat referee, the attacker’s tool sends a secret dice-roll seed (`MT19937-64`) that both sides use to scramble their messages.',
         simpleExplanation:
@@ -505,9 +482,8 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, ScenarioSt
       },
       {
         stepNumber: 3,
+        mitreId: 'T1562.001',
         plainTitle: 'Ring-0 ZwTerminateProcess Massacre via IOCTL 0x81034000 & Mass Encryption',
-        technicalTitle: 'Stage 3: Ring-0 ZwTerminateProcess Massacre via IOCTL 0x81034000 & Mass Encryption',
-        mitreTactic: 'Defense Evasion & Impact (T1562.001 / T1486)',
         storyAnalogy:
           'With the scrambled communication channel open, the attacker feeds the ID numbers of every antivirus guard into the anti-cheat driver, which terminates them from the kernel so the ransomware can lock the server.',
         simpleExplanation:

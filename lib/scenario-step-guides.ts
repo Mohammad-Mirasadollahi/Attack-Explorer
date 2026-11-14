@@ -11,6 +11,11 @@ import { BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES } from './step-guides/batch1-supplyc
 import { BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES } from './step-guides/batch2-ad-exchange-windows-guides';
 import { BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES } from './step-guides/batch3-virtualization-appliances-guides';
 import { BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES } from './step-guides/batch4-enterprise-os-zerodays-guides';
+import { BATCH5_CLOUD_SAAS_STEP_GUIDES } from './step-guides/batch5-cloud-saas-guides';
+import { BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES } from './step-guides/batch6-supplychain-cicd-guides';
+import { BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES } from './step-guides/batch7-zeroday-appliances-guides';
+import { BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES } from './step-guides/batch8-kernel-firmware-byovd-guides';
+import { BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES } from './step-guides/batch9-ransomware-extortion-guides';
 
 export interface RawScenarioBriefingGuide {
   headline: string;
@@ -72,14 +77,33 @@ export interface DiagramStepGuideModel {
   steps: DiagramAlignedStepGuideItem[];
 }
 
-export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
-  ...CORE_AND_PALOALTO_STEP_GUIDES,
-  ...MS_CISCO_KASPERSKY_STEP_GUIDES,
-  ...BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES,
-  ...BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES,
-  ...BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES,
-  ...BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES,
-};
+/** Later batches must not overwrite richer guides already registered for the same id. */
+function mergeStepGuidesFirstWins(
+  ...batches: Array<Record<string, RawScenarioStepGuideData>>
+): Record<string, RawScenarioStepGuideData> {
+  const merged: Record<string, RawScenarioStepGuideData> = {};
+  for (const batch of batches) {
+    for (const [id, guide] of Object.entries(batch)) {
+      if (!(id in merged)) merged[id] = guide;
+    }
+  }
+  return merged;
+}
+
+export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> =
+  mergeStepGuidesFirstWins(
+    CORE_AND_PALOALTO_STEP_GUIDES,
+    MS_CISCO_KASPERSKY_STEP_GUIDES,
+    BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES,
+    BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES,
+    BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES,
+    BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES,
+    BATCH5_CLOUD_SAAS_STEP_GUIDES,
+    BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES,
+    BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES,
+    BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES,
+    BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES
+  );
 
 export function getRawScenarioStepGuide(
   scenarioId: string

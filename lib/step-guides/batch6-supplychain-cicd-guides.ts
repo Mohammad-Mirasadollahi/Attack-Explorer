@@ -1,6 +1,6 @@
-import { ScenarioStepGuide } from '../scenario-step-guides';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
 
-export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGuide> = {
+export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   'solarwinds-sunburst-orion-supply-chain': {
     scenarioId: 'solarwinds-sunburst-orion-supply-chain',
     briefing: {
@@ -18,9 +18,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.002',
         plainTitle: 'SUNSPOT Build-Time Source Injection into MSBuild',
-        technicalTitle: 'Stage 1: SUNSPOT Build-Time Source Injection into MSBuild',
-        mitreTactic: 'Initial Access (T1195.002 - Compromise Software Supply Chain)',
         storyAnalogy:
           'A saboteur stands next to the factory printing press, swapping a single page of the master template only while the press rollers are spinning and immediately restoring the clean page afterward.',
         simpleExplanation:
@@ -34,9 +33,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1568.002',
         plainTitle: 'SUNBURST Dormancy, FNV-1a Blocklist Check & DGA C2 Beacon',
-        technicalTitle: 'Stage 2: SUNBURST Dormancy, FNV-1a Blocklist Check & DGA C2 Beacon',
-        mitreTactic: 'Command and Control (T1568.002 - Domain Generation Algorithms)',
         storyAnalogy:
           'Once installed inside the customer’s building, the hidden radio waits silently for two full weeks, checks if any security guards are standing nearby, and then whispers the building’s name inside a standard maintenance check.',
         simpleExplanation:
@@ -50,9 +48,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1552.004',
         plainTitle: 'TEARDROP Memory-Only Dropper & ADFS Golden SAML Theft',
-        technicalTitle: 'Stage 3: TEARDROP Memory-Only Dropper & ADFS Golden SAML Theft',
-        mitreTactic: 'Credential Access (T1552.004 - Private Keys / Golden SAML)',
         storyAnalogy:
           'After confirming the target is a high-value vault, the intruder uses the hidden radio to print a master identity stamp that lets them forge signed entry passes for any employee at any time.',
         simpleExplanation:
@@ -83,9 +80,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.002',
         plainTitle: 'Retroactive Git Tag Repointing to Malicious Commit 0e58ed8',
-        technicalTitle: 'Stage 1: Retroactive Git Tag Repointing to Malicious Commit 0e58ed8',
-        mitreTactic: 'Initial Access (T1195.002 - Compromise Software Supply Chain)',
         storyAnalogy:
           'Instead of publishing a brand-new book edition, a saboteur changes the library catalog index so every existing edition number points to a single poisoned volume.',
         simpleExplanation:
@@ -99,9 +95,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1003.007',
         plainTitle: 'Sudo Python Execution of memdump.py Against /proc/$pid/mem',
-        technicalTitle: 'Stage 2: Sudo Python Execution of memdump.py Against /proc/$pid/mem',
-        mitreTactic: 'Credential Access (T1003.007 - Proc Filesystem)',
         storyAnalogy:
           'Even if a specific step wasn’t handed the vault key directly, the courier who setup the room still holds all the keys in their coat pocket—so the script reaches straight into the courier’s pocket.',
         simpleExplanation:
@@ -115,9 +110,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1567',
         plainTitle: 'Double-Base64 Secret Exfiltration via Public Build Logs',
-        technicalTitle: 'Stage 3: Double-Base64 Secret Exfiltration via Public Build Logs',
-        mitreTactic: 'Exfiltration (T1567 - Exfiltration Over Web Service)',
         storyAnalogy:
           'To sneak past the censor who blacks out secret words in outgoing letters, the thief encodes the secret message twice in a row and prints it right in the public newspaper.',
         simpleExplanation:
@@ -148,9 +142,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.002',
         plainTitle: 'GCS Bucket Tampering of Hosted codecov.sh Uploader',
-        technicalTitle: 'Stage 1: GCS Bucket Tampering of Hosted codecov.sh Uploader',
-        mitreTactic: 'Initial Access (T1195.002 - Compromise Software Supply Chain)',
         storyAnalogy:
           'A thief finds a spare key left inside an old shipping crate and uses it to unlock the printing room where the daily instruction flyers are stored.',
         simpleExplanation:
@@ -164,9 +157,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1005',
         plainTitle: 'Unverified curl | bash Execution & CI Environment Harvesting',
-        technicalTitle: 'Stage 2: Unverified curl | bash Execution & CI Environment Harvesting',
-        mitreTactic: 'Collection (T1005 - Data from Local System)',
         storyAnalogy:
           'Every time a factory finishes testing a product, the robot downloads the tampered flyer and immediately reads out every password posted on the factory wall.',
         simpleExplanation:
@@ -180,9 +172,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1078.004',
         plainTitle: 'Downstream Private Git Repository Cloning & Signing Key Abuse',
-        technicalTitle: 'Stage 3: Downstream Private Git Repository Cloning & Signing Key Abuse',
-        mitreTactic: 'Lateral Movement (T1078.004 - Cloud Accounts)',
         storyAnalogy:
           'Armed with the photocopied master keys from hundreds of companies, the thief walks into their private blueprint vaults at night and copies their crown-jewel designs.',
         simpleExplanation:
@@ -213,9 +204,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Kaseya VSA /dl.asp Authentication Bypass & agent.crt Upload',
-        technicalTitle: 'Stage 1: Kaseya VSA /dl.asp Authentication Bypass & agent.crt Upload',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'The attacker exploits a flaw in the lobby badge reader where presenting a predictable badge number tricks the turnstile into opening as an administrator.',
         simpleExplanation:
@@ -229,9 +219,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1562.001',
         plainTitle: 'Kaseya Agent Procedure Disabling Defender & Decoding agent.exe',
-        technicalTitle: 'Stage 2: Kaseya Agent Procedure Disabling Defender & Decoding agent.exe',
-        mitreTactic: 'Defense Evasion (T1562.001 - Disable or Modify Tools)',
         storyAnalogy:
           'Because the local computers completely trust instructions coming from their IT support agent, they obey a command to blindfold their own antivirus before opening a disguised package.',
         simpleExplanation:
@@ -245,9 +234,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1574.002',
         plainTitle: 'MsMpEng.exe DLL Side-Loading of REvil Ransomware (mpsvc.dll)',
-        technicalTitle: 'Stage 3: MsMpEng.exe DLL Side-Loading of REvil Ransomware (mpsvc.dll)',
-        mitreTactic: 'Defense Evasion & Impact (T1574.002 - DLL Side-Loading / T1486)',
         storyAnalogy:
           'The dropper places a genuine, Microsoft-signed security uniform on the floor next to a poisoned badge; when the uniform stands up, it automatically pins on the poisoned badge and locks the building.',
         simpleExplanation:
@@ -278,9 +266,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.002',
         plainTitle: 'GitHub Actions pull_request_target Branch Name Command Injection',
-        technicalTitle: 'Stage 1: GitHub Actions pull_request_target Branch Name Command Injection',
-        mitreTactic: 'Initial Access (T1195.002 - Compromise Software Supply Chain)',
         storyAnalogy:
           'A visitor writes a shell command on their nametag knowing the automated receptionist types every visitor’s nametag straight into the administrator console.',
         simpleExplanation:
@@ -294,9 +281,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1195.001',
         plainTitle: 'Poisoning ultralytics/utils/downloads.py & Publishing PyPI v8.3.41–8.3.46',
-        technicalTitle: 'Stage 2: Poisoning ultralytics/utils/downloads.py & Publishing PyPI v8.3.41–8.3.46',
-        mitreTactic: 'Persistence (T1195.001 - Compromise Software Dependencies)',
         storyAnalogy:
           'First the thief tricks the factory’s packing machine into sealing a poisoned box; when the factory fixes the machine, the thief uses the spare key they copied earlier to mail two more poisoned boxes directly.',
         simpleExplanation:
@@ -310,9 +296,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1496',
         plainTitle: 'Downstream AI Workstation & Colab Execution of XMRig Miner (/tmp/ultralytics_runner)',
-        technicalTitle: 'Stage 3: Downstream AI Workstation & Colab Execution of XMRig Miner (/tmp/ultralytics_runner)',
-        mitreTactic: 'Impact (T1496 - Resource Hijacking)',
         storyAnalogy:
           'When data scientists open the new AI toolkit, it quietly launches a cryptocurrency furnace in the basement and burns the instruction manual so nobody sees it on the shelf.',
         simpleExplanation:
@@ -343,9 +328,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.001',
         plainTitle: 'Maintainer Account Takeover & Malicious preinstall Hook Publish',
-        technicalTitle: 'Stage 1: Maintainer Account Takeover & Malicious preinstall Hook Publish',
-        mitreTactic: 'Initial Access (T1195.001 - Compromise Software Dependencies)',
         storyAnalogy:
           'The attacker takes over the supplier’s catalog account and ships a new batch of parts with a "run immediately upon opening" sticker.',
         simpleExplanation:
@@ -359,9 +343,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.007',
         plainTitle: 'Automatic preinstall Execution & curl Download of sdd.dll',
-        technicalTitle: 'Stage 2: Automatic preinstall Execution & curl Download of sdd.dll',
-        mitreTactic: 'Execution (T1059.007 - JavaScript / T1059.003 - Windows Command Shell)',
         storyAnalogy:
           'As soon as the developer runs the installer, the hidden script checks whether it is on Windows or Linux and reaches out to download a burglar tool.',
         simpleExplanation:
@@ -375,9 +358,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1218.010',
         plainTitle: 'Silent regsvr32.exe -s Execution & DanaBot Credential Theft',
-        technicalTitle: 'Stage 3: Silent regsvr32.exe -s Execution & DanaBot Credential Theft',
-        mitreTactic: 'Defense Evasion & Credential Access (T1218.010 - Regsvr32 / T1555)',
         storyAnalogy:
           'The script hands the downloaded burglar tool to a built-in Windows clerk (`regsvr32.exe`) with instructions to run silently and empty the developer’s password drawer.',
         simpleExplanation:
@@ -408,9 +390,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.002',
         plainTitle: 'Unpinned Third-Party <script> Tag Without Subresource Integrity (SRI)',
-        technicalTitle: 'Stage 1: Unpinned Third-Party <script> Tag Without Subresource Integrity (SRI)',
-        mitreTactic: 'Initial Access (T1195.002 - Compromise Software Supply Chain)',
         storyAnalogy:
           'A website leaves an open window in its checkout page that automatically runs whatever script is handed through by an external domain name.',
         simpleExplanation:
@@ -424,9 +405,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1027',
         plainTitle: 'HTTP User-Agent Fingerprinting & Evasive Payload Generation',
-        technicalTitle: 'Stage 2: HTTP User-Agent Fingerprinting & Evasive Payload Generation',
-        mitreTactic: 'Defense Evasion (T1027 - Obfuscated Files or Information)',
         storyAnalogy:
           'The rogue server checks the visitor’s ID at the door: if it sees a security inspector or a desktop computer, it hands out a clean brochure; if it sees a mobile phone in a targeted region, it slips in a hidden detonator.',
         simpleExplanation:
@@ -440,9 +420,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1185',
         plainTitle: 'First-Party DOM Execution & Silent Session Hijack / Redirection',
-        technicalTitle: 'Stage 3: First-Party DOM Execution & Silent Session Hijack / Redirection',
-        mitreTactic: 'Collection & Impact (T1185 - Browser Session Hijacking)',
         storyAnalogy:
           'Once the script runs inside the customer’s browser tab, it has the exact same authority as the store’s own checkout code.',
         simpleExplanation:
@@ -473,9 +452,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1195.001',
         plainTitle: 'Former Employee NPM Token Phishing & Publish of v1.1.5–1.1.7',
-        technicalTitle: 'Stage 1: Former Employee NPM Token Phishing & Publish of v1.1.5–1.1.7',
-        mitreTactic: 'Initial Access (T1195.001 - Compromise Software Dependencies)',
         storyAnalogy:
           'A former employee’s badge still works at the publishing house, allowing an impersonator to print three unauthorized editions without going through the editorial board.',
         simpleExplanation:
@@ -489,9 +467,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.007',
         plainTitle: 'Unpinned jsDelivr CDN Propagation of @ledgerhq/connect-kit-loader',
-        technicalTitle: 'Stage 2: Unpinned jsDelivr CDN Propagation of @ledgerhq/connect-kit-loader',
-        mitreTactic: 'Execution (T1059.007 - JavaScript)',
         storyAnalogy:
           'Even stores that locked their own front doors had installed an automatic chute that pulled whatever package was labeled "Latest Version 1" straight from the public warehouse into their lobby.',
         simpleExplanation:
@@ -505,9 +482,8 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, ScenarioStepGui
       },
       {
         stepNumber: 3,
+        mitreId: 'T1657',
         plainTitle: 'Rogue WalletConnect Modal & Permit2 / SetApprovalForAll Asset Drain',
-        technicalTitle: 'Stage 3: Rogue WalletConnect Modal & Permit2 / SetApprovalForAll Asset Drain',
-        mitreTactic: 'Impact (T1657 - Financial Theft)',
         storyAnalogy:
           ' while the customer thinks they are simply signing in at the reception desk, the counterfeit screen asks them to sign a power-of-attorney form giving the thief permission to empty their vault.',
         simpleExplanation:

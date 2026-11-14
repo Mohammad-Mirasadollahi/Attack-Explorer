@@ -1,6 +1,6 @@
-import { AttackScenario } from './types';
+import { LegacyDraftScenario } from './normalize-legacy-draft-scenario';
 
-export const APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS: AttackScenario[] = [
+export const APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'blackbasta-qakbot-backstab-ransomware',
     title: 'Black Basta Teams Vishing, Quick Assist, Backstab EDR Bypass & ChaCha20 (AA24-131A)',

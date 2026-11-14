@@ -1,6 +1,6 @@
-import { ScenarioStepGuide } from '../scenario-step-guides';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
 
-export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepGuide> = {
+export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   'barracuda-esg-cve-2023-2868-unc4841': {
     scenarioId: 'barracuda-esg-cve-2023-2868-unc4841',
     briefing: {
@@ -18,9 +18,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Crafted .tar Attachment Filename Perl qx{} Injection (CVE-2023-2868)',
-        technicalTitle: 'Stage 1: Crafted .tar Attachment Filename Perl qx{} Injection (CVE-2023-2868)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'A spy writes a computer command on the filename sticker inside a zip-style archive knowing the mail scanner types every filename straight into a root terminal.',
         simpleExplanation:
@@ -34,9 +33,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1574.006',
         plainTitle: 'SALTWATER Trojanized bsmtpd Module & SEASPY PCAP Backdoor',
-        technicalTitle: 'Stage 2: SALTWATER Trojanized bsmtpd Module & SEASPY PCAP Backdoor',
-        mitreTactic: 'Persistence & Defense Evasion (T1574.006 - Dynamic Linker Hijacking / T1205.001)',
         storyAnalogy:
           'The intruder swaps the mailroom’s sorting machine with a rigged lookalike and hides a silent listener on the front porch that only wakes up when someone knocks with a secret rhythm.',
         simpleExplanation:
@@ -50,9 +48,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1505',
         plainTitle: 'SUBMARINE SQLite Trigger Persistence & Bulk MIME Exfiltration',
-        technicalTitle: 'Stage 3: SUBMARINE SQLite Trigger Persistence & Bulk MIME Exfiltration',
-        mitreTactic: 'Persistence & Exfiltration (T1505 / T1114.002 - Email Collection)',
         storyAnalogy:
           'Even after the security team sweeps the building, a booby-trap hidden inside the mailroom’s database ledger automatically re-installs the backdoor every time a new email entry is recorded.',
         simpleExplanation:
@@ -83,9 +80,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Unauthenticated Path Traversal POST Request to /clients/MyCRL (CVE-2024-24919)',
-        technicalTitle: 'Stage 1: Unauthenticated Path Traversal POST Request to /clients/MyCRL (CVE-2024-24919)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'A visitor writes "../" seven times on a brochure request slip, tricking the automated retrieval arm into reaching outside the public folder and into the private safe.',
         simpleExplanation:
@@ -99,9 +95,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1552.001',
         plainTitle: 'Harvesting /etc/shadow, SSH Keys & AD LDAP Bind Credentials',
-        technicalTitle: 'Stage 2: Harvesting /etc/shadow, SSH Keys & AD LDAP Bind Credentials',
-        mitreTactic: 'Credential Access (T1552.001 - Credentials In Files)',
         storyAnalogy:
           'Once the thief realizes the clerk will fetch any book in the building, they ask for the local guard roster, the SSH key ring, and the firewall’s address book containing the corporate directory password.',
         simpleExplanation:
@@ -115,9 +110,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1003.003',
         plainTitle: 'VPN Tunnel Establishment & Active Directory ntds.dit Extraction',
-        technicalTitle: 'Stage 3: VPN Tunnel Establishment & Active Directory ntds.dit Extraction',
-        mitreTactic: 'Credential Access (T1003.003 - NTDS)',
         storyAnalogy:
           'With the local gate key and the over-privileged directory service badge in hand, the thief walks through the VPN tunnel and copies the entire company identity database in under two hours.',
         simpleExplanation:
@@ -148,9 +142,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'SonicOS SSLVPN Improper Access Control Exploitation (CVE-2024-40766)',
-        technicalTitle: 'Stage 1: SonicOS SSLVPN Improper Access Control Exploitation (CVE-2024-40766)',
-        mitreTactic: 'Initial Access (T1190 / T1133 - External Remote Services)',
         storyAnalogy:
           'The attacker exploits a flaw in the VPN gate’s access controller that grants a virtual badge and internal IP address without valid authorization.',
         simpleExplanation:
@@ -164,9 +157,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1021.002',
         plainTitle: 'Network Scanning, Impacket SMB Execution & AnyDesk Persistence',
-        technicalTitle: 'Stage 2: Network Scanning, Impacket SMB Execution & AnyDesk Persistence',
-        mitreTactic: 'Lateral Movement & Command and Control (T1021.002 / T1219)',
         storyAnalogy:
           'Once inside the hallway, the intruder maps every office door, uses remote management scripts to run commands on servers, and props open a side window (`AnyDesk`) in case the main VPN gate is patched.',
         simpleExplanation:
@@ -180,9 +172,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1490',
         plainTitle: 'PowerShell CIM Shadow Copy Deletion & Akira/Fog Encryption',
-        technicalTitle: 'Stage 3: PowerShell CIM Shadow Copy Deletion & Akira/Fog Encryption',
-        mitreTactic: 'Impact (T1490 - Inhibit System Recovery / T1486)',
         storyAnalogy:
           'After stealing copies of the company’s financial records, the extortionists shatter the emergency recovery snapshots and lock every server and virtual machine.',
         simpleExplanation:
@@ -213,9 +204,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Appweb CGI Query-String Environment Variable Injection (PHPRC=/dev/fd/0)',
-        technicalTitle: 'Stage 1: Appweb CGI Query-String Environment Variable Injection (PHPRC=/dev/fd/0)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'A visitor writes "RULEBOOK=MY_LETTER" on the outside of an envelope, tricking the mail handler into treating the letter inside as the official operating manual.',
         simpleExplanation:
@@ -229,9 +219,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.004',
         plainTitle: 'Fileless In-Memory PHP Execution via auto_prepend_file=data://',
-        technicalTitle: 'Stage 2: Fileless In-Memory PHP Execution via auto_prepend_file=data://',
-        mitreTactic: 'Execution & Defense Evasion (T1059.004 / T1620 - Reflective Code Loading)',
         storyAnalogy:
           'Reading the attacker’s letter as its new rulebook, the interpreter sees a rule to decode and run a Base64 paragraph in memory before touching any real webpage.',
         simpleExplanation:
@@ -245,9 +234,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1552.001',
         plainTitle: 'Junos Configuration Exfiltration (/config/juniper.conf.gz) & Backdoor Admin Creation',
-        technicalTitle: 'Stage 3: Junos Configuration Exfiltration (/config/juniper.conf.gz) & Backdoor Admin Creation',
-        mitreTactic: 'Credential Access & Persistence (T1552.001 / T1136.001)',
         storyAnalogy:
           'With the router obeying every command, the intruder copies the master network blueprint—including every reversible password—and registers a hidden administrator badge.',
         simpleExplanation:
@@ -278,9 +266,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Unauthenticated FGFM TLS Handshake & Rogue Device Registration (TCP/541)',
-        technicalTitle: 'Stage 1: Unauthenticated FGFM TLS Handshake & Rogue Device Registration (TCP/541)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'A stranger walks up to the branch-office check-in window, flashes a self-printed badge with a made-up branch number, and the system automatically registers them as an active branch.',
         simpleExplanation:
@@ -294,9 +281,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.004',
         plainTitle: 'FGFM put_json / rcs_checkout Command Injection as Root',
-        technicalTitle: 'Stage 2: FGFM put_json / rcs_checkout Command Injection as Root',
-        mitreTactic: 'Execution (T1059.004 - Unix Shell)',
         storyAnalogy:
           'Now that the system treats the stranger as a registered branch, the stranger sends a file check-out request with a shell command hidden inside the filename.',
         simpleExplanation:
@@ -310,9 +296,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1005',
         plainTitle: 'Exfiltration of Managed FortiGate Configurations (/var/fwclient & globaldb)',
-        technicalTitle: 'Stage 3: Exfiltration of Managed FortiGate Configurations (/var/fwclient & globaldb)',
-        mitreTactic: 'Collection & Exfiltration (T1005 / T1552.001)',
         storyAnalogy:
           'Instead of attacking one firewall, the intruder bags up the central filing cabinet holding the full configuration and passwords for every firewall in the company.',
         simpleExplanation:
@@ -343,9 +328,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Unauthenticated Admin Credential Reset via restoreAdmin.php (CVE-2024-5910)',
-        technicalTitle: 'Stage 1: Unauthenticated Admin Credential Reset via restoreAdmin.php (CVE-2024-5910)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'A helper script meant only for first-time setup is left unlocked on the front porch, allowing anyone to reset the administrator password back to "paloalto" with a single click.',
         simpleExplanation:
@@ -359,9 +343,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.004',
         plainTitle: 'OS Command Injection via Cron/Checkpoint Import Handler (CVE-2024-9463 / CVE-2024-9464)',
-        technicalTitle: 'Stage 2: OS Command Injection via Cron/Checkpoint Import Handler (CVE-2024-9463 / CVE-2024-9464)',
-        mitreTactic: 'Execution & Privilege Escalation (T1059.004 - Unix Shell)',
         storyAnalogy:
           'Once inside the architect’s dashboard, the intruder feeds a booby-trapped filename into the Check Point blueprint converter, tricking the underlying Linux server into opening a command shell.',
         simpleExplanation:
@@ -375,9 +358,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1552.001',
         plainTitle: 'Dumping MySQL PAN-OS Firewall API Keys & Multi-Vendor Config Backups',
-        technicalTitle: 'Stage 3: Dumping MySQL PAN-OS Firewall API Keys & Multi-Vendor Config Backups',
-        mitreTactic: 'Credential Access & Lateral Movement (T1552.001 / T1078)',
         storyAnalogy:
           'With control of the database, the intruder extracts the live API keys for the company’s production firewalls and downloads their entire security configurations.',
         simpleExplanation:
@@ -408,9 +390,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Crafted JSON mode=151 Request to /userportal/Controller (CVE-2022-3236)',
-        technicalTitle: 'Stage 1: Crafted JSON mode=151 Request to /userportal/Controller (CVE-2022-3236)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'Imagine a two-person security desk where the front guard checks that your name badge only has normal letters, but stops reading as soon as they hit an invisible blank spot (`null byte`). The back-office clerk reads right past the blank spot and types the rest of your badge into the master control computer.',
         simpleExplanation:
@@ -424,9 +405,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.004',
         plainTitle: 'Cyberoam System Controller (csc) Perl/Shell Evaluation as Root',
-        technicalTitle: 'Stage 2: Cyberoam System Controller (csc) Perl/Shell Evaluation as Root',
-        mitreTactic: 'Execution (T1059.004 - Unix Shell)',
         storyAnalogy:
           'The back-office controller (`csc`), which runs with master building keys, reads the second half of the forged badge and executes it as a root shell command.',
         simpleExplanation:
@@ -440,9 +420,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1556',
         plainTitle: 'Trojanized Login CGI Credential Harvesting & Persistent Reverse Tunnel',
-        technicalTitle: 'Stage 3: Trojanized Login CGI Credential Harvesting & Persistent Reverse Tunnel',
-        mitreTactic: 'Credential Access & Command and Control (T1556 / T1572 - Protocol Tunneling)',
         storyAnalogy:
           'With control of the firewall, the spy wires a secret recorder into the login page to write down every employee’s VPN password and digs a hidden tunnel into the internal office network.',
         simpleExplanation:
@@ -473,9 +452,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'Crafted Unauthenticated IKEv2 SA_INIT Notify Packet on UDP Port 500',
-        technicalTitle: 'Stage 1: Crafted Unauthenticated IKEv2 SA_INIT Notify Packet on UDP Port 500',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'Because UDP requires no handshake, the attacker fires a single "knock" packet at port 500 carrying a hidden shell command inside an error notification field.',
         simpleExplanation:
@@ -489,9 +467,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1059.004',
         plainTitle: '/sbin/sshipsecpm string_to_binary() & cmd_sn_write_log() Shell Injection',
-        technicalTitle: 'Stage 2: /sbin/sshipsecpm string_to_binary() & cmd_sn_write_log() Shell Injection',
-        mitreTactic: 'Execution (T1059.004 - Unix Shell)',
         storyAnalogy:
           'Instead of writing the error note into the logbook with a pen, the VPN daemon opens a root command shell and runs `echo [untrusted note] >> logfile`.',
         simpleExplanation:
@@ -505,9 +482,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1552.001',
         plainTitle: 'Root Persistence, IPSec VPN Credential Theft & Internal LAN Pivot',
-        technicalTitle: 'Stage 3: Root Persistence, IPSec VPN Credential Theft & Internal LAN Pivot',
-        mitreTactic: 'Credential Access & Defense Evasion (T1552.001 / T1562.004)',
         storyAnalogy:
           'Now running as the master of the firewall, the attacker steals the saved VPN passwords from the configuration file and opens the firewall gates to the internal office network.',
         simpleExplanation:
@@ -538,9 +514,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
     steps: [
       {
         stepNumber: 1,
+        mitreId: 'T1190',
         plainTitle: 'X-AN-FILESHARE flags=00300 Header Authentication Bypass (CVE-2023-28461)',
-        technicalTitle: 'Stage 1: X-AN-FILESHARE flags=00300 Header Authentication Bypass (CVE-2023-28461)',
-        mitreTactic: 'Initial Access (T1190 - Exploit Public-Facing Application)',
         storyAnalogy:
           'An external visitor attaches an internal routing slip (`X-AN-FILESHARE`) to their request with the "pre-approved" bit switched on, fooling the gateway into skipping login completely.',
         simpleExplanation:
@@ -554,9 +529,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 2,
+        mitreId: 'T1505.003',
         plainTitle: 'Arbitrary File Read of Gateway Configs & PHP Webshell Deployment',
-        technicalTitle: 'Stage 2: Arbitrary File Read of Gateway Configs & PHP Webshell Deployment',
-        mitreTactic: 'Persistence & Command and Control (T1505.003 - Web Shell / T1090)',
         storyAnalogy:
           'Once inside the VPN gateway, the spy copies the gateway’s master password file, plants a hidden web command page, and sets up an invisible tunnel (`s5n`) into the corporate network.',
         simpleExplanation:
@@ -570,9 +544,8 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, ScenarioStepG
       },
       {
         stepNumber: 3,
+        mitreId: 'T1127.001',
         plainTitle: 'Internal Lateral Movement & LODEINFO / NOOPDOOR Memory Injection',
-        technicalTitle: 'Stage 3: Internal Lateral Movement & LODEINFO / NOOPDOOR Memory Injection',
-        mitreTactic: 'Defense Evasion & Execution (T1127.001 - MSBuild / T1574.002)',
         storyAnalogy:
           'Stepping out of the VPN tunnel onto internal Windows computers, the spy uses Microsoft’s own compiler tool (`MSBuild.exe`) and a signed antivirus helper to run espionage implants purely in memory.',
         simpleExplanation:

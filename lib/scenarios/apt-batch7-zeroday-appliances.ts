@@ -1,6 +1,6 @@
-import { AttackScenario } from './types';
+import { LegacyDraftScenario } from './normalize-legacy-draft-scenario';
 
-export const APT_BATCH7_ZERODAY_APPLIANCES_SCENARIOS: AttackScenario[] = [
+export const APT_BATCH7_ZERODAY_APPLIANCES_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'barracuda-esg-cve-2023-2868-unc4841',
     title: 'Barracuda ESG .tar Attachment RCE & SALTWATER / SUBMARINE Implants (CVE-2023-2868)',
