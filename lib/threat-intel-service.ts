@@ -1,5 +1,6 @@
 import { AttackScenario, MITRE_PHASES } from './scenarios/types';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
+import { BATCH_1_TO_4_CURATED_INTEL } from './batch1-to-4-attributions-and-intel';
 
 export interface MitreTacticFrequencyItem {
   phase: number;
@@ -23,6 +24,8 @@ export interface ThreatIntelContextData {
   scenarioCode: string;
   scenarioName: string;
   summary: string;
+  /** Explains how multiple independent security vendor/CERT reports complement one another for this scenario */
+  multiSourceSynthesis: string;
   cves: Array<{
     id: string;
     cvss: string;
@@ -118,6 +121,8 @@ const CURATED_THREAT_INTEL: Record<
     scenarioName: 'Process Hollowing (svchost.exe Replacement)',
     summary:
       'Process Hollowing (MITRE T1055.012) remains a premier defense-evasion technique used by banking trojans, state-sponsored loaders, and ransomware initial-access brokers to masquerade malicious code inside suspended Windows system binaries such as svchost.exe, RuntimeBroker.exe, or werfault.exe.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft Win32 docs define the CREATE_SUSPENDED (0x4), NtUnmapViewOfSection, and SetThreadContext (RCX) mechanics; Elastic Security Labs details unbacked PAGE_EXECUTE_READWRITE (0x40) VAD detection via kernel EtwTiLogAllocVMRemote; and Microsoft Sysinternals documents Sysmon EventID 25 (ProcessTampering).',
     cves: [
       {
         id: 'CVE-2023-36884',
@@ -153,6 +158,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'CISA AA23-242A: QakBot Infrastructure Disrupted — details svchost.exe / wermgr.exe process hollowing chains.',
       'Microsoft Defender Threat Intelligence: Detecting NtUnmapViewOfSection & PAGE_EXECUTE_READWRITE anomalies via ETW Ti.',
+      'Elastic Security Labs: Hunting Unbacked RWX VAD Regions & Process Tampering (Sysmon EID 25).',
     ],
     groundedSources: [
       {
@@ -160,8 +166,12 @@ const CURATED_THREAT_INTEL: Record<
         uri: 'https://attack.mitre.org/techniques/T1055/012/',
       },
       {
-        title: 'CISA Known Exploited Vulnerabilities (KEV) Catalog',
-        uri: 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog',
+        title: 'Microsoft Sysinternals — Sysmon Event ID 25 (ProcessTampering)',
+        uri: 'https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-25-processtampering',
+      },
+      {
+        title: 'Elastic Security Labs — Memory Injection & ETW Threat Research',
+        uri: 'https://www.elastic.co/security-labs',
       },
     ],
   },
@@ -171,6 +181,8 @@ const CURATED_THREAT_INTEL: Record<
     scenarioName: 'Log4Shell JNDI Injection & Post-Exploitation',
     summary:
       'Apache Log4j2 JNDI lookup injection (CVE-2021-44228) enables unauthenticated remote code execution when untrusted HTTP headers or parameters containing ${jndi:ldap://...} strings are logged by vulnerable JVM services.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Apache Foundation & NIST NVD define the MessagePatternConverter JNDI lookup flaw; Swiss GOVCERT.ch & LunaSec dissect the LDAP JavaNamingReference (javaCodeBase + javaFactory) and URLClassLoader remote bytecode execution; and CISA ED 22-02 correlates Nginx HTTP logs, Zeek LDAP flows, and Linux auditd execve events.',
     cves: [
       {
         id: 'CVE-2021-44228',
@@ -206,6 +218,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'CISA Alert AA22-174A: Iranian Government-Sponsored Actors Exploit Log4Shell in VMware Horizon Systems.',
       'NSA & CISA Joint Guidance: Mitigating Log4Shell and Other Log4j-Related Vulnerabilities.',
+      'Swiss NCSC / GOVCERT.ch: Technical Anatomy of Log4Shell JNDI Remote Class Loading.',
     ],
     groundedSources: [
       {
@@ -216,6 +229,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'CISA Apache Log4j Vulnerability Guidance',
         uri: 'https://www.cisa.gov/news-events/news/apache-log4j-vulnerability-guidance',
       },
+      {
+        title: 'Swiss NCSC / GOVCERT.ch — Log4j Zero-Day Technical Analysis',
+        uri: 'https://www.ncsc.admin.ch/ncsc/en/home/aktuell/im-fokus/log4j.html',
+      },
     ],
   },
   'amsi-reflective-dll': {
@@ -224,6 +241,8 @@ const CURATED_THREAT_INTEL: Record<
     scenarioName: 'In-Memory AMSI Bypass & Reflective DLL Loading',
     summary:
       'Fileless PowerShell and CLR post-exploitation frameworks routinely patch amsi.dll!AmsiScanBuffer in virtual memory before invoking [System.Reflection.Assembly]::Load() or reflective PE loaders so payloads never touch NTFS disk.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft Learn defines how amsi.dll!AmsiScanBuffer bridges PowerShell to Windows Defender; MDSec & MITRE T1562.001/T1620 dissect the 6-byte VirtualProtect prologue patch (mov eax, 0x80070057; ret) and in-memory CLR reflection; and Microsoft PowerShell Team documents pre-patch EventID 4104 and kernel EtwTiLogProtectVM detections.',
     cves: [
       {
         id: 'CVE-2023-23397',
@@ -259,6 +278,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'MITRE ATT&CK T1562.001: Impair Defenses — Disable or Modify Tools (AMSI & ETW Patching).',
       'MITRE ATT&CK T1620: Reflective Code Loading in CLR & Native Process Heaps.',
+      'Microsoft PowerShell Team: Detecting Memory Patching via Script Block Logging (EventID 4104) & ETW.',
     ],
     groundedSources: [
       {
@@ -269,6 +289,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'MITRE ATT&CK T1562.001 — Impair Defenses',
         uri: 'https://attack.mitre.org/techniques/T1562/001/',
       },
+      {
+        title: 'Microsoft Learn — Antimalware Scan Interface (AMSI) Architecture',
+        uri: 'https://learn.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal',
+      },
     ],
   },
   'ad-kerberoasting': {
@@ -277,6 +301,8 @@ const CURATED_THREAT_INTEL: Record<
     scenarioName: 'Active Directory Kerberoasting & Pass-the-Hash Lateral Movement',
     summary:
       'Kerberoasting abuses the Kerberos Ticket Granting Service (TGS-REQ) by requesting RC4-HMAC (0x17) encrypted service tickets for Active Directory accounts with registered SPNs, cracking them offline to escalate privileges and move laterally.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: SpecterOps & MITRE T1558.003 explain LDAP SPN discovery and why requesting RC4-HMAC (0x17) forces the KDC to encrypt TGS tickets with the service account’s NTLM hash; Microsoft Auditing defines EventID 4769 (0x17) and EventID 4624 (LogonType 3); and NSA/CISA guidance mandates AES256-only and gMSA accounts.',
     cves: [
       {
         id: 'CVE-2022-33679',
@@ -312,6 +338,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'NSA & CISA Advisory: Active Directory Security — Mitigating Kerberoasting (Enforce AES256 & gMSA 25+ char passwords).',
       'Microsoft Security Guidance: Monitoring Event ID 4769 with TicketEncryptionType 0x17.',
+      'MITRE ATT&CK T1558.003 & T1550.002: Offline Hashcat 13100 Cracking & NTLM Pass-the-Hash.',
     ],
     groundedSources: [
       {
@@ -322,6 +349,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'MITRE ATT&CK T1550.002 — Use Alternate Authentication Material: Pass the Hash',
         uri: 'https://attack.mitre.org/techniques/T1550/002/',
       },
+      {
+        title: 'Microsoft Security Auditing — Event ID 4769 (Kerberos Service Ticket Requested)',
+        uri: 'https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4769',
+      },
     ],
   },
   'dns-tunneling-exfil': {
@@ -330,6 +361,8 @@ const CURATED_THREAT_INTEL: Record<
     scenarioName: 'Covert DNS Tunneling Data Exfiltration & C2',
     summary:
       'DNS Tunneling encapsulates sensitive data chunks and C2 commands inside high-entropy Base32/Hex subdomain labels over UDP port 53, bypassing perimeter firewalls that block direct outbound HTTP/S traffic by abusing recursive corporate DNS resolvers.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: IETF RFC 1035 specifies the 63-byte label and 253-byte FQDN protocol boundaries; Palo Alto Unit 42 & SANS DFIR dissect APT34 (OilRig) Base32 chunking, cache-busting nonces, and Shannon entropy (>4.2 bits/byte) anomalies; and Microsoft Sysinternals Sysmon EventID 22 attributes DNS queries to the exact host process.',
     cves: [
       {
         id: 'CVE-2024-21887',
@@ -365,6 +398,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'CISA & NSA DNS Security Guidance: Inspecting Recursive Resolver Logs (Zeek dns.log) and Blocking Unauthorised Authoritative Domains.',
       'SANS DFIR: Detecting DNS Tunneling via Subdomain Shannon Entropy (>4.2 bits) and Unusual TXT/NULL Record Ratios.',
+      'Palo Alto Networks Unit 42: OilRig / APT34 DNS Tunneling Protocol Anatomy.',
     ],
     groundedSources: [
       {
@@ -372,8 +406,12 @@ const CURATED_THREAT_INTEL: Record<
         uri: 'https://attack.mitre.org/techniques/T1071/004/',
       },
       {
-        title: 'MITRE ATT&CK T1048.003 — Exfiltration Over Alternative Protocol',
-        uri: 'https://attack.mitre.org/techniques/T1048/003/',
+        title: 'Palo Alto Unit 42 — DNS Tunneling Abuse & Detection',
+        uri: 'https://unit42.paloaltonetworks.com/dns-tunneling-how-dns-can-be-abused-by-malicious-actors/',
+      },
+      {
+        title: 'Microsoft Sysinternals — Sysmon Event ID 22 (DNSEvent)',
+        uri: 'https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-22-dnsevent',
       },
     ],
   },
@@ -383,6 +421,8 @@ const CURATED_THREAT_INTEL: Record<
     scenarioName: 'LockBit-Style Volume Shadow Copy Wipe & Encryption',
     summary:
       'Human-operated ransomware groups systematically inhibit system recovery (T1490) by deleting Volume Shadow Copies via vssadmin.exe, wmic, or WMI COM APIs and disabling Windows Recovery Environment via bcdedit.exe before launching multi-threaded hybrid encryption (T1486).',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: CISA/FBI/MS-ISAC Advisory AA23-165A documents LockBit 3.0 PsExec lateral deployment (EventID 7045) and vssadmin/bcdedit recovery wiping; Trend Micro & Sophos X-Ops dissect LockBit Black’s intermittent head-only encryption using Windows I/O Completion Ports; and Microsoft Learn defines VSS & Sysmon EventID 1/11 telemetry.',
     cves: [
       {
         id: 'CVE-2023-4966 & CVE-2024-1709',
@@ -418,6 +458,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'CISA / FBI / MS-ISAC Joint Cybersecurity Advisory AA23-165A: Understanding Ransomware Threat Actors: LockBit 3.0.',
       'MITRE ATT&CK T1490 & T1486: Inhibit System Recovery & Data Encrypted for Impact.',
+      'Trend Micro & Sophos X-Ops: LockBit Black Intermittent Encryption & I/O Completion Port Analysis.',
     ],
     groundedSources: [
       {
@@ -428,6 +469,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'CISA Joint Advisory AA23-165A — LockBit 3.0 Ransomware',
         uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-165a',
       },
+      {
+        title: 'Microsoft Learn — Volume Shadow Copy Service (VSS)',
+        uri: 'https://learn.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service',
+      },
     ],
   },
   'unit42-panos-midnight-eclipse': {
@@ -435,7 +480,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'CVE-2024-3400',
     scenarioName: 'Unit 42 — Operation MidnightEclipse: PAN-OS GlobalProtect RCE & UPSTYLE Backdoor',
     summary:
-      'Disclosed by Palo Alto Networks Unit 42 in April 2024, Operation MidnightEclipse (UTA0218) exploited zero-day CVE-2024-3400 (CVSS 10.0) in PAN-OS GlobalProtect via SESSID cookie path traversal and sendTelemetry cron command injection to deploy the UPSTYLE Python backdoor.',
+      'Synthesizing findings from Volexity (UTA0218 discovery), Palo Alto Networks Unit 42 (Operation MidnightEclipse), and Rapid7, attackers exploited zero-day CVE-2024-3400 (CVSS 10.0) in PAN-OS GlobalProtect via SESSID cookie path traversal and sendTelemetry cron command injection to implant the UPSTYLE Python backdoor in system.pth and exfiltrate running-config.xml.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Volexity discovered the zero-day campaign (UTA0218), capturing the initial firewall breach, running-config.xml theft, and internal SMB/DPAPI lateral movement; Unit 42 reverse-engineered the UPSTYLE Python backdoor in /usr/lib/python3.6/site-packages/system.pth and its sslvpn_ngx_error.log inotify monitor; and Rapid7 & PAN PSIRT detailed the SESSID filename backtick injection inside sendTelemetry.',
     cves: [
       {
         id: 'CVE-2024-3400',
@@ -451,7 +498,7 @@ const CURATED_THREAT_INTEL: Record<
         aliases: 'Velvet Ant Overlaps, State-Sponsored Perimeter Intrusion Group',
         targetSectors: 'Government, Defense, Telecommunications, Critical Infrastructure',
         notableCampaign:
-          'Exploited CVE-2024-3400 zero-day to plant the in-memory UPSTYLE backdoor in update.py and exfiltrate running-config.xml.',
+          'Exploited CVE-2024-3400 zero-day to plant the in-memory UPSTYLE backdoor in system.pth / update.py and exfiltrate running-config.xml.',
       },
       {
         name: 'Opportunistic Post-Disclosure Clusters',
@@ -462,13 +509,18 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'Palo Alto Networks Unit 42 Threat Brief: Operation MidnightEclipse (CVE-2024-3400).',
-      'Palo Alto Networks Security Advisory PAN-SA-2024-0005 (CVE-2024-3400).',
+      'Palo Alto Networks Unit 42 Threat Brief: Operation MidnightEclipse (CVE-2024-3400 & UPSTYLE Backdoor).',
+      'Volexity Threat Research: Zero-Day Exploitation of Unauthenticated RCE in GlobalProtect (UTA0218).',
+      'Palo Alto Networks Security Advisory PAN-SA-2024-0005 & Rapid7 AttackerKB Root-Cause Analysis.',
     ],
     groundedSources: [
       {
         title: 'Unit 42 — Operation MidnightEclipse & CVE-2024-3400 Analysis',
         uri: 'https://unit42.paloaltonetworks.com/cve-2024-3400/',
+      },
+      {
+        title: 'Volexity — Zero-Day Exploitation of GlobalProtect CVE-2024-3400 (UTA0218)',
+        uri: 'https://www.volexity.com/blog/2024/04/12/zero-day-exploitation-of-unauthenticated-remote-code-execution-vulnerability-in-globalprotect-cve-2024-3400/',
       },
       {
         title: 'Palo Alto Networks Security Advisory CVE-2024-3400',
@@ -481,7 +533,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1218.014',
     scenarioName: 'Elastic Security Labs — GrimResource: MMC & apds.dll XSS-to-RCE Execution',
     summary:
-      'Discovered by Elastic Security Labs in June 2024, GrimResource abuses a cross-site scripting (XSS) flaw in Windows apds.dll (apds:// URI protocol) inside crafted Microsoft Management Console (.msc) files to execute arbitrary JScript/VBScript and .NET payloads via mmc.exe without macro warnings.',
+      'Discovered by Elastic Security Labs and patched by Microsoft (CVE-2024-43572), GrimResource abuses a cross-site scripting (XSS) flaw in Windows apds.dll (res://apds.dll/redirect.html) inside crafted Microsoft Management Console (.msc) files to trigger DotNetToJScript deserialization in mmc.exe and inject Cobalt Strike into dllhost.exe via RwSection.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Elastic Security Labs discovered GrimResource in the wild and dissected the apds.dll XSS redirect and RwSection dirty-CLR injection into dllhost.exe; MDSec’s DotNetToJScript research explains how VBScript/JScript inside mmc.exe deserializes arbitrary .NET payloads in RAM; and Microsoft MSRC (CVE-2024-43572) documents the official MMC snap-in validation fix.',
     cves: [
       {
         id: 'CVE-2024-43572',
@@ -509,12 +563,17 @@ const CURATED_THREAT_INTEL: Record<
     ],
     realWorldAdvisories: [
       'Elastic Security Labs (June 2024): GrimResource — Microsoft Management Console for Initial Access and Evasion.',
-      'MITRE ATT&CK T1218.014: System Binary Proxy Execution — MMC.',
+      'Microsoft Security Response Center (MSRC): CVE-2024-43572 MMC Remote Code Execution Advisory.',
+      'MITRE ATT&CK T1218.014: System Binary Proxy Execution — MMC & DotNetToJScript.',
     ],
     groundedSources: [
       {
         title: 'Elastic Security Labs — GrimResource Technical Analysis',
         uri: 'https://www.elastic.co/security-labs/grimresource',
+      },
+      {
+        title: 'Microsoft MSRC — CVE-2024-43572 MMC RCE Vulnerability',
+        uri: 'https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43572',
       },
       {
         title: 'MITRE ATT&CK T1218.014 — System Binary Proxy Execution: MMC',
@@ -527,7 +586,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1574.002',
     scenarioName: 'Elastic Security Labs — Lotus Blossom APT: WinGUp DLL Side-Loading & CHRYSALIS Backdoor',
     summary:
-      'Documented by Elastic Security Labs, Lotus Blossom (Spring Dragon / Billbug) uses a legitimate signed Notepad++ updater binary (GUP.exe) to side-load a malicious libcurl.dll, decrypting the CHRYSALIS backdoor in memory with API hashing and custom HTTPS C2.',
+      'Documented by Elastic Security Labs and Cisco Talos, Lotus Blossom (Spring Dragon / Billbug) uses a legitimate signed Notepad++ updater binary (GUP.exe) to side-load a malicious libcurl.dll, decrypting the CHRYSALIS and Sagerunex backdoors in memory with custom API hashing and HTTPS C2.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Elastic Security Labs reverse-engineered the 3-piece WinGUp (GUP.exe) + malicious libcurl.dll + encrypted conf.bin loader chain and the CHRYSALIS implant; Cisco Talos correlated Lotus Blossom’s Sagerunex backdoor evolution and regional telecom/defense targeting; and MITRE G0030/T1574.002 mapped the Sysmon EventID 7 unsigned-DLL detection rules.',
     cves: [
       {
         id: 'MITRE-T1574.002',
@@ -555,12 +616,17 @@ const CURATED_THREAT_INTEL: Record<
     ],
     realWorldAdvisories: [
       'Elastic Security Labs: Lotus Blossom Espionage Tradecraft & CHRYSALIS Backdoor Analysis.',
+      'Cisco Talos Intelligence: Spring Dragon / Lotus Blossom Sagerunex Backdoor & Side-Loading Campaigns.',
       'MITRE ATT&CK Group G0030 (Lotus Blossom) & T1574.002 (DLL Side-Loading).',
     ],
     groundedSources: [
       {
         title: 'Elastic Security Labs — Threat Research & APT Intrusion Analysis',
         uri: 'https://www.elastic.co/security-labs',
+      },
+      {
+        title: 'Cisco Talos Intelligence — Lotus Blossom / Sagerunex Research',
+        uri: 'https://blog.talosintelligence.com/',
       },
       {
         title: 'MITRE ATT&CK Group G0030 — Lotus Blossom',
@@ -573,7 +639,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1078.004',
     scenarioName: 'Unit 42 & CISA — Scattered Spider (Muddled Libra): SSO MFA Fatigue, RMM & AWS/ESXi Pivot',
     summary:
-      'Profiled by Palo Alto Networks Unit 42 and CISA (AA23-320A), Muddled Libra (Scattered Spider / Octo Tempest) combines IT helpdesk social engineering and rogue MFA device registration in Okta/Entra ID with commercial RMM tools and Active Directory ESX Admins group manipulation to compromise AWS and VMware ESXi.',
+      'Profiled by Palo Alto Networks Unit 42, CISA (AA23-320A), and Mandiant (UNC3944), Muddled Libra (Scattered Spider / Octo Tempest) combines IT helpdesk social engineering ("vishing") and rogue MFA device registration in Okta/Entra ID with signed commercial RMM tools and rogue SAML IdP federation to compromise AWS and VMware ESXi.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: CISA/FBI Advisory AA23-320A documents the helpdesk voice-phishing scripts, SIM swapping, and commercial RMM tools (AnyDesk, ScreenConnect, Tailscale, ngrok); Unit 42 ("Muddled Libra") details the SSO-to-AWS sts:AssumeRole / CreateSAMLProvider and VMware ESXi pivot; and Mandiant (UNC3944) adds internal Confluence/SharePoint runbook harvesting.',
     cves: [
       {
         id: 'MITRE-T1078.004',
@@ -602,6 +670,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'Palo Alto Networks Unit 42 Threat Actor Profile: Muddled Libra (Scattered Spider).',
       'CISA & FBI Joint Cybersecurity Advisory AA23-320A: Scattered Spider.',
+      'Mandiant Threat Intelligence: UNC3944 Identity-Driven Cloud & Hypervisor Intrusions.',
     ],
     groundedSources: [
       {
@@ -612,6 +681,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'CISA Joint Advisory AA23-320A — Scattered Spider',
         uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a',
       },
+      {
+        title: 'Mandiant / Google Cloud Threat Intel — UNC3944 Research',
+        uri: 'https://cloud.google.com/blog/topics/threat-intelligence/',
+      },
     ],
   },
   'elastic-apt41-dustpan-stealthvector': {
@@ -619,7 +692,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1620',
     scenarioName: 'Elastic & Mandiant — APT41 (Brass Typhoon): DodgeBox, Call-Stack Spoofing & DUSTPAN Loader',
     summary:
-      'Analyzed by Elastic Security Labs and Mandiant/Google TAG, APT41 (Brass Typhoon / Wicked Panda) uses the DodgeBox and DUSTPAN loaders with synthetic thread call-stack spoofing (RtlUserThreadStart -> BaseThreadInitThunk), CFG bypass, and AES-GCM decryption to execute STEALTHVECTOR and MOONWALK in memory.',
+      'Analyzed by Google Mandiant, Elastic Security Labs, and Trend Micro, APT41 (Brass Typhoon / Earth Freybug) injects the DUSTPAN stage-1 loader into wermgr.exe, uses STEALTHVECTOR to overwrite ntdll.dll in RAM (erasing user-mode EDR hooks) with synthetic call-stack spoofing, and loads the 16-plugin DUSTTRAP framework.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Mandiant uncovered the DUSTPAN memory launcher and the 16-plugin DUSTTRAP mTLS framework; Elastic Security Labs dissected DodgeBox and STEALTHVECTOR’s ntdll.dll .text unhooking (VirtualProtect RX -> RWX -> RX) and synthetic BaseThreadInitThunk call-stack spoofing; and Trend Micro (Earth Freybug) documented wermgr.exe process hollowing.',
     cves: [
       {
         id: 'MITRE-T1620',
@@ -632,27 +707,32 @@ const CURATED_THREAT_INTEL: Record<
     actorGroups: [
       {
         name: 'APT41 (Brass Typhoon / Wicked Panda)',
-        aliases: 'Barium, Winnti, Earth Baku, HOODOO',
+        aliases: 'Barium, Winnti, Earth Baku, Earth Freybug, HOODOO',
         targetSectors: 'Telecommunications, Government, Technology, Healthcare, Media',
         notableCampaign:
-          'Deployed DodgeBox, DUSTPAN, STEALTHVECTOR, and MOONWALK (Google Drive C2) across global enterprise targets.',
+          'Deployed DodgeBox, DUSTPAN, STEALTHVECTOR, and DUSTTRAP across global enterprise targets.',
       },
       {
-        name: 'Earth Freyja & ShadowPad Affiliates',
+        name: 'Earth Freybug & ShadowPad Affiliates',
         aliases: 'APT41 Sub-Clusters',
         targetSectors: 'Semiconductor, Aviation, Logistics',
         notableCampaign:
-          'Uses signed binary side-loading and call-stack spoofing to blind endpoint memory scanners.',
+          'Uses wermgr.exe injection, ntdll.dll unhooking, and call-stack spoofing to blind endpoint memory scanners.',
       },
     ],
     realWorldAdvisories: [
-      'Elastic Security Labs & Mandiant: APT41 DUSTPAN, DodgeBox, and STEALTHVECTOR Analysis.',
-      'MITRE ATT&CK Group G0096 (APT41) & Technique T1620 (Reflective Code Loading).',
+      'Elastic Security Labs: APT41 DodgeBox and STEALTHVECTOR Call-Stack Spoofing Analysis.',
+      'Google Mandiant: APT41 DUSTPAN Loader and DUSTTRAP Multi-Stage In-Memory Plugin Ecosystem.',
+      'MITRE ATT&CK Group G0096 (APT41) & Trend Micro Earth Freybug wermgr.exe Analysis.',
     ],
     groundedSources: [
       {
         title: 'Elastic Security Labs — APT & Loader Evasion Research',
         uri: 'https://www.elastic.co/security-labs',
+      },
+      {
+        title: 'Mandiant — APT41 DUSTPAN & DUSTTRAP Technical Analysis',
+        uri: 'https://cloud.google.com/blog/topics/threat-intelligence/apt41-us-state-governments',
       },
       {
         title: 'MITRE ATT&CK Group G0096 — APT41',
@@ -665,7 +745,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1003.003',
     scenarioName: 'Microsoft Threat Intel — Volt Typhoon LOTL: KV Botnet, ntdsutil IFM & netsh portproxy',
     summary:
-      'Detailed by Microsoft Threat Intelligence and CISA (AA24-038A), Volt Typhoon (Bronze Silhouette) compromises SOHO routers (KV Botnet) and maintains multi-year stealth inside critical infrastructure using exclusively native Windows binaries (wmic, ntdsutil IFM media creation, and netsh interface portproxy).',
+      'Detailed by Microsoft Threat Intelligence, CISA/NSA/FBI (AA24-038A), and Lumen Black Lotus Labs, Volt Typhoon (Bronze Silhouette) compromises SOHO routers (KV Botnet) and maintains multi-year stealth inside critical infrastructure using exclusively native Windows binaries (wmic, ntdsutil IFM media creation, and netsh interface portproxy).',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft Threat Intelligence identified the hands-on-keyboard wmic, ntdsutil "ac i ntds" ifm "create full", and netsh portproxy commands; Lumen Black Lotus Labs & Secureworks dissected the KV Botnet SOHO router relay mesh; and CISA/NSA/FBI Advisory AA24-038A provided PortProxy registry paths and ESent EventID 325 hunting rules.',
     cves: [
       {
         id: 'CVE-2022-42475 / SOHO-0DAY',
@@ -694,6 +776,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'Microsoft Threat Intelligence: Volt Typhoon targets US critical infrastructure with living-off-the-land techniques.',
       'CISA / NSA / FBI Joint Advisory AA24-038A: PRC State-Sponsored Actors Compromise U.S. Critical Infrastructure.',
+      'Lumen Black Lotus Labs & MITRE G1017: KV Botnet SOHO Router Relay Infrastructure.',
     ],
     groundedSources: [
       {
@@ -704,6 +787,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'CISA Joint Advisory AA24-038A — Volt Typhoon',
         uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-038a',
       },
+      {
+        title: 'MITRE ATT&CK Group G1017 — Volt Typhoon',
+        uri: 'https://attack.mitre.org/groups/G1017/',
+      },
     ],
   },
   'ms-midnight-blizzard-oauth': {
@@ -711,7 +798,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1098.003',
     scenarioName: 'Microsoft Threat Intel — Midnight Blizzard (APT29): OAuth App Privilege Escalation',
     summary:
-      'Reported by Microsoft Threat Intelligence in January 2024, Midnight Blizzard (APT29 / Cozy Bear) used a distributed residential proxy password spray to breach a legacy non-production test tenant, then abused an OAuth application with Directory.ReadWrite.All to grant full_access_as_app across Exchange Online.',
+      'Reported by Microsoft Threat Intelligence, CISA (ED 24-02), and Mandiant, Midnight Blizzard (APT29 / Cozy Bear) used a distributed residential proxy password spray to breach a legacy non-production test tenant, then abused an OAuth application with Directory.ReadWrite.All to grant full_access_as_app across corporate Exchange Online.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft Threat Intelligence disclosed the low-volume residential-proxy password spray and the legacy OAuth Service Principal elevation to full_access_as_app; Mandiant documented APT29’s multi-app backdoor registration and EWS client_credentials collection; and CISA ED 24-02 mandated Entra ID Service Principal credential auditing.',
     cves: [
       {
         id: 'MITRE-T1098.003',
@@ -740,6 +829,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'Microsoft Threat Intelligence (Jan 2024): Midnight Blizzard — Guidance for responders on nation-state attack.',
       'CISA Emergency Directive 24-02: Mitigating Nation-State Compromise of Cloud Email.',
+      'Mandiant Threat Intelligence: APT29 Cloud Identity & Service Principal Persistence Tradecraft.',
     ],
     groundedSources: [
       {
@@ -750,6 +840,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'CISA Emergency Directive 24-02 — Midnight Blizzard Response',
         uri: 'https://www.cisa.gov/news-events/directives/ed-24-02-mitigating-significant-risk-nation-state-compromise-microsoft-corporate-email',
       },
+      {
+        title: 'Mandiant — APT29 Cloud & OAuth Persistence Research',
+        uri: 'https://cloud.google.com/blog/topics/threat-intelligence/',
+      },
     ],
   },
   'ms-salt-typhoon-telecom': {
@@ -757,7 +851,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1014',
     scenarioName: 'Microsoft Threat Intel & CISA — Salt Typhoon: Telecom Core Router Compromise & Demodex Rootkit',
     summary:
-      'Documented by Microsoft Threat Intelligence and CISA/FBI/NSA (AA24-338A), Salt Typhoon (GhostEmperor / FamousSparrow) compromises telecommunications backbone routers (Cisco IOS XE Guest Shell), captures TACACS+/RADIUS credentials, and deploys the signed kernel-mode Demodex rootkit (`Nguv64.sys`) on Windows mediation servers.',
+      'Documented by CISA/FBI/NSA (AA24-338A), Kaspersky GReAT, and Cisco Talos, Salt Typhoon (GhostEmperor / FamousSparrow) compromises telecommunications backbone routers via Cisco IOS XE (CVE-2023-20198 Guest Shell), captures TACACS+/RADIUS credentials, and deploys the kernel-mode Demodex rootkit (Nguv64.sys) on Windows mediation servers.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: CISA/NSA/FBI Advisory AA24-338A & Cisco Talos detail Cisco IOS XE exploitation (CVE-2023-20198), Guest Shell container abuse, and TACACS+/RADIUS capture; Kaspersky GReAT reverse-engineered the GhostEmperor Demodex kernel rootkit (BYOVD EPROCESS unlinking); and Microsoft Threat Intelligence linked the GhostSpider user-mode C2 framework.',
     cves: [
       {
         id: 'CVE-2023-20198 / CVE-2023-20273',
@@ -784,13 +880,18 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'CISA / NSA / FBI Joint Guide (Dec 2024): Enhanced Visibility and Hardening Guidance for Communications Infrastructure (Salt Typhoon).',
-      'Kaspersky & Microsoft Threat Intelligence: GhostEmperor Demodex Rootkit & Telecom Intrusion Analysis.',
+      'CISA / NSA / FBI Joint Guide (AA24-338A): Enhanced Visibility and Hardening Guidance for Communications Infrastructure.',
+      'Kaspersky GReAT: GhostEmperor — From ProxyLogon to Kernel Mode with Demodex Rootkit.',
+      'Cisco Talos & Microsoft Threat Intelligence: IOS XE Guest Shell & Salt Typhoon Telecom Analysis.',
     ],
     groundedSources: [
       {
-        title: 'CISA — Enhanced Visibility & Hardening for Communications Infrastructure',
+        title: 'CISA — Enhanced Visibility & Hardening for Communications Infrastructure (AA24-338A)',
         uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-338a',
+      },
+      {
+        title: 'Kaspersky Securelist — GhostEmperor & Demodex Kernel Rootkit',
+        uri: 'https://securelist.com/ghostemperor-from-proxylogon-to-kernel-mode/104407/',
       },
       {
         title: 'MITRE ATT&CK T1014 — Rootkit (Demodex / GhostEmperor)',
@@ -803,7 +904,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'CVE-2022-38028',
     scenarioName: 'Microsoft Threat Intel — Forest Blizzard (APT28): Print Spooler CVE-2022-38028 & GooseEgg',
     summary:
-      'Published by Microsoft Threat Intelligence in April 2024, Forest Blizzard (APT28 / Fancy Bear / Fighting Ursa) deployed the custom GooseEgg launcher to exploit CVE-2022-38028 in Windows Print Spooler (`spoolsv.exe`) by modifying a JavaScript constraints file (`MPDW-constraints.js`) to register a malicious COM server (`wayzgoose.dll`) as SYSTEM.',
+      'Published by Microsoft Threat Intelligence, MSRC, and ESET, Forest Blizzard (APT28 / Fancy Bear / Fighting Ursa) deployed the custom GooseEgg launcher (execute.bat + justice.exe) to exploit CVE-2022-38028 in Windows Print Spooler by modifying MPDW-constraints.js in the DriverStore and registering wayzgoose.dll as a SYSTEM COM server.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft MSRC (CVE-2022-38028) defines the DriverStore MPDW-constraints.js permissions flaw; Microsoft Threat Intelligence dissected the GooseEgg launcher (execute.bat / justice.exe) and wayzgoose.dll COM registration inside PrintFilterPipelineSvc.exe; and ESET & CISA correlated APT28’s post-escalation SYSTEM credential harvesting.',
     cves: [
       {
         id: 'CVE-2022-38028',
@@ -832,11 +935,16 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'Microsoft Threat Intelligence (April 2024): Forest Blizzard uses novel GooseEgg tool for post-compromise activities.',
       'Microsoft Security Update Guide: CVE-2022-38028 Windows Print Spooler Elevation of Privilege.',
+      'ESET & MITRE ATT&CK G0007: APT28 (Forest Blizzard) Post-Compromise Toolset Analysis.',
     ],
     groundedSources: [
       {
         title: 'Microsoft Security Blog — Forest Blizzard GooseEgg Tool Analysis',
         uri: 'https://www.microsoft.com/en-us/security/blog/2024/04/22/analyzing-forest-blizzards-custom-post-compromise-tool-for-exploiting-cve-2022-38028-to-obtain-credentials/',
+      },
+      {
+        title: 'Microsoft MSRC — CVE-2022-38028 Windows Print Spooler Advisory',
+        uri: 'https://msrc.microsoft.com/update-guide/vulnerability/CVE-2022-38028',
       },
       {
         title: 'MITRE ATT&CK Group G0007 — APT28 (Forest Blizzard)',
@@ -849,7 +957,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'T1539',
     scenarioName: 'Microsoft, Unit 42 & CISA — Star Blizzard / Storm-0539: Evilginx AiTM Cookie Theft',
     summary:
-      'Documented by Microsoft Threat Intelligence, Palo Alto Networks Unit 42, and CISA (AA23-341A), Star Blizzard (SEABORGIUM / Callisto) and Storm-0539 deploy Evilginx Adversary-in-the-Middle (AiTM) reverse proxies in front of Microsoft Entra ID login endpoints to intercept MFA-authenticated `ESTSAUTH` / `ESTSAUTHPERSISTENT` session cookies.',
+      'Documented by Microsoft Threat Intelligence, Palo Alto Networks Unit 42, and CISA/NCSC-UK (AA23-341A), Star Blizzard (SEABORGIUM / COLDRIVER) and Storm-0539 deploy Evilginx Adversary-in-the-Middle (AiTM) reverse proxies in front of Microsoft Entra ID login endpoints to intercept MFA-authenticated ESTSAUTH / ESTSAUTHPERSISTENT session cookies.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: CISA & NCSC-UK (AA23-341A) document Star Blizzard’s target reconnaissance and cloud-hosted PDF lures; Microsoft Threat Intelligence dissects how Evilginx reverse proxies relay live MFA challenges, steal ESTSAUTHPERSISTENT cookies, and create hidden Exchange New-InboxRule forwarding rules; and Unit 42 details FIDO2 Token Binding mitigations.',
     cves: [
       {
         id: 'MITRE-T1539 / T1557',
@@ -878,6 +988,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'CISA / NCSC UK / NSA / FBI Joint Advisory AA23-341A: Russian FSB Cyber Actor Star Blizzard Continues Worldwide Spear-Phishing.',
       'Microsoft Threat Intelligence: From cookie theft to BEC — Attackers use AiTM phishing sites as entry point.',
+      'Palo Alto Networks Unit 42 & MITRE T1539: Defending Against AiTM Reverse-Proxy Session Hijacking.',
     ],
     groundedSources: [
       {
@@ -888,6 +999,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'Microsoft Security Blog — AiTM Phishing & Session Cookie Theft',
         uri: 'https://www.microsoft.com/en-us/security/blog/2022/07/12/from-cookie-theft-to-bec-attackers-use-aitm-phishing-sites-as-entry-point-to-further-financial-fraud/',
       },
+      {
+        title: 'MITRE ATT&CK T1539 — Steal Web Session Cookie',
+        uri: 'https://attack.mitre.org/techniques/T1539/',
+      },
     ],
   },
   'talos-arcanedoor-asa': {
@@ -895,7 +1010,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'CVE-2024-20353',
     scenarioName: 'Cisco Talos — ArcaneDoor: UAT4356 ASA/FTD Line Dancer & Line Runner Espionage',
     summary:
-      'Uncovered by Cisco Talos in April 2024, the ArcaneDoor campaign (UAT4356 / STORM-1849) targeted Cisco ASA and FTD perimeter firewalls using CVE-2024-20353 and CVE-2024-20359 to deploy Line Dancer (in-memory shellcode interpreter via AAA SAML/IPsec fields) and Line Runner (persistent Lua/WebVPN backdoor).',
+      'Uncovered by Cisco Talos, Cisco PSIRT, and NCSC-UK in April 2024, the ArcaneDoor campaign (UAT4356 / STORM-1849) targeted Cisco ASA and FTD perimeter firewalls using CVE-2024-20353 and CVE-2024-20359 to deploy Line Dancer (in-memory shellcode interpreter via <host-scan-reply> WebVPN POSTs) and Line Runner (persistent vpn_dessert.zip boot backdoor).',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Cisco Talos reverse-engineered the Line Dancer volatile memory implant (which hooks lina to disable syslog/crashdumps and captures PCAPs) and the Line Runner persistent backdoor; Cisco PSIRT documented CVE-2024-20353 and CVE-2024-20359; and NCSC-UK & Canadian Cyber Centre published the verify /md5 system:memory/text forensic integrity check.',
     cves: [
       {
         id: 'CVE-2024-20353',
@@ -930,7 +1047,8 @@ const CURATED_THREAT_INTEL: Record<
     ],
     realWorldAdvisories: [
       'Cisco Talos Intelligence Group: ArcaneDoor — New Espionage-Focused Campaign Found Targeting Perimeter Network Devices.',
-      'NCSC UK, CISA & Canadian Cyber Centre Joint Advisory on ArcaneDoor (UAT4356).',
+      'Cisco PSIRT Security Advisory: CVE-2024-20353 & CVE-2024-20359 ASA/FTD Web Services & Persistence.',
+      'NCSC UK, CISA & Canadian Cyber Centre Joint Advisory on ArcaneDoor Memory Forensics.',
     ],
     groundedSources: [
       {
@@ -941,6 +1059,10 @@ const CURATED_THREAT_INTEL: Record<
         title: 'Cisco Security Advisory — CVE-2024-20353 & CVE-2024-20359',
         uri: 'https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-asaftd-persist-rce-FLsNXF4h',
       },
+      {
+        title: 'NCSC-UK — ArcaneDoor Perimeter Campaign Advisory',
+        uri: 'https://www.ncsc.gov.uk/news/arcanedoor-espionage-campaign-targeting-perimeter-network-devices',
+      },
     ],
   },
   'talos-fortinet-coathanger-apt': {
@@ -948,7 +1070,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'CVE-2024-21762',
     scenarioName: 'FortiGuard, NCSC-NL & Talos — COATHANGER RAT: FortiOS SSL-VPN & preload.so Rootkit',
     summary:
-      'Disclosed by the Dutch Military Intelligence and Security Service (MIVD), NCSC-NL, and FortiGuard Labs in February 2024, state-sponsored actors exploited FortiOS SSL-VPN out-of-bounds write vulnerabilities (CVE-2022-42475 / CVE-2024-21762) against the Dutch Ministry of Defence to deploy COATHANGER, a stealthy persistent RAT that hooks `ld.so` via `preload.so` and survives firmware updates by infecting `smartctl`.',
+      'Disclosed by the Dutch Military Intelligence and Security Service (MIVD), NCSC-NL, and FortiGuard Labs in February 2024, state-sponsored actors exploited FortiOS SSL-VPN vulnerabilities (CVE-2022-42475 / CVE-2024-21762) to deploy COATHANGER, a stealthy persistent RAT that hooks userland libc calls via /etc/ld.so.preload and survives firmware updates by patching the flatkc boot unpacker and smartctl.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Dutch MIVD/AIVD & NCSC-NL reverse-engineered COATHANGER—showing how preload.so in /etc/ld.so.preload hides /data2/ files from CLI commands and how hooking flatkc survives FortiOS firmware upgrades; FortiGuard PSIRT documented the sslvpnd heap/out-of-bounds write bugs (CVE-2022-42475 / CVE-2024-21762); and Mandiant detailed monolithic /bin/init ROP chains.',
     cves: [
       {
         id: 'CVE-2024-21762',
@@ -971,7 +1095,7 @@ const CURATED_THREAT_INTEL: Record<
         aliases: 'MIVD / NCSC-NL Tracked State Actor',
         targetSectors: 'Defense Ministries, Military Networks, Diplomatic Gateways',
         notableCampaign:
-          'Deployed COATHANGER (`preload.so`, `httpsd`, and modified `smartctl`) on FortiGate appliances to maintain hidden access across firmware upgrades.',
+          'Deployed COATHANGER (`preload.so`, `httpsd`, and modified `smartctl` / `flatkc`) on FortiGate appliances to maintain hidden access across firmware upgrades.',
       },
       {
         name: 'UNC3886 & Perimeter Appliance Actors',
@@ -984,15 +1108,20 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'NCSC-NL & MIVD/AIVD Technical Advisory (Feb 2024): Ministry of Defence of the Netherlands Uncovers COATHANGER Stealthy Malware.',
       'Fortinet PSIRT Advisory FG-IR-24-015 (CVE-2024-21762) & FG-IR-22-398 (CVE-2022-42475).',
+      'MITRE ATT&CK T1574.006 & Mandiant Appliance Forensics: Detecting /etc/ld.so.preload Rootkits.',
     ],
     groundedSources: [
       {
-        title: 'NCSC-NL & MIVD — COATHANGER Technical Analysis Report',
-        uri: 'https://www.ncsc.nl/binaries/ncsc/documenten/publicaties/2024/februari/6/mivd-aivd-advisory-coathanger-tlp-clear/TLP-CLEAR+MIVD+AIVD+Advisory+COATHANGER.pdf',
+        title: 'NCSC-NL & MIVD — COATHANGER Malware Publication',
+        uri: 'https://english.ncsc.nl/publications/publications/2024/february/6/mivd-and-aivd-alert-on-coathanger-malware',
       },
       {
         title: 'FortiGuard PSIRT Advisory FG-IR-24-015 (CVE-2024-21762)',
         uri: 'https://www.fortiguard.com/psirt/FG-IR-24-015',
+      },
+      {
+        title: 'MITRE ATT&CK T1574.006 — Dynamic Linker Hijacking (LD_PRELOAD)',
+        uri: 'https://attack.mitre.org/techniques/T1574/006/',
       },
     ],
   },
@@ -1001,7 +1130,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'CVE-2023-46747',
     scenarioName: 'F5 SIRT & ProjectDiscovery — BIG-IP TMUI AJP Request Smuggling & Root RCE',
     summary:
-      'Documented by F5 SIRT (K000137353), Praetorian, and ProjectDiscovery, CVE-2023-46747 (CVSS 9.8) exploits an Apache httpd `mod_proxy_ajp` request smuggling flaw on F5 BIG-IP TMUI (`/tmui/Control/jspmap/tmui/system/user/authproperties.jsp`) to inject `REMOTEROLE: 0` and `REMOTEUSER: admin` into Tomcat, create a rogue admin user, and execute arbitrary root commands via `/mgmt/tm/util/bash`.',
+      'Documented by F5 SIRT (K000137353), Praetorian, and ProjectDiscovery, CVE-2023-46747 (CVSS 9.8) exploits an Apache httpd mod_proxy_ajp request smuggling flaw on F5 BIG-IP TMUI to inject a forged 0x1234 AJP frame with SC_A_REMOTE_USER=admin into Tomcat (:8009), create a rogue admin user in /config/bigip_user.conf, and execute root commands via tmsh run /util bash.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Praetorian & ProjectDiscovery dissected the Apache mod_proxy_ajp packet-boundary miscalculation that smuggles a second 0x1234 AJP frame with SC_A_REMOTE_USER=admin into Tomcat; F5 SIRT (K000137353) published the mitigation script and /var/log/audit mcpd/tmsh indicators; and CISA KEV documented post-exploitation SSL private key theft.',
     cves: [
       {
         id: 'CVE-2023-46747',
@@ -1030,6 +1161,7 @@ const CURATED_THREAT_INTEL: Record<
     realWorldAdvisories: [
       'F5 Security Advisory K000137353: BIG-IP Configuration Utility Unauthenticated RCE (CVE-2023-46747).',
       'ProjectDiscovery & Praetorian Technical Reproduction of CVE-2023-46747 AJP Smuggling.',
+      'NIST NVD & CISA KEV: CVE-2023-46747 Remediation & Audit Log Hunting.',
     ],
     groundedSources: [
       {
@@ -1040,14 +1172,20 @@ const CURATED_THREAT_INTEL: Record<
         title: 'ProjectDiscovery Blog — F5 BIG-IP Unauthenticated RCE (CVE-2023-46747)',
         uri: 'https://blog.projectdiscovery.io/f5-big-ip-unauthenticated-rce-cve-2023-46747/',
       },
+      {
+        title: 'NVD — CVE-2023-46747 Detail',
+        uri: 'https://nvd.nist.gov/vuln/detail/CVE-2023-46747',
+      },
     ],
   },
   'splunk-ivanti-connect-secure': {
     scenarioId: 'splunk-ivanti-connect-secure',
     scenarioCode: 'CVE-2024-21887',
-    scenarioName: 'Mandiant & Splunk SURGe — UNC5221 Ivanti Connect Secure Zero-Day & ZIPLINE',
+    scenarioName: 'Mandiant, Volexity & Splunk SURGe — UNC5221 Ivanti Connect Secure Zero-Day & WIREFIRE / ZIPLINE',
     summary:
-      'Uncovered by Mandiant and analyzed by Splunk SURGe in January 2024, UNC5221 chained zero-days CVE-2023-46805 (authentication bypass) and CVE-2024-21887 (command injection) on Ivanti Connect Secure VPN appliances to inject the ZIPLINE passive ELF backdoor (`libsecure.so`) and WARPWIRE JavaScript credential harvester.',
+      'Discovered by Volexity (UTA0178) and analyzed by Mandiant (UNC5221), Splunk SURGe, and CISA (ED 24-01), attackers chained zero-days CVE-2023-46805 (../../ path-traversal auth bypass) and CVE-2024-21887 (Python popen command injection) on Ivanti Connect Secure VPN appliances to implant the WIREFIRE webshell in visits.py, the ZIPLINE LD_PRELOAD backdoor (libsecure.so), and the WARPWIRE credential harvester.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Volexity discovered the zero-day chain (/api/v1/totp/user-backup-code/../../license/keys-status/) and the WIREFIRE Python webshell injected into visits.py; Mandiant (UNC5221) reverse-engineered ZIPLINE (libsecure.so LD_PRELOAD), WARPWIRE, and ComponentIntegrity.pm ICT tampering; and CISA ED 24-01 & Splunk SURGe authored the external ICT and SIEM detections.',
     cves: [
       {
         id: 'CVE-2024-21887',
@@ -1066,11 +1204,11 @@ const CURATED_THREAT_INTEL: Record<
     ],
     actorGroups: [
       {
-        name: 'UNC5221',
+        name: 'UNC5221 / UTA0178',
         aliases: 'Cutting Edge Campaign Espionage Actor',
         targetSectors: 'Defense Industrial Base, Government, Aerospace, Finance, Telecom',
         notableCampaign:
-          'Deployed ZIPLINE (LD_PRELOAD libsecure.so hooking accept() for SSH-2.0-OpenSSH_0.3xx) and WARPWIRE on Ivanti VPN gateways.',
+          'Deployed WIREFIRE in visits.py, ZIPLINE (LD_PRELOAD libsecure.so), and WARPWIRE on Ivanti VPN gateways while patching ComponentIntegrity.pm.',
       },
       {
         name: 'UNC5325 & Post-Disclosure Clusters',
@@ -1081,10 +1219,15 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'Mandiant: Cutting Edge — Suspected APT Targets Ivanti Connect Secure VPN in New Zero-Day Exploitation.',
-      'CISA Emergency Directive 24-01: Mitigate Ivanti Connect Secure and Policy Secure Vulnerabilities.',
+      'Volexity Threat Research: Active Exploitation of Two Zero-Day Vulnerabilities in Ivanti Connect Secure (WIREFIRE).',
+      'Mandiant: Cutting Edge — Suspected APT Targets Ivanti Connect Secure VPN in New Zero-Day Exploitation (ZIPLINE & WARPWIRE).',
+      'CISA Emergency Directive 24-01 & Splunk SURGe: Mitigate Ivanti Connect Secure Vulnerabilities.',
     ],
     groundedSources: [
+      {
+        title: 'Volexity — Active Exploitation of Two Zero-Days in Ivanti Connect Secure',
+        uri: 'https://www.volexity.com/blog/2024/01/10/active-exploitation-of-two-zero-day-vulnerabilities-in-ivanti-connect-secure/',
+      },
       {
         title: 'Mandiant — Cutting Edge Ivanti Zero-Day & ZIPLINE Analysis',
         uri: 'https://cloud.google.com/blog/topics/threat-intelligence/suspected-apt-targets-ivanti-zero-day',
@@ -1098,9 +1241,11 @@ const CURATED_THREAT_INTEL: Record<
   'splunk-citrix-bleed-session-hijack': {
     scenarioId: 'splunk-citrix-bleed-session-hijack',
     scenarioCode: 'CVE-2023-4966',
-    scenarioName: 'Splunk SURGe & CISA — Citrix Bleed (CVE-2023-4966) NSC_AAAC Session Hijack',
+    scenarioName: 'Splunk SURGe, Assetnote & CISA — Citrix Bleed (CVE-2023-4966) NSC_AAAC Session Hijack',
     summary:
-      'Analyzed by Splunk SURGe and CISA (AA23-325A), Citrix Bleed (CVE-2023-4966) exploits an unsafe `snprintf` return-value usage in Citrix NetScaler ADC/Gateway (`/oauth/idp/.well-known/openid-configuration`) via an oversized HTTP Host header to leak uninitialized heap memory containing valid 64-byte `NSC_AAAC` session tokens, bypassing MFA.',
+      'Analyzed by Assetnote, Splunk SURGe, Mandiant, and CISA (AA23-325A), Citrix Bleed (CVE-2023-4966) exploits an unsafe snprintf() return-value usage in Citrix NetScaler ADC/Gateway (/oauth/idp/.well-known/openid-configuration) via a ~24,576-byte HTTP Host header to over-read ~16 KB of adjacent heap memory containing active 65-character NSC_AAAC session tokens, bypassing MFA.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Assetnote reverse-engineered the NetScaler binary to prove how inserting a 24 KB Host header 6 times into a 131 KB buffer causes snprintf() to return ~147 KB and leak ~16 KB of adjacent heap RAM; Mandiant & CISA (AA23-325A) documented LockBit 3.0 post-MFA hijacking and kill aaa session -all remediation; and Splunk SURGe authored the multi-ASN cookie-replay SPL rules.',
     cves: [
       {
         id: 'CVE-2023-4966',
@@ -1127,10 +1272,15 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
+      'Assetnote Security Research: Citrix Bleed — Leaking Session Tokens with CVE-2023-4966 (snprintf Root Cause).',
       'Splunk SURGe: Citrix Bleed (CVE-2023-4966) Vulnerability Analysis and Detection Guidance.',
       'CISA / FBI / MS-ISAC Joint Advisory AA23-325A: Threat Actors Exploit Citrix Bleed (CVE-2023-4966).',
     ],
     groundedSources: [
+      {
+        title: 'Assetnote — Citrix Bleed CVE-2023-4966 Technical Root-Cause Research',
+        uri: 'https://www.assetnote.io/resources/research/citrix-bleed-leaking-session-tokens-with-cve-2023-4966',
+      },
       {
         title: 'Splunk SURGe — Citrix Bleed CVE-2023-4966 Detection Guide',
         uri: 'https://www.splunk.com/en_us/blog/security/citrix-bleed-cve-2023-4966-vulnerability-analysis-and-detection.html',
@@ -1146,7 +1296,9 @@ const CURATED_THREAT_INTEL: Record<
     scenarioCode: 'CVE-2023-38606',
     scenarioName: 'Kaspersky GReAT — Operation Triangulation: Zero-Click iMessage, Hardware MMIO & TriangleDB',
     summary:
-      'Discovered by Kaspersky GReAT in 2023, Operation Triangulation used a 4-zero-day chain—a zero-click Apple iMessage TrueType font ADJUST instruction RCE (CVE-2023-41990), integer overflow (CVE-2023-32434), undocumented Apple A-series SoC hardware MMIO register PPL bypass (CVE-2023-38606), and Safari stage—to deploy the in-memory TriangleDB implant.',
+      'Discovered by Kaspersky GReAT in 2023 and patched by Apple, Operation Triangulation chained 4 zero-days—a zero-click Apple iMessage TrueType font ADJUST (0x90) instruction RCE (CVE-2023-41990), integer overflow (CVE-2023-32434), undocumented Apple A12–A16 SoC hardware MMIO register PPL bypass (CVE-2023-38606), and Safari stage—to deploy the in-memory TriangleDB implant.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Kaspersky GReAT’s 37C3 hardware analysis solved CVE-2023-38606 (undocumented SoC MMIO DMA register 0x206040000 writes bypassing Apple PPL); Kaspersky’s TriangleDB report dissected the volatile in-memory Mach-O implant and sms.db wiping; and Apple Security Engineering / NVD documented CVE-2023-41990 (FontParser ADJUST instruction) and DataUsage.sqlite BackupAgent indicators.',
     cves: [
       {
         id: 'CVE-2023-38606',
@@ -1180,8 +1332,9 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'Kaspersky GReAT (37C3 & Securelist): Operation Triangulation — The Last (Hardware) Mystery.',
+      'Kaspersky GReAT (37C3 & Securelist): Operation Triangulation — The Last (Hardware) Mystery (CVE-2023-38606).',
       'Kaspersky GReAT: Dissecting TriangleDB, the Operation Triangulation iOS Implant.',
+      'Apple Security Updates & NIST NVD: CVE-2023-41990 (FontParser) & CVE-2023-38606 (Kernel MMIO).',
     ],
     groundedSources: [
       {
@@ -1192,30 +1345,36 @@ const CURATED_THREAT_INTEL: Record<
         title: 'Kaspersky Securelist — Dissecting the TriangleDB iOS Implant',
         uri: 'https://securelist.com/triangledb-iostriangulation-implant/110050/',
       },
+      {
+        title: 'NIST NVD — CVE-2023-38606 Apple SoC MMIO Vulnerability',
+        uri: 'https://nvd.nist.gov/vuln/detail/CVE-2023-38606',
+      },
     ],
   },
   'kaspersky-toddycat-eset-dll': {
     scenarioId: 'kaspersky-toddycat-eset-dll',
     scenarioCode: 'T1574.002',
-    scenarioName: 'Kaspersky GReAT — ToddyCat APT: ESET DLL Side-Loading, Samurai & TomBerBil',
+    scenarioName: 'Kaspersky GReAT & ESET — ToddyCat APT: ESET DLL Side-Loading (CVE-2024-11859), TCESB & Samurai',
     summary:
-      'Documented by Kaspersky GReAT, ToddyCat APT uses legitimate signed ESET Command Line Scanner (`ecls.exe`) to side-load a malicious `version.dll` / `eclsLang.dll` loader (`LoFiSe`), injecting the modular Samurai passive backdoor into `svchost.exe` and deploying the TomBerBil stealer to extract browser DPAPI tokens.',
+      'Documented by Kaspersky GReAT and ESET (CVE-2024-11859), ToddyCat APT abuses the standalone signed ESET Command Line Scanner (ecls.exe) to side-load a malicious version.dll / http_dll.dll proxy loader (TCESB / LoFiSe), decrypting the modular Samurai passive backdoor in memory and deploying the TomBerBil credential stealer while forwarding exports to the real DLL.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Kaspersky GReAT uncovered ToddyCat’s TCESB, Samurai, and TomBerBil toolset and how export forwarding (#pragma comment(linker, "/export:...")) keeps the host binary running cleanly; ESET PSIRT (CVE-2024-11859) documented the DLL search-order flaw in ecls.exe; and MITRE T1574.002 defines the Sysmon EventID 7 unsigned-DLL detection rule.',
     cves: [
       {
-        id: 'MITRE-T1574.002',
-        cvss: '8.7 HIGH',
-        status: 'Active ToddyCat Espionage Campaign',
+        id: 'CVE-2024-11859',
+        cvss: '6.7 MEDIUM (Abused for Stealth APT Execution)',
+        status: 'ESET Advisory · Exploited by ToddyCat APT',
         description:
-          'DLL Side-Loading via signed ESET ecls.exe binary to decrypt and inject Samurai and Ninja implants into svchost.exe.',
+          'DLL search-order hijacking vulnerability in ESET Command Line Scanner (`ecls.exe`) abused by ToddyCat to side-load TCESB / Samurai.',
       },
     ],
     actorGroups: [
       {
         name: 'ToddyCat APT',
-        aliases: 'Samurai / Ninja / TomBerBil Operator',
+        aliases: 'Samurai / Ninja / TomBerBil / TCESB Operator',
         targetSectors: 'Government Ministries, Military, Defense Contractors (Europe & Asia)',
         notableCampaign:
-          'Pivoted from Exchange servers to workstations using ESET ecls.exe side-loading, Samurai passive C2, and TomBerBil credential theft.',
+          'Pivoted from Exchange servers to workstations using ESET ecls.exe side-loading (CVE-2024-11859), TCESB/Samurai C2, and TomBerBil credential theft.',
       },
       {
         name: 'UNC-Exchange-Samurai Clusters',
@@ -1226,13 +1385,18 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'Kaspersky GReAT (Securelist): ToddyCat — Keep Calm and Check Logs & Staying Under the Radar.',
-      'MITRE ATT&CK Software & Technique Analysis: ToddyCat Samurai & Ninja Toolset.',
+      'Kaspersky GReAT (Securelist): ToddyCat — Keep Calm and Continue Espionage (Samurai, Ninja, LoFiSe & TCESB).',
+      'ESET Security Advisory & NIST NVD: CVE-2024-11859 DLL Search Order Hijacking in ESET Command Line Scanner.',
+      'MITRE ATT&CK T1574.002: Hijack Execution Flow — DLL Side-Loading.',
     ],
     groundedSources: [
       {
         title: 'Kaspersky Securelist — ToddyCat Technical Analysis',
-        uri: 'https://securelist.com/toddycat-keep-calm-and-check-logs/110696/',
+        uri: 'https://securelist.com/toddycat-keep-calm-and-continue-espionage/110698/',
+      },
+      {
+        title: 'NIST NVD — CVE-2024-11859 ESET Command Line Scanner DLL Hijacking',
+        uri: 'https://nvd.nist.gov/vuln/detail/CVE-2024-11859',
       },
       {
         title: 'MITRE ATT&CK T1574.002 — Hijack Execution Flow: DLL Side-Loading',
@@ -1243,9 +1407,11 @@ const CURATED_THREAT_INTEL: Record<
   'kaspersky-lazarus-byovd-fudmodule': {
     scenarioId: 'kaspersky-lazarus-byovd-fudmodule',
     scenarioCode: 'CVE-2024-21338',
-    scenarioName: 'Kaspersky & Avast — Lazarus Group: AppLocker appid.sys Zero-Day & FudModule Rootkit',
+    scenarioName: 'Avast, Kaspersky & Microsoft — Lazarus Group: AppLocker appid.sys Zero-Day & FudModule Rootkit',
     summary:
-      'Disclosed by Avast and analyzed by Kaspersky GReAT in 2024, the North Korean Lazarus Group exploited a zero-day object pointer manipulation vulnerability (CVE-2024-21338) in the native Windows AppLocker driver (`appid.sys` IOCTL `0x22A018` `AipSmartHashImageFile`) to achieve arbitrary kernel read/write and deploy the FudModule rootkit, blinding EDR ETW Ti providers and PPL flags without loading third-party drivers.',
+      'Disclosed by Avast Decoded Threat Labs and analyzed by Kaspersky GReAT and Microsoft MSRC, the North Korean Lazarus Group (Diamond Sleet) exploited a zero-day object pointer manipulation flaw (CVE-2024-21338) in the built-in Windows AppLocker driver (appid.sys IOCTL 0x22A018 AipSmartHashImageFile) to flip KTHREAD.PreviousMode to 0 and deploy the FudModule DKOM rootkit, blinding EDR ETW Ti providers and PPL flags without loading any third-party driver.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Avast Threat Labs captured the CVE-2024-21338 zero-day in the wild and dissected how IOCTL 0x22A018 tricks appid.sys into calling ObfDereferenceObjectWithTag on KTHREAD.PreviousMode; Kaspersky GReAT analyzed the KaolinRAT loader and FudModule’s DKOM array (zeroing EPROCESS.Protection and EtwThreatIntProvRegHandle); and MSRC documented the kernel patch and EventID 7040 AppIDSvc telemetry.',
     cves: [
       {
         id: 'CVE-2024-21338',
@@ -1272,10 +1438,15 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'Avast Threat Labs & Kaspersky GReAT: Lazarus Group FudModule Rootkit and CVE-2024-21338 Zero-Day Analysis.',
+      'Avast Decoded Threat Labs: Lazarus and the FudModule Rootkit — Beyond BYOVD with an Admin-to-Kernel Zero-Day (CVE-2024-21338).',
       'Microsoft Security Response Center (MSRC): CVE-2024-21338 Windows Kernel Elevation of Privilege.',
+      'Kaspersky GReAT: Lazarus Group KaolinRAT & FudModule Kernel Callback Blinding Analysis.',
     ],
     groundedSources: [
+      {
+        title: 'Avast Decoded — Lazarus FudModule & CVE-2024-21338 Zero-Day Analysis',
+        uri: 'https://decoded.avast.io/janvojtesek/lazarus-and-the-fudmodule-rootkit-beyond-byovd-with-an-admin-to-kernel-zero-day/',
+      },
       {
         title: 'Microsoft MSRC — CVE-2024-21338 Windows Kernel Advisory',
         uri: 'https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-21338',
@@ -1289,9 +1460,11 @@ const CURATED_THREAT_INTEL: Record<
   'mandiant-apt29-teamcity-jetstream': {
     scenarioId: 'mandiant-apt29-teamcity-jetstream',
     scenarioCode: 'CVE-2023-42793',
-    scenarioName: 'Mandiant, Microsoft & CISA — APT29: JetBrains TeamCity RCE & GraphicalProton',
+    scenarioName: 'Mandiant, Rapid7/SonarSource & CISA — APT29: JetBrains TeamCity RCE & GraphicalProton',
     summary:
-      'Detailed by CISA/FBI/NSA/NCSC-UK (AA23-347A), Mandiant, and Microsoft Threat Intelligence, APT29 (Midnight Blizzard / Cozy Bear) conducted mass exploitation of JetBrains TeamCity CI/CD servers via CVE-2023-42793 (`GET /app/rest/users/id:1/tokens/RPC2` authentication bypass) to execute commands via `/app/rest/debug/processes` and deploy the GraphicalProton backdoor (OneDrive/Dropbox C2).',
+      'Detailed by CISA/FBI/NSA/NCSC-UK (AA23-347A), Mandiant, and SonarSource/Rapid7, APT29 (Midnight Blizzard / Cozy Bear) exploited JetBrains TeamCity CI/CD servers via CVE-2023-42793 (POST /app/rest/users/id:1/tokens/RPC2 RequestInterceptors wildcard bypass) to mint admin bearer tokens, enable /app/rest/debug/processes, and deploy the GraphicalProton backdoor.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: SonarSource & Rapid7 dissected the Java RequestInterceptors /**/RPC2 wildcard bug that leaves /app/rest/users/id:1/tokens/RPC2 unauthenticated and explained how internal.debug.processes.enable=true unlocks RCE; CISA, NSA, FBI & Mandiant (AA23-347A) documented APT29’s GraphicalProton backdoor and CI/CD secret theft; and JetBrains Security published the token-creation audit indicators.',
     cves: [
       {
         id: 'CVE-2023-42793',
@@ -1318,13 +1491,18 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
-      'CISA / FBI / NSA / NCSC-UK / CERT.PL Joint Advisory AA23-347A: Russian Foreign Intelligence Service (SVR) Exploiting JetBrains TeamCity CVE-2023-42793.',
+      'CISA / FBI / NSA / NCSC-UK / CERT.PL Joint Advisory AA23-347A: Russian SVR Exploiting JetBrains TeamCity CVE-2023-42793.',
+      'SonarSource & Rapid7 Vulnerability Research: JetBrains TeamCity RequestInterceptors /**/RPC2 Root-Cause Analysis.',
       'JetBrains Security Bulletin: CVE-2023-42793 Critical Authentication Bypass in TeamCity.',
     ],
     groundedSources: [
       {
         title: 'CISA Joint Advisory AA23-347A — SVR Exploiting TeamCity CVE-2023-42793',
         uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-347a',
+      },
+      {
+        title: 'SonarSource — JetBrains TeamCity CVE-2023-42793 Technical Root Cause',
+        uri: 'https://www.sonarsource.com/blog/jetbrains-teamcity-averted-supply-chain-attack/',
       },
       {
         title: 'NVD — CVE-2023-42793 JetBrains TeamCity Auth Bypass',
@@ -1335,9 +1513,11 @@ const CURATED_THREAT_INTEL: Record<
   'splunk-screenconnect-slashandgrab': {
     scenarioId: 'splunk-screenconnect-slashandgrab',
     scenarioCode: 'CVE-2024-1709',
-    scenarioName: 'Splunk SURGe & Huntress — ScreenConnect SlashAndGrab (CVE-2024-1709) Auth Bypass',
+    scenarioName: 'Huntress & Splunk SURGe — ScreenConnect SlashAndGrab (CVE-2024-1709) Auth Bypass',
     summary:
-      'Documented by Splunk SURGe and Huntress ("SlashAndGrab"), CVE-2024-1709 (CVSS 10.0) allows unauthenticated attackers to append an extra slash (`/SetupWizard.aspx/`) to ConnectWise ScreenConnect URLs, re-run the installation wizard, overwrite `App_Data\\User.xml` with a rogue admin account, and push SYSTEM commands across managed endpoints via `ScreenConnect.ClientService.exe`.',
+      'Documented by Huntress ("SlashAndGrab"), Splunk SURGe, and ConnectWise, CVE-2024-1709 (CVSS 10.0) allows unauthenticated attackers to append an extra slash (/SetupWizard.aspx/) so ASP.NET populates Request.PathInfo, bypassing the setup-lock check to re-run the installation wizard, overwrite App_Data\\User.xml with a rogue admin account, and push SYSTEM scripts across managed endpoints via ScreenConnect.ClientService.exe.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Huntress ("SlashAndGrab") reverse-engineered the ASP.NET Request.PathInfo /SetupWizard.aspx/ authentication bypass, App_Data\\User.xml overwrite, and C:\\Windows\\Temp\\ScreenConnect\\ endpoint execution; Splunk SURGe authored the SIEM SPL & Sysmon EventID 1/11 detection queries; and ConnectWise & CISA KEV documented the companion CVE-2024-1708 ZipSlip extension path-traversal bug.',
     cves: [
       {
         id: 'CVE-2024-1709',
@@ -1371,10 +1551,15 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
     realWorldAdvisories: [
+      'Huntress Security Research: SlashAndGrab — ScreenConnect Post-Exploitation in the Wild (CVE-2024-1709 & CVE-2024-1708).',
       'Splunk SURGe: ConnectWise ScreenConnect Authentication Bypass (CVE-2024-1709 & CVE-2024-1708) Detection.',
       'ConnectWise Security Bulletin (Feb 19, 2024): ScreenConnect 23.9.8 Critical Patch.',
     ],
     groundedSources: [
+      {
+        title: 'Huntress — SlashAndGrab ScreenConnect CVE-2024-1709 Technical Analysis',
+        uri: 'https://www.huntress.com/blog/slashandgrab-screen-connect-post-exploitation-in-the-wild-cve-2024-1709-cve-2024-1708',
+      },
       {
         title: 'Splunk SURGe — ScreenConnect CVE-2024-1709 Analysis & SPL Rules',
         uri: 'https://www.splunk.com/en_us/blog/security/connectwise-screenconnect-cve-2024-1709-cve-2024-1708.html',
@@ -1385,6 +1570,7 @@ const CURATED_THREAT_INTEL: Record<
       },
     ],
   },
+  ...BATCH_1_TO_4_CURATED_INTEL,
 };
 
 export function getCuratedThreatIntel(
@@ -1402,5 +1588,3 @@ export function getCuratedThreatIntel(
     fetchedAt: new Date().toISOString(),
   };
 }
-
-

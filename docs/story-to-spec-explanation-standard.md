@@ -112,7 +112,7 @@ export interface RawScenarioStepGuideItem {
 
 ## 4. Authoring Rules for New Scenarios & Steps
 
-When adding a new attack scenario or editing an existing one, follow these **7 mandatory authoring rules**:
+When adding a new attack scenario or editing an existing one, follow these **8 mandatory authoring rules**:
 
 1. **Never Write Textbook Definitions Without a Story (`storyAnalogy`)**:
    - Every `briefing.storyAnalogy` must be at least 100 characters long and tell a cohesive, concrete story (e.g., a bank vault, reception desk, photocopier, hotel keycard, pneumatic tube, or factory assembly line).
@@ -120,15 +120,21 @@ When adding a new attack scenario or editing an existing one, follow these **7 m
 2. **Always Pair Metaphors With Exact Technical Terms in Parentheses**:
    - Inside `storyAnalogy` and `simpleExplanation`, bridge the everyday concept to the technical term right next to it, e.g., *"the prison operator (`Corporate DNS Resolver 10.20.1.53`)"*, *"the VIP wristband (`NSC_AAAC` session cookie)"*, or *"pressing the Freeze button (`CREATE_SUSPENDED = 0x00000004`)"*.
 3. **Zero Fabricated Facts (Strict Grounding Rule)**:
-   - Use **only** the CVEs, MITRE technique IDs, process names, file paths, registry keys, IP addresses, ports, and Event IDs documented in the scenario’s authoritative advisory (`CISA`, `Mandiant`, `Unit 42`, `Elastic Security Labs`, `Microsoft Threat Intelligence`, `Cisco Talos`, `Kaspersky GReAT`, `Splunk SURGe`).
+   - Use **only** the CVEs, MITRE technique IDs, process names, file paths, registry keys, IP addresses, ports, and Event IDs documented in the scenario’s authoritative advisories (`CISA`, `Mandiant`, `Unit 42`, `Elastic Security Labs`, `Microsoft Threat Intelligence`, `Cisco Talos`, `Kaspersky GReAT`, `Splunk SURGe`, `Volexity`, `Huntress`, `Rapid7`, `Assetnote`, `ProjectDiscovery`, `Avast`, `ESET`, `NCSC-NL`).
    - Do not invent fictional tools, CVEs, or unverified attributions.
-4. **Explicit Diagram Node & Sequence Alignment (`diagramAlignment`)**:
+4. **Mandatory Multi-Source Cross-Vendor Research & Synthesis (`>= 3 Independent Sources`)**:
+   - Because no single security vendor observes every stage of a real-world attack chain, **whenever you write or update an analysis for any attack scenario, you must search for and synthesize at least 3 complementary independent sources** before writing the step guide:
+     1. **Exploit / Initial Access Root-Cause Source** (e.g., Assetnote, ProjectDiscovery, Rapid7, Huntress, Volexity, or Vendor PSIRT explaining the exact HTTP/AJP/URI packet or parser flaw).
+     2. **Implant / Memory / Post-Exploitation Reverse-Engineering Source** (e.g., Mandiant, Unit 42, Elastic Security Labs, Kaspersky GReAT, Cisco Talos, Avast, or Microsoft Threat Intelligence dissecting the in-memory loader, rootkit, or lateral pivot).
+     3. **SIEM / EDR / Forensic Detection & CERT Advisory Source** (e.g., CISA KEV / Joint Advisories, Splunk SURGe, Microsoft Sysinternals/Learn, NCSC-NL/MIVD, or SigmaHQ detailing the exact Event IDs, SPL/Sigma queries, and remediation steps).
+   - Record all complementary sources in `SCENARIO_ATTRIBUTION_MAP` (`lib/attack-sources-and-legal.ts`) and `CURATED_THREAT_INTEL` (`lib/threat-intel-service.ts`), and explicitly summarize how the sources complement each other in `multiSourceSynthesis`.
+5. **Explicit Diagram Node & Sequence Alignment (`diagramAlignment`)**:
    - Every `step.diagramAlignment` **must** reference the exact forward arrow `#<stepNumber>.1` (e.g., `#1.1→`, `#2.1→`, `#3.1→`), the return arrow `⇠#<stepNumber>.2`, and the circled node numbers (`Node ①` .. `Node ⑥`).
-5. **Actionable Defender / SIEM Evidence (`detectionAndEvidence`)**:
+6. **Actionable Defender / SIEM Evidence (`detectionAndEvidence`)**:
    - Every step must state the exact log source and identifier that detects the action (e.g., `Sysmon EventID 1 / 7 / 8 / 10 / 22 / 25`, `Windows Security EventID 4769 / 4624 / 1102`, `Suricata SID`, `Zeek dns.log`, `Entra AuditLogs`).
-6. **100% English-Only Strings in Codebase**:
+7. **100% English-Only Strings in Codebase**:
    - All TypeScript/React source files (`lib/**`, `components/**`) must use English-only strings. Automated tests (`lib/scenario-step-guides.test.ts` and `lib/simulation-engine.test.ts`) assert `/[\u0600-\u06FF]/.test(...) === false`.
-7. **Zero-Truncation UI Rule**:
+8. **Zero-Truncation UI Rule**:
    - Never use the CSS `truncate` class (`text-overflow: ellipsis`) on any narrative, title, badge, or specification in `InspectorPanel.tsx` or `StepByStepGuidePanel.tsx`. Always allow multi-line wrapping with `leading-snug` / `leading-relaxed` and `break-words`.
 
 ---

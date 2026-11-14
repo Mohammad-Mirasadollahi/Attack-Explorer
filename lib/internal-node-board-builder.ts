@@ -157,7 +157,7 @@ export function buildInternalNodeSubBoard(
         wx: 520,
         wy: 360,
         isCompromised: true,
-        internalSummary: 'Matches 5-tuple against allowed service rule (e.g., TCP :443, UDP :53, SMB :445, or Kerberos :88) and creates a stateful session entry.' },
+        internalSummary: 'Matches the packet’s 5-tuple against an allowed service rule (such as TCP :443, UDP :53, SMB :445, or Kerberos :88 — chosen by the attacker so the firewall opens a stateful session entry instead of dropping the packet at the perimeter).' },
       {
         id: `${parentNode.id}_sub_dpi_engine`,
         zoneId: 'INTERNAL_SUBZONE_C',
@@ -176,7 +176,7 @@ export function buildInternalNodeSubBoard(
         wx: 875,
         wy: 215,
         isCompromised: true,
-        internalSummary: 'Processes application-layer header/query. Obfuscated payload evades static signature block and is queued for forwarding.' },
+        internalSummary: 'Inspects the application-layer header or query (where TLS encryption, Base32 encoding, or path-traversal normalization tricks the L7 filter into forwarding the payload as legitimate traffic).' },
       {
         id: `${parentNode.id}_sub_egress_fib`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -187,7 +187,7 @@ export function buildInternalNodeSubBoard(
         wx: 1190,
         wy: 195,
         isCompromised: true,
-        internalSummary: 'Rewrites L2 MAC header and VLAN tag, transmitting the packet onto the target internal subnet trunk.' },
+        internalSummary: 'Rewrites the Layer-2 MAC header and 802.1Q VLAN tag (routing the approved packet across the internal network boundary onto the target subnet trunk).' },
       {
         id: `${parentNode.id}_sub_span_mirror`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -198,7 +198,7 @@ export function buildInternalNodeSubBoard(
         wx: 1355,
         wy: 390,
         isCompromised: false,
-        internalSummary: 'Mirrors raw packet frames via hardware SPAN port to NDR/IDS sensors (Suricata / Zeek / SIEM) for anomaly detection.' },
+        internalSummary: 'Mirrors raw packet frames via a hardware SPAN tap to NDR/IDS sensors (Suricata / Zeek / SIEM — allowing defenders to spot anomalous JA3 fingerprints, oversized headers, or DNS entropy out-of-band without slowing down inline traffic).' },
     ];
 
     const flowBlueprints: InternalFlowBlueprint[] = [
@@ -212,7 +212,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'EMAIL',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Ingress NIC strips Ethernet preamble/VLAN tag and passes the packet descriptor to the Stateful ACL & NAT engine.' },
+        summary: 'Ingress NIC strips the Ethernet preamble/VLAN tag and passes the packet buffer via DMA to the Stateful ACL & NAT engine (checking whether the destination port is permitted).' },
       {
         fromIdx: 1,
         toIdx: 2,
@@ -223,7 +223,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'MALWARE_DROP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Stateful firewall rule matches allowed port and forwards the stream to the L7 Proxy / DPI / Resolver engine.' },
+        summary: 'Stateful firewall rule matches an allowed corporate port (so the packet is not blocked at Layer 4) and forwards the stream to the L7 Proxy / DPI / Resolver engine.' },
       {
         fromIdx: 2,
         toIdx: 3,
@@ -234,7 +234,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'LATERAL_HOP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'L7 engine hands off the packet to the L3 Forwarding Information Base (FIB) to route into the target VLAN.' },
+        summary: 'L7 engine hands off the packet to the L3 Forwarding Information Base (FIB — looking up the destination IP’s next-hop MAC address to route it into the target VLAN).' },
       {
         fromIdx: 3,
         toIdx: 4,
@@ -245,7 +245,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'C2_EXFIL',
         curveOffset: 42,
         returnOffset: -42,
-        summary: 'Switch/Firewall mirrors a passive copy of the session frames to the SOC sensor for deep packet inspection.' },
+        summary: 'Switch/Firewall mirrors a passive copy of the session frames to the SOC sensor (so Suricata/Zeek can inspect the traffic even after the firewall allowed it through).' },
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
@@ -340,8 +340,8 @@ export function buildInternalNodeSubBoard(
         wy: 210,
         isCompromised: false,
         internalSummary: p0
-            ? `Executes command line: ${p0.commandLine} and invokes ${p0.apiCalls.join(', ')}.`
-            : 'Initial host application receiving external input and triggering child process creation.' },
+            ? `Executes command line: ${p0.commandLine} and invokes ${p0.apiCalls.join(', ')} (serving as the initial user-space entry process on the host).`
+            : 'Initial host application receiving external input and triggering child process creation (serving as the entry foothold).' },
       {
         id: `${parentNode.id}_sub_child_loader`,
         zoneId: 'INTERNAL_SUBZONE_B',
@@ -353,8 +353,8 @@ export function buildInternalNodeSubBoard(
         wy: 360,
         isCompromised: true,
         internalSummary: p1
-            ? `Child process (${p1.commandLine}) invoking ${p1.apiCalls.join(', ')}.`
-            : 'Malicious child process spawned inside host user session.' },
+            ? `Child process (${p1.commandLine}) invoking ${p1.apiCalls.join(', ')} (spawned to stage or inject the payload under a trusted or background process context).`
+            : 'Malicious child process spawned inside the host user session (inheriting the parent’s security token).' },
       {
         id: `${parentNode.id}_sub_vad_memory`,
         zoneId: 'INTERNAL_SUBZONE_C',
@@ -366,7 +366,7 @@ export function buildInternalNodeSubBoard(
         wy: 215,
         isCompromised: true,
         internalSummary: p2?.memoryBlocks?.[0]?.description ||
-            'Virtual Address Descriptor (VAD) region where code injection, hollowing, or in-memory execution takes place.' },
+            'Virtual Address Descriptor (VAD) region where code injection, hollowing, or in-memory execution takes place (using private memory pages so no unpacked malware file is written to disk).' },
       {
         id: `${parentNode.id}_sub_cred_net`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -377,7 +377,7 @@ export function buildInternalNodeSubBoard(
         wx: 1190,
         wy: 195,
         isCompromised: true,
-        internalSummary: 'Accesses host network sockets, Kerberos ticket cache, or local files to continue lateral movement or exfiltration.' },
+        internalSummary: 'Accesses host network sockets, Kerberos ticket cache, or local files (allowing the payload to harvest credentials or beacon out under the host process’s identity).' },
       {
         id: `${parentNode.id}_sub_sysmon_agent`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -388,7 +388,7 @@ export function buildInternalNodeSubBoard(
         wx: 1355,
         wy: 390,
         isCompromised: false,
-        internalSummary: 'Kernel callbacks (PsSetCreateProcessNotifyRoutineEx & ETW) record every process creation and memory anomaly.' },
+        internalSummary: 'Kernel callbacks (PsSetCreateProcessNotifyRoutineEx & ETW — running in Ring 0 so user-mode malware cannot hide process spawns or cross-process memory writes) record every anomaly.' },
     ];
 
     const flowBlueprints: InternalFlowBlueprint[] = [
@@ -402,7 +402,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'MALWARE_DROP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Parent process invokes OS process creation API to spawn the child loader/shell process.' },
+        summary: 'Parent process invokes the OS process creation API (CreateProcessW / execve) to spawn the child loader or shell process (logged in Sysmon EventID 1 with full command-line arguments).' },
       {
         fromIdx: 1,
         toIdx: 2,
@@ -413,7 +413,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'SYSCALL',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Child process allocates executable memory pages and writes/unmaps payload sections in RAM.' },
+        summary: 'Child process allocates executable memory pages (PAGE_EXECUTE_READWRITE = 0x40) and writes or unmaps payload sections directly in RAM (avoiding disk-based file scanners).' },
       {
         fromIdx: 2,
         toIdx: 3,
@@ -424,7 +424,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'LATERAL_HOP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Hijacked or in-memory thread executes and opens outbound network sockets or reads local tokens.' },
+        summary: 'Hijacked or in-memory thread resumes execution and opens outbound network sockets or reads local authentication tokens (operating inside the trusted host process).' },
       {
         fromIdx: 2,
         toIdx: 4,
@@ -435,7 +435,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'C2_EXFIL',
         curveOffset: 42,
         returnOffset: -42,
-        summary: 'Kernel sensor detects unbacked executable memory / process tampering and commits an event log.' },
+        summary: 'Kernel sensor detects unbacked executable memory or process image replacement (comparing in-memory code against the signed file on disk) and commits a forensic event log.' },
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
@@ -524,7 +524,7 @@ export function buildInternalNodeSubBoard(
         wx: 175,
         wy: 345,
         isCompromised: true,
-        internalSummary: 'Walks the Process Environment Block (PEB) to resolve NTDLL/Kernel32 APIs dynamically and decrypts the embedded payload.' },
+        internalSummary: 'Walks the Process Environment Block (PEB — locating loaded DLLs in memory by hash so suspicious API names like VirtualAllocEx do not appear in the file’s static Import Table) and decrypts the stage-2 payload in RAM.' },
       {
         id: `${parentNode.id}_sub_evasion`,
         zoneId: 'INTERNAL_SUBZONE_B',
@@ -541,7 +541,7 @@ export function buildInternalNodeSubBoard(
         wx: 520,
         wy: 205,
         isCompromised: true,
-        internalSummary: 'Neutralizes host inspection or unmaps the legitimate executable section at 0x00400000 to prepare the hollow container.' },
+        internalSummary: 'Neutralizes user-mode inspection (patching amsi.dll / ntdll.dll in RAM) or calls NtUnmapViewOfSection (stripping the legitimate signed code out of the suspended process shell to make room for the malware).' },
       {
         id: `${parentNode.id}_sub_rwx_writer`,
         zoneId: 'INTERNAL_SUBZONE_C',
@@ -552,7 +552,7 @@ export function buildInternalNodeSubBoard(
         wx: 875,
         wy: 355,
         isCompromised: true,
-        internalSummary: 'Allocates PAGE_EXECUTE_READWRITE memory and writes MZ/PE headers plus .text/.rdata/.data sections into memory.' },
+        internalSummary: 'Allocates PAGE_EXECUTE_READWRITE (0x40 — allowing the memory block to be written now and executed as CPU instructions immediately after) and copies the MZ/PE headers and code sections into RAM.' },
       {
         id: `${parentNode.id}_sub_thread_hijack`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -563,7 +563,7 @@ export function buildInternalNodeSubBoard(
         wx: 1190,
         wy: 195,
         isCompromised: true,
-        internalSummary: 'Updates the suspended thread register context to point to the injected entry point and calls ResumeThread.' },
+        internalSummary: 'Calls SetThreadContext to overwrite the suspended thread’s RCX/RIP register (re-aiming the thread’s starting address at the injected payload entry point) and calls ResumeThread to wake it up.' },
       {
         id: `${parentNode.id}_sub_c2_module`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -574,7 +574,7 @@ export function buildInternalNodeSubBoard(
         wx: 1355,
         wy: 390,
         isCompromised: true,
-        internalSummary: 'Establishes the covert communication channel or executes post-exploitation tasks under the masqueraded process identity.' },
+        internalSummary: 'Establishes the covert communication channel or executes post-exploitation tasks (running under the trusted digital signature and PID of the hollowed/host process).' },
     ];
 
     const flowBlueprints: InternalFlowBlueprint[] = [
@@ -588,7 +588,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'SYSCALL',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Unpacker resolves native API addresses and invokes the defense evasion / unmapping routine.' },
+        summary: 'Unpacker resolves native API addresses from the PEB (avoiding static import detections) and invokes the defense evasion / unmapping routine.' },
       {
         fromIdx: 1,
         toIdx: 2,
@@ -599,7 +599,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'MALWARE_DROP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Allocates executable memory region and writes the decrypted PE headers and code sections.' },
+        summary: 'Allocates an executable memory region (0x40 RWX) and writes the decrypted PE headers ("MZ") and code sections directly into volatile RAM.' },
       {
         fromIdx: 2,
         toIdx: 3,
@@ -610,7 +610,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'SYSCALL',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Redirects the primary thread instruction pointer to the new payload entry point and wakes the thread.' },
+        summary: 'Redirects the primary thread’s entry-point register (RCX/RIP) to the injected payload address and decrements the suspend counter to 0 so execution begins.' },
       {
         fromIdx: 3,
         toIdx: 4,
@@ -621,7 +621,7 @@ export function buildInternalNodeSubBoard(
         packetKind: 'C2_EXFIL',
         curveOffset: 42,
         returnOffset: -42,
-        summary: 'Active payload thread initializes the C2 beacon / lateral movement module.' },
+        summary: 'Hijacked thread starts running the injected payload and initializes the outbound C2 beacon or lateral movement module.' },
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
@@ -728,7 +728,7 @@ export function buildInternalNodeSubBoard(
       wx: 175,
       wy: 210,
       isCompromised: isAttacker,
-      internalSummary: `Accepts or dispatches initial network requests on ${parentNode.label} into the internal processing pipeline.` },
+      internalSummary: `Accepts or dispatches initial network requests on ${parentNode.label} into the internal processing pipeline (using standard service ports like 88, 389, 443, or 445 so perimeter firewalls permit the traffic).` },
     {
       id: `${parentNode.id}_sub_srv_engine`,
       zoneId: 'INTERNAL_SUBZONE_B',
@@ -743,7 +743,7 @@ export function buildInternalNodeSubBoard(
       wx: 520,
       wy: 360,
       isCompromised: true,
-      internalSummary: 'Processes authentication tickets, remote service control commands, C2 staging, or telemetry normalization.' },
+      internalSummary: 'Processes authentication tickets (KDC), remote service control commands (services.exe), C2 staging, or telemetry field normalization (extracting ParentImage, GrantedAccess, and EncryptionType fields).' },
     {
       id: `${parentNode.id}_sub_srv_vault`,
       zoneId: 'INTERNAL_SUBZONE_C',
@@ -758,7 +758,7 @@ export function buildInternalNodeSubBoard(
       wx: 875,
       wy: 215,
       isCompromised: !isSiem,
-      internalSummary: 'Reads or modifies high-value hashes, Volume Shadow Copies, exfiltrated chunks, or correlates multi-stage indicators.' },
+      internalSummary: 'Reads or modifies high-value Active Directory password hashes (ntds.dit), Volume Shadow Copies (vssvc.exe), exfiltrated data chunks, or evaluates multi-stage Sigma correlation rules.' },
     {
       id: `${parentNode.id}_sub_srv_exec`,
       zoneId: 'INTERNAL_SUBZONE_D',
@@ -773,7 +773,7 @@ export function buildInternalNodeSubBoard(
       wx: 1190,
       wy: 195,
       isCompromised: !isSiem,
-      internalSummary: 'Completes privileged action on the server, dispatches operator commands, or constructs the correlated attack timeline.' },
+      internalSummary: 'Completes the privileged action on the server (executing as SYSTEM / Domain Admin), dispatches interactive C2 operator commands, or builds the correlated SOC incident timeline.' },
     {
       id: `${parentNode.id}_sub_srv_audit`,
       zoneId: 'INTERNAL_SUBZONE_D',
@@ -784,7 +784,7 @@ export function buildInternalNodeSubBoard(
       wx: 1355,
       wy: 390,
       isCompromised: false,
-      internalSummary: 'Generates high-priority security audit records and telemetry traces for DFIR analysts.' },
+      internalSummary: 'Generates high-priority security audit records (such as EventID 4769 RC4 ticket requests, EventID 4624 network logons, or EventID 7045 service installs) so DFIR analysts can reconstruct the attack.' },
   ];
 
   const primaryMitre = scenario.stages[0]?.mitreTechniqueId || 'MITRE Action';
@@ -800,7 +800,7 @@ export function buildInternalNodeSubBoard(
       packetKind: 'LATERAL_HOP',
       curveOffset: -38,
       returnOffset: 38,
-      summary: 'Ingress listener accepts the connection and forwards the payload to the internal processing engine.' },
+      summary: 'Ingress listener accepts the connection and forwards the payload to the internal processing engine (where authentication or protocol parsing occurs).' },
     {
       fromIdx: 1,
       toIdx: 2,
@@ -811,7 +811,7 @@ export function buildInternalNodeSubBoard(
       packetKind: 'SYSCALL',
       curveOffset: -38,
       returnOffset: 38,
-      summary: 'Core handler interacts with the underlying credential store, VSS storage, or correlation database.' },
+      summary: 'Core handler interacts with the underlying credential store (LSASS / ntds.dit), VSS snapshot storage, or SIEM correlation database.' },
     {
       fromIdx: 2,
       toIdx: 3,
@@ -822,7 +822,7 @@ export function buildInternalNodeSubBoard(
       packetKind: 'MALWARE_DROP',
       curveOffset: -38,
       returnOffset: 38,
-      summary: 'Returns the issued ticket, decrypted data, or execution result to the active session handler.' },
+      summary: 'Returns the issued ticket (KRB_TGS_REP), decrypted data, or privileged execution result to the active session handler.' },
     {
       fromIdx: 3,
       toIdx: 4,
@@ -833,7 +833,7 @@ export function buildInternalNodeSubBoard(
       packetKind: 'C2_EXFIL',
       curveOffset: 42,
       returnOffset: -42,
-      summary: 'Commits a detailed forensic audit event capturing the internal operation and returns ACK.' },
+      summary: 'Commits a detailed forensic audit event (capturing the caller IP, encryption type, or spawned binary path) and returns ACK.' },
   ];
 
   const backboneLinks: NetworkBackboneLink[] = [

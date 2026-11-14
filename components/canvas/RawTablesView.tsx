@@ -87,7 +87,7 @@ export function RawTablesView({
 
   return (
     <div
-      className="relative flex-1 w-full h-full overflow-auto p-6 bg-white dark:bg-[#09090B]"
+      className="relative flex-1 w-full h-full overflow-auto p-3 pb-16 sm:p-6 bg-white dark:bg-[#09090B]"
       dir="ltr"
       data-testid="raw-tables-view"
       data-active-environment={activeEnvironment}

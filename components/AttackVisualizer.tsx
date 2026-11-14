@@ -736,6 +736,15 @@ export function AttackVisualizer({
     let wheelRafId: number | null = null;
 
     const onNativeWheel = (e: WheelEvent) => {
+      const targetEl = e.target instanceof Element ? e.target : null;
+      if (
+        targetEl?.closest(
+          '[role="tooltip"], [data-testid^="node-hover-tooltip-"], [data-testid^="workbench-tooltip-"], [data-testid="responsive-mobile-zones-view"], [data-testid="entity-drilldown-drawer"]'
+        )
+      ) {
+        return;
+      }
+
       e.preventDefault();
       e.stopPropagation();
 
@@ -800,6 +809,7 @@ export function AttackVisualizer({
       if (!targetEl) return;
 
       if (
+        targetEl.closest('[data-testid="responsive-mobile-zones-view"]') ||
         targetEl.closest('[data-testid="canvas-interaction-toolbar"]') ||
         targetEl.closest('[data-testid="diagram-legend-panel"]') ||
         targetEl.closest('[data-testid="playback-control-bar"]') ||
@@ -1680,201 +1690,208 @@ export function AttackVisualizer({
         </WorkbenchIconTooltip>
       )}
 
-      {/* Segmented Tool Switcher: Box Select (B) vs Pan Page (P) */}
+      {/* Desktop Whiteboard Pointer, Layout & Shortcut Controls (Hidden on mobile card view unless Desktop canvas is forced) */}
       <div
-        role="group"
-        aria-label="Canvas Pointer Interaction Mode"
-        className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700"
+        className={`${
+          forceDesktopCanvas ? 'flex' : 'hidden md:flex'
+        } flex-wrap items-center gap-1.5`}
       >
+        {/* Segmented Tool Switcher: Box Select (B) vs Pan Page (P) */}
+        <div
+          role="group"
+          aria-label="Canvas Pointer Interaction Mode"
+          className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700"
+        >
+          <WorkbenchIconTooltip
+            label="Box Select Tool"
+            badge="B"
+            detail="Rubber-band marquee selection (or Right-Click + Hold)"
+            side="bottom"
+          >
+            <button
+              type="button"
+              data-testid="canvas-mode-select-btn"
+              aria-pressed={interactionMode === 'SELECT'}
+              onClick={() => setInteractionMode('SELECT')}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                interactionMode === 'SELECT'
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              <MousePointer className="w-3 h-3 shrink-0" />
+              <span className="hidden sm:inline">Box Select</span>
+              <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
+                B
+              </kbd>
+            </button>
+          </WorkbenchIconTooltip>
+
+          <WorkbenchIconTooltip
+            label="Pan / Pen Page Tool"
+            badge="P"
+            detail="Smooth 60/120fps canvas pan (or Left-Click + Hold)"
+            side="bottom"
+          >
+            <button
+              type="button"
+              data-testid="canvas-mode-pan-btn"
+              aria-pressed={interactionMode === 'PAN'}
+              onClick={() => setInteractionMode('PAN')}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                interactionMode === 'PAN'
+                  ? 'bg-indigo-600 text-white shadow-2xs'
+                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              <Hand className="w-3 h-3 shrink-0" />
+              <span className="hidden sm:inline">Pan Page</span>
+              <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
+                P
+              </kbd>
+            </button>
+          </WorkbenchIconTooltip>
+        </div>
+
+        {/* Force-Directed Auto-Layout Button */}
         <WorkbenchIconTooltip
-          label="Box Select Tool"
-          badge="B"
-          detail="Rubber-band marquee selection (or Right-Click + Hold)"
+          label="Force-Directed Auto-Layout"
+          badge={
+            activeAutoLayoutMode
+              ? `FORCE · ${activeAutoLayoutMode}`
+              : 'HOTKEY A'
+          }
+          detail="Automatically organize attack graph nodes using Coulomb repulsion and Hooke spring forces for optimal readability"
           side="bottom"
         >
           <button
             type="button"
-            data-testid="canvas-mode-select-btn"
-            aria-pressed={interactionMode === 'SELECT'}
-            onClick={() => setInteractionMode('SELECT')}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-              interactionMode === 'SELECT'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+            data-testid="canvas-auto-layout-btn"
+            data-auto-layout-mode={activeAutoLayoutMode || 'NONE'}
+            aria-pressed={isAutoLayoutActive}
+            onClick={handleAutoLayoutNodes}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              isAutoLayoutActive
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                : 'bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80'
             }`}
           >
-            <MousePointer className="w-3 h-3 shrink-0" />
-            <span>Box Select</span>
+            <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+            <span className="hidden sm:inline">Auto-Layout</span>
             <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
-              B
+              A
             </kbd>
           </button>
         </WorkbenchIconTooltip>
 
+        {/* Select All / Deselect All Objects Button */}
         <WorkbenchIconTooltip
-          label="Pan / Pen Page Tool"
-          badge="P"
-          detail="Smooth 60/120fps canvas pan (or Left-Click + Hold)"
+          label={
+            multiSelectedNodeIds.length === activeNodes.length
+              ? 'Deselect All Nodes'
+              : 'Select All Nodes'
+          }
+          badge="CTRL+A"
+          detail="Select all hosts & appliances to move together"
           side="bottom"
         >
           <button
             type="button"
-            data-testid="canvas-mode-pan-btn"
-            aria-pressed={interactionMode === 'PAN'}
-            onClick={() => setInteractionMode('PAN')}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-              interactionMode === 'PAN'
-                ? 'bg-indigo-600 text-white shadow-2xs'
-                : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+            data-testid="canvas-select-all-btn"
+            onClick={handleSelectAllNodes}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              multiSelectedNodeIds.length === activeNodes.length &&
+              activeNodes.length > 0
+                ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-400 dark:border-indigo-700'
+                : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
             }`}
           >
-            <Hand className="w-3 h-3 shrink-0" />
-            <span>Pan Page</span>
-            <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
-              P
-            </kbd>
+            <CheckSquare className="w-3 h-3 shrink-0" />
+            <span className="hidden 2xl:inline">
+              {multiSelectedNodeIds.length === activeNodes.length
+                ? 'Deselect All'
+                : 'Select All'}
+            </span>
           </button>
         </WorkbenchIconTooltip>
-      </div>
 
-      {/* Force-Directed Auto-Layout Button */}
-      <WorkbenchIconTooltip
-        label="Force-Directed Auto-Layout"
-        badge={
-          activeAutoLayoutMode
-            ? `FORCE · ${activeAutoLayoutMode}`
-            : 'HOTKEY A'
-        }
-        detail="Automatically organize attack graph nodes using Coulomb repulsion and Hooke spring forces for optimal readability"
-        side="bottom"
-      >
-        <button
-          type="button"
-          data-testid="canvas-auto-layout-btn"
-          data-auto-layout-mode={activeAutoLayoutMode || 'NONE'}
-          aria-pressed={isAutoLayoutActive}
-          onClick={handleAutoLayoutNodes}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-            isAutoLayoutActive
-              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-              : 'bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80'
-          }`}
-        >
-          <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-          <span>Auto-Layout</span>
-          <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
-            A
-          </kbd>
-        </button>
-      </WorkbenchIconTooltip>
-
-      {/* Select All / Deselect All Objects Button */}
-      <WorkbenchIconTooltip
-        label={
-          multiSelectedNodeIds.length === activeNodes.length
-            ? 'Deselect All Nodes'
-            : 'Select All Nodes'
-        }
-        badge="CTRL+A"
-        detail="Select all hosts & appliances to move together"
-        side="bottom"
-      >
-        <button
-          type="button"
-          data-testid="canvas-select-all-btn"
-          onClick={handleSelectAllNodes}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-            multiSelectedNodeIds.length === activeNodes.length &&
-            activeNodes.length > 0
-              ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-400 dark:border-indigo-700'
-              : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
-          }`}
-        >
-          <CheckSquare className="w-3 h-3 shrink-0" />
-          <span className="hidden 2xl:inline">
-            {multiSelectedNodeIds.length === activeNodes.length
-              ? 'Deselect All'
-              : 'Select All'}
-          </span>
-        </button>
-      </WorkbenchIconTooltip>
-
-      {/* Diagram Node Tooltips Show / Hide Toggle Button */}
-      <WorkbenchIconTooltip
-        label={
-          diagramTooltipsEnabled
-            ? 'Diagram Tooltips: Shown'
-            : 'Diagram Tooltips: Hidden'
-        }
-        badge={diagramTooltipsEnabled ? 'SHOW' : 'HIDE'}
-        detail="Toggle hover inspection tooltips on diagram nodes (or use Hide/Show inside any diagram tooltip)"
-        side="bottom"
-        isDiagramTooltip={true}
-      >
-        <button
-          type="button"
-          data-testid="canvas-toggle-diagram-tooltips-btn"
-          aria-pressed={diagramTooltipsEnabled}
-          onClick={() => setDiagramTooltipsEnabled((prev) => !prev)}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+        {/* Diagram Node Tooltips Show / Hide Toggle Button */}
+        <WorkbenchIconTooltip
+          label={
             diagramTooltipsEnabled
-              ? 'bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
-              : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
-          }`}
-        >
-          {diagramTooltipsEnabled ? (
-            <Eye className="w-3 h-3 text-emerald-500 shrink-0" />
-          ) : (
-            <EyeOff className="w-3 h-3 shrink-0" />
-          )}
-          <span className="hidden xl:inline">
-            {diagramTooltipsEnabled ? 'Tooltips: Show' : 'Tooltips: Hide'}
-          </span>
-        </button>
-      </WorkbenchIconTooltip>
-
-      {/* Keyboard Shortcuts Overlay Trigger Button */}
-      {onOpenShortcutsModal && (
-        <WorkbenchIconTooltip
-          label="Keyboard Shortcuts"
-          badge="?"
-          detail="Hotkeys for Tools (B/P) & Canvas Navigation"
+              ? 'Diagram Tooltips: Shown'
+              : 'Diagram Tooltips: Hidden'
+          }
+          badge={diagramTooltipsEnabled ? 'SHOW' : 'HIDE'}
+          detail="Toggle hover inspection tooltips on diagram nodes (or use Hide/Show inside any diagram tooltip)"
           side="bottom"
-          align="right"
+          isDiagramTooltip={true}
         >
           <button
             type="button"
-            data-testid="canvas-shortcuts-btn"
-            aria-label="Open Keyboard Shortcuts Overlay"
-            onClick={onOpenShortcutsModal}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap"
+            data-testid="canvas-toggle-diagram-tooltips-btn"
+            aria-pressed={diagramTooltipsEnabled}
+            onClick={() => setDiagramTooltipsEnabled((prev) => !prev)}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              diagramTooltipsEnabled
+                ? 'bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
+                : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
+            }`}
           >
-            <Keyboard className="w-3 h-3 text-indigo-500 shrink-0" />
-            <span className="hidden 2xl:inline">Hotkeys</span>
+            {diagramTooltipsEnabled ? (
+              <Eye className="w-3 h-3 text-emerald-500 shrink-0" />
+            ) : (
+              <EyeOff className="w-3 h-3 shrink-0" />
+            )}
+            <span className="hidden xl:inline">
+              {diagramTooltipsEnabled ? 'Tooltips: Show' : 'Tooltips: Hide'}
+            </span>
           </button>
         </WorkbenchIconTooltip>
-      )}
 
-      {/* Reset Layout / Positions / Pan & Zoom Button */}
-      {hasCustomLayoutOrView && (
-        <WorkbenchIconTooltip
-          label="Reset Canvas Layout"
-          badge="0 / R"
-          detail="Restore default node/zone positions, 100% zoom, and (0,0) pan"
-          side="bottom"
-          align="right"
-        >
-          <button
-            type="button"
-            data-testid="canvas-reset-layout-btn"
-            onClick={handleResetCanvasLayout}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap"
+        {/* Keyboard Shortcuts Overlay Trigger Button */}
+        {onOpenShortcutsModal && (
+          <WorkbenchIconTooltip
+            label="Keyboard Shortcuts"
+            badge="?"
+            detail="Hotkeys for Tools (B/P) & Canvas Navigation"
+            side="bottom"
+            align="right"
           >
-            <RotateCcw className="w-2.5 h-2.5 shrink-0" />
-            <span>Reset</span>
-          </button>
-        </WorkbenchIconTooltip>
-      )}
+            <button
+              type="button"
+              data-testid="canvas-shortcuts-btn"
+              aria-label="Open Keyboard Shortcuts Overlay"
+              onClick={onOpenShortcutsModal}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <Keyboard className="w-3 h-3 text-indigo-500 shrink-0" />
+              <span className="hidden 2xl:inline">Hotkeys</span>
+            </button>
+          </WorkbenchIconTooltip>
+        )}
+
+        {/* Reset Layout / Positions / Pan & Zoom Button */}
+        {hasCustomLayoutOrView && (
+          <WorkbenchIconTooltip
+            label="Reset Canvas Layout"
+            badge="0 / R"
+            detail="Restore default node/zone positions, 100% zoom, and (0,0) pan"
+            side="bottom"
+            align="right"
+          >
+            <button
+              type="button"
+              data-testid="canvas-reset-layout-btn"
+              onClick={handleResetCanvasLayout}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <RotateCcw className="w-2.5 h-2.5 shrink-0" />
+              <span>Reset</span>
+            </button>
+          </WorkbenchIconTooltip>
+        )}
+      </div>
 
       {/* Hide Top Canvas Bar Button */}
       <WorkbenchIconTooltip
@@ -2024,8 +2041,10 @@ export function AttackVisualizer({
             data-testid="current-environment-context-bar"
             className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-wrap items-center justify-between gap-2"
           >
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+              <div className="hidden sm:block">
                 <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
+              </div>
 
                 <WorkbenchIconTooltip
                   label={envProfile.badgeLabel}
@@ -2090,7 +2109,9 @@ export function AttackVisualizer({
           data-pan-x={panOffset.x}
           data-pan-y={panOffset.y}
           data-selected-count={multiSelectedNodeIds.length}
-          className={`excalidraw-board-bg relative w-full h-full rounded-2xl border overflow-hidden touch-none transition-colors duration-300 ${
+          className={`excalidraw-board-bg relative w-full h-full rounded-2xl border overflow-hidden ${
+            forceDesktopCanvas ? 'touch-none' : 'touch-pan-y sm:touch-none'
+          } transition-colors duration-300 ${
             isPanningCanvas
               ? 'cursor-grabbing'
               : interactionMode === 'PAN'
@@ -2356,7 +2377,42 @@ export function AttackVisualizer({
             )}
           </AnimatePresence>
 
-          {/* 4. Animated Board Switcher Wrapped in CanvasController (react-zoom-pan-pinch) */}
+          {/* 4A. Compact Mobile Board (Native vertical touch scroll, outside TransformWrapper) */}
+          {!forceDesktopCanvas && (
+            <div className="sm:hidden relative w-full h-full z-20 overflow-hidden">
+              <ResponsiveMobileZonesView
+                zones={activeZones}
+                sketchNodes={activeNodes}
+                sketchFlows={activeFlows}
+                selectedSketchNode={
+                  internalSubBoard
+                    ? activeInternalSubNode
+                    : selectedSketchNode
+                }
+                onSelectNode={(node) => {
+                  if (internalSubBoard) {
+                    setSelectedInternalSubNodeId(node.id);
+                  } else {
+                    handleNodeSelect(node);
+                  }
+                }}
+                onExpandNode={
+                  !internalSubBoard
+                    ? (node) => handleNodeExpand(node)
+                    : undefined
+                }
+                selectedTelemetryId={selectedTelemetryId}
+                onSelectTelemetry={onSelectTelemetry}
+              />
+            </div>
+          )}
+
+          {/* 4B. Animated Desktop Board Switcher Wrapped in CanvasController (react-zoom-pan-pinch) */}
+          <div
+            className={`${
+              forceDesktopCanvas ? 'block' : 'hidden sm:block'
+            } relative w-full h-full z-20`}
+          >
           <CanvasController
             ref={canvasControllerRef}
             panningEnabled={interactionMode === 'PAN' && !isBoxSelectHoldActive}
@@ -2408,41 +2464,9 @@ export function AttackVisualizer({
               }}
               className="relative w-full h-full overflow-visible z-20"
             >
-              {/* Compact mobile board — skipped when Desktop layout is forced */}
-              {!forceDesktopCanvas && (
-              <div className="sm:hidden w-full h-full">
-                <ResponsiveMobileZonesView
-                  zones={activeZones}
-                  sketchNodes={activeNodes}
-                  sketchFlows={activeFlows}
-                  selectedSketchNode={
-                    internalSubBoard
-                      ? activeInternalSubNode
-                      : selectedSketchNode
-                  }
-                  onSelectNode={(node) => {
-                    if (internalSubBoard) {
-                      setSelectedInternalSubNodeId(node.id);
-                    } else {
-                      handleNodeSelect(node);
-                    }
-                  }}
-                  onExpandNode={(node) => {
-                    if (!internalSubBoard) {
-                      handleNodeExpand(node);
-                    }
-                  }}
-                  selectedTelemetryId={selectedTelemetryId}
-                  onSelectTelemetry={onSelectTelemetry}
-                />
-              </div>
-              )}
-
               {/* Desktop topology board (also used on phones when Desktop layout is forced) */}
               <div
-                className={`${
-                  forceDesktopCanvas ? 'flex' : 'hidden sm:flex'
-                } relative w-full h-full overflow-visible items-center justify-center`}
+                className="flex relative w-full h-full overflow-visible items-center justify-center"
                 style={{ containerType: 'size' }}
                 data-testid="whiteboard-aspect-stage"
               >
@@ -2626,6 +2650,7 @@ export function AttackVisualizer({
             </motion.div>
           </AnimatePresence>
           </CanvasController>
+          </div>
 
           {/* Viewport-Clamped, Collision-Aware Diagram Node Hover Tooltip (Rendered at Board Container Scope) */}
           <AnimatePresence>
@@ -2707,7 +2732,7 @@ export function AttackVisualizer({
           {/* Bottom-Right: Play/Pause Sequence Control Bar (Pinned in Viewport) */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="flex flex-col items-end gap-2 absolute bottom-4 right-4 z-30"
+            className="flex flex-col items-end gap-2 absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-30"
           >
             <PlaybackControlBar
               isPlaying={isPlaying}

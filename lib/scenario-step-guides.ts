@@ -7,6 +7,10 @@ import { buildWhiteboardSchematic } from './sketch-zones-and-drilldown';
 import { CinematicPhase } from './cinematic-camera-director';
 import { CORE_AND_PALOALTO_STEP_GUIDES } from './step-guides/core-and-paloalto-guides';
 import { MS_CISCO_KASPERSKY_STEP_GUIDES } from './step-guides/ms-cisco-kaspersky-guides';
+import { BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES } from './step-guides/batch1-supplychain-mft-guides';
+import { BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES } from './step-guides/batch2-ad-exchange-windows-guides';
+import { BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES } from './step-guides/batch3-virtualization-appliances-guides';
+import { BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES } from './step-guides/batch4-enterprise-os-zerodays-guides';
 
 export interface RawScenarioBriefingGuide {
   headline: string;
@@ -71,6 +75,10 @@ export interface DiagramStepGuideModel {
 export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   ...CORE_AND_PALOALTO_STEP_GUIDES,
   ...MS_CISCO_KASPERSKY_STEP_GUIDES,
+  ...BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES,
+  ...BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES,
+  ...BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES,
+  ...BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES,
 };
 
 export function getRawScenarioStepGuide(

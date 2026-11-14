@@ -335,3 +335,60 @@ export function formatWorkbenchTooltipCopyText(
   const header = badge ? `${label} [${badge}]` : label;
   return detail ? `${header}\n${detail}` : header;
 }
+
+export interface TooltipWheelScrollInput {
+  scrollTop: number;
+  scrollHeight: number;
+  clientHeight: number;
+  deltaY: number;
+  deltaMode?: number;
+}
+
+export interface TooltipWheelScrollResult {
+  /** Whether the tooltip container has vertical overflow (scrollHeight > clientHeight) */
+  isScrollable: boolean;
+  /** Clamped next scrollTop value inside [0 .. scrollHeight - clientHeight] */
+  nextScrollTop: number;
+  /** Whether scrollTop changed on this wheel step */
+  didScroll: boolean;
+  /** Always true inside a tooltip so the parent diagram canvas never zooms while hovering a tooltip */
+  shouldConsumeWheelEvent: boolean;
+}
+
+/**
+ * Computes isolated vertical scroll progression for an active tooltip when the user
+ * scrolls the mouse wheel inside the tooltip card, preventing the underlying diagram
+ * canvas from zooming in or out.
+ */
+export function computeTooltipWheelScrollStep(
+  input: TooltipWheelScrollInput
+): TooltipWheelScrollResult {
+  const {
+    scrollTop,
+    scrollHeight,
+    clientHeight,
+    deltaY,
+    deltaMode = 0,
+  } = input;
+
+  const pixelDeltaY =
+    deltaMode === 1
+      ? deltaY * 18
+      : deltaMode === 2
+      ? deltaY * Math.max(120, clientHeight * 0.85)
+      : deltaY;
+
+  const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
+  const isScrollable = maxScrollTop > 1;
+  const nextScrollTop = isScrollable
+    ? clamp(scrollTop + pixelDeltaY, 0, maxScrollTop)
+    : 0;
+
+  return {
+    isScrollable,
+    nextScrollTop: Math.round(nextScrollTop),
+    didScroll: Math.abs(nextScrollTop - scrollTop) >= 0.5,
+    shouldConsumeWheelEvent: true,
+  };
+}
+

@@ -4,6 +4,7 @@ import {
   computeOverlapArea,
   computeSmartDiagramTooltipPlacement,
   computeSmartViewportTooltipPosition,
+  computeTooltipWheelScrollStep,
   formatNodeTooltipCopyText,
   formatWorkbenchTooltipCopyText,
   RectBox,
@@ -134,4 +135,38 @@ describe('tooltip-positioning', () => {
       'Force-Directed Auto-Layout [HOTKEY A]\nAutomatically organize attack graph nodes'
     );
   });
+
+  it('scrolls scrollable tooltips cleanly on mouse wheel and always consumes wheel events so the diagram never zooms', () => {
+    const stepDown = computeTooltipWheelScrollStep({
+      scrollTop: 0,
+      scrollHeight: 340,
+      clientHeight: 210,
+      deltaY: 60,
+    });
+    assert.equal(stepDown.isScrollable, true);
+    assert.equal(stepDown.nextScrollTop, 60);
+    assert.equal(stepDown.didScroll, true);
+    assert.equal(stepDown.shouldConsumeWheelEvent, true);
+
+    const stepClampBottom = computeTooltipWheelScrollStep({
+      scrollTop: 100,
+      scrollHeight: 340,
+      clientHeight: 210,
+      deltaY: 90,
+    });
+    assert.equal(stepClampBottom.nextScrollTop, 130);
+    assert.equal(stepClampBottom.didScroll, true);
+    assert.equal(stepClampBottom.shouldConsumeWheelEvent, true);
+
+    const stepUp = computeTooltipWheelScrollStep({
+      scrollTop: 130,
+      scrollHeight: 340,
+      clientHeight: 210,
+      deltaY: -50,
+    });
+    assert.equal(stepUp.nextScrollTop, 80);
+    assert.equal(stepUp.didScroll, true);
+    assert.equal(stepUp.shouldConsumeWheelEvent, true);
+  });
 });
+

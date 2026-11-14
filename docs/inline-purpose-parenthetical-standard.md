@@ -115,9 +115,11 @@ In complex attack steps, a single sentence or short paragraph often chains **2 t
 
 ## 5. Checklist for Writing or Updating Any Scenario Step
 
-When authoring or reviewing any step in `lib/step-guides/*.ts` or `lib/scenarios/*.ts`, verify every sentence against these 4 checks:
+When authoring or reviewing any step in `lib/step-guides/*.ts` or `lib/scenarios/*.ts`, verify every sentence against these 5 checks:
 
 - [ ] **Check 1 — Target Selection Clarity:** If a specific process, file, port, or service is named, does an inline parenthetical explain *why* the attacker targeted or abused that specific component?
 - [ ] **Check 2 — Flag / Parameter Clarity:** If a command-line switch (`-enc`, `/quiet`), hex flag (`0x00000004`, `0x40`, `0x17`), or protocol option is mentioned, does an inline parenthetical state *what happens when that flag is set* and *how it aids evasion or execution*?
 - [ ] **Check 3 — API / Syscall Clarity:** If a system API (`CreateProcessW`, `NtUnmapViewOfSection`, `VirtualAllocEx`, `MiniDumpWriteDump`) is cited, does an inline parenthetical explain its mechanical effect on memory/OS state in plain language?
 - [ ] **Check 4 — Multi-Clause Flow:** Where a sentence chains multiple technical actions, does each action have its own concise parenthetical placed right where the reader encounters the term, rather than deferring the explanation to the end?
+- [ ] **Check 5 — Multi-Source Cross-Vendor Completeness (`>= 3 Sources`):** Have you searched and cross-referenced multiple independent vendor/CERT analyses (see [`/docs/analytical-sources-and-references.md`](./analytical-sources-and-references.md)) so that the inline parentheticals combine the exact exploit trigger (Source A), the in-memory/kernel implant behavior (Source B), and the forensic/SIEM detection artifact (Source C)?
+

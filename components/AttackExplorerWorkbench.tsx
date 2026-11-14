@@ -393,6 +393,9 @@ export function AttackExplorerWorkbench() {
     if (!inspectorOpen) {
       setInspectorOpen(true);
     }
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
   };
 
   const displayedScenarios = useMemo(() => {
@@ -554,9 +557,25 @@ export function AttackExplorerWorkbench() {
           isDark={isDark}
           onToggleDark={() => setIsDark((prev) => !prev)}
           sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          onToggleSidebar={() => {
+            setSidebarOpen((prev) => {
+              const next = !prev;
+              if (next && typeof window !== 'undefined' && window.innerWidth < 1024) {
+                setInspectorOpen(false);
+              }
+              return next;
+            });
+          }}
           inspectorOpen={inspectorOpen}
-          onToggleInspector={() => setInspectorOpen((prev) => !prev)}
+          onToggleInspector={() => {
+            setInspectorOpen((prev) => {
+              const next = !prev;
+              if (next && typeof window !== 'undefined' && window.innerWidth < 1024) {
+                setSidebarOpen(false);
+              }
+              return next;
+            });
+          }}
           telemetryOpen={telemetryOpen}
           onToggleTelemetry={() => setTelemetryOpen((prev) => !prev)}
           onOpenAttackLibrary={() => setAttackLibraryOpen(true)}

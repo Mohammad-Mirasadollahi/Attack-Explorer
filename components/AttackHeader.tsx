@@ -240,32 +240,34 @@ export function AttackHeader({
           </WorkbenchIconTooltip>
 
           {/* Active Environment Icon-Only Trigger (Click opens consolidated Settings Drawer) */}
-          <WorkbenchIconTooltip
-            label={currentEnvProfile.badgeLabel}
-            badge={currentEnvProfile.shortLabel}
-            detail={`Active Environment: ${currentEnvProfile.telemetryTag}`}
-            align="left"
-          >
-            <button
-              type="button"
-              data-testid="header-environment-dropdown-trigger"
-              aria-label={currentEnvProfile.badgeLabel}
-              onClick={() => setSettingsDrawerOpen(true)}
-              className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
+          <div className="hidden sm:block">
+            <WorkbenchIconTooltip
+              label={currentEnvProfile.badgeLabel}
+              badge={currentEnvProfile.shortLabel}
+              detail={`Active Environment: ${currentEnvProfile.telemetryTag}`}
+              align="left"
             >
-              {getEnvIcon(
-                activeEnvironment,
-                'w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0'
-              )}
-              <span
-                data-testid="header-active-environment-badge"
-                data-environment-id={activeEnvironment}
-                className="sr-only"
+              <button
+                type="button"
+                data-testid="header-environment-dropdown-trigger"
+                aria-label={currentEnvProfile.badgeLabel}
+                onClick={() => setSettingsDrawerOpen(true)}
+                className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
               >
-                {currentEnvProfile.badgeLabel}
-              </span>
-            </button>
-          </WorkbenchIconTooltip>
+                {getEnvIcon(
+                  activeEnvironment,
+                  'w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0'
+                )}
+                <span
+                  data-testid="header-active-environment-badge"
+                  data-environment-id={activeEnvironment}
+                  className="sr-only"
+                >
+                  {currentEnvProfile.badgeLabel}
+                </span>
+              </button>
+            </WorkbenchIconTooltip>
+          </div>
         </div>
 
         {/* Center Zone: Primary View Mode Links + Top Toolbar Attack Graph Node Search Bar + Quick Tools */}
@@ -295,7 +297,7 @@ export function AttackHeader({
                     aria-label={tab.label}
                     aria-selected={isSelected}
                     onClick={() => onViewModeChange(tab.id)}
-                    className="relative h-7 w-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
+                    className="relative h-7 w-7 sm:w-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
                   >
                     {isSelected && (
                       <motion.span
@@ -323,11 +325,11 @@ export function AttackHeader({
             })}
           </div>
 
-          {/* Top Workbench Toolbar Attack Graph Node Search Bar */}
+          {/* Top Workbench Toolbar Attack Graph Node Search Bar (Desktop/Tablet) */}
           <div
             ref={searchContainerRef}
             data-testid="top-toolbar-node-search"
-            className="relative flex items-center shrink-0"
+            className="relative hidden md:flex items-center shrink-0"
           >
             <div
               className={`h-8 w-36 sm:w-48 md:w-56 lg:w-64 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${
@@ -476,37 +478,39 @@ export function AttackHeader({
 
           {/* Top Workbench Toolbar Force-Directed Auto-Layout Trigger Button */}
           {onTriggerAutoLayout && (
-            <WorkbenchIconTooltip
-              label="Force-Directed Auto-Layout"
-              badge={isAutoLayoutActive ? 'APPLIED · A' : 'HOTKEY A'}
-              detail="Automatically organize attack graph nodes via Coulomb repulsion & Hooke spring forces"
-            >
-              <button
-                type="button"
-                data-testid="top-toolbar-auto-layout-btn"
-                aria-label="Auto-Layout Attack Graph"
-                aria-pressed={isAutoLayoutActive}
-                onClick={() => {
-                  if (viewMode !== 'TOPOLOGY') {
-                    onViewModeChange('TOPOLOGY');
-                  }
-                  onTriggerAutoLayout();
-                }}
-                className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border text-[11px] font-mono font-semibold transition-all cursor-pointer shrink-0 ${
-                  isAutoLayoutActive
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                    : 'bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-700 dark:hover:text-indigo-300 hover:border-indigo-300'
-                }`}
+            <div className="hidden md:flex items-center shrink-0">
+              <WorkbenchIconTooltip
+                label="Force-Directed Auto-Layout"
+                badge={isAutoLayoutActive ? 'APPLIED · A' : 'HOTKEY A'}
+                detail="Automatically organize attack graph nodes via Coulomb repulsion & Hooke spring forces"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="hidden xl:inline whitespace-nowrap">
-                  Auto-Layout
-                </span>
-              </button>
-            </WorkbenchIconTooltip>
+                <button
+                  type="button"
+                  data-testid="top-toolbar-auto-layout-btn"
+                  aria-label="Auto-Layout Attack Graph"
+                  aria-pressed={isAutoLayoutActive}
+                  onClick={() => {
+                    if (viewMode !== 'TOPOLOGY') {
+                      onViewModeChange('TOPOLOGY');
+                    }
+                    onTriggerAutoLayout();
+                  }}
+                  className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border text-[11px] font-mono font-semibold transition-all cursor-pointer shrink-0 ${
+                    isAutoLayoutActive
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                      : 'bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-700 dark:hover:text-indigo-300 hover:border-indigo-300'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span className="hidden xl:inline whitespace-nowrap">
+                    Auto-Layout
+                  </span>
+                </button>
+              </WorkbenchIconTooltip>
+            </div>
           )}
 
-          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block shrink-0" />
 
           {/* Quick Navigation Icon-Only Links: Operational Guide + MITRE Library + Log Analyzer + Sources */}
           <div className="hidden sm:flex items-center gap-1 shrink-0">
@@ -624,7 +628,7 @@ export function AttackHeader({
                 onClick={onOpenAboutModal}
                 whileHover={{ scale: 1.05, y: -1 }}
                 whileTap={{ scale: 0.96 }}
-                className="relative h-8 pl-2 pr-2.5 flex items-center gap-1.5 rounded-lg border border-teal-400/80 dark:border-teal-500/70 bg-teal-500 text-white shadow-[0_0_0_0_rgba(20,184,166,0.55)] hover:bg-teal-400 cursor-pointer overflow-hidden"
+                className="relative h-8 w-8 sm:w-auto sm:pl-2 sm:pr-2.5 flex items-center justify-center gap-1.5 rounded-lg border border-teal-400/80 dark:border-teal-500/70 bg-teal-500 text-white shadow-[0_0_0_0_rgba(20,184,166,0.55)] hover:bg-teal-400 cursor-pointer overflow-hidden"
               >
                 <motion.span
                   aria-hidden
@@ -657,7 +661,7 @@ export function AttackHeader({
                   <UserRound className="w-3.5 h-3.5" />
                 </motion.span>
                 <motion.span
-                  className="relative text-[11px] font-bold tracking-wide whitespace-nowrap"
+                  className="relative hidden sm:inline text-[11px] font-bold tracking-wide whitespace-nowrap"
                   animate={{ opacity: [1, 0.72, 1] }}
                   transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                 >

@@ -24,7 +24,7 @@ export function buildEntityDrillDownData(
       target: `${scenario.processTree[1]?.name || 'Invoice_Q4.exe'} (PID ${scenario.processTree[1]?.pid || 3104})`,
       memoryAddress: '0x00400000 (PEB Base)',
       status: 'EXECUTED' as const,
-      detail: 'Malware binary unpacked from email attachment and spawns legitimate target container in suspended state.' },
+      detail: 'Malware stage-1 loader unpacks from the delivery vector and calls CreateProcessW with CREATE_SUSPENDED = 0x00000004 (freezing the legitimate target container before its first instruction runs so its memory can be replaced quietly).' },
     ...scenario.stages.map((stage, idx) => ({
       step: idx + 2,
       apiOrProcess:
@@ -44,7 +44,7 @@ export function buildEntityDrillDownData(
       artifactPath:
         'C:\\Users\\s.ahmadi\\AppData\\Local\\Temp\\Invoice_Q4.pdf.exe',
       eventIdBadge: 'Sysmon EID 11 (FileCreate)',
-      description: 'Outlook/Browser writes the disguised attachment to disk in the user Temp/Downloads folder.' },
+      description: 'Outlook/Browser writes the disguised attachment to disk in the user Temp/Downloads folder (using a double extension like .pdf.exe so Windows hides the .exe suffix by default and tricks the user into launching code).' },
     {
       category: 'PROCESS_SPAWN',
       title: '2. Suspicious Child Process Creation on Host',
@@ -52,19 +52,19 @@ export function buildEntityDrillDownData(
         scenario.processTree[scenario.processTree.length - 1]?.commandLine ||
         'C:\\Windows\\System32\\svchost.exe',
       eventIdBadge: 'Sysmon EID 1 & WinSec EID 4688',
-      description: 'Process creation logged simultaneously in Sysmon Event ID 1 and Windows Security Event ID 4688 with abnormal parent process.' },
+      description: 'Process creation logged simultaneously in Sysmon Event ID 1 and Windows Security Event ID 4688 with an abnormal parent process (exposing the attack because a genuine svchost.exe is always spawned by services.exe, never by a user-folder binary).' },
     {
       category: 'MEMORY_TAMPER',
       title: '3. Cross-Process Memory Injection & Tampering',
       artifactPath: 'ntdll.dll!NtUnmapViewOfSection + VirtualAllocEx(RWX)',
       eventIdBadge: 'Sysmon EID 10 & EID 25',
-      description: 'Malware modifies virtual memory inside the host process and redirects thread execution.' },
+      description: 'Malware modifies virtual memory inside the host process (allocating PAGE_EXECUTE_READWRITE = 0x40 so it can both write and execute shellcode in RAM without dropping a second .exe to disk) and redirects thread execution.' },
     {
       category: 'REGISTRY_NET',
       title: '4. Local Credential Harvest & Outbound Socket',
       artifactPath: 'LSASS / Kerberos Ticket Cache -> TCP 445 / 443',
       eventIdBadge: 'Sysmon EID 3 & WinSec 4624',
-      description: 'Compromised laptop initiates internal lateral scanning and outbound C2 beacon traffic.' },
+      description: 'Compromised laptop initiates internal lateral scanning and outbound C2 beacon traffic over TCP 443 (blending into standard HTTPS web traffic while running under the trusted host binary’s digital signature).' },
   ];
 
   const lateralMovementHops: EntityDrillDownData['lateralMovementHops'] = [
@@ -75,7 +75,7 @@ export function buildEntityDrillDownData(
       protocol: 'Kerberos TCP/88 & LDAP/389',
       technique: 'T1558.003 · SPN Discovery & Ticket Request',
       eventId: 'WinSec EID 4769 (0x17 RC4)',
-      summary: 'From the compromised laptop, the attacker queries Active Directory and requests service tickets to pivot across the domain.' },
+      summary: 'From the compromised laptop, the attacker queries Active Directory LDAP (port 389 — readable by all domain users by default) and requests RC4-encrypted service tickets (etype 0x17 — chosen so the ticket can be brute-forced offline on a GPU without triggering DC lockouts).' },
     {
       hop: 2,
       sourceHost: '10.10.4.22 (Victim Laptop WKS-04)',
@@ -83,7 +83,7 @@ export function buildEntityDrillDownData(
       protocol: 'SMB2 TCP/445 · NTLM Pass-the-Hash',
       technique: 'T1550.002 · Lateral Movement via SMB',
       eventId: 'WinSec EID 4624 (LogonType=3)',
-      summary: 'Attacker authenticates laterally over SMB to the internal server using extracted hashes/tickets.' },
+      summary: 'Attacker authenticates laterally over SMB (TCP port 445) to the internal server using extracted hashes or cracked service credentials (producing a LogonType=3 network logon from a workstation IP).' },
     {
       hop: 3,
       sourceHost: '10.10.2.14 (Internal Server)',
@@ -91,7 +91,7 @@ export function buildEntityDrillDownData(
       protocol: 'DCERPC / SVCCTL (Service Control)',
       technique: 'T1569.002 · Remote Service Creation',
       eventId: 'System EID 7045 & Sysmon EID 1',
-      summary: 'A remote service payload is installed and executed on the target server, completing domain compromise.' },
+      summary: 'A remote service payload is registered with the Service Control Manager (services.exe — which automatically runs the new service binary as NT AUTHORITY\\SYSTEM, completing privileged takeover of the target server).' },
   ];
 
   const packets: EntityDrillDownData['packets'] = scenario.telemetry.map(

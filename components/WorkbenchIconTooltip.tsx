@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Check, Copy, Eye, EyeOff } from 'lucide-react';
 import {
   computeSmartViewportTooltipPosition,
+  computeTooltipWheelScrollStep,
   formatWorkbenchTooltipCopyText,
 } from '@/lib/tooltip-positioning';
 
@@ -167,6 +168,34 @@ export function WorkbenchIconTooltip({
     };
   }, [isOpen, isDetailCollapsed, label, detail, badge, updateViewportPosition]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const el = tooltipRef.current;
+    if (!el) return;
+
+    const onTooltipWheel = (e: WheelEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const step = computeTooltipWheelScrollStep({
+        scrollTop: el.scrollTop,
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        deltaY: e.deltaY,
+        deltaMode: e.deltaMode,
+      });
+
+      if (step.isScrollable) {
+        el.scrollTop = step.nextScrollTop;
+      }
+    };
+
+    el.addEventListener('wheel', onTooltipWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onTooltipWheel);
+    };
+  }, [isOpen, isDetailCollapsed]);
+
   const handleTriggerMouseEnter = () => {
     clearCloseTimer();
     stripNativeTitlesInTrigger();
@@ -261,12 +290,13 @@ export function WorkbenchIconTooltip({
           onMouseLeave={scheduleClose}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
             left: `${coords.leftPx}px`,
             top: `${coords.topPx}px`,
           }}
-          className="pointer-events-auto select-text cursor-auto z-[9999] min-w-[200px] max-w-[min(340px,calc(100vw-20px))] rounded-xl bg-zinc-950/96 dark:bg-zinc-900/98 text-white border border-zinc-700/85 dark:border-zinc-700 shadow-[0_12px_32px_rgba(9,9,11,0.55)] backdrop-blur-md px-2.5 py-2"
+          className="pointer-events-auto select-text cursor-auto z-[9999] min-w-[200px] max-w-[min(340px,calc(100vw-20px))] max-h-[min(260px,calc(100vh-24px))] overflow-y-auto overscroll-contain workbench-scrollbar rounded-xl bg-zinc-950/96 dark:bg-zinc-900/98 text-white border border-zinc-700/85 dark:border-zinc-700 shadow-[0_12px_32px_rgba(9,9,11,0.55)] backdrop-blur-md px-2.5 py-2"
         >
           <div className="relative z-10 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0 flex-wrap">

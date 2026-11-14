@@ -11,6 +11,10 @@ import { APT_PALOALTO_ELASTIC_SCENARIOS } from './scenarios/apt-paloalto-elastic
 import { APT_MICROSOFT_THREAT_INTEL_SCENARIOS } from './scenarios/apt-microsoft-threat-intel';
 import { APT_CISCO_F5_SPLUNK_SCENARIOS } from './scenarios/apt-cisco-f5-splunk';
 import { APT_KASPERSKY_MANDIANT_CISA_SCENARIOS } from './scenarios/apt-kaspersky-mandiant-cisa';
+import { APT_BATCH1_SUPPLYCHAIN_MFT_SCENARIOS } from './scenarios/apt-batch1-supplychain-mft';
+import { APT_BATCH2_AD_EXCHANGE_WINDOWS_SCENARIOS } from './scenarios/apt-batch2-ad-exchange-windows';
+import { APT_BATCH3_VIRTUALIZATION_APPLIANCES_SCENARIOS } from './scenarios/apt-batch3-virtualization-appliances';
+import { APT_BATCH4_ENTERPRISE_OS_ZERODAYS_SCENARIOS } from './scenarios/apt-batch4-enterprise-os-zerodays';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
 
 const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
@@ -24,6 +28,10 @@ const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   ...APT_MICROSOFT_THREAT_INTEL_SCENARIOS,
   ...APT_CISCO_F5_SPLUNK_SCENARIOS,
   ...APT_KASPERSKY_MANDIANT_CISA_SCENARIOS,
+  ...APT_BATCH1_SUPPLYCHAIN_MFT_SCENARIOS,
+  ...APT_BATCH2_AD_EXCHANGE_WINDOWS_SCENARIOS,
+  ...APT_BATCH3_VIRTUALIZATION_APPLIANCES_SCENARIOS,
+  ...APT_BATCH4_ENTERPRISE_OS_ZERODAYS_SCENARIOS,
 ];
 
 export const ATTACK_SCENARIOS: AttackScenario[] = RAW_ATTACK_SCENARIOS.map(

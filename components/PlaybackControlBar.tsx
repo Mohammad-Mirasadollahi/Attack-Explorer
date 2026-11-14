@@ -69,7 +69,7 @@ export function PlaybackControlBar({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.14, ease: 'easeOut' }}
         onClick={(e) => e.stopPropagation()}
-        className="hidden sm:flex items-center z-30"
+        className="flex items-center z-30"
       >
         <WorkbenchIconTooltip
           label="Show Playback & Zoom Bar"
@@ -104,7 +104,7 @@ export function PlaybackControlBar({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.14, ease: 'easeOut' }}
       onClick={(e) => e.stopPropagation()}
-      className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-lg backdrop-blur-md z-30"
+      className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-lg backdrop-blur-md z-30"
     >
           {/* Step Backward */}
           <WorkbenchIconTooltip
@@ -232,10 +232,10 @@ export function PlaybackControlBar({
             </WorkbenchIconTooltip>
           )}
 
-          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+          <div className="hidden sm:block h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
 
           {/* Smooth Camera Focus (Icon-Only AutoCam) & Zoom Controls */}
-          <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1">
             <WorkbenchIconTooltip
               label={autoCameraEnabled ? 'AutoCam Enabled' : 'Manual Camera'}
               badge={autoCameraEnabled ? 'ON · C' : 'OFF · C'}

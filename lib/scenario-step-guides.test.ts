@@ -7,15 +7,17 @@ import {
   getRawScenarioStepGuide,
   validateAllScenarioStepGuides,
 } from './scenario-step-guides';
+import { getScenarioAttribution } from './attack-sources-and-legal';
+import { getCuratedThreatIntel } from './threat-intel-service';
 
 describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
-  it('validates that all 26 scenarios have complete step-by-step guides and Scenario Briefings', () => {
+  it('validates that all 46 scenarios have complete step-by-step guides and Scenario Briefings', () => {
     const validation = validateAllScenarioStepGuides(ATTACK_SCENARIOS);
-    assert.equal(validation.totalScenarios, 26);
+    assert.equal(validation.totalScenarios, 46);
     assert.deepEqual(validation.missingScenarioIds, []);
     assert.deepEqual(validation.stageCountMismatches, []);
     assert.equal(validation.valid, true);
-    assert.equal(validation.totalSteps, 80);
+    assert.equal(validation.totalSteps, 140);
   });
 
   it('ensures every scenario has rich plain-language Scenario Briefings and numbered steps grounded in documentation with zero Persian characters', () => {
@@ -44,7 +46,54 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
         assert.ok(step.howItWorksInPractice.length > 40, `${scenario.id} step ${step.stepNumber} howItWorksInPractice too short`);
         assert.ok(step.diagramAlignment.includes(`#${step.stepNumber}.1`), `${scenario.id} step ${step.stepNumber} diagramAlignment must reference #${step.stepNumber}.1`);
         assert.ok(step.detectionAndEvidence.length > 25, `${scenario.id} step ${step.stepNumber} detectionAndEvidence too short`);
+
+        // Verify the Inline Purpose & Cause-and-Effect Parenthetical Standard:
+        // Every step's simpleExplanation must include at least one substantive inline parenthetical (> 25 chars inside parentheses)
+        // explaining the mechanical behavior and operational why/impact right after the technical term.
+        const inlineParentheticals = step.simpleExplanation.match(/\([^)]{25,}\)/g) || [];
+        assert.ok(
+          inlineParentheticals.length >= 1,
+          `${scenario.id} step ${step.stepNumber} simpleExplanation must include substantive inline purpose parentheticals (...)`
+        );
       });
+    }
+  });
+
+  it('enforces the Multi-Source Cross-Vendor Threat Intelligence & Synthesis Standard (>= 3 complementary sources per scenario)', () => {
+    for (const scenario of ATTACK_SCENARIOS) {
+      const attribution = getScenarioAttribution(scenario);
+      assert.ok(
+        attribution.primarySources.length >= 3,
+        `${scenario.id} must have >= 3 complementary primarySources in SCENARIO_ATTRIBUTION_MAP (found ${attribution.primarySources.length})`
+      );
+      assert.ok(
+        attribution.multiSourceSynthesis && attribution.multiSourceSynthesis.length >= 80,
+        `${scenario.id} must have a substantive multiSourceSynthesis in SCENARIO_ATTRIBUTION_MAP`
+      );
+      assert.equal(
+        /[\u0600-\u06FF]/.test(JSON.stringify(attribution)),
+        false,
+        `${scenario.id} attribution must contain zero Persian characters`
+      );
+
+      const intel = getCuratedThreatIntel(scenario);
+      assert.ok(
+        intel.groundedSources.length >= 3,
+        `${scenario.id} must have >= 3 groundedSources in CURATED_THREAT_INTEL (found ${intel.groundedSources.length})`
+      );
+      assert.ok(
+        intel.realWorldAdvisories.length >= 3,
+        `${scenario.id} must have >= 3 realWorldAdvisories in CURATED_THREAT_INTEL (found ${intel.realWorldAdvisories.length})`
+      );
+      assert.ok(
+        intel.multiSourceSynthesis && intel.multiSourceSynthesis.length >= 60,
+        `${scenario.id} must have a substantive multiSourceSynthesis in CURATED_THREAT_INTEL`
+      );
+      assert.equal(
+        /[\u0600-\u06FF]/.test(JSON.stringify(intel)),
+        false,
+        `${scenario.id} curated threat intel must contain zero Persian characters`
+      );
     }
   });
 

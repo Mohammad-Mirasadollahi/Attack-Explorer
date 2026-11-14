@@ -154,11 +154,31 @@ export function SourcesAndLegalContent({
         </div>
       </div>
 
-      {/* 3. Primary Technical Documentation & Advisories for This Scenario */}
+      {/* 3. Multi-Source Cross-Vendor Synthesis & Primary Technical Documentation */}
       <div className="space-y-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-zinc-700 dark:text-zinc-300">
-          Primary Technical Specifications & Log Schemas
-        </h4>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-mono text-zinc-700 dark:text-zinc-300">
+            Primary Technical Specifications & Multi-Source Synthesis
+          </h4>
+          <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 text-[10px] font-mono font-bold">
+            {attribution.primarySources.length} Complementary Sources
+          </span>
+        </div>
+
+        {attribution.multiSourceSynthesis && (
+          <div
+            data-testid="sources-multi-source-synthesis-card"
+            className="p-3 rounded-xl bg-indigo-50/75 dark:bg-indigo-950/35 border border-indigo-200/80 dark:border-indigo-800/75 space-y-1"
+          >
+            <div className="text-[10.5px] font-mono font-bold text-indigo-700 dark:text-indigo-300 uppercase">
+              How Multiple Analytical Sources Complement Each Other
+            </div>
+            <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+              {attribution.multiSourceSynthesis}
+            </p>
+          </div>
+        )}
+
         <div className="space-y-2">
           {attribution.primarySources.map((src) => (
             <div

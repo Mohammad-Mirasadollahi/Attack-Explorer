@@ -112,6 +112,24 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
         {intel.summary}
       </p>
 
+      {/* Multi-Source Cross-Vendor Synthesis */}
+      {intel.multiSourceSynthesis && (
+        <div
+          data-testid="threat-intel-multi-source-synthesis"
+          className="p-2.5 rounded-lg bg-indigo-50/75 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/70 space-y-1 min-w-0"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-1.5 min-w-0 text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+            <span className="leading-snug">Multi-Source Cross-Vendor Synthesis</span>
+            <span className="px-1.5 py-0.5 rounded bg-indigo-600/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 shrink-0">
+              {intel.groundedSources.length} Sources Combined
+            </span>
+          </div>
+          <p className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+            {intel.multiSourceSynthesis}
+          </p>
+        </div>
+      )}
+
       {/* Associated CVEs & CISA KEV */}
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-[10.5px] font-semibold text-zinc-800 dark:text-zinc-200">
@@ -189,9 +207,12 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
       {/* Grounded Web Citations */}
       {intel.groundedSources.length > 0 && (
         <div className="pt-1.5 border-t border-zinc-200/70 dark:border-zinc-800 space-y-1">
-          <div className="flex items-center gap-1 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
-            <ShieldAlert className="w-3 h-3 text-emerald-500 shrink-0" />
-            <span className="leading-snug">Search-Grounded Citations</span>
+          <div className="flex items-center justify-between gap-1 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+            <span className="inline-flex items-center gap-1 min-w-0">
+              <ShieldAlert className="w-3 h-3 text-emerald-500 shrink-0" />
+              <span className="leading-snug">Multi-Vendor Grounded Citations</span>
+            </span>
+            <span className="shrink-0">{intel.groundedSources.length} refs</span>
           </div>
           <div className="flex flex-col gap-1 min-w-0">
             {intel.groundedSources.map((src, idx) => (

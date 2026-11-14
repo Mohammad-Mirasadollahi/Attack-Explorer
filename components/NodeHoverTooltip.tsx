@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import {
   computeSmartDiagramTooltipPlacement,
+  computeTooltipWheelScrollStep,
   DiagramTooltipPlacementResult,
   formatNodeTooltipCopyText,
   RectBox,
@@ -94,6 +95,34 @@ export function NodeHoverTooltip({
     [node]
   );
 
+  // Isolate mouse wheel inside the tooltip: scroll the tooltip scrollbar instead of zooming the diagram
+  useEffect(() => {
+    const el = tooltipElRef.current;
+    if (!el) return;
+
+    const onTooltipWheel = (e: WheelEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      const step = computeTooltipWheelScrollStep({
+        scrollTop: el.scrollTop,
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        deltaY: e.deltaY,
+        deltaMode: e.deltaMode,
+      });
+
+      if (step.isScrollable) {
+        el.scrollTop = step.nextScrollTop;
+      }
+    };
+
+    el.addEventListener('wheel', onTooltipWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onTooltipWheel);
+    };
+  }, [node.id, isCollapsed]);
+
   // Compute initial fallback placement from node logical coordinates (1480x650)
   const [placementState, setPlacementState] =
     useState<DiagramTooltipPlacementResult>(() => {
@@ -114,7 +143,7 @@ export function NodeHoverTooltip({
           height: approxNodeH,
         },
         tooltipWidth: 320,
-        tooltipHeight: isCollapsed ? 52 : 240,
+        tooltipHeight: isCollapsed ? 52 : 220,
       });
     });
 
@@ -167,7 +196,7 @@ export function NodeHoverTooltip({
       });
 
       const tWidth = tooltipEl?.offsetWidth || 320;
-      const tHeight = tooltipEl?.offsetHeight || (isCollapsed ? 52 : 240);
+      const tHeight = tooltipEl?.offsetHeight || (isCollapsed ? 52 : 220);
 
       const nextPlacement = computeSmartDiagramTooltipPlacement({
         containerWidth: cRect.width,
@@ -206,6 +235,7 @@ export function NodeHoverTooltip({
     : node.isActive
     ? 'ACTIVE FLOW'
     : 'STANDBY';
+  const effectiveMaxHeightPx = Math.min(220, placementState.maxHeightPx);
 
   return (
     <motion.div
@@ -222,12 +252,13 @@ export function NodeHoverTooltip({
       onMouseLeave={onTooltipMouseLeave}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
       style={{
         left: `${placementState.leftPx}px`,
         top: `${placementState.topPx}px`,
-        maxHeight: `${placementState.maxHeightPx}px`,
+        maxHeight: `${effectiveMaxHeightPx}px`,
       }}
-      className="pointer-events-auto select-text cursor-auto absolute z-50 w-80 max-w-[calc(100%-24px)] overflow-y-auto workbench-scrollbar rounded-xl bg-zinc-950/96 text-white border border-zinc-700/90 shadow-[0_14px_34px_rgba(9,9,11,0.65)] p-2.5 space-y-2 backdrop-blur-md"
+      className="pointer-events-auto select-text cursor-auto absolute z-50 w-80 max-w-[calc(100%-24px)] overflow-y-auto overscroll-contain workbench-scrollbar rounded-xl bg-zinc-950/96 text-white border border-zinc-700/90 shadow-[0_14px_34px_rgba(9,9,11,0.65)] p-2.5 space-y-2 backdrop-blur-md"
     >
       {/* Header: Sequence + Status + Diagram-Only Show/Hide & Copy Controls */}
       <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-zinc-800 pb-1.5">

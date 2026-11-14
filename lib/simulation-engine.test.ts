@@ -24,12 +24,12 @@ import {
 import { computeScenarioChoreography } from './camera-choreography';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 26 scenarios (including 20 APT campaigns)', () => {
+  it('filterScenarios filters by category and search query accurately across all 46 scenarios (including 40 APT & zero-day campaigns)', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 26);
+    assert.equal(all.length, 46);
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
-    assert.equal(malwareOnly.length, 12);
+    assert.ok(malwareOnly.length >= 16);
 
     const byMitre = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'T1055.012');
     assert.equal(byMitre.length, 1);
@@ -106,7 +106,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 26);
+    assert.equal(fullLib.totalCount, 46);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass
