@@ -9,7 +9,10 @@ import {
   ActiveEnvironmentId,
   ComputedStageView,
   DEFAULT_ACTIVE_ENVIRONMENT } from '@/lib/simulation-engine';
-import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
+import {
+  WhiteboardSketchFlow,
+  WhiteboardSketchNode,
+} from '@/lib/sketch-zones-and-drilldown';
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import { AttackVisualizer } from './AttackVisualizer';
 import { SequenceView } from './canvas/SequenceView';
@@ -62,6 +65,12 @@ interface DiagramCanvasProps {
   autoLayoutTriggerSeq?: number;
   onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
+  customInjectedNodes?: WhiteboardSketchNode[];
+  customInjectedFlows?: WhiteboardSketchFlow[];
+  onDropAttackVector?: (
+    vectorId: string,
+    dropCoords?: { wx: number; wy: number }
+  ) => void;
   forceDesktopCanvas?: boolean;
 }
 
@@ -105,6 +114,9 @@ export function DiagramCanvas({
   autoLayoutTriggerSeq = 0,
   onAutoLayoutActiveChange,
   onActiveNodesChange,
+  customInjectedNodes = [],
+  customInjectedFlows = [],
+  onDropAttackVector,
   forceDesktopCanvas = false,
 }: DiagramCanvasProps) {
   return (
@@ -156,6 +168,9 @@ export function DiagramCanvas({
           autoLayoutTriggerSeq={autoLayoutTriggerSeq}
           onAutoLayoutActiveChange={onAutoLayoutActiveChange}
           onActiveNodesChange={onActiveNodesChange}
+          customInjectedNodes={customInjectedNodes}
+          customInjectedFlows={customInjectedFlows}
+          onDropAttackVector={onDropAttackVector}
           forceDesktopCanvas={forceDesktopCanvas}
         />
       )}

@@ -25,6 +25,15 @@ import {
   resolveInspectorScopeContext,
   resolveScopedTelemetrySelection,
 } from '@/lib/inspector-scope';
+import {
+  buildWhiteboardSchematic,
+  WhiteboardSketchFlow,
+  WhiteboardSketchNode,
+} from '@/lib/sketch-zones-and-drilldown';
+import {
+  instantiateAttackVectorNode,
+  PREDEFINED_ATTACK_VECTOR_LIBRARY,
+} from '@/lib/canvas-interaction-engine';
 import { AttackHeader } from './AttackHeader';
 import { AttackSidebar } from './AttackSidebar';
 import { AttackLibrary } from './AttackLibrary';
@@ -116,6 +125,26 @@ export function AttackExplorerWorkbench() {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(
     ATTACK_SCENARIOS[0].id
   );
+
+  // Top Workbench Toolbar Graph Node & MITRE Search + Auto-Layout State
+  const [nodeSearchQuery, setNodeSearchQuery] = useState<string>('');
+  const [activeGraphNodes, setActiveGraphNodes] = useState<
+    WhiteboardSketchNode[]
+  >([]);
+  const [focusedSearchNodeId, setFocusedSearchNodeId] = useState<string | null>(
+    null
+  );
+  const [focusSearchSeq, setFocusSearchSeq] = useState<number>(0);
+  const [autoLayoutTriggerSeq, setAutoLayoutTriggerSeq] = useState<number>(0);
+  const [isAutoLayoutActive, setIsAutoLayoutActive] = useState<boolean>(false);
+
+  // Custom Drag-and-Drop / Injected Attack Vector Nodes & Flows per Scenario
+  const [injectedVectorsByScenario, setInjectedVectorsByScenario] = useState<
+    Record<
+      string,
+      { nodes: WhiteboardSketchNode[]; flows: WhiteboardSketchFlow[] }
+    >
+  >({});
 
   // Simulation Step & Selection State (0 = Overview, 1..N = Stage 1..N)
   const [activeStageIndex, setActiveStageIndex] = useState<number>(0);
@@ -211,6 +240,15 @@ export function AttackExplorerWorkbench() {
     [selectedScenarioId]
   );
 
+  const currentInjectedVectors = useMemo(
+    () =>
+      injectedVectorsByScenario[activeScenario.id] || {
+        nodes: [],
+        flows: [],
+      },
+    [injectedVectorsByScenario, activeScenario.id]
+  );
+
   const stageView = useMemo(
     () =>
       computeStageView(
@@ -244,21 +282,25 @@ export function AttackExplorerWorkbench() {
     ]
   );
 
-  const selectedTelemetry = useMemo(
-    () =>
-      resolveScopedTelemetrySelection({
-        scenario: activeScenario,
-        selectedTelemetryId,
-        internalSubBoard: inspectorScopeContext.internalSubBoard,
-        activeEnvironment,
-      }),
-    [
-      activeScenario,
+  const selectedTelemetry = useMemo(() => {
+    const scoped = resolveScopedTelemetrySelection({
+      scenario: activeScenario,
       selectedTelemetryId,
+      internalSubBoard: inspectorScopeContext.internalSubBoard,
       activeEnvironment,
-      inspectorScopeContext.internalSubBoard,
-    ]
-  );
+    });
+    if (scoped || !selectedTelemetryId) return scoped;
+    const injectedFlow = currentInjectedVectors.flows.find(
+      (f) => f.telemetryEvent.id === selectedTelemetryId
+    );
+    return injectedFlow ? injectedFlow.telemetryEvent : null;
+  }, [
+    activeScenario,
+    selectedTelemetryId,
+    activeEnvironment,
+    inspectorScopeContext.internalSubBoard,
+    currentInjectedVectors.flows,
+  ]);
 
   const handleExpandedNodeChange = useCallback((nodeId: string | null) => {
     setExpandedNodeId(nodeId);
@@ -274,6 +316,67 @@ export function AttackExplorerWorkbench() {
       setSelectedTelemetryId(null);
     },
     []
+  );
+
+  const handleFocusGraphNode = useCallback((nodeId: string) => {
+    setFocusedSearchNodeId(nodeId);
+    setFocusSearchSeq((prev) => prev + 1);
+    setSelectedNodeId(nodeId);
+  }, []);
+
+  const handleTriggerAutoLayout = useCallback(() => {
+    setAutoLayoutTriggerSeq((prev) => prev + 1);
+  }, []);
+
+  const handleInjectAttackVector = useCallback(
+    (vectorId: string, dropCoords?: { wx: number; wy: number }) => {
+      const template = PREDEFINED_ATTACK_VECTOR_LIBRARY.find(
+        (v) => v.id === vectorId
+      );
+      if (!template) return;
+
+      if (viewMode !== 'TOPOLOGY') {
+        setViewMode('TOPOLOGY');
+      }
+
+      setInjectedVectorsByScenario((prev) => {
+        const current = prev[activeScenario.id] || { nodes: [], flows: [] };
+        const baseSchematic = buildWhiteboardSchematic(
+          activeScenario,
+          activeStageIndex,
+          activeEnvironment
+        );
+        const existingNodes = [...baseSchematic.nodes, ...current.nodes];
+        const existingFlows = [...baseSchematic.flows, ...current.flows];
+        const { node, flow } = instantiateAttackVectorNode({
+          template,
+          existingNodes,
+          existingFlows,
+          dropWx: dropCoords?.wx,
+          dropWy: dropCoords?.wy,
+          activeStageIndex: activeStageIndex > 0 ? activeStageIndex : 1,
+          sequenceOffset: current.nodes.length + 1,
+        });
+
+        setSelectedNodeId(node.id);
+        if (flow) {
+          setSelectedTelemetryId(flow.telemetryEvent.id);
+        }
+
+        return {
+          ...prev,
+          [activeScenario.id]: {
+            nodes: [...current.nodes, node],
+            flows: flow ? [...current.flows, flow] : current.flows,
+          },
+        };
+      });
+
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    },
+    [activeEnvironment, activeScenario, activeStageIndex, viewMode]
   );
 
   // Prince-of-Persia / Protocol-Explorer Cinematic Walkthrough Sequencer
@@ -545,6 +648,7 @@ export function AttackExplorerWorkbench() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onSelectStage={handleSelectStage}
+          onSelectScenario={(id) => handleSelectScenario(id, 0)}
           isPlaying={isPlaying}
           onTogglePlay={handleTogglePlay}
           onStepForward={handleStepForward}
@@ -586,6 +690,12 @@ export function AttackExplorerWorkbench() {
           layoutMode={layoutMode}
           onLayoutModeChange={handleLayoutModeChange}
           onReplayIntro={() => setShowIntro(true)}
+          nodeSearchQuery={nodeSearchQuery}
+          onNodeSearchQueryChange={setNodeSearchQuery}
+          graphNodes={activeGraphNodes}
+          onFocusGraphNode={handleFocusGraphNode}
+          onTriggerAutoLayout={handleTriggerAutoLayout}
+          isAutoLayoutActive={isAutoLayoutActive}
         />
 
         {/* Visual Step-Indicator Progress Bar Synchronized with Animation State */}
@@ -598,7 +708,7 @@ export function AttackExplorerWorkbench() {
 
         <main
           onContextMenu={(e) => e.preventDefault()}
-          className="relative flex-1 flex min-h-0 overflow-hidden"
+          className="relative flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden"
         >
           {/* Mobile/Tablet Backdrop when a side drawer is open */}
           <AnimatePresence>
@@ -616,7 +726,7 @@ export function AttackExplorerWorkbench() {
             )}
           </AnimatePresence>
 
-          {/* Left Collapsible Scenarios Sidebar */}
+          {/* Left Collapsible Scenarios & Attack Vectors Sidebar */}
           <AnimatePresence initial={false}>
             {sidebarOpen && (
               <AttackSidebar
@@ -631,12 +741,15 @@ export function AttackExplorerWorkbench() {
                 onSortChange={setSortBy}
                 groupBy={groupBy}
                 onGroupByChange={setGroupBy}
+                onInjectAttackVector={(vectorId) =>
+                  handleInjectAttackVector(vectorId)
+                }
               />
             )}
           </AnimatePresence>
 
-          <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-            <div className="flex-1 flex flex-row min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto sm:overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto sm:overflow-hidden">
               <DiagramCanvas
                 scenario={activeScenario}
                 stageView={stageView}
@@ -670,6 +783,16 @@ export function AttackExplorerWorkbench() {
                 shortcutsModalOpen={shortcutsModalOpen}
                 onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
                 onCloseShortcutsModal={() => setShortcutsModalOpen(false)}
+                nodeSearchQuery={nodeSearchQuery}
+                onNodeSearchQueryChange={setNodeSearchQuery}
+                focusedSearchNodeId={focusedSearchNodeId}
+                focusSearchSeq={focusSearchSeq}
+                autoLayoutTriggerSeq={autoLayoutTriggerSeq}
+                onAutoLayoutActiveChange={setIsAutoLayoutActive}
+                onActiveNodesChange={setActiveGraphNodes}
+                customInjectedNodes={currentInjectedVectors.nodes}
+                customInjectedFlows={currentInjectedVectors.flows}
+                onDropAttackVector={handleInjectAttackVector}
                 forceDesktopCanvas={layoutMode === 'DESKTOP'}
               />
 

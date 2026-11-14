@@ -392,3 +392,28 @@ export function computeTooltipWheelScrollStep(
   };
 }
 
+/**
+ * Default hover intent delay (in ms) before opening workbench icon tooltips and diagram node tooltips.
+ * Prevents accidental tooltip popups when the user moves the pointer across icons or graph nodes.
+ */
+export const DEFAULT_TOOLTIP_OPEN_DELAY_MS = 340;
+export const DEFAULT_DIAGRAM_NODE_TOOLTIP_OPEN_DELAY_MS = 320;
+export const DEFAULT_TOOLTIP_CLOSE_DELAY_MS = 170;
+
+export function resolveTooltipOpenDelay(
+  customDelayMs?: number,
+  isDiagramNode: boolean = false
+): number {
+  if (
+    typeof customDelayMs === 'number' &&
+    Number.isFinite(customDelayMs) &&
+    customDelayMs >= 0
+  ) {
+    return Math.round(customDelayMs);
+  }
+  return isDiagramNode
+    ? DEFAULT_DIAGRAM_NODE_TOOLTIP_OPEN_DELAY_MS
+    : DEFAULT_TOOLTIP_OPEN_DELAY_MS;
+}
+
+

@@ -134,6 +134,7 @@ export const CanvasController = forwardRef<
         velocityAnimation={{ disabled: true }}
         wheel={{
           disabled: true,
+          excluded: ['canvas-scrollable-overlay'],
         }}
         // Custom AttackVisualizer pointer pan owns one-finger drag; keep
         // library panning off so it does not fight Select / node drag.
@@ -143,6 +144,7 @@ export const CanvasController = forwardRef<
             'canvas-interactive-node',
             'canvas-interactive-zone',
             'canvas-interactive-control',
+            'canvas-scrollable-overlay',
           ],
         }}
         // Pinch-zoom must stay on for phones in forced-desktop layout.

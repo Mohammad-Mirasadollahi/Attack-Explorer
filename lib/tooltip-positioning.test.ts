@@ -5,13 +5,25 @@ import {
   computeSmartDiagramTooltipPlacement,
   computeSmartViewportTooltipPosition,
   computeTooltipWheelScrollStep,
+  DEFAULT_DIAGRAM_NODE_TOOLTIP_OPEN_DELAY_MS,
+  DEFAULT_TOOLTIP_OPEN_DELAY_MS,
   formatNodeTooltipCopyText,
   formatWorkbenchTooltipCopyText,
   RectBox,
+  resolveTooltipOpenDelay,
 } from './tooltip-positioning';
 import { WhiteboardSketchNode } from './sketch-zones-and-drilldown';
 
 describe('tooltip-positioning', () => {
+  it('enforces hover-intent open delay (~320-340ms) so moving the mouse across icons or nodes never immediately opens tooltips', () => {
+    assert.equal(DEFAULT_TOOLTIP_OPEN_DELAY_MS, 340);
+    assert.equal(DEFAULT_DIAGRAM_NODE_TOOLTIP_OPEN_DELAY_MS, 320);
+    assert.equal(resolveTooltipOpenDelay(undefined, false), 340);
+    assert.equal(resolveTooltipOpenDelay(undefined, true), 320);
+    assert.equal(resolveTooltipOpenDelay(420, false), 420);
+    assert.equal(resolveTooltipOpenDelay(-50, false), 340);
+  });
+
   it('keeps diagram node tooltips strictly inside container bounds and off the hovered node (Victim Laptop WKS-04 case)', () => {
     const containerWidth = 920;
     const containerHeight = 460;

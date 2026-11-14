@@ -242,6 +242,7 @@ export function NodeHoverTooltip({
       ref={tooltipElRef}
       role="tooltip"
       data-testid={`node-hover-tooltip-${node.id}`}
+      data-scrollable-canvas-overlay="true"
       data-tooltip-placement={placementState.placement}
       data-tooltip-collapsed={isCollapsed ? 'true' : 'false'}
       initial={{ opacity: 0, scale: 0.96 }}
@@ -252,6 +253,7 @@ export function NodeHoverTooltip({
       onMouseLeave={onTooltipMouseLeave}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
+      onWheelCapture={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
       style={{
         left: `${placementState.leftPx}px`,

@@ -2,11 +2,12 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { AttackScenario } from '@/lib/attack-scenarios';
+import { ATTACK_SCENARIOS, AttackScenario } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
   ComputedStageView,
   DEFAULT_ACTIVE_ENVIRONMENT,
+  filterScenarios,
   getActiveEnvironmentProfile,
 } from '@/lib/simulation-engine';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
@@ -33,6 +34,7 @@ import {
   SearchCode,
   Server,
   Settings,
+  ShieldAlert,
   Sparkles,
   Table2,
   UserRound,
@@ -51,6 +53,7 @@ interface AttackHeaderProps {
   viewMode: CanvasViewMode;
   onViewModeChange: (mode: CanvasViewMode) => void;
   onSelectStage: (stageIndex: number) => void;
+  onSelectScenario?: (scenarioId: string) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
   onStepForward: () => void;
@@ -85,6 +88,7 @@ interface AttackHeaderProps {
 }
 
 export function AttackHeader({
+  scenario,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   onSelectEnvironment,
   tacticalMode = false,
@@ -93,6 +97,7 @@ export function AttackHeader({
   onToggleLegend,
   viewMode,
   onViewModeChange,
+  onSelectScenario,
   playbackSpeed,
   onSpeedChange,
   isDark,
@@ -129,6 +134,12 @@ export function AttackHeader({
     () => searchAttackGraphNodes(graphNodes, nodeSearchQuery),
     [graphNodes, nodeSearchQuery]
   );
+
+  const matchedScenarios = useMemo(() => {
+    const trimmed = nodeSearchQuery.trim();
+    if (!trimmed) return [];
+    return filterScenarios(ATTACK_SCENARIOS, 'ALL', trimmed).slice(0, 8);
+  }, [nodeSearchQuery]);
 
   // Close search dropdown when clicking outside
   useEffect(() => {
@@ -198,12 +209,18 @@ export function AttackHeader({
     setSearchDropdownOpen(false);
   };
 
+  const handleSelectSearchedScenario = (scenarioId: string) => {
+    onSelectScenario?.(scenarioId);
+    onNodeSearchQueryChange?.('');
+    setSearchDropdownOpen(false);
+  };
+
   return (
     <>
       <header
         dir="ltr"
         data-testid="persistent-navigation-bar"
-        className="relative shrink-0 h-12 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 px-2.5 sm:px-3.5 flex items-center justify-between gap-2 z-40 overflow-visible"
+        className="relative shrink-0 min-h-12 h-auto py-1 sm:py-0 sm:h-12 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 px-2 sm:px-3.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 z-40 overflow-visible"
       >
         {/* Left Zone: Animated Logo + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
@@ -325,14 +342,14 @@ export function AttackHeader({
             })}
           </div>
 
-          {/* Top Workbench Toolbar Attack Graph Node Search Bar (Desktop/Tablet) */}
+          {/* Top Workbench Toolbar Search Bar: Attack Graph Nodes + Scenarios & MITRE ATT&CK Techniques */}
           <div
             ref={searchContainerRef}
             data-testid="top-toolbar-node-search"
-            className="relative hidden md:flex items-center shrink-0"
+            className="relative flex items-center shrink-0"
           >
             <div
-              className={`h-8 w-36 sm:w-48 md:w-56 lg:w-64 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${
+              className={`h-8 w-28 sm:w-44 md:w-56 lg:w-64 px-2 sm:px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${
                 searchResult.isFiltering
                   ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-400 dark:border-amber-600 ring-2 ring-amber-400/25'
                   : 'bg-zinc-50/95 dark:bg-zinc-900/95 border-zinc-200/80 dark:border-zinc-800 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20'
@@ -349,7 +366,7 @@ export function AttackHeader({
                 ref={searchInputRef}
                 type="text"
                 data-testid="top-toolbar-node-search-input"
-                aria-label="Search and filter attack graph nodes"
+                aria-label="Search attack graph nodes, scenarios, or MITRE ATT&CK techniques"
                 value={nodeSearchQuery}
                 onFocus={() => setSearchDropdownOpen(true)}
                 onChange={(e) => {
@@ -363,15 +380,16 @@ export function AttackHeader({
                     }
                     setSearchDropdownOpen(false);
                     searchInputRef.current?.blur();
-                  } else if (
-                    e.key === 'Enter' &&
-                    searchResult.matchedNodes.length > 0
-                  ) {
+                  } else if (e.key === 'Enter') {
                     e.preventDefault();
-                    handleSelectSearchNode(searchResult.matchedNodes[0].id);
+                    if (searchResult.matchedNodes.length > 0) {
+                      handleSelectSearchNode(searchResult.matchedNodes[0].id);
+                    } else if (matchedScenarios.length > 0) {
+                      handleSelectSearchedScenario(matchedScenarios[0].id);
+                    }
                   }
                 }}
-                placeholder="Find graph node, IP, host..."
+                placeholder="Search node, MITRE ID, scenario..."
                 className="w-full min-w-0 bg-transparent text-[11px] font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none"
               />
 
@@ -379,7 +397,8 @@ export function AttackHeader({
                 <span
                   data-testid="top-toolbar-node-search-count"
                   className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold tabular-nums shrink-0 ${
-                    searchResult.matchedNodes.length > 0
+                    searchResult.matchedNodes.length > 0 ||
+                    matchedScenarios.length > 0
                       ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300'
                       : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
                   }`}
@@ -392,7 +411,7 @@ export function AttackHeader({
                 <button
                   type="button"
                   data-testid="top-toolbar-node-search-clear"
-                  aria-label="Clear node search filter"
+                  aria-label="Clear node and MITRE search filter"
                   onClick={() => {
                     onNodeSearchQueryChange?.('');
                     setSearchDropdownOpen(false);
@@ -405,7 +424,7 @@ export function AttackHeader({
               )}
             </div>
 
-            {/* Interactive Node Search & Filter Results Dropdown */}
+            {/* Interactive Unified Search Results Dropdown (Graph Nodes + Scenarios/MITRE Techniques) */}
             <AnimatePresence>
               {searchDropdownOpen &&
                 (searchResult.isFiltering || graphNodes.length > 0) && (
@@ -415,8 +434,10 @@ export function AttackHeader({
                     exit={{ opacity: 0, y: 4, scale: 0.98 }}
                     transition={{ duration: 0.14 }}
                     data-testid="top-toolbar-node-search-results"
-                    className="absolute top-[calc(100%+6px)] left-0 w-80 sm:w-96 max-h-80 overflow-y-auto rounded-xl bg-white/98 dark:bg-zinc-900/98 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl backdrop-blur-md p-2 z-50 flex flex-col gap-1"
+                    onWheel={(e) => e.stopPropagation()}
+                    className="absolute top-[calc(100%+6px)] left-0 w-72 sm:w-96 max-h-96 overflow-y-auto rounded-xl bg-white/98 dark:bg-zinc-900/98 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl backdrop-blur-md p-2 z-50 flex flex-col gap-1.5"
                   >
+                    {/* Section 1: Active Graph Nodes */}
                     <div className="px-2 py-1 flex items-center justify-between gap-2 text-[10px] font-mono text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800/80">
                       <span className="font-bold uppercase tracking-wider">
                         {searchResult.isFiltering
@@ -434,10 +455,10 @@ export function AttackHeader({
                     ).length === 0 ? (
                       <div
                         data-testid="top-toolbar-node-search-empty"
-                        className="px-3 py-4 text-center text-xs text-zinc-500 dark:text-zinc-400"
+                        className="px-3 py-2 text-center text-xs text-zinc-500 dark:text-zinc-400"
                       >
-                        No graph nodes match &ldquo;{nodeSearchQuery}&rdquo;.
-                        Try searching by hostname, IP address, or stage role.
+                        No graph nodes in {scenario.code} match &ldquo;
+                        {nodeSearchQuery}&rdquo;.
                       </div>
                     ) : (
                       (searchResult.isFiltering
@@ -471,6 +492,68 @@ export function AttackHeader({
                         </button>
                       ))
                     )}
+
+                    {/* Section 2: Matching Attack Scenarios & MITRE ATT&CK Techniques */}
+                    {searchResult.isFiltering && (
+                      <div
+                        data-testid="top-toolbar-scenario-mitre-results"
+                        className="mt-1 pt-1.5 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-col gap-1"
+                      >
+                        <div className="px-2 py-1 flex items-center justify-between gap-2 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                          <span className="font-bold uppercase tracking-wider">
+                            Scenarios & MITRE ATT&CK ({matchedScenarios.length})
+                          </span>
+                          <span className="text-[9.5px] text-rose-600 dark:text-rose-400 font-semibold">
+                            Load Scenario
+                          </span>
+                        </div>
+
+                        {matchedScenarios.length === 0 ? (
+                          <div className="px-3 py-2 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
+                            No scenarios or MITRE techniques match &ldquo;
+                            {nodeSearchQuery}&rdquo;.
+                          </div>
+                        ) : (
+                          matchedScenarios.map((sc) => {
+                            const mitreIds = Array.from(
+                              new Set(
+                                sc.stages.map((st) => st.mitreTechniqueId)
+                              )
+                            ).slice(0, 3);
+                            return (
+                              <button
+                                key={sc.id}
+                                type="button"
+                                data-testid={`top-toolbar-scenario-result-${sc.id}`}
+                                onClick={() =>
+                                  handleSelectSearchedScenario(sc.id)
+                                }
+                                className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-rose-50/90 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-800/70 transition-colors flex items-start justify-between gap-2 cursor-pointer group"
+                              >
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[9px] font-bold shrink-0">
+                                      {sc.code}
+                                    </span>
+                                    <span className="text-[11.5px] font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                                      {sc.name}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words">
+                                    {mitreIds.join(', ')} · {sc.stages.length}{' '}
+                                    Stages
+                                  </div>
+                                </div>
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 group-hover:bg-rose-600 group-hover:text-white text-zinc-600 dark:text-zinc-300 font-mono text-[9px] font-semibold shrink-0 transition-colors">
+                                  <ShieldAlert className="w-2.5 h-2.5" />
+                                  <span>Load</span>
+                                </span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 )}
             </AnimatePresence>
@@ -478,7 +561,7 @@ export function AttackHeader({
 
           {/* Top Workbench Toolbar Force-Directed Auto-Layout Trigger Button */}
           {onTriggerAutoLayout && (
-            <div className="hidden md:flex items-center shrink-0">
+            <div className="flex items-center shrink-0">
               <WorkbenchIconTooltip
                 label="Force-Directed Auto-Layout"
                 badge={isAutoLayoutActive ? 'APPLIED · A' : 'HOTKEY A'}
@@ -495,7 +578,7 @@ export function AttackHeader({
                     }
                     onTriggerAutoLayout();
                   }}
-                  className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border text-[11px] font-mono font-semibold transition-all cursor-pointer shrink-0 ${
+                  className={`h-8 px-2 sm:px-2.5 flex items-center gap-1.5 rounded-lg border text-[11px] font-mono font-semibold transition-all cursor-pointer shrink-0 ${
                     isAutoLayoutActive
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
                       : 'bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-700 dark:hover:text-indigo-300 hover:border-indigo-300'

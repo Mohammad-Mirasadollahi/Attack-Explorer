@@ -17,6 +17,7 @@ import {
   buildWhiteboardSchematic,
   getStageLocationContext,
   NetworkZoneColumn,
+  WhiteboardSketchFlow,
   WhiteboardSketchNode,
 } from '@/lib/sketch-zones-and-drilldown';
 import {
@@ -26,6 +27,7 @@ import {
 import {
   applyNodePositionOffsets,
   applyZonePositionOffsets,
+  ATTACK_VECTOR_DRAG_MIME_TYPE,
   computeForceDirectedNodeLayout,
   computeMarqueeSelectedNodeIds,
   computePanFromMinimapPoint,
@@ -43,6 +45,7 @@ import {
   WHITEBOARD_HEIGHT,
   WHITEBOARD_WIDTH,
 } from '@/lib/canvas-interaction-engine';
+import { DEFAULT_DIAGRAM_NODE_TOOLTIP_OPEN_DELAY_MS } from '@/lib/tooltip-positioning';
 import { SketchWhiteboardSvg } from './canvas/SketchWhiteboardSvg';
 import { ResponsiveMobileZonesView } from './canvas/ResponsiveMobileZonesView';
 import { TacticalGridOverlay } from './canvas/TacticalGridOverlay';
@@ -120,6 +123,12 @@ export interface AttackVisualizerProps {
   autoLayoutTriggerSeq?: number;
   onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
+  customInjectedNodes?: WhiteboardSketchNode[];
+  customInjectedFlows?: WhiteboardSketchFlow[];
+  onDropAttackVector?: (
+    vectorId: string,
+    dropCoords?: { wx: number; wy: number }
+  ) => void;
   /** Controlled expanded parent node ID for internal sub-board scope */
   expandedNodeId?: string | null;
   onExpandedNodeChange?: (nodeId: string | null) => void;
@@ -173,6 +182,9 @@ export function AttackVisualizer({
   autoLayoutTriggerSeq = 0,
   onAutoLayoutActiveChange,
   onActiveNodesChange,
+  customInjectedNodes = [],
+  customInjectedFlows = [],
+  onDropAttackVector,
   expandedNodeId: controlledExpandedNodeId,
   onExpandedNodeChange,
   selectedInternalSubNodeId: controlledSelectedSubNodeId,
@@ -199,6 +211,7 @@ export function AttackVisualizer({
   const [multiSelectedNodeIds, setMultiSelectedNodeIds] = useState<string[]>(
     []
   );
+  const [isVectorDragOver, setIsVectorDragOver] = useState<boolean>(false);
 
   // User-dragged position offsets for main topology nodes, sub-board nodes, and zones
   const [nodeOffsetsByScenario, setNodeOffsetsByScenario] = useState<
@@ -258,7 +271,15 @@ export function AttackVisualizer({
     useState<boolean>(true);
   const [diagramTooltipCollapsed, setDiagramTooltipCollapsed] =
     useState<boolean>(false);
+  const hoverOpenTimeoutRef = useRef<number | null>(null);
   const hoverClearTimeoutRef = useRef<number | null>(null);
+
+  const clearHoverOpenTimeout = useCallback(() => {
+    if (hoverOpenTimeoutRef.current !== null) {
+      window.clearTimeout(hoverOpenTimeoutRef.current);
+      hoverOpenTimeoutRef.current = null;
+    }
+  }, []);
 
   const clearHoverTimeout = useCallback(() => {
     if (hoverClearTimeoutRef.current !== null) {
@@ -269,9 +290,13 @@ export function AttackVisualizer({
 
   const handleNodeHoverChange = useCallback(
     (nextNodeId: string | null) => {
+      clearHoverOpenTimeout();
       clearHoverTimeout();
       if (nextNodeId !== null) {
-        setHoveredNodeId(nextNodeId);
+        hoverOpenTimeoutRef.current = window.setTimeout(() => {
+          setHoveredNodeId(nextNodeId);
+          hoverOpenTimeoutRef.current = null;
+        }, DEFAULT_DIAGRAM_NODE_TOOLTIP_OPEN_DELAY_MS);
       } else {
         hoverClearTimeoutRef.current = window.setTimeout(() => {
           setHoveredNodeId(null);
@@ -279,23 +304,28 @@ export function AttackVisualizer({
         }, 185);
       }
     },
-    [clearHoverTimeout]
+    [clearHoverOpenTimeout, clearHoverTimeout]
   );
 
   const handleTooltipMouseEnter = useCallback(() => {
+    clearHoverOpenTimeout();
     clearHoverTimeout();
-  }, [clearHoverTimeout]);
+  }, [clearHoverOpenTimeout, clearHoverTimeout]);
 
   const handleTooltipMouseLeave = useCallback(() => {
+    clearHoverOpenTimeout();
     clearHoverTimeout();
     hoverClearTimeoutRef.current = window.setTimeout(() => {
       setHoveredNodeId(null);
       hoverClearTimeoutRef.current = null;
     }, 140);
-  }, [clearHoverTimeout]);
+  }, [clearHoverOpenTimeout, clearHoverTimeout]);
 
   useEffect(() => {
     return () => {
+      if (hoverOpenTimeoutRef.current !== null) {
+        window.clearTimeout(hoverOpenTimeoutRef.current);
+      }
       if (hoverClearTimeoutRef.current !== null) {
         window.clearTimeout(hoverClearTimeoutRef.current);
       }
@@ -380,12 +410,28 @@ export function AttackVisualizer({
   const {
     zones: scenarioZones,
     backboneLinks: scenarioBackboneLinks,
-    nodes: rawSketchNodes,
-    flows: rawSketchFlows,
+    nodes: baseSketchNodes,
+    flows: baseSketchFlows,
   } = useMemo(
     () =>
       buildWhiteboardSchematic(scenario, activeStageIndex, activeEnvironment),
     [scenario, activeStageIndex, activeEnvironment]
+  );
+
+  const rawSketchNodes = useMemo(
+    () =>
+      customInjectedNodes.length > 0
+        ? [...baseSketchNodes, ...customInjectedNodes]
+        : baseSketchNodes,
+    [baseSketchNodes, customInjectedNodes]
+  );
+
+  const rawSketchFlows = useMemo(
+    () =>
+      customInjectedFlows.length > 0
+        ? [...baseSketchFlows, ...customInjectedFlows]
+        : baseSketchFlows,
+    [baseSketchFlows, customInjectedFlows]
   );
 
   const boardScopeKey = `${scenario.id}-${activeEnvironment}-${
@@ -729,6 +775,58 @@ export function AttackVisualizer({
     setSelectedInternalSubNodeId,
   ]);
 
+  // HTML5 Drag-and-Drop Handlers for Pre-Defined Attack Vector Library Injection
+  const handleBoardDragOver = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      if (!onDropAttackVector || internalSubBoard) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      if (!isVectorDragOver) {
+        setIsVectorDragOver(true);
+      }
+    },
+    [internalSubBoard, isVectorDragOver, onDropAttackVector]
+  );
+
+  const handleBoardDragLeave = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      if (
+        boardContainerRef.current &&
+        !boardContainerRef.current.contains(e.relatedTarget as Node)
+      ) {
+        setIsVectorDragOver(false);
+      }
+    },
+    []
+  );
+
+  const handleBoardDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      if (!onDropAttackVector || internalSubBoard) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setIsVectorDragOver(false);
+
+      const vectorId =
+        e.dataTransfer.getData(ATTACK_VECTOR_DRAG_MIME_TYPE) ||
+        e.dataTransfer.getData('text/plain');
+      if (!vectorId) return;
+
+      const rigEl = cameraRigRef.current || boardContainerRef.current;
+      const rect = rigEl?.getBoundingClientRect();
+      if (rect && rect.width > 0 && rect.height > 0) {
+        const relX = Math.max(0.06, Math.min(0.94, (e.clientX - rect.left) / rect.width));
+        const relY = Math.max(0.14, Math.min(0.86, (e.clientY - rect.top) / rect.height));
+        const wx = Math.round(relX * WHITEBOARD_WIDTH);
+        const wy = Math.round(relY * WHITEBOARD_HEIGHT);
+        onDropAttackVector(vectorId.trim(), { wx, wy });
+      } else {
+        onDropAttackVector(vectorId.trim());
+      }
+    },
+    [internalSubBoard, onDropAttackVector]
+  );
+
   // Mouse Wheel / Trackpad Scroll Zoom Handler synchronized with CanvasController
   useEffect(() => {
     const boardEl = boardContainerRef.current;
@@ -739,7 +837,7 @@ export function AttackVisualizer({
       const targetEl = e.target instanceof Element ? e.target : null;
       if (
         targetEl?.closest(
-          '[role="tooltip"], [data-testid^="node-hover-tooltip-"], [data-testid^="workbench-tooltip-"], [data-testid="responsive-mobile-zones-view"], [data-testid="entity-drilldown-drawer"]'
+          '[role="tooltip"], [data-scrollable-canvas-overlay="true"], .canvas-scrollable-overlay, [data-testid^="node-hover-tooltip-"], [data-testid^="workbench-tooltip-"], [data-testid="responsive-mobile-zones-view"], [data-testid="entity-drilldown-drawer"], [data-testid="diagram-legend-panel"]'
         )
       ) {
         return;
@@ -2094,6 +2192,9 @@ export function AttackVisualizer({
         <div
           ref={boardContainerRef}
           onPointerDown={handleBoardPointerDown}
+          onDragOver={handleBoardDragOver}
+          onDragLeave={handleBoardDragLeave}
+          onDrop={handleBoardDrop}
           onContextMenu={(e) => {
             e.preventDefault();
           }}
@@ -2109,6 +2210,7 @@ export function AttackVisualizer({
           data-pan-x={panOffset.x}
           data-pan-y={panOffset.y}
           data-selected-count={multiSelectedNodeIds.length}
+          data-vector-drop-active={isVectorDragOver ? 'true' : 'false'}
           className={`excalidraw-board-bg relative w-full h-full rounded-2xl border overflow-hidden ${
             forceDesktopCanvas ? 'touch-none' : 'touch-pan-y sm:touch-none'
           } transition-colors duration-300 ${
@@ -2118,11 +2220,25 @@ export function AttackVisualizer({
               ? 'cursor-grab'
               : 'cursor-crosshair'
           } ${
-            tacticalMode
+            isVectorDragOver
+              ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-950/10'
+              : tacticalMode
               ? 'bg-[#050B14] border-emerald-500/60 shadow-[inset_0_0_55px_rgba(16,185,129,0.14)]'
               : 'bg-[#FDFBF7] dark:bg-[#0D111A] border-zinc-200/90 dark:border-zinc-800 shadow-2xs'
           }`}
         >
+          {/* Attack Vector Drag-and-Drop Overlay Indicator */}
+          {isVectorDragOver && (
+            <div
+              data-testid="canvas-vector-drop-overlay"
+              className="pointer-events-none absolute inset-3 z-40 rounded-xl border-2 border-dashed border-rose-500/80 bg-rose-500/10 flex items-center justify-center backdrop-blur-[1px]"
+            >
+              <div className="px-4 py-2 rounded-xl bg-zinc-950/90 text-white border border-rose-500/60 shadow-2xl font-mono text-xs font-bold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-rose-400" />
+                <span>Drop Attack Vector to Inject into Simulation Graph</span>
+              </div>
+            </div>
+          )}
           {/* Floating Top-Right "Show Toolbar" Pill when Top Bar is Hidden */}
           {topBarHidden && (
             <div

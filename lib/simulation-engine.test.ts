@@ -1108,4 +1108,57 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       );
     }
   });
+
+  it('filterAttackVectorLibrary and instantiateAttackVectorNode support side-panel search and drag-and-drop vector injection into the simulation canvas', async () => {
+    const {
+      filterAttackVectorLibrary,
+      instantiateAttackVectorNode,
+      PREDEFINED_ATTACK_VECTOR_LIBRARY,
+      computeForceDirectedNodeLayout,
+      searchAttackGraphNodes,
+    } = await import('./canvas-interaction-engine');
+
+    // 1. Pre-defined attack vector library contains 10 MITRE ATT&CK vectors across 4 tactic categories
+    assert.equal(PREDEFINED_ATTACK_VECTOR_LIBRARY.length, 10);
+
+    const krbResults = filterAttackVectorLibrary('T1558.003', 'ALL');
+    assert.equal(krbResults.length, 1);
+    assert.equal(krbResults[0].id, 'vec-kerberoasting-tgs');
+
+    const lateralResults = filterAttackVectorLibrary('', 'CREDENTIAL_LATERAL');
+    assert.ok(lateralResults.length >= 3);
+
+    // 2. Instantiating a dropped attack vector creates a connected WhiteboardSketchNode and WhiteboardSketchFlow
+    const baseSchematic = buildWhiteboardSchematic(ATTACK_SCENARIOS[0], 1);
+    const { node, flow } = instantiateAttackVectorNode({
+      template: krbResults[0],
+      existingNodes: baseSchematic.nodes,
+      dropWx: 980,
+      dropWy: 280,
+      activeStageIndex: 1,
+      sequenceOffset: 1,
+    });
+
+    assert.equal(node.wx, 980);
+    assert.equal(node.wy, 280);
+    assert.ok(node.label.includes('Kerberoasting'));
+    assert.ok(flow);
+    assert.equal(flow.toNodeId, node.id);
+    assert.ok(flow.pathD.startsWith('M '));
+
+    // 3. Injected node is searchable via top toolbar search and organized by Force-Directed Auto-Layout
+    const combinedNodes = [...baseSchematic.nodes, node];
+    const combinedFlows = [...baseSchematic.flows, flow];
+    const searchRes = searchAttackGraphNodes(combinedNodes, 'T1558.003');
+    assert.equal(searchRes.isFiltering, true);
+    assert.ok(searchRes.matchedNodeIds.includes(node.id));
+
+    const layoutRes = computeForceDirectedNodeLayout({
+      nodes: combinedNodes,
+      flows: combinedFlows,
+      zones: baseSchematic.zones,
+      mode: 'BALANCED',
+    });
+    assert.ok(layoutRes.nodeOffsets[node.id]);
+  });
 });

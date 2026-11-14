@@ -13,7 +13,9 @@ import { Check, Copy, Eye, EyeOff } from 'lucide-react';
 import {
   computeSmartViewportTooltipPosition,
   computeTooltipWheelScrollStep,
+  DEFAULT_TOOLTIP_CLOSE_DELAY_MS,
   formatWorkbenchTooltipCopyText,
+  resolveTooltipOpenDelay,
 } from '@/lib/tooltip-positioning';
 
 export interface WorkbenchIconTooltipProps {
@@ -31,11 +33,14 @@ export interface WorkbenchIconTooltipProps {
   placement?: 'bottom' | 'top';
   /** Explicit flag for Diagram scope; auto-detected when inside [data-testid="attack-visualizer"] */
   isDiagramTooltip?: boolean;
+  /** Hover intent delay in ms before opening the tooltip (default: 340ms) */
+  openDelayMs?: number;
   children: React.ReactNode;
 }
 
 /**
  * Custom application-styled tooltip wrapper for icon-only and concise workbench controls.
+ * - Uses a hover-intent open delay (340ms default) so moving the mouse across icons never triggers accidental popups.
  * - Renders via a viewport-clamped portal so it never overflows the screen or gets clipped by overflow containers.
  * - Keeps the tooltip open when the user moves the mouse onto the tooltip card (hover-bridge) so text can be selected or copied.
  * - Includes a 1-click Copy button on all tooltips.
@@ -50,6 +55,7 @@ export function WorkbenchIconTooltip({
   side = 'bottom',
   placement,
   isDiagramTooltip,
+  openDelayMs,
   children,
 }: WorkbenchIconTooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,8 +64,10 @@ export function WorkbenchIconTooltip({
   const [copied, setCopied] = useState(false);
 
   const preferredSide = placement || side;
+  const effectiveOpenDelayMs = resolveTooltipOpenDelay(openDelayMs, false);
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const openTimerRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const copyResetTimerRef = useRef<number | null>(null);
 
@@ -73,6 +81,13 @@ export function WorkbenchIconTooltip({
     effectiveSide: preferredSide,
   });
 
+  const clearOpenTimer = useCallback(() => {
+    if (openTimerRef.current !== null) {
+      window.clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  }, []);
+
   const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current !== null) {
       window.clearTimeout(closeTimerRef.current);
@@ -81,12 +96,13 @@ export function WorkbenchIconTooltip({
   }, []);
 
   const scheduleClose = useCallback(() => {
+    clearOpenTimer();
     clearCloseTimer();
     closeTimerRef.current = window.setTimeout(() => {
       setIsOpen(false);
       closeTimerRef.current = null;
-    }, 170);
-  }, [clearCloseTimer]);
+    }, DEFAULT_TOOLTIP_CLOSE_DELAY_MS);
+  }, [clearCloseTimer, clearOpenTimer]);
 
   // Strip any native HTML `title` attributes on trigger children so native OS tooltips never appear alongside custom tooltips
   const stripNativeTitlesInTrigger = useCallback(() => {
@@ -112,6 +128,9 @@ export function WorkbenchIconTooltip({
 
   useEffect(() => {
     return () => {
+      if (openTimerRef.current !== null) {
+        window.clearTimeout(openTimerRef.current);
+      }
       if (closeTimerRef.current !== null) {
         window.clearTimeout(closeTimerRef.current);
       }
@@ -196,9 +215,7 @@ export function WorkbenchIconTooltip({
     };
   }, [isOpen, isDetailCollapsed]);
 
-  const handleTriggerMouseEnter = () => {
-    clearCloseTimer();
-    stripNativeTitlesInTrigger();
+  const openTooltipImmediately = useCallback(() => {
     if (triggerRef.current) {
       setIsInsideDiagram(
         Boolean(triggerRef.current.closest('[data-testid="attack-visualizer"]'))
@@ -223,6 +240,20 @@ export function WorkbenchIconTooltip({
       setCoords(initial);
     }
     setIsOpen(true);
+  }, [align, preferredSide]);
+
+  const handleTriggerMouseEnter = () => {
+    clearCloseTimer();
+    clearOpenTimer();
+    stripNativeTitlesInTrigger();
+    if (isOpen || effectiveOpenDelayMs <= 0) {
+      openTooltipImmediately();
+      return;
+    }
+    openTimerRef.current = window.setTimeout(() => {
+      openTimerRef.current = null;
+      openTooltipImmediately();
+    }, effectiveOpenDelayMs);
   };
 
   const handleCopyText = useCallback(
@@ -271,6 +302,7 @@ export function WorkbenchIconTooltip({
           ref={tooltipRef}
           role="tooltip"
           data-testid={tooltipTestId}
+          data-scrollable-canvas-overlay="true"
           data-diagram-tooltip={effectiveIsDiagram ? 'true' : 'false'}
           data-tooltip-collapsed={isDetailCollapsed ? 'true' : 'false'}
           data-effective-side={coords.effectiveSide}
@@ -290,6 +322,7 @@ export function WorkbenchIconTooltip({
           onMouseLeave={scheduleClose}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
+          onWheelCapture={(e) => e.stopPropagation()}
           onWheel={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',

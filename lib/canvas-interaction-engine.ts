@@ -1,3 +1,4 @@
+import { TelemetryEvent } from './attack-scenarios';
 import {
   CurveArrowMarker,
   NetworkBackboneLink,
@@ -965,5 +966,595 @@ export function searchAttackGraphNodes(
     totalNodes: nodes.length,
   };
 }
+
+export const ATTACK_VECTOR_DRAG_MIME_TYPE =
+  'application/x-attack-explorer-vector';
+
+export type AttackVectorCategory =
+  | 'ALL'
+  | 'INITIAL_ACCESS'
+  | 'EXECUTION_EVASION'
+  | 'CREDENTIAL_LATERAL'
+  | 'C2_IMPACT';
+
+export interface AttackVectorTemplate {
+  id: string;
+  mitreId: string;
+  name: string;
+  category: Exclude<AttackVectorCategory, 'ALL'>;
+  tacticLabel: string;
+  iconType: WhiteboardSketchNode['iconType'];
+  zoneId: WhiteboardSketchNode['zoneId'];
+  archetype: WhiteboardSketchNode['archetype'];
+  actionBadge: string;
+  sublabel: string;
+  hostContext: string;
+  activitySummary: string;
+  internalSummary: string;
+  packetKind: WhiteboardSketchFlow['packetKind'];
+  forwardLabel: string;
+  returnLabel: string;
+  protocolBadge: string;
+  defaultWx: number;
+  defaultWy: number;
+}
+
+export const PREDEFINED_ATTACK_VECTOR_LIBRARY: AttackVectorTemplate[] = [
+  {
+    id: 'vec-phishing-iso-dropper',
+    mitreId: 'T1566.001',
+    name: 'Spearphishing ISO / LNK Dropper',
+    category: 'INITIAL_ACCESS',
+    tacticLabel: 'Initial Access',
+    iconType: 'PHISHING_GATEWAY',
+    zoneId: 'PERIMETER_DELIVERY',
+    archetype: 'PACKET_AND_GATEWAY',
+    actionBadge: 'LNK / ISO DROP',
+    sublabel: 'SMTP / Mark-of-the-Web Bypass',
+    hostContext: 'Perimeter Mail Gateway -> User Downloads Mount (D:\\)',
+    activitySummary:
+      'Delivers weaponized ISO/VHD container with hidden DLL + LNK shortcut to bypass SmartScreen.',
+    internalSummary:
+      'Sysmon EID 11 (FileCreateZoneIdentifier) & EID 1 (rundll32.exe launching side-loaded payload).',
+    packetKind: 'EMAIL',
+    forwardLabel: 'ISO PAYLOAD',
+    returnLabel: 'MOUNT ACK',
+    protocolBadge: 'SMTP / ISO',
+    defaultWx: 360,
+    defaultWy: 220,
+  },
+  {
+    id: 'vec-public-facing-exploit',
+    mitreId: 'T1190',
+    name: 'Edge Appliance Pre-Auth RCE Exploit',
+    category: 'INITIAL_ACCESS',
+    tacticLabel: 'Initial Access',
+    iconType: 'WAF_REVERSE_PROXY',
+    zoneId: 'PERIMETER_DELIVERY',
+    archetype: 'PACKET_AND_GATEWAY',
+    actionBadge: 'PRE-AUTH RCE',
+    sublabel: 'HTTPS :443 / Path Normalization',
+    hostContext: 'DMZ Edge VPN / Reverse Proxy Appliance (172.16.10.5)',
+    activitySummary:
+      'Exploits unauthenticated path traversal or command injection on perimeter gateway daemon.',
+    internalSummary:
+      'Spawns /bin/sh or w3wp.exe child shell from internet-facing reverse proxy worker.',
+    packetKind: 'MALWARE_DROP',
+    forwardLabel: 'EXPLOIT POST',
+    returnLabel: 'ROOT SHELL',
+    protocolBadge: 'HTTPS :443',
+    defaultWx: 390,
+    defaultWy: 420,
+  },
+  {
+    id: 'vec-process-hollowing-inject',
+    mitreId: 'T1055.012',
+    name: 'Process Hollowing (svchost.exe)',
+    category: 'EXECUTION_EVASION',
+    tacticLabel: 'Defense Evasion',
+    iconType: 'PROCESS_THREAD',
+    zoneId: 'ENDPOINT_LAPTOP_MALWARE',
+    archetype: 'MALWARE_PROCESSES',
+    actionBadge: 'HOLLOW RWX',
+    sublabel: 'CREATE_SUSPENDED + NtUnmapView',
+    hostContext: 'Target Endpoint Process Space (svchost.exe PID 4892)',
+    activitySummary:
+      'Spawns suspended system binary, unmaps legitimate image section, and writes beacon PE into RWX VAD.',
+    internalSummary:
+      'Triggers Sysmon EID 25 (ProcessTampering) and kernel EtwTiLogAllocVMRemote telemetry.',
+    packetKind: 'SYSCALL',
+    forwardLabel: 'RWX INJECT',
+    returnLabel: 'EID 25 ACK',
+    protocolBadge: 'NTAPI / RWX',
+    defaultWx: 820,
+    defaultWy: 240,
+  },
+  {
+    id: 'vec-amsi-etw-patch',
+    mitreId: 'T1562.001',
+    name: 'In-Memory AMSI & ETW Byte Patch',
+    category: 'EXECUTION_EVASION',
+    tacticLabel: 'Defense Evasion',
+    iconType: 'KERNEL_MEMORY',
+    zoneId: 'ENDPOINT_LAPTOP_MALWARE',
+    archetype: 'MALWARE_PROCESSES',
+    actionBadge: 'AMSI / ETW PATCH',
+    sublabel: 'amsi.dll!AmsiScanBuffer 0xB857000780',
+    hostContext: 'PowerShell / CLR Process Memory (amsi.dll & ntdll.dll)',
+    activitySummary:
+      'Uses VirtualProtect (PAGE_EXECUTE_READWRITE) to overwrite AmsiScanBuffer and EtwEventWrite entry bytes.',
+    internalSummary:
+      'Blinds user-mode AMSI script scanning and user-mode .NET ETW telemetry providers.',
+    packetKind: 'SYSCALL',
+    forwardLabel: 'PATCH BYTES',
+    returnLabel: 'RET E_INVALIDARG',
+    protocolBadge: 'MEM PATCH',
+    defaultWx: 860,
+    defaultWy: 460,
+  },
+  {
+    id: 'vec-byovd-kernel-driver',
+    mitreId: 'T1068',
+    name: 'BYOVD / CLFS Kernel Token Swap',
+    category: 'EXECUTION_EVASION',
+    tacticLabel: 'Privilege Escalation',
+    iconType: 'KERNEL_MEMORY',
+    zoneId: 'ENDPOINT_LAPTOP_MALWARE',
+    archetype: 'MALWARE_PROCESSES',
+    actionBadge: 'RING-0 SYSTEM',
+    sublabel: 'Kernel _EPROCESS Token Swap',
+    hostContext: 'Windows Ring-0 Kernel Space (NT AUTHORITY\\SYSTEM)',
+    activitySummary:
+      'Exploits vulnerable kernel driver or CLFS.sys metadata block to copy PID 4 SYSTEM token and blind EDR callbacks.',
+    internalSummary:
+      'Sysmon EID 6 (DriverLoaded) and System EID 7045 kernel service creation.',
+    packetKind: 'SYSCALL',
+    forwardLabel: 'IOCTL WRITE',
+    returnLabel: 'SYSTEM TOKEN',
+    protocolBadge: 'RING-0 IOCTL',
+    defaultWx: 760,
+    defaultWy: 360,
+  },
+  {
+    id: 'vec-kerberoasting-tgs',
+    mitreId: 'T1558.003',
+    name: 'Kerberoasting RC4 TGS Extraction',
+    category: 'CREDENTIAL_LATERAL',
+    tacticLabel: 'Credential Access',
+    iconType: 'CREDENTIAL_VAULT',
+    zoneId: 'CORP_LATERAL_MOVEMENT',
+    archetype: 'LATERAL_MOVEMENT',
+    actionBadge: 'RC4 TGS 0x17',
+    sublabel: 'KDC :88 · Ticket Encryption 0x17',
+    hostContext: 'Active Directory KDC (CORP-DC01 :88)',
+    activitySummary:
+      'Queries SPN service accounts via LDAP and requests RC4-HMAC (0x17) Kerberos TGS tickets for offline cracking.',
+    internalSummary:
+      'Generates Windows Security EventID 4769 with TicketEncryptionType=0x17 and TicketOptions=0x40810000.',
+    packetKind: 'LATERAL_HOP',
+    forwardLabel: 'KRB_TGS_REQ',
+    returnLabel: 'TGS 0x17 CIPHER',
+    protocolBadge: 'KRB5 :88',
+    defaultWx: 1180,
+    defaultWy: 220,
+  },
+  {
+    id: 'vec-dcsync-ntds-dump',
+    mitreId: 'T1003.006',
+    name: 'DCSync Directory Replication (NTDS)',
+    category: 'CREDENTIAL_LATERAL',
+    tacticLabel: 'Credential Access',
+    iconType: 'CREDENTIAL_VAULT',
+    zoneId: 'CORP_LATERAL_MOVEMENT',
+    archetype: 'LATERAL_MOVEMENT',
+    actionBadge: 'DCSYNC DUMP',
+    sublabel: 'MS-DRSR DrsGetNCChanges (1131f6ad...)',
+    hostContext: 'Domain Controller Active Directory DB (NTDS.dit)',
+    activitySummary:
+      'Impersonates a Domain Controller via MS-DRSR RPC to replicate krbtgt and Domain Admin password hashes.',
+    internalSummary:
+      'Triggers Windows Security EventID 4662 on DS-Replication-Get-Changes-All extended right GUID.',
+    packetKind: 'LATERAL_HOP',
+    forwardLabel: 'DrsGetNCChanges',
+    returnLabel: 'KRBTGT HASHES',
+    protocolBadge: 'MS-DRSR RPC',
+    defaultWx: 1220,
+    defaultWy: 410,
+  },
+  {
+    id: 'vec-smb-wmi-lateral-pivot',
+    mitreId: 'T1021.002',
+    name: 'Pass-the-Hash SMB / WMI Pivot',
+    category: 'CREDENTIAL_LATERAL',
+    tacticLabel: 'Lateral Movement',
+    iconType: 'LATERAL_SERVER',
+    zoneId: 'CORP_LATERAL_MOVEMENT',
+    archetype: 'LATERAL_MOVEMENT',
+    actionBadge: 'SMB / WMI EXEC',
+    sublabel: 'TCP :445 ADMIN$ & WMI Win32_Process',
+    hostContext: 'Internal Tier-1 Server Share (\\\\10.10.0.5\\ADMIN$)',
+    activitySummary:
+      'Authenticates with stolen NTLM hash (LogonType=3) over SMB :445 to stage and execute remote service binary.',
+    internalSummary:
+      'Security EID 4624 (LogonType=3, NTLMv2) + EID 5145 (ADMIN$) + System EID 7045.',
+    packetKind: 'LATERAL_HOP',
+    forwardLabel: 'SMB ADMIN$',
+    returnLabel: 'SVC SPAWNED',
+    protocolBadge: 'SMB2 :445',
+    defaultWx: 1140,
+    defaultWy: 520,
+  },
+  {
+    id: 'vec-cobalt-strike-c2-beacon',
+    mitreId: 'T1071.001',
+    name: 'Malleable HTTPS C2 Beacon Channel',
+    category: 'C2_IMPACT',
+    tacticLabel: 'Command & Control',
+    iconType: 'ATTACKER',
+    zoneId: 'EXTERNAL_ATTACKER',
+    archetype: 'PACKET_AND_GATEWAY',
+    actionBadge: 'HTTPS C2 BEACON',
+    sublabel: 'TLS 1.3 Jitter Beacon (185.220.101.42:443)',
+    hostContext: 'External Adversary C2 Redirector (WAN AS64512)',
+    activitySummary:
+      'Establishes encrypted HTTP/2 malleable C2 channel disguised as CDN static asset traffic.',
+    internalSummary:
+      'Sysmon EID 3 (NetworkConnect) and Zeek SSL/JA3S fingerprint correlation.',
+    packetKind: 'C2_EXFIL',
+    forwardLabel: 'C2 BEACON',
+    returnLabel: 'TASKING 1.4KB',
+    protocolBadge: 'TLS :443',
+    defaultWx: 165,
+    defaultWy: 470,
+  },
+  {
+    id: 'vec-ransomware-vss-wipe',
+    mitreId: 'T1490',
+    name: 'VSS Shadow Wipe & Fast Encryption',
+    category: 'C2_IMPACT',
+    tacticLabel: 'Impact',
+    iconType: 'MALWARE_PAYLOAD',
+    zoneId: 'ENDPOINT_LAPTOP_MALWARE',
+    archetype: 'MALWARE_PROCESSES',
+    actionBadge: 'VSS WIPE & LOCK',
+    sublabel: 'vssadmin delete shadows /all /quiet',
+    hostContext: 'Compromised Host Volume Shadow Copy Service (VSS)',
+    activitySummary:
+      'Deletes Volume Shadow Copies via WMI/vssadmin and encrypts user shares using ChaCha20/AES-NI.',
+    internalSummary:
+      'Sysmon EID 1 (vssadmin.exe / wmic shadowcopy delete) & rapid mass FileRename operations.',
+    packetKind: 'SYSCALL',
+    forwardLabel: 'VSS DELETE',
+    returnLabel: 'SHADOWS WIPED',
+    protocolBadge: 'VSS / IO',
+    defaultWx: 910,
+    defaultWy: 535,
+  },
+];
+
+/**
+ * Filters the pre-defined attack vector library by search query and optional category.
+ */
+export function filterAttackVectorLibrary(
+  rawQuery: string,
+  category: AttackVectorCategory = 'ALL'
+): AttackVectorTemplate[] {
+  const query = rawQuery.trim().toLowerCase();
+  return PREDEFINED_ATTACK_VECTOR_LIBRARY.filter((vec) => {
+    if (category !== 'ALL' && vec.category !== category) {
+      return false;
+    }
+    if (!query) return true;
+    const haystack = [
+      vec.id,
+      vec.mitreId,
+      vec.name,
+      vec.tacticLabel,
+      vec.actionBadge,
+      vec.sublabel,
+      vec.hostContext,
+      vec.activitySummary,
+      vec.internalSummary,
+      vec.protocolBadge,
+    ]
+      .join(' ')
+      .toLowerCase();
+    const tokens = query.split(/\s+/).filter(Boolean);
+    return tokens.every((t) => haystack.includes(t));
+  });
+}
+
+/**
+ * Instantiates a live WhiteboardSketchNode and connecting WhiteboardSketchFlow
+ * when a user drags and drops an AttackVectorTemplate onto the simulation canvas.
+ */
+export function instantiateAttackVectorNode(params: {
+  template: AttackVectorTemplate;
+  dropWx?: number;
+  dropWy?: number;
+  existingNodes: WhiteboardSketchNode[];
+  existingFlows?: WhiteboardSketchFlow[];
+  sequenceIndex?: number;
+  sequenceOffset?: number;
+  activeStageIndex?: number;
+}): {
+  node: WhiteboardSketchNode;
+  flow: WhiteboardSketchFlow | null;
+} {
+  const {
+    template,
+    dropWx,
+    dropWy,
+    existingNodes = [],
+    existingFlows = [],
+    sequenceOffset,
+    sequenceIndex = sequenceOffset ?? existingNodes.length + 1,
+  } = params;
+
+  const clampedWx =
+    Math.round(
+      Math.max(
+        110,
+        Math.min(
+          WHITEBOARD_WIDTH - 110,
+          Number.isFinite(dropWx) ? (dropWx as number) : template.defaultWx
+        )
+      ) * 10
+    ) / 10;
+  const clampedWy =
+    Math.round(
+      Math.max(
+        95,
+        Math.min(
+          WHITEBOARD_HEIGHT - 95,
+          Number.isFinite(dropWy) ? (dropWy as number) : template.defaultWy
+        )
+      ) * 10
+    ) / 10;
+
+  const uniqueSuffix = `${sequenceIndex}-${Math.abs(Math.round(clampedWx))}`;
+  const newNodeId = `custom-${template.id}-${uniqueSuffix}`;
+  const chainOrder = existingNodes.length + 1;
+
+  const newNode: WhiteboardSketchNode = {
+    id: newNodeId,
+    zoneId: template.zoneId,
+    archetype: template.archetype,
+    chainOrder,
+    sequenceCode: String(chainOrder),
+    iconType: template.iconType,
+    label: `${template.name} (${template.mitreId})`,
+    sublabel: template.sublabel,
+    zoneLabel: template.tacticLabel,
+    actionBadge: template.actionBadge,
+    hostContext: template.hostContext,
+    activitySummary: template.activitySummary,
+    internalSummary: template.internalSummary,
+    wx: clampedWx,
+    wy: clampedWy,
+    isCompromised: true,
+    isActive: true,
+    originalNode: {
+      id: newNodeId,
+      label: `${template.name} (${template.mitreId})`,
+      sublabel: template.sublabel,
+      role: 'process',
+      x: Math.round((clampedWx / WHITEBOARD_WIDTH) * 100),
+      y: Math.round((clampedWy / WHITEBOARD_HEIGHT) * 100),
+      details: {
+        osOrType: `${template.tacticLabel} · ${template.mitreId}`,
+        pidOrPort: template.sublabel,
+        privilege: 'Injected Attack Vector',
+        artifacts: [template.mitreId, template.protocolBadge],
+        description: `${template.activitySummary} ${template.internalSummary}`,
+      },
+    },
+  };
+
+  if (existingNodes.length === 0) {
+    return { node: newNode, flow: null };
+  }
+
+  // Connect from the nearest or last active node in the graph
+  let anchorNode = existingNodes[existingNodes.length - 1];
+  let bestDist = Infinity;
+  for (const candidate of existingNodes) {
+    const d = Math.hypot(candidate.wx - clampedWx, candidate.wy - clampedWy);
+    if (d < bestDist && d > 10) {
+      bestDist = d;
+      anchorNode = candidate;
+    }
+  }
+
+  const rawFromX = anchorNode.wx;
+  const rawFromY = anchorNode.wy;
+  const rawToX = newNode.wx;
+  const rawToY = newNode.wy;
+
+  const dx = rawToX - rawFromX;
+  const dy = rawToY - rawFromY;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  const midX = (rawFromX + rawToX) / 2;
+  const midY = (rawFromY + rawToY) / 2;
+
+  const controlX = Math.round((midX + nx * -36) * 10) / 10;
+  const controlY = Math.round((midY + ny * -36) * 10) / 10;
+  const returnControlX = Math.round((midX + nx * 36) * 10) / 10;
+  const returnControlY = Math.round((midY + ny * 36) * 10) / 10;
+
+  const trimmedFrom = trimPointFromNodeCenter(
+    rawFromX,
+    rawFromY,
+    controlX,
+    controlY,
+    52
+  );
+  const trimmedTo = trimPointFromNodeCenter(
+    rawToX,
+    rawToY,
+    controlX,
+    controlY,
+    56
+  );
+
+  const trimmedRetFrom = trimPointFromNodeCenter(
+    rawToX,
+    rawToY,
+    returnControlX,
+    returnControlY,
+    52
+  );
+  const trimmedRetTo = trimPointFromNodeCenter(
+    rawFromX,
+    rawFromY,
+    returnControlX,
+    returnControlY,
+    56
+  );
+
+  const fromX = trimmedFrom.x;
+  const fromY = trimmedFrom.y;
+  const toX = trimmedTo.x;
+  const toY = trimmedTo.y;
+
+  const pathD = `M ${fromX} ${fromY} Q ${controlX} ${controlY} ${toX} ${toY}`;
+  const returnPathD = `M ${trimmedRetFrom.x} ${trimmedRetFrom.y} Q ${returnControlX} ${returnControlY} ${trimmedRetTo.x} ${trimmedRetTo.y}`;
+
+  const forwardArrows: CurveArrowMarker[] = [0.22, 0.78, 0.98].map((t) =>
+    sampleBezierPointAndAngle(fromX, fromY, controlX, controlY, toX, toY, t)
+  );
+  const returnArrows: CurveArrowMarker[] = [0.22, 0.78, 0.98].map((t) =>
+    sampleBezierPointAndAngle(
+      trimmedRetFrom.x,
+      trimmedRetFrom.y,
+      returnControlX,
+      returnControlY,
+      trimmedRetTo.x,
+      trimmedRetTo.y,
+      t
+    )
+  );
+
+  const xKeyframes: number[] = [];
+  const yKeyframes: number[] = [];
+  const returnXKeyframes: number[] = [];
+  const returnYKeyframes: number[] = [];
+  const steps = 8;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const inv = 1 - t;
+    xKeyframes.push(
+      Math.round(
+        (inv * inv * fromX + 2 * inv * t * controlX + t * t * toX) * 10
+      ) / 10
+    );
+    yKeyframes.push(
+      Math.round(
+        (inv * inv * fromY + 2 * inv * t * controlY + t * t * toY) * 10
+      ) / 10
+    );
+    returnXKeyframes.push(
+      Math.round(
+        (inv * inv * trimmedRetFrom.x +
+          2 * inv * t * returnControlX +
+          t * t * trimmedRetTo.x) *
+          10
+      ) / 10
+    );
+    returnYKeyframes.push(
+      Math.round(
+        (inv * inv * trimmedRetFrom.y +
+          2 * inv * t * returnControlY +
+          t * t * trimmedRetTo.y) *
+          10
+      ) / 10
+    );
+  }
+
+  const flowStepNo = existingFlows.length + 1;
+  const seqCode = String(flowStepNo);
+
+  const telemetryEvent: TelemetryEvent = {
+    id: `tel-${newNodeId}`,
+    no: flowStepNo,
+    stageIndex: 1,
+    timestamp: 'LIVE+00.1s',
+    sourceNodeId: anchorNode.id,
+    targetNodeId: newNode.id,
+    sourceLabel: anchorNode.label,
+    targetLabel: newNode.label,
+    sourceType: 'SYSMON',
+    protocolOrEventId: `${template.mitreId} · ${template.protocolBadge}`,
+    shortAction: template.forwardLabel,
+    info: `${template.name}: ${template.activitySummary}`,
+    sizeOrCode: template.protocolBadge,
+    severity: 'CRITICAL',
+    mitreId: template.mitreId,
+    explanation: `${template.activitySummary} ${template.internalSummary}`,
+    rawLog: `[INJECTED ATTACK VECTOR] MITRE=${template.mitreId} Tactic="${template.tacticLabel}" Source="${anchorNode.label}" Target="${newNode.label}" Context="${template.hostContext}" Telemetry="${template.internalSummary}"`,
+    detectionRule: {
+      type: 'SIGMA',
+      title: `Injected Attack Vector — ${template.name} (${template.mitreId})`,
+      ruleCode: `title: Custom Injected Attack Vector — ${template.name} (${template.mitreId})\nstatus: experimental\nlogsource:\n  category: process_creation\ndetection:\n  selection:\n    TechniqueID: '${template.mitreId}'\n  condition: selection\nlevel: critical`,
+      mitigation: `Monitor and block ${template.mitreId} (${template.name}) on ${template.hostContext}.`,
+    },
+  };
+
+  const newFlow: WhiteboardSketchFlow = {
+    id: `flow-${newNodeId}`,
+    stepNo: flowStepNo,
+    stageIndex: 1,
+    sequenceCode: seqCode,
+    forwardSeq: `#${seqCode}.1→`,
+    returnSeq: `⇠#${seqCode}.2`,
+    isBidirectional: true,
+    fromNodeId: anchorNode.id,
+    toNodeId: newNode.id,
+    initiatorLabel: anchorNode.label,
+    targetLabel: newNode.label,
+    fromX,
+    fromY,
+    toX,
+    toY,
+    controlX,
+    controlY,
+    pathD,
+    xKeyframes,
+    yKeyframes,
+    forwardArrows,
+    returnControlX,
+    returnControlY,
+    returnPathD,
+    returnXKeyframes,
+    returnYKeyframes,
+    returnArrows,
+    packetKind: template.packetKind,
+    label: template.forwardLabel,
+    returnLabel: template.returnLabel,
+    protocolBadge: template.protocolBadge,
+    isCurrentStep: true,
+    isVisible: true,
+    telemetryEvent,
+    traceMeta: {
+      stepNo: flowStepNo,
+      stageIndex: 1,
+      sequenceCode: seqCode,
+      forwardSeq: `#${seqCode}.1→`,
+      returnSeq: `⇠#${seqCode}.2`,
+      isBidirectional: true,
+      initiatorLabel: anchorNode.label,
+      receiverLabel: newNode.label,
+      forwardAction: template.activitySummary,
+      returnLabel: template.returnLabel,
+      returnDescription: template.internalSummary,
+      continuationHint: 'Custom injected attack vector node on simulation canvas',
+    },
+  };
+
+  return { node: newNode, flow: newFlow };
+}
+
 
 
