@@ -64,6 +64,12 @@ GET /api/attacks?category=ALL&mitrePhase=ALL&severity=ALL&search=
 - [Inline Purpose & Cause-and-Effect Parenthetical Standard](./docs/inline-purpose-parenthetical-standard.md)
 - [UI & Canvas Engineering Standards](./docs/ui-canvas-engineering-standards.md)
 
+## Content & Sources
+
+All attack descriptions, step narratives, and technical explanations in Attack Explorer are taken from **official public documentation and published advisories** (vendor threat research, government/CISA-style advisories, and established ATT&CK / security references).
+
+Nothing here is invented as a new factual claim. Where the wording feels more conversational or story-like, **only the tone and presentation were rewritten** so the same documented material is easier to follow inside the workbench. For the authoritative source index and synthesis rules, see [analytical-sources-and-references.md](./docs/analytical-sources-and-references.md).
+
 ## Credits
 
 Original idea inspired by **[Dilum Sanjaya](https://x.com/DilumSanjaya)**.
