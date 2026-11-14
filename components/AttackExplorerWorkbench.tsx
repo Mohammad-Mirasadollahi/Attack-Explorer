@@ -20,6 +20,11 @@ import {
   tagTelemetryEventWithEnvironment } from '@/lib/simulation-engine';
 import { ActiveEnvironmentProvider } from '@/lib/active-environment-context';
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
+import {
+  InspectorScopeMode,
+  resolveInspectorScopeContext,
+  resolveScopedTelemetrySelection,
+} from '@/lib/inspector-scope';
 import { AttackHeader } from './AttackHeader';
 import { AttackSidebar } from './AttackSidebar';
 import { AttackLibrary } from './AttackLibrary';
@@ -121,6 +126,12 @@ export function AttackExplorerWorkbench() {
     null
   );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [expandedNodeId, setExpandedNodeId] = useState<string | null>(null);
+  const [selectedInternalSubNodeId, setSelectedInternalSubNodeId] = useState<
+    string | null
+  >(null);
+  const [inspectorScopeOverride, setInspectorScopeOverride] =
+    useState<InspectorScopeMode | null>(null);
   const [telemetryFilter, setTelemetryFilter] = useState<
     TelemetrySourceType | 'ALL'
   >('ALL');
@@ -211,14 +222,59 @@ export function AttackExplorerWorkbench() {
     [activeScenario, activeStageIndex, telemetryFilter, activeEnvironment]
   );
 
-  const selectedTelemetry = useMemo(() => {
-    const found =
-      activeScenario.telemetry.find((t) => t.id === selectedTelemetryId) ||
-      null;
-    return found
-      ? tagTelemetryEventWithEnvironment(found, activeEnvironment)
-      : null;
-  }, [activeScenario, selectedTelemetryId, activeEnvironment]);
+  const inspectorScopeContext = useMemo(
+    () =>
+      resolveInspectorScopeContext({
+        scenario: activeScenario,
+        activeStageIndex,
+        activeEnvironment,
+        selectedNodeId,
+        expandedNodeId,
+        selectedInternalSubNodeId,
+        scopeOverride: inspectorScopeOverride,
+      }),
+    [
+      activeScenario,
+      activeStageIndex,
+      activeEnvironment,
+      selectedNodeId,
+      expandedNodeId,
+      selectedInternalSubNodeId,
+      inspectorScopeOverride,
+    ]
+  );
+
+  const selectedTelemetry = useMemo(
+    () =>
+      resolveScopedTelemetrySelection({
+        scenario: activeScenario,
+        selectedTelemetryId,
+        internalSubBoard: inspectorScopeContext.internalSubBoard,
+        activeEnvironment,
+      }),
+    [
+      activeScenario,
+      selectedTelemetryId,
+      activeEnvironment,
+      inspectorScopeContext.internalSubBoard,
+    ]
+  );
+
+  const handleExpandedNodeChange = useCallback((nodeId: string | null) => {
+    setExpandedNodeId(nodeId);
+    setSelectedInternalSubNodeId(null);
+    setInspectorScopeOverride(null);
+    setSelectedTelemetryId(null);
+  }, []);
+
+  const handleSelectInternalSubNode = useCallback(
+    (subNodeId: string | null) => {
+      setSelectedInternalSubNodeId(subNodeId);
+      setInspectorScopeOverride(null);
+      setSelectedTelemetryId(null);
+    },
+    []
+  );
 
   // Prince-of-Persia / Protocol-Explorer Cinematic Walkthrough Sequencer
   useEffect(() => {
@@ -259,6 +315,9 @@ export function AttackExplorerWorkbench() {
     setCinematicPhase(stageIdx === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
     setSelectedTelemetryId(null);
     setSelectedNodeId(null);
+    setExpandedNodeId(null);
+    setSelectedInternalSubNodeId(null);
+    setInspectorScopeOverride(null);
     setIsPlaying(false);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setSidebarOpen(false);
@@ -296,11 +355,17 @@ export function AttackExplorerWorkbench() {
     setCinematicPhase('OVERVIEW');
     setSelectedTelemetryId(null);
     setSelectedNodeId(null);
+    setExpandedNodeId(null);
+    setSelectedInternalSubNodeId(null);
+    setInspectorScopeOverride(null);
   };
 
   const handleStartGuidedWalkthrough = () => {
     setSelectedTelemetryId(null);
     setSelectedNodeId(null);
+    setExpandedNodeId(null);
+    setSelectedInternalSubNodeId(null);
+    setInspectorScopeOverride(null);
     setActiveStageIndex(1);
     setCinematicPhase('INTRO_SURVEY');
     setIsPlaying(true);
@@ -565,6 +630,10 @@ export function AttackExplorerWorkbench() {
                 onSelectTelemetry={handleSelectTelemetry}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={setSelectedNodeId}
+                expandedNodeId={expandedNodeId}
+                onExpandedNodeChange={handleExpandedNodeChange}
+                selectedInternalSubNodeId={selectedInternalSubNodeId}
+                onSelectInternalSubNode={handleSelectInternalSubNode}
                 onSelectStage={handleSelectStage}
                 cinematicPhase={cinematicPhase}
                 isPlaying={isPlaying}
@@ -602,6 +671,11 @@ export function AttackExplorerWorkbench() {
                     onResetWalkthrough={handleReset}
                     onClearTelemetrySelection={() => setSelectedTelemetryId(null)}
                     onOpenSourcesModal={() => setSourcesModalOpen(true)}
+                    scopeContext={inspectorScopeContext}
+                    onSelectNode={setSelectedNodeId}
+                    onExpandedNodeChange={handleExpandedNodeChange}
+                    onSelectInternalSubNode={handleSelectInternalSubNode}
+                    onScopeOverrideChange={setInspectorScopeOverride}
                     width={inspectorWidth}
                     onResizeWidth={setInspectorWidth}
                   />
@@ -613,7 +687,11 @@ export function AttackExplorerWorkbench() {
             <AnimatePresence initial={false}>
               {telemetryOpen && (
                 <TelemetryFlowPanel
-                  events={stageView.visibleTelemetry}
+                  events={
+                    inspectorScopeContext.effectiveScope !== 'MAIN_SCENARIO'
+                      ? inspectorScopeContext.scopedTelemetryEvents
+                      : stageView.visibleTelemetry
+                  }
                   activeEnvironment={activeEnvironment}
                   selectedTelemetryId={selectedTelemetryId}
                   onSelectTelemetry={handleSelectTelemetry}

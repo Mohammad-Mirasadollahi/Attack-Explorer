@@ -7,10 +7,12 @@ import {
   getScenarioAttribution,
   GLOBAL_FRAMEWORK_SOURCES,
   LEGAL_COMPLIANCE_STATEMENT } from '@/lib/attack-sources-and-legal';
+import { InspectorScopeContext } from '@/lib/inspector-scope';
 import {
   BookOpenCheck,
   CheckCircle2,
   ExternalLink,
+  Layers,
   Scale,
   ShieldCheck,
   X } from 'lucide-react';
@@ -18,19 +20,78 @@ import {
 interface SourcesAndLegalViewProps {
   scenario: AttackScenario;
   compact?: boolean;
+  scopeContext?: InspectorScopeContext;
 }
 
 export function SourcesAndLegalContent({
   scenario,
-  compact = false }: SourcesAndLegalViewProps) {
+  compact = false,
+  scopeContext }: SourcesAndLegalViewProps) {
   const attribution = getScenarioAttribution(scenario);
+  const isExpandedScope = Boolean(
+    scopeContext &&
+      scopeContext.effectiveScope !== 'MAIN_SCENARIO' &&
+      scopeContext.internalSubBoard
+  );
+  const scopedMitreIds = isExpandedScope && scopeContext
+    ? Array.from(
+        new Set(
+          scopeContext.scopedTelemetryEvents
+            .map((ev) => ev.mitreId)
+            .filter(Boolean)
+        )
+      )
+    : [];
 
   return (
     <div
       data-testid="sources-and-legal-content"
+      data-inspector-scope={scopeContext?.effectiveScope || 'MAIN_SCENARIO'}
       className="space-y-4 text-left"
       dir="ltr"
     >
+      {/* 0. Active Expanded Scope Attribution & Architecture Reference */}
+      {isExpandedScope && scopeContext && scopeContext.internalSubBoard && (
+        <div
+          data-testid="sources-current-scope-card"
+          className="p-3.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/35 border border-indigo-300/80 dark:border-indigo-800/80 space-y-2"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono">
+            <span className="inline-flex items-center gap-1.5 font-bold text-indigo-700 dark:text-indigo-300">
+              <Layers className="w-3.5 h-3.5 shrink-0" />
+              <span>{scopeContext.scopeBadgeText}</span>
+            </span>
+            <span className="px-1.5 py-0.5 rounded bg-indigo-600/15 text-indigo-800 dark:text-indigo-200 border border-indigo-500/30 font-bold">
+              {scopeContext.internalSubBoard.boardCode}
+            </span>
+          </div>
+          <div className="text-xs font-bold text-zinc-900 dark:text-white leading-snug break-words">
+            {scopeContext.internalSubBoard.title}
+          </div>
+          <div className="text-[10.5px] font-mono text-zinc-600 dark:text-zinc-300 leading-snug break-words">
+            {scopeContext.internalSubBoard.hostSystemLabel}
+          </div>
+          <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+            {scopeContext.internalSubBoard.architectureNote}
+          </p>
+          {scopedMitreIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                Scoped MITRE IDs:
+              </span>
+              {scopedMitreIds.map((mId) => (
+                <span
+                  key={mId}
+                  className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-mono font-bold"
+                >
+                  {mId}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 1. Legal & Synthetic Telemetry Compliance Banner */}
       <div
         data-testid="legal-compliance-guarantee-box"

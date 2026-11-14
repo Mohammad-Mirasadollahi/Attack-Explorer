@@ -20,6 +20,7 @@ interface SelectedTelemetryDetailProps {
   currentStage: AttackStage | null;
   onClearTelemetrySelection: () => void;
   activeEnvironment?: ActiveEnvironmentId;
+  scopeBadgeText?: string;
   width?: number;
   resizeHandle?: React.ReactNode;
 }
@@ -29,6 +30,7 @@ export function SelectedTelemetryDetail({
   currentStage,
   onClearTelemetrySelection,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
+  scopeBadgeText,
   width = 300,
   resizeHandle }: SelectedTelemetryDetailProps) {
   const [artifactTab, setArtifactTab] = useState<'RAW_LOG' | 'DETECTION_RULE'>(
@@ -57,12 +59,23 @@ export function SelectedTelemetryDetail({
     >
       {resizeHandle}
       {/* Clean Header with Back Action */}
-      <div className="h-12 flex items-center justify-between gap-2 px-4 border-b border-zinc-200/70 dark:border-zinc-800/80 shrink-0">
-        <h2 className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Trace Detail
-        </h2>
+      <div className="min-h-12 py-2 flex items-center justify-between gap-2 px-4 border-b border-zinc-200/70 dark:border-zinc-800/80 shrink-0">
+        <div className="min-w-0 flex flex-col gap-0.5">
+          <h2 className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Trace Detail
+          </h2>
+          {scopeBadgeText && (
+            <span
+              data-testid="inspector-scope-badge"
+              className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 leading-snug break-words"
+            >
+              {scopeBadgeText}
+            </span>
+          )}
+        </div>
         <button
           type="button"
+          data-testid="clear-telemetry-selection-btn"
           onClick={onClearTelemetrySelection}
           className="h-7 flex items-center gap-1 px-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-900 rounded-lg hover:bg-zinc-200/70 dark:hover:bg-zinc-800 cursor-pointer whitespace-nowrap shrink-0"
         >

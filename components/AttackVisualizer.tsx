@@ -120,6 +120,12 @@ export interface AttackVisualizerProps {
   autoLayoutTriggerSeq?: number;
   onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
+  /** Controlled expanded parent node ID for internal sub-board scope */
+  expandedNodeId?: string | null;
+  onExpandedNodeChange?: (nodeId: string | null) => void;
+  /** Controlled selected sub-node ID inside the expanded sub-board */
+  selectedInternalSubNodeId?: string | null;
+  onSelectInternalSubNode?: (subNodeId: string | null) => void;
   /** Prefer full desktop topology board even on narrow physical screens */
   forceDesktopCanvas?: boolean;
 }
@@ -167,6 +173,10 @@ export function AttackVisualizer({
   autoLayoutTriggerSeq = 0,
   onAutoLayoutActiveChange,
   onActiveNodesChange,
+  expandedNodeId: controlledExpandedNodeId,
+  onExpandedNodeChange,
+  selectedInternalSubNodeId: controlledSelectedSubNodeId,
+  onSelectInternalSubNode,
   forceDesktopCanvas = false,
 }: AttackVisualizerProps) {
   const { currentStage } = stageView;
@@ -211,12 +221,38 @@ export function AttackVisualizer({
   const autoLayoutTimerRef = useRef<number | null>(null);
 
   const [autoCameraEnabled, setAutoCameraEnabled] = useState<boolean>(true);
-  const [activeSketchNodeId, setActiveSketchNodeId] = useState<string | null>(
-    null
-  );
-  const [selectedInternalSubNodeId, setSelectedInternalSubNodeId] = useState<
+  const [internalActiveSketchNodeId, setInternalActiveSketchNodeId] = useState<
     string | null
   >(null);
+  const [internalSelectedSubNodeId, setInternalSelectedSubNodeId] = useState<
+    string | null
+  >(null);
+
+  const activeSketchNodeId =
+    controlledExpandedNodeId !== undefined
+      ? controlledExpandedNodeId
+      : internalActiveSketchNodeId;
+  const selectedInternalSubNodeId =
+    controlledSelectedSubNodeId !== undefined
+      ? controlledSelectedSubNodeId
+      : internalSelectedSubNodeId;
+
+  const setActiveSketchNodeId = useCallback(
+    (nextId: string | null) => {
+      setInternalActiveSketchNodeId(nextId);
+      onExpandedNodeChange?.(nextId);
+    },
+    [onExpandedNodeChange]
+  );
+
+  const setSelectedInternalSubNodeId = useCallback(
+    (nextSubId: string | null) => {
+      setInternalSelectedSubNodeId(nextSubId);
+      onSelectInternalSubNode?.(nextSubId);
+    },
+    [onSelectInternalSubNode]
+  );
+
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [portalOrigin, setPortalOrigin] = useState<{
     xPct: number;
@@ -637,7 +673,13 @@ export function AttackVisualizer({
       });
       return () => window.cancelAnimationFrame(rafId);
     }
-  }, [activeNodes, focusSearchSeq, focusedSearchNodeId, internalSubBoard]);
+  }, [
+    activeNodes,
+    focusSearchSeq,
+    focusedSearchNodeId,
+    internalSubBoard,
+    setSelectedInternalSubNodeId,
+  ]);
 
   // Mouse Wheel / Trackpad Scroll Zoom Handler synchronized with CanvasController
   useEffect(() => {
@@ -1226,7 +1268,7 @@ export function AttackVisualizer({
       setSelectedInternalSubNodeId(null);
       setMultiSelectedNodeIds([]);
     },
-    [onSelectNode]
+    [onSelectNode, setActiveSketchNodeId, setSelectedInternalSubNodeId]
   );
 
   const handleBackToMainTopology = () => {
@@ -1283,12 +1325,6 @@ export function AttackVisualizer({
       }
       if (internalSubBoard) {
         setSelectedInternalSubNodeId(clickedNode.id);
-        const relatedFlow = internalSubBoard.subFlows.find(
-          (f) => f.fromNodeId === clickedNode.id || f.toNodeId === clickedNode.id
-        );
-        if (relatedFlow) {
-          onSelectTelemetry(relatedFlow.telemetryEvent);
-        }
       } else {
         handleNodeSelect(clickedNode);
       }
@@ -1296,7 +1332,7 @@ export function AttackVisualizer({
     [
       handleNodeSelect,
       internalSubBoard,
-      onSelectTelemetry,
+      setSelectedInternalSubNodeId,
       toggleNodeInMultiSelection,
     ]
   );
@@ -1777,6 +1813,13 @@ export function AttackVisualizer({
     <div
       className="relative flex-1 w-full h-full flex flex-col min-h-0 overflow-hidden select-none p-2.5 gap-2"
       data-testid="attack-visualizer"
+      data-inspector-scope={
+        internalSubBoard
+          ? selectedInternalSubNodeId
+            ? 'INTERNAL_SUBNODE'
+            : 'EXPANDED_NODE'
+          : 'MAIN_SCENARIO'
+      }
       data-active-environment={activeEnvironment}
       data-tactical-mode={tacticalMode ? 'true' : 'false'}
       data-interaction-mode={interactionMode}
@@ -2491,7 +2534,7 @@ export function AttackVisualizer({
                   {/* Draggable & Multi-Selectable Schematic Nodes (framer-motion useDragControls + Shift+Click Group Selection) */}
                 {activeNodes.map((node, nIdx) => {
                   const isSelected = internalSubBoard
-                    ? activeInternalSubNode?.id === node.id
+                    ? selectedInternalSubNodeId === node.id
                     : selectedNodeId === node.id;
                     const isMultiSelected = multiSelectedNodeIds.includes(
                       node.id

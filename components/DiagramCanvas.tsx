@@ -34,6 +34,10 @@ interface DiagramCanvasProps {
   onSelectTelemetry: (event: TelemetryEvent) => void;
   selectedNodeId: string | null;
   onSelectNode: (nodeId: string | null) => void;
+  expandedNodeId?: string | null;
+  onExpandedNodeChange?: (nodeId: string | null) => void;
+  selectedInternalSubNodeId?: string | null;
+  onSelectInternalSubNode?: (subNodeId: string | null) => void;
   onSelectStage: (stageIndex: number) => void;
   cinematicPhase?: CinematicPhase | null;
   isPlaying?: boolean;
@@ -73,6 +77,10 @@ export function DiagramCanvas({
   onSelectTelemetry,
   selectedNodeId,
   onSelectNode,
+  expandedNodeId,
+  onExpandedNodeChange,
+  selectedInternalSubNodeId,
+  onSelectInternalSubNode,
   onSelectStage,
   cinematicPhase = null,
   isPlaying = false,
@@ -120,6 +128,10 @@ export function DiagramCanvas({
           onSelectTelemetry={onSelectTelemetry}
           selectedNodeId={selectedNodeId}
           onSelectNode={onSelectNode}
+          expandedNodeId={expandedNodeId}
+          onExpandedNodeChange={onExpandedNodeChange}
+          selectedInternalSubNodeId={selectedInternalSubNodeId}
+          onSelectInternalSubNode={onSelectInternalSubNode}
           onSelectStage={onSelectStage}
           cinematicPhase={cinematicPhase}
           isPlaying={isPlaying}

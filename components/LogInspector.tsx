@@ -4,14 +4,21 @@ import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   AttackScenario,
-  TelemetryEvent } from '@/lib/attack-scenarios';
+  TelemetryEvent,
+} from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
-  DEFAULT_ACTIVE_ENVIRONMENT } from '@/lib/simulation-engine';
+  DEFAULT_ACTIVE_ENVIRONMENT,
+} from '@/lib/simulation-engine';
 import {
   buildCorrelatedStepLogs,
-  tokenizeLogLineForHighlight } from '@/lib/log-inspector-utils';
-import { Check, ChevronDown, Copy } from 'lucide-react';
+  tokenizeLogLineForHighlight,
+} from '@/lib/log-inspector-utils';
+import {
+  buildScopedCorrelatedLogs,
+  InspectorScopeContext,
+} from '@/lib/inspector-scope';
+import { Check, ChevronDown, Copy, Layers } from 'lucide-react';
 
 export interface LogInspectorProps {
   scenario: AttackScenario;
@@ -20,6 +27,7 @@ export interface LogInspectorProps {
   onSelectTelemetry?: (event: TelemetryEvent) => void;
   onSelectStage?: (stageIndex: number) => void;
   activeEnvironment?: ActiveEnvironmentId;
+  scopeContext?: InspectorScopeContext;
 }
 
 export function LogInspector({
@@ -28,18 +36,31 @@ export function LogInspector({
   selectedTelemetryId,
   onSelectTelemetry,
   onSelectStage,
-  activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT }: LogInspectorProps) {
+  activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
+  scopeContext,
+}: LogInspectorProps) {
   const [activeTabByStep, setActiveTabByStep] = useState<
     Record<string, 'RAW' | 'RULE'>
   >({});
   const [manualExpandedId, setManualExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const enrichedLogs = useMemo(
-    () =>
-      buildCorrelatedStepLogs(scenario, activeStageIndex, activeEnvironment),
-    [scenario, activeStageIndex, activeEnvironment]
+  const isExpandedScope = Boolean(
+    scopeContext &&
+      scopeContext.effectiveScope !== 'MAIN_SCENARIO' &&
+      scopeContext.internalSubBoard
   );
+
+  const enrichedLogs = useMemo(() => {
+    if (scopeContext) {
+      return buildScopedCorrelatedLogs(scopeContext);
+    }
+    return buildCorrelatedStepLogs(
+      scenario,
+      activeStageIndex,
+      activeEnvironment
+    );
+  }, [scopeContext, scenario, activeStageIndex, activeEnvironment]);
 
   const handleCopyLog = (id: string, text: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -52,14 +73,38 @@ export function LogInspector({
   return (
     <section
       data-testid="log-inspector"
+      data-inspector-scope={scopeContext?.effectiveScope || 'MAIN_SCENARIO'}
       dir="ltr"
       aria-label="Sysmon and SIEM Step Log Inspector"
       className="space-y-2.5"
     >
+      {isExpandedScope && scopeContext && scopeContext.internalSubBoard && (
+        <div
+          data-testid="log-inspector-scope-header"
+          className="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/70 space-y-1"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
+            <span className="inline-flex items-center gap-1.5 font-bold text-indigo-700 dark:text-indigo-300 leading-snug break-words">
+              <Layers className="w-3 h-3 shrink-0" />
+              <span>{scopeContext.scopeBadgeText}</span>
+            </span>
+            <span className="text-zinc-500 dark:text-zinc-400">
+              {`${enrichedLogs.length} TELEMETRY ${
+                enrichedLogs.length === 1 ? 'EVENT' : 'EVENTS'
+              }`}
+            </span>
+          </div>
+          <div className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 leading-snug break-words">
+            {scopeContext.internalSubBoard.hostSystemLabel}
+          </div>
+        </div>
+      )}
+
       {enrichedLogs.map((item, idx) => {
-        const isStepFocused =
-          (activeStageIndex > 0 && item.stageIndex === activeStageIndex) ||
-          selectedTelemetryId === item.id;
+        const isStepFocused = isExpandedScope
+          ? selectedTelemetryId === item.id || idx === 0
+          : (activeStageIndex > 0 && item.stageIndex === activeStageIndex) ||
+            selectedTelemetryId === item.id;
         const isExpanded =
           manualExpandedId === item.id ||
           (manualExpandedId === null &&
@@ -67,6 +112,10 @@ export function LogInspector({
 
         const currentTab = activeTabByStep[item.id] || 'RAW';
         const logLines = item.correlatedRawLog.split('\n');
+        const stepCodeLabel =
+          isExpandedScope && scopeContext?.expandedNode
+            ? `#${scopeContext.expandedNode.chainOrder}.${item.stageIndex}`
+            : `S${item.stageIndex}`;
 
         return (
           <article
@@ -85,7 +134,9 @@ export function LogInspector({
                 setManualExpandedId((prev) =>
                   prev === item.id ? '__NONE__' : item.id
                 );
-                onSelectStage?.(item.stageIndex);
+                if (!isExpandedScope) {
+                  onSelectStage?.(item.stageIndex);
+                }
               }}
               className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left cursor-pointer"
             >
@@ -95,7 +146,7 @@ export function LogInspector({
                   className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums"
                 >
                   <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                    S{item.stageIndex}
+                    {stepCodeLabel}
                   </span>
                   <span aria-hidden="true">·</span>
                   <span className="break-words">{item.event.protocolOrEventId}</span>
@@ -144,7 +195,8 @@ export function LogInspector({
                         onClick={() =>
                           setActiveTabByStep((prev) => ({
                             ...prev,
-                            [item.id]: 'RAW' }))
+                            [item.id]: 'RAW',
+                          }))
                         }
                         className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
                           currentTab === 'RAW'
@@ -159,7 +211,8 @@ export function LogInspector({
                         onClick={() =>
                           setActiveTabByStep((prev) => ({
                             ...prev,
-                            [item.id]: 'RULE' }))
+                            [item.id]: 'RULE',
+                          }))
                         }
                         className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
                           currentTab === 'RULE'
