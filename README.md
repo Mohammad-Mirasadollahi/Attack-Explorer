@@ -6,6 +6,12 @@ Live product: **[www.attackexplorer.com](https://www.attackexplorer.com/)**
 
 Interactive workbench for exploring cyber-attack scenarios: kill-chain visuals, Sysmon/SIEM-style telemetry, and MITRE ATT&CK mapping.
 
+## Content & Sources
+
+All attack descriptions, step narratives, and technical explanations in Attack Explorer are taken from **official public documentation and published advisories** (vendor threat research, government/CISA-style advisories, and established ATT&CK / security references).
+
+Nothing here is invented as a new factual claim. Where the wording feels more conversational or story-like, **only the tone and presentation were rewritten** so the same documented material is easier to follow inside the workbench. For the authoritative source index and synthesis rules, see [analytical-sources-and-references.md](./docs/analytical-sources-and-references.md).
+
 ## Screenshots
 
 ### Workbench overview
