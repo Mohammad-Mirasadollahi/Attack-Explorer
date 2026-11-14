@@ -4,7 +4,13 @@ export type AttackCategory =
   | 'MALWARE'
   | 'LOG_ANALYSIS'
   | 'NETWORK_WEB'
-  | 'ACTIVE_DIRECTORY';
+  | 'ACTIVE_DIRECTORY'
+  | 'CLOUD_SAAS'
+  | 'SUPPLY_CHAIN_CICD'
+  | 'ZERO_DAY_APPLIANCES'
+  | 'KERNEL_FIRMWARE_BYOVD'
+  | 'RANSOMWARE_EXTORTION'
+  | 'ICS_OT_MOBILE';
 
 export type TelemetrySourceType =
   | 'SYSMON'
