@@ -240,7 +240,9 @@ export function createBidirectionalFlowGeometry(params: {
   const traceMeta = buildBidirectionalTraceMeta(
     telemetryEvent,
     nextEvent,
-    sequencePrefix
+    sequencePrefix,
+    stepNo,
+    nextEvent ? stepNo + 1 : undefined
   );
 
   const rawFromX = fromNode.wx;
@@ -395,18 +397,23 @@ export function createBidirectionalFlowGeometry(params: {
 export function buildBidirectionalTraceMeta(
   ev: TelemetryEvent,
   nextEv?: TelemetryEvent,
-  sequencePrefix?: string
+  sequencePrefix?: string,
+  stepNoOverride?: number,
+  nextStepNoOverride?: number
 ): BidirectionalTraceMeta {
+  const resolvedStepNo = stepNoOverride ?? ev.no;
+  const resolvedNextStepNo = nextStepNoOverride ?? (nextEv ? resolvedStepNo + 1 : undefined);
   const sequenceCode = sequencePrefix
-    ? `${sequencePrefix}.${ev.no}`
-    : `${ev.no}`;
-  const forwardSeq = `${sequenceCode}.1`;
-  const returnSeq = `${sequenceCode}.2`;
-  const nextSequenceCode = nextEv
-    ? sequencePrefix
-      ? `${sequencePrefix}.${nextEv.no}`
-      : `${nextEv.no}`
-    : null;
+    ? `${sequencePrefix}.${resolvedStepNo}`
+    : `${resolvedStepNo}`;
+  const forwardSeq = sequenceCode;
+  const returnSeq = sequenceCode;
+  const nextSequenceCode =
+    nextEv && resolvedNextStepNo !== undefined
+      ? sequencePrefix
+        ? `${sequencePrefix}.${resolvedNextStepNo}`
+        : `${resolvedNextStepNo}`
+      : null;
   const code = ev.sizeOrCode || 'OK';
 
   let returnLabel = `ACK · ${code}`;
@@ -424,15 +431,15 @@ export function buildBidirectionalTraceMeta(
     returnLabel = `ALERT ${code}`;
   }
 
-  const returnDescription: string = `Return leg (#${returnSeq} ⇠): ${ev.targetLabel} responds to initiator ${ev.sourceLabel} with [${returnLabel}] confirming execution/delivery of ${ev.shortAction}.`;
+  const returnDescription: string = `Return leg (⇠ #${returnSeq}): ${ev.targetLabel} responds to initiator ${ev.sourceLabel} with [${returnLabel}] confirming execution/delivery of ${ev.shortAction}.`;
 
   const continuationHint: string =
     nextEv && nextSequenceCode
-      ? `Next (#${nextSequenceCode}.1 →): ${nextEv.sourceLabel} continues the chain toward ${nextEv.targetLabel} via ${nextEv.shortAction} (${nextEv.protocolOrEventId}).`
-      : `End of current sequence (#${returnSeq} ⇠): Final state recorded in telemetry & SIEM audit trail.`;
+      ? `Next (#${nextSequenceCode} →): ${nextEv.sourceLabel} continues the chain toward ${nextEv.targetLabel} via ${nextEv.shortAction} (${nextEv.protocolOrEventId}).`
+      : `End of current sequence (⇠ #${returnSeq}): Final state recorded in telemetry & SIEM audit trail.`;
 
   return {
-    stepNo: ev.no,
+    stepNo: resolvedStepNo,
     stageIndex: ev.stageIndex,
     sequenceCode,
     forwardSeq,

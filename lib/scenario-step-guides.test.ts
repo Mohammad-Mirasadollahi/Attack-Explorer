@@ -44,7 +44,12 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
         assert.ok(step.storyAnalogy.length > 60, `${scenario.id} step ${step.stepNumber} storyAnalogy too short`);
         assert.ok(step.simpleExplanation.length > 60, `${scenario.id} step ${step.stepNumber} simpleExplanation too short`);
         assert.ok(step.howItWorksInPractice.length > 40, `${scenario.id} step ${step.stepNumber} howItWorksInPractice too short`);
-        assert.ok(step.diagramAlignment.includes(`#${step.stepNumber}.1`), `${scenario.id} step ${step.stepNumber} diagramAlignment must reference #${step.stepNumber}.1`);
+        assert.ok(step.diagramAlignment.includes(`#${step.stepNumber}`), `${scenario.id} step ${step.stepNumber} diagramAlignment must reference #${step.stepNumber}`);
+        assert.equal(
+          /#\d+\.\d+→/.test(step.diagramAlignment),
+          false,
+          `${scenario.id} step ${step.stepNumber} diagramAlignment must not contain legacy #N.1→ numbering`
+        );
         assert.ok(step.detectionAndEvidence.length > 25, `${scenario.id} step ${step.stepNumber} detectionAndEvidence too short`);
 
         // Verify the Inline Purpose & Cause-and-Effect Parenthetical Standard:
@@ -119,12 +124,25 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
     assert.equal(stage3Model.steps[2].status, 'ACTIVE');
     assert.equal(stage3Model.steps[3].status, 'UPCOMING');
     assert.equal(stage3Model.steps[4].status, 'UPCOMING');
-    assert.ok(stage3Model.steps[2].forwardFlowBadge.startsWith('#3.1→'));
-    assert.ok(stage3Model.steps[2].returnFlowBadge.startsWith('⇠#3.2'));
+    assert.ok(stage3Model.steps[2].forwardFlowBadge.startsWith('#3→'));
+    assert.ok(stage3Model.steps[2].returnFlowBadge.startsWith('⇠#3'));
 
     // 4. Outro complete -> all steps COMPLETED and isOutroComplete=true
     const outroModel = buildDiagramStepGuideModel(scenario, 5, 'OUTRO_COMPLETE');
     assert.equal(outroModel.briefing.isOutroComplete, true);
     assert.ok(outroModel.steps.every((s) => s.status === 'COMPLETED'));
+
+    // 5. Verify all 85 scenarios have contiguous 1..N step guide badges with zero legacy .1/.2 suffixes
+    for (const sc of ATTACK_SCENARIOS) {
+      const m = buildDiagramStepGuideModel(sc, 1, 'STAGE_ACTIVE');
+      assert.equal(m.steps.length, sc.stages.length);
+      m.steps.forEach((st, idx) => {
+        const expectedNo = idx + 1;
+        assert.equal(st.stepNumber, expectedNo);
+        assert.ok(st.forwardFlowBadge.startsWith(`#${expectedNo}→`));
+        assert.ok(st.returnFlowBadge.startsWith(`⇠#${expectedNo}`));
+        assert.equal(/#\d+\.\d+→/.test(st.diagramAlignment), false);
+      });
+    }
   });
 });

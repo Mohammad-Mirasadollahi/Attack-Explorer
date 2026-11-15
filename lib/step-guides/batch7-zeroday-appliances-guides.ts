@@ -27,7 +27,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because the vulnerability triggered during pre-delivery attachment scanning on port 25, exploitation required zero user interaction and succeeded even if the recipient email address did not exist.',
         diagramAlignment:
-          'Vector #1.1 links the UNC4841 SMTP Sender to the Barracuda ESG (`Amavis .tar Scanner`) where the `.tar` header triggers root execution.',
+          'Step #1 (#1→ / ⇠#1) links the UNC4841 SMTP Sender to the Barracuda ESG (`Amavis .tar Scanner`) where the `.tar` header triggers root execution.',
         detectionAndEvidence:
           'Amavis mail logs and `/mail/log/barracuda_log` entries showing `.tar` attachment filenames containing backticks (`` ` ``), `$()`, or semicolon command separators.',
       },
@@ -42,7 +42,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'By piggybacking on port 25 via `bsmtpd` hooks and passive `libpcap` filters, UNC4841 bypassed perimeter firewall egress/ingress blocks because port 25 must remain open to the internet on an email gateway.',
         diagramAlignment:
-          'Vector #2.1 connects the Barracuda ESG scanner to the ESG `bsmtpd` Daemon & SQLite Trigger node and back to the UNC4841 C2 Relay.',
+          'Step #2 (#2→ / ⇠#2) connects the Barracuda ESG scanner to the ESG `bsmtpd` Daemon & SQLite Trigger node and back to the UNC4841 C2 Relay.',
         detectionAndEvidence:
           'Mandiant/CISA YARA signatures matching `SALTWATER` function hooks in `/usr/local/barracuda/bin/bsmtpd` and `/sbin/BarracudaMailService` opening raw `AF_PACKET` sockets.',
       },
@@ -57,7 +57,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because `SUBMARINE` entrenched itself across SQLite triggers, `/etc/cron.d`, and kernel modules (`DEPTHCHARGE`), Barracuda and CISA took the unprecedented step of instructing customers to decommission and replace compromised ESG appliances entirely.',
         diagramAlignment:
-          'Vector #3.1 traces the ESG `bsmtpd` & SQLite Trigger node harvesting Enterprise Mailboxes & Domain Trusts and streaming encrypted tarballs to the UNC4841 C2 Relay.',
+          'Step #3 (#3→ / ⇠#3) traces the ESG `bsmtpd` & SQLite Trigger node harvesting Enterprise Mailboxes & Domain Trusts and streaming encrypted tarballs to the UNC4841 C2 Relay.',
         detectionAndEvidence:
           'CISA MAR-10454006 inspection of `/mail/mlog/sql/mlog.sqlite` for unauthorized `CREATE TRIGGER` statements and anomalous outbound HTTPS transfers from ESG appliances.',
       },
@@ -89,7 +89,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'watchTowr Labs demonstrated through binary diffing that the patch added an explicit substring check rejecting requests containing `..` or `/` inside the `/clients/MyCRL` handler.',
         diagramAlignment:
-          'Vector #1.1 links the External Threat Actor to the Check Point Gateway (`vpnd root daemon`) via `POST /clients/MyCRL`.',
+          'Step #1 (#1→ / ⇠#1) links the External Threat Actor to the Check Point Gateway (`vpnd root daemon`) via `POST /clients/MyCRL`.',
         detectionAndEvidence:
           'Check Point web/VPN logs and IPS signatures alerting on HTTP POST requests to `/clients/MyCRL` or `/clients/MyCRL/` containing `..` sequences.',
       },
@@ -104,7 +104,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Even if all human employees used MFA for VPN logins, organizations frequently had a forgotten local "test" or vendor VPN user configured with password-only authentication in `fwauth.NDB` or an over-privileged AD LDAP bind account in `objects_5_0.C`.',
         diagramAlignment:
-          'Vector #2.1 connects the Check Point Gateway daemon to the Gateway Filesystem (`/etc/shadow & objects_5_0.C`) and returns the secrets to the attacker.',
+          'Step #2 (#2→ / ⇠#2) connects the Check Point Gateway daemon to the Gateway Filesystem (`/etc/shadow & objects_5_0.C`) and returns the secrets to the attacker.',
         detectionAndEvidence:
           'Auditing gateway logs for sequential `/clients/MyCRL` hits followed by VPN login attempts from VPS/TOR IP addresses using local firewall user accounts.',
       },
@@ -119,7 +119,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'In documented incidents, the entire kill chain from initial `/clients/MyCRL` file read to full `ntds.dit` Active Directory compromise completed in less than three hours.',
         diagramAlignment:
-          'Vector #3.1 traces the attacker’s VPN session through the Check Point Gateway to the Active Directory DC (`ntds.dit Extraction`).',
+          'Step #3 (#3→ / ⇠#3) traces the attacker’s VPN session through the Check Point Gateway to the Active Directory DC (`ntds.dit Extraction`).',
         detectionAndEvidence:
           'Sysmon EventID 1 on Domain Controllers for `ntdsutil.exe` or `vssadmin.exe` executed under firewall LDAP service accounts (`svc_*`).',
       },
@@ -151,7 +151,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Once the SSLVPN session established from a commercial VPS IP, the SonicWall appliance assigned an internal virtual IP from the SSLVPN address pool (e.g., `10.212.134.105`), placing the attacker directly on the internal routable network.',
         diagramAlignment:
-          'Vector #1.1 links the Akira / Fog VPS Infrastructure to the SonicWall Firewall (`SonicOS SSLVPN`) over TCP port 4433.',
+          'Step #1 (#1→ / ⇠#1) links the Akira / Fog VPS Infrastructure to the SonicWall Firewall (`SonicOS SSLVPN`) over TCP port 4433.',
         detectionAndEvidence:
           'SonicOS SSLVPN logs showing sessions established from commercial hosting ASNs (`45.86.201.0/24`, etc.) and logins by local firewall accounts lacking TOTP MFA.',
       },
@@ -166,7 +166,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'By deploying AnyDesk or Cloudflared tunnels within minutes of initial SSLVPN entry, Akira and Fog affiliates retained access even after administrators applied the SonicOS firmware patch.',
         diagramAlignment:
-          'Vector #2.1 connects the SonicWall Firewall to the Internal Windows Server (`Impacket SMB`) and triggers alerts on the Arctic Wolf / Rapid7 MDR Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the SonicWall Firewall to the Internal Windows Server (`Impacket SMB`) and triggers alerts on the Arctic Wolf / Rapid7 MDR Sensor.',
         detectionAndEvidence:
           'Sysmon EventID 1 showing `WmiPrvSE.exe` spawning `cmd.exe /Q /c ... 1> \\\\127.0.0.1\\ADMIN$\\__*` and unauthorized installation of `AnyDesk.exe`.',
       },
@@ -181,7 +181,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Akira operators also deployed their Linux/ESXi Rust/C++ encryptor (`akira_esxi`) via SSH onto VMware ESXi hypervisors to encrypt `.vmdk` and `.vswp` virtual machine disks simultaneously.',
         diagramAlignment:
-          'Vector #3.1 traces the Internal Windows Server wiping shadow copies and encrypting Hyper-V / ESXi & Domain Shares.',
+          'Step #3 (#3→ / ⇠#3) traces the Internal Windows Server wiping shadow copies and encrypting Hyper-V / ESXi & Domain Shares.',
         detectionAndEvidence:
           'PowerShell ScriptBlock Logging (EventID 4104) capturing `Win32_ShadowCopy | Remove-CimInstance` and high-velocity file renames to `.akira` or `.fog`.',
       },
@@ -213,7 +213,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Earlier exploits first uploaded a temporary file via `CVE-2023-36844` and pointed `PHPRC` to `/tmp/php...`, but pointing `PHPRC` to `/dev/fd/0` eliminated the file upload step altogether.',
         diagramAlignment:
-          'Vector #1.1 links the External Exploit Client (`PHPRC=/dev/fd/0`) to the Juniper SRX / EX (`J-Web Appweb CGI`) interface.',
+          'Step #1 (#1→ / ⇠#1) links the External Exploit Client (`PHPRC=/dev/fd/0`) to the Juniper SRX / EX (`J-Web Appweb CGI`) interface.',
         detectionAndEvidence:
           'WAF/IDS detection of `PHPRC` in HTTP query strings, headers, or multipart bodies targeting Juniper J-Web ports.',
       },
@@ -228,7 +228,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because the payload executes entirely from the `stdin` pipe and `data://` memory stream, forensic investigators checking `/tmp` or `/var/tmp` for dropped webshells find nothing on disk.',
         diagramAlignment:
-          'Vector #2.1 connects the Juniper J-Web CGI handler to the FreeBSD `php-cgi` Process (`stdin fd/0`) and alerts the watchTowr / VulnCheck IDS Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Juniper J-Web CGI handler to the FreeBSD `php-cgi` Process (`stdin fd/0`) and alerts the watchTowr / VulnCheck IDS Sensor.',
         detectionAndEvidence:
           'FreeBSD process monitoring showing `/usr/sbin/php-cgi` spawning `/bin/sh` or `/sbin/cli` and HTTP access logs recording `POST /?PHPRC=`.',
       },
@@ -243,7 +243,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Any password stored in `juniper.conf.gz` with the `$9$` prefix (as opposed to `$1$` MD5 or `$6$` SHA-512) can be instantaneously decrypted offline into cleartext using standard Junos `$9$` decoders.',
         diagramAlignment:
-          'Vector #3.1 traces the FreeBSD `php-cgi` process reading `/config/juniper.conf.gz` and modifying the Junos Config node.',
+          'Step #3 (#3→ / ⇠#3) traces the FreeBSD `php-cgi` process reading `/config/juniper.conf.gz` and modifying the Junos Config node.',
         detectionAndEvidence:
           'Junos `UI_COMMIT` syslog events initiated by user `www` and configuration diff alerts for newly added `system login user` entries.',
       },
@@ -275,7 +275,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'FortiManager’s default setting (`fgfm-deny-unknown disable`) allowed unknown FortiGate serial numbers to register dynamically in the `Unregistered Devices` table and immediately invoke internal FGFM protocol channels.',
         diagramAlignment:
-          'Vector #1.1 links the UNC5820 Rogue FGFM Client (`TCP/541`) to the FortiManager Daemon (`fgfmsd Port 541`).',
+          'Step #1 (#1→ / ⇠#1) links the UNC5820 Rogue FGFM Client (`TCP/541`) to the FortiManager Daemon (`fgfmsd Port 541`).',
         detectionAndEvidence:
           'FortiManager event logs showing `Unregistered device <serial> added` with `hostname="localhost"` from external WAN IP addresses.',
       },
@@ -290,7 +290,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Rapid7 and Mandiant documented how `put_json` requests routed through `umath_handler` to `rcs_checkout` allowed immediate non-interactive command execution or interactive reverse shells over TLS.',
         diagramAlignment:
-          'Vector #2.1 connects the FortiManager Daemon (`fgfmsd`) to the FortiManager Root Shell (`rcs_checkout`) and triggers the Mandiant / Rapid7 Network Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the FortiManager Daemon (`fgfmsd`) to the FortiManager Root Shell (`rcs_checkout`) and triggers the Mandiant / Rapid7 Network Sensor.',
         detectionAndEvidence:
           'Process telemetry on FortiManager showing `/bin/fgfmsd` spawning `/bin/sh -c /usr/bin/rcs -l` with semicolons or backticks, and unexplained files in `/tmp/.tm`.',
       },
@@ -305,7 +305,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'With the full running configurations of all managed FortiGate appliances, an adversary can crack weak administrator hashes offline, decrypt Reversible `ENC` secrets using knowledge of FortiOS key derivation, or push malicious firewall policy packages downstream.',
         diagramAlignment:
-          'Vector #3.1 traces the FortiManager Root Shell archiving Managed FortiGate Fleet Configs & Hashes and exfiltrating them to UNC5820.',
+          'Step #3 (#3→ / ⇠#3) traces the FortiManager Root Shell archiving Managed FortiGate Fleet Configs & Hashes and exfiltrating them to UNC5820.',
         detectionAndEvidence:
           'Forensic artifacts in `/tmp/.tm` or `/var/tmp`, unexpected archive creation of `/var/fwclient`, and unauthorized FGFM configuration pushes to downstream FortiGates.',
       },
@@ -337,7 +337,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'In less than two HTTP requests, an unauthenticated remote attacker gained full administrative access to the Expedition web application.',
         diagramAlignment:
-          'Vector #1.1 links the External Attacker (`restoreAdmin.php`) to the Palo Alto Expedition Web UI as the admin account is reset and hijacked.',
+          'Step #1 (#1→ / ⇠#1) links the External Attacker (`restoreAdmin.php`) to the Palo Alto Expedition Web UI as the admin account is reset and hijacked.',
         detectionAndEvidence:
           'Apache access logs on the Expedition server recording `GET` or `POST` requests to `/OS/startup/restoreAdmin.php`.',
       },
@@ -352,7 +352,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because Expedition runs a root-privileged cron script every minute that reads job commands from the local MySQL database (whose credentials `root / paloalto` are hardcoded on the host), `www-data` execution trivially escalates to `root`.',
         diagramAlignment:
-          'Vector #2.1 connects the Palo Alto Expedition Web UI to the Expedition Cron Daemon & MySQL DB and triggers the Horizon3 / Unit 42 Telemetry alert.',
+          'Step #2 (#2→ / ⇠#2) connects the Palo Alto Expedition Web UI to the Expedition Cron Daemon & MySQL DB and triggers the Horizon3 / Unit 42 Telemetry alert.',
         detectionAndEvidence:
           'Linux process monitoring showing `/usr/sbin/apache2` spawning `/bin/sh -c` from `CHECKPOINT.php` or unauthorized entries inserted into the MySQL cron job table.',
       },
@@ -367,7 +367,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Using a stolen `LUFRPT1...` API key, the attacker could immediately query `https://<firewall>/api/?type=export&category=configuration` or create administrative accounts on production PAN-OS firewalls.',
         diagramAlignment:
-          'Vector #3.1 traces the Expedition MySQL DB credential dump pivoting directly into Managed PAN-OS Firewalls (`API Keys`).',
+          'Step #3 (#3→ / ⇠#3) traces the Expedition MySQL DB credential dump pivoting directly into Managed PAN-OS Firewalls (`API Keys`).',
         detectionAndEvidence:
           'PAN-OS system/config logs showing XML API requests (`type=export`, `type=config`, `type=op`) originating from the Expedition host IP or unknown internal hosts.',
       },
@@ -399,7 +399,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because `mode=151` is the standard pre-authentication login request handler for both the User Portal and Webadmin, the exploit worked without any prior credentials.',
         diagramAlignment:
-          'Vector #1.1 links the DriftingCloud Operator to the Sophos Firewall (`User Portal / Webadmin`) via `POST /userportal/Controller`.',
+          'Step #1 (#1→ / ⇠#1) links the DriftingCloud Operator to the Sophos Firewall (`User Portal / Webadmin`) via `POST /userportal/Controller`.',
         detectionAndEvidence:
           'Sophos `/log/apache_access.log` and WAF alerts for `mode=151` requests containing `%00`, `\\u0000`, `%0a`, or shell metacharacters in the `json` parameter.',
       },
@@ -414,7 +414,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Volexity observed DriftingCloud using this primitive to selectively target high-value organizations in South Asia while leaving minimal disk artifacts.',
         diagramAlignment:
-          'Vector #2.1 connects the Sophos Firewall web controller to the `csc` Service Daemon (`Root Execution`) and alerts the Volexity / Sophos X-Ops Telemetry sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Sophos Firewall web controller to the `csc` Service Daemon (`Root Execution`) and alerts the Volexity / Sophos X-Ops Telemetry sensor.',
         detectionAndEvidence:
           'Entries in `/log/csc.log` indicating malformed opcode/JSON parsing errors and child `/bin/sh` processes spawned by `/bin/csc`.',
       },
@@ -429,7 +429,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Even after the CVE-2022-3236 hotfix was applied, harvested cleartext VPN and Active Directory credentials allowed the threat actor to authenticate legitimately unless passwords were rotated.',
         diagramAlignment:
-          'Vector #3.1 traces the `csc` root execution modifying the authentication handler to capture Intercepted VPN Credentials & Internal LAN access.',
+          'Step #3 (#3→ / ⇠#3) traces the `csc` root execution modifying the authentication handler to capture Intercepted VPN Credentials & Internal LAN access.',
         detectionAndEvidence:
           'Filesystem integrity verification of `/usr/share/userportal` and `/usr/share/webconsole`, detection of unauthorized `socat`/`ssh` processes on the firewall, and outbound TLS connections originating from the appliance.',
       },
@@ -461,7 +461,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because UDP is connectionless, an attacker can exploit the vulnerability in a single packet or even spoof the source IP address when firing blind commands.',
         diagramAlignment:
-          'Vector #1.1 links the External Attacker (`UDP/500 IKEv2 Packet`) to the Zyxel Firewall WAN (`UDP Port 500`).',
+          'Step #1 (#1→ / ⇠#1) links the External Attacker (`UDP/500 IKEv2 Packet`) to the Zyxel Firewall WAN (`UDP Port 500`).',
         detectionAndEvidence:
           'Suricata/Snort network IDS rules inspecting inbound UDP/500 IKEv2 Notify Type 14 payloads exceeding expected length (>64 bytes) or containing ASCII shell metacharacters (`;`, `` ` ``, `$()`).',
       },
@@ -476,7 +476,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Rapid7’s reverse engineering showed that `string_to_binary()` did not terminate or sanitize the trailing plaintext bytes after the 48-byte DES-CBC block, handing the raw attacker command string straight to `cmd_sn_write_log()`.',
         diagramAlignment:
-          'Vector #2.1 connects the Zyxel Firewall WAN interface to `/sbin/sshipsecpm` (`string_to_binary -> system`) and alerts the TRAPA / Rapid7 Network Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Zyxel Firewall WAN interface to `/sbin/sshipsecpm` (`string_to_binary -> system`) and alerts the TRAPA / Rapid7 Network Sensor.',
         detectionAndEvidence:
           'Inspecting `/tmp/sdwan_vpndebug.log` on the Zyxel appliance for injected command strings and monitoring `/sbin/sshipsecpm` child processes.',
       },
@@ -491,7 +491,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Both ransomware initial-access brokers and botnet operators rapidly weaponized CVE-2023-28771 across tens of thousands of exposed Zyxel appliances worldwide.',
         diagramAlignment:
-          'Vector #3.1 traces `/sbin/sshipsecpm` root execution compromising the ZLD Appliance Root & LAN Interfaces.',
+          'Step #3 (#3→ / ⇠#3) traces `/sbin/sshipsecpm` root execution compromising the ZLD Appliance Root & LAN Interfaces.',
         detectionAndEvidence:
           'Unexpected outbound TCP/HTTP connections initiated from the Zyxel WAN interface itself and unauthorized modifications to `/conf/startup-config.conf` or `iptables` chains.',
       },
@@ -523,7 +523,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Combining the `flags` authentication bypass with the `fshare_template` relative path traversal gave unauthenticated attackers arbitrary file read and script execution on the SSL VPN appliance.',
         diagramAlignment:
-          'Vector #1.1 links the Earth Kasha (`MirrorFace`) Operator to the Array AG SSL VPN (`/prx/000/http/localhost`) endpoint.',
+          'Step #1 (#1→ / ⇠#1) links the Earth Kasha (`MirrorFace`) Operator to the Array AG SSL VPN (`/prx/000/http/localhost`) endpoint.',
         detectionAndEvidence:
           'WAF/IDS inspection for external HTTP requests containing the `X-AN-FILESHARE` header or `/prx/000/http/localhost/client_sec` URIs with `%00` or `..` sequences.',
       },
@@ -538,7 +538,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           'Because internal firewalls and EDRs expect user traffic to originate from the SSL VPN appliance’s internal interface IP, routing attacker traffic through `/tmp/s5n` blended in with legitimate remote-worker traffic.',
         diagramAlignment:
-          'Vector #2.1 connects the Array AG SSL VPN to the ArrayOS Web Root (`cals.php Webshell`) and triggers the JPCERT/CC & Trend Micro Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Array AG SSL VPN to the ArrayOS Web Root (`cals.php Webshell`) and triggers the JPCERT/CC & Trend Micro Sensor.',
         detectionAndEvidence:
           'ArrayOS filesystem auditing for newly created `.php` files, unauthorized ELF listeners in `/tmp` (`s5n`), and unexpected SMB/WMI connections originating from the VPN gateway’s internal IP.',
       },
@@ -553,7 +553,7 @@ export const BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES: Record<string, RawScenarioSt
         howItWorksInPractice:
           '`LODEINFO` and `NOOPDOOR` then performed Active Directory reconnaissance, document theft, and encrypted C2 communication back through the compromised Array AG gateway.',
         diagramAlignment:
-          'Vector #3.1 traces the ArrayOS SOCKS5 relay pivoting to the Internal Windows Host (`LODEINFO / NOOPDOOR`).',
+          'Step #3 (#3→ / ⇠#3) traces the ArrayOS SOCKS5 relay pivoting to the Internal Windows Host (`LODEINFO / NOOPDOOR`).',
         detectionAndEvidence:
           'Sysmon EventID 1 & 7 alerting on `MSBuild.exe` loading `.xml` files from `C:\\ProgramData` and `K7SysMn1.exe` side-loading unsigned `K7DbgMN.dll`.',
       },

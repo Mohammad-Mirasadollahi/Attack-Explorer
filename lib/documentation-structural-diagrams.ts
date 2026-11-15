@@ -833,7 +833,9 @@ export function buildStepStructuralBreakdown(
       initiatorLabel: initiatorSketch?.label || 'Initiator Node',
       initiatorSublabel: initiatorSketch?.sublabel || 'Source Context',
       initiatorNumber: initiatorSketch?.chainOrder || 1,
-      forwardArrowCode: primaryFlow?.forwardSeq || `#${stage.index}.1→`,
+      forwardArrowCode: primaryFlow?.forwardSeq
+        ? `#${primaryFlow.forwardSeq}→`
+        : `#${stage.index}→`,
       forwardActionLabel:
         primaryFlow?.label || primaryTel?.shortAction || stage.title,
       forwardProtocolOrApi:
@@ -844,7 +846,9 @@ export function buildStepStructuralBreakdown(
       targetLabel: targetSketch?.label || 'Target Host / Process',
       targetSublabel: targetSketch?.sublabel || 'Target Context',
       targetNumber: targetSketch?.chainOrder || 2,
-      returnArrowCode: primaryFlow?.returnSeq || `⇠#${stage.index}.2`,
+      returnArrowCode: primaryFlow?.returnSeq
+        ? `⇠#${primaryFlow.returnSeq}`
+        : `⇠#${stage.index}`,
       returnVerificationLabel:
         primaryFlow?.returnLabel ||
         `ACK / State Transition (${stage.mitreTechniqueId})`,

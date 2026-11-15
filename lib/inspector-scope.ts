@@ -207,8 +207,8 @@ function buildInternalStepGuideItems(
 
     const sequenceCode =
       fl.sequenceCode || `${parentNode.chainOrder}.${fl.stepNo}`;
-    const forwardSeq = fl.forwardSeq || `${sequenceCode}.1`;
-    const returnSeq = fl.returnSeq || `${sequenceCode}.2`;
+    const forwardSeq = fl.forwardSeq || sequenceCode;
+    const returnSeq = fl.returnSeq || sequenceCode;
 
     const fromLabel = fromSubNode?.label || fl.fromNodeId;
     const toLabel = toSubNode?.label || fl.toNodeId;
@@ -1483,8 +1483,8 @@ export function buildScopedSequenceModel(
     );
 
     const sequenceCode = fl.sequenceCode || `${fl.stepNo}`;
-    const forwardSeq = fl.forwardSeq || `${sequenceCode}.1`;
-    const returnSeq = fl.returnSeq || `${sequenceCode}.2`;
+    const forwardSeq = fl.forwardSeq || sequenceCode;
+    const returnSeq = fl.returnSeq || sequenceCode;
 
     const initiatorLabel =
       srcNode?.label || fl.telemetryEvent.sourceLabel || fl.fromNodeId;

@@ -25,7 +25,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Why didn’t Active Directory block the rename as a duplicate name? Because the real Domain Controller’s sAMAccountName is "CORP-DC01$" (with a dollar sign), so "CORP-DC01" (without a dollar sign) is treated by LDAP as a distinct string.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the LDAP `sAMAccountName` rename and `KRB_AS_REQ` from Node ① to Node ②/③ (`CORP-DC01`), and ⇠#1.2 returns the TGT for `"CORP-DC01"` (logging EventID 4781 & 4768).',
+          'On the diagram, arrow #1→ sends the LDAP `sAMAccountName` rename and `KRB_AS_REQ` from Node ① to Node ②/③ (`CORP-DC01`), and ⇠#1 returns the TGT for `"CORP-DC01"` (logging EventID 4781 & 4768).',
         detectionAndEvidence:
           'Documented by Splunk SURGe & CrowdStrike: Windows Security EventID 4741 (computer created) followed by EventID 4781 (`OldTargetUserName` ending in `$` renamed to `NewTargetUserName` without `$`).',
       },
@@ -40,7 +40,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Why is CVE-2021-42287 so critical? Because the KDC validates the incoming TGT using the attacker’s key, but encrypts the outgoing S4U2self TGS ticket (and its high-privilege Domain Admin PAC) for the real Domain Controller ("CORP-DC01$").',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ triggers the `S4U2self` lookup inside Node ④ (`kdcsvc.dll`), and ⇠#2.2 returns the forged `cifs/CORP-DC01.corp.local` Domain Admin ticket.',
+          'On the diagram, arrow #2→ triggers the `S4U2self` lookup inside Node ④ (`kdcsvc.dll`), and ⇠#2 returns the forged `cifs/CORP-DC01.corp.local` Domain Admin ticket.',
         detectionAndEvidence:
           'Documented by Microsoft & Splunk SURGe: Windows Security EventID 4769 (`S4U2self` TGS request for `cifs/CORP-DC01` immediately following EventID 4781).',
       },
@@ -55,7 +55,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'From start to finish, tools like noPac.exe and sam_the_admin.py complete all three steps automatically in under 3 seconds.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `DCSync` against Node ⑤ (`NTDS.dit` Vault) while Node ⑥ (Splunk SIEM) alerts on the 4781 -> 4769 -> 4662 chain.',
+          'On the diagram, arrow #3→ executes `DCSync` against Node ⑤ (`NTDS.dit` Vault) while Node ⑥ (Splunk SIEM) alerts on the 4781 -> 4769 -> 4662 chain.',
         detectionAndEvidence:
           'Documented in CISA & CrowdStrike advisories: Windows Security EventID 4662 (`DS-Replication-Get-Changes-All`) from a workstation IP.',
       },
@@ -86,7 +86,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Because Netlogon has no rate-limiting or account lockout on computer accounts, an unauthenticated attacker on the network can fire ~256 RPC attempts in under 3 seconds until the random session key happens to produce the all-zero output.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the `NetrServerAuthenticate3` zero-challenge loop from Node ① to Node ②/③ (`CORP-DC01` Netlogon), and ⇠#1.2 accepts the 1-in-256 spoofed handshake.',
+          'On the diagram, arrow #1→ sends the `NetrServerAuthenticate3` zero-challenge loop from Node ① to Node ②/③ (`CORP-DC01` Netlogon), and ⇠#1 accepts the 1-in-256 spoofed handshake.',
         detectionAndEvidence:
           'Documented by Secura, CrowdStrike & Suricata SID 2030870: Burst of `NetrServerAuthenticate3` RPC calls with `0x0000000000000000` and Windows System EventID 5805.',
       },
@@ -101,7 +101,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Because this RPC call runs over an unauthenticated network pipe rather than a logged-in user session, Windows logs Security EventID 4742 ("A computer account was modified") with SubjectUserName: ANONYMOUS LOGON.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ invokes `NetrServerPasswordSet2` inside Node ④ (`netlogon.dll`), and ⇠#2.2 sets `CORP-DC01$` password to empty in `NTDS.dit` (logging EventID 4742).',
+          'On the diagram, arrow #2→ invokes `NetrServerPasswordSet2` inside Node ④ (`netlogon.dll`), and ⇠#2 sets `CORP-DC01$` password to empty in `NTDS.dit` (logging EventID 4742).',
         detectionAndEvidence:
           'Documented by Microsoft & CrowdStrike: Windows Security EventID 4742 where `SubjectUserName` is `ANONYMOUS LOGON` and `TargetUserName` is `CORP-DC01$`.',
       },
@@ -116,7 +116,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Why did Zerologon break Domain Controllers when naive attackers forgot Step 3? Because NetrServerPasswordSet2 updates NTDS.dit without updating the DC’s local LSA secret ($MACHINE.ACC), locking the DC out of its own domain until restored.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `DCSync` on Node ⑤ (`NTDS.dit`) and restores `$MACHINE.ACC` while Node ⑥ (SIEM) alerts on the `ANONYMOUS LOGON` 4742 + `CORP-DC01$` network logon.',
+          'On the diagram, arrow #3→ executes `DCSync` on Node ⑤ (`NTDS.dit`) and restores `$MACHINE.ACC` while Node ⑥ (SIEM) alerts on the `ANONYMOUS LOGON` 4742 + `CORP-DC01$` network logon.',
         detectionAndEvidence:
           'Documented in CISA ED 20-04: Security EventID 4624 (LogonType 3 for `CORP-DC01$` from a non-DC IP) followed by EventID 4662 (`DCSync`).',
       },
@@ -147,7 +147,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Attackers also used an alternate form discovered in the wild: placing the path inside an HTTP cookie (Cookie: Email=autodiscover/autodiscover.json%3F@foo.com) so simple URL filters looking for "@foo.com" in the URI query string would miss it.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `/autodiscover/autodiscover.json?@foo.com/powershell/` from Node ① to Node ②/③ (Exchange CAS Frontend), and ⇠#1.2 proxies `/powershell/` to the Backend as `SYSTEM`.',
+          'On the diagram, arrow #1→ sends `/autodiscover/autodiscover.json?@foo.com/powershell/` from Node ① to Node ②/③ (Exchange CAS Frontend), and ⇠#1 proxies `/powershell/` to the Backend as `SYSTEM`.',
         detectionAndEvidence:
           'Documented in CISA AA21-265A & Splunk SURGe: IIS W3SVC logs showing `/autodiscover/autodiscover.json` paired with `/powershell` or `/mapi/nspi`.',
       },
@@ -162,7 +162,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'How did the attacker know the Exchange Administrator’s SID before logging in? By first sending a quick autodiscover/mapi request through the same CVE-2021-34473 proxy to convert the administrator’s email address into their legacyExchangeDN and Windows SID.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ deserializes `X-Rps-CAT` inside Node ④ (Exchange PowerShell Backend `:444`) and runs `New-ManagementRoleAssignment`, with ⇠#2.2 granting Mailbox Export privileges.',
+          'On the diagram, arrow #2→ deserializes `X-Rps-CAT` inside Node ④ (Exchange PowerShell Backend `:444`) and runs `New-ManagementRoleAssignment`, with ⇠#2 granting Mailbox Export privileges.',
         detectionAndEvidence:
           'Documented by Mandiant & DEVCORE: `X-Rps-CAT=` in IIS query strings and `New-ManagementRoleAssignment -Role "Mailbox Import Export"` in `MSExchange Management` logs.',
       },
@@ -177,7 +177,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Why did the raw ASPX code have to be specially encoded inside the draft email? Because Exchange normally compresses or encodes email bodies inside a PST file; Orange Tsai used a custom UTF-7 / uncompressed attachment trick so the exact ASCII characters `<%@ Page ... %>` appeared intact inside the binary PST file.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ exports the PST/ASPX polyglot webshell to Node ⑤ (`aspnet_client\\shell.aspx`) while Node ⑥ (SIEM) alerts on the `.aspx` MailboxExport.',
+          'On the diagram, arrow #3→ exports the PST/ASPX polyglot webshell to Node ⑤ (`aspnet_client\\shell.aspx`) while Node ⑥ (SIEM) alerts on the `.aspx` MailboxExport.',
         detectionAndEvidence:
           'Documented in CISA AA21-265A: `MSExchange Management` EventID 1 (`New-MailboxExportRequest` with `.aspx`) and Sysmon EventID 11 (`MSExchangeMailboxReplication.exe` creating `.aspx` in `aspnet_client`).',
       },
@@ -208,7 +208,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Even after Microsoft patched the legacy MS-RPRN interface in June 2021 (CVE-2021-1675), researchers discovered that the asynchronous RPC interface MS-PAR (RpcAsyncAddPrinterDriver) had the exact same missing check (tracked as CVE-2021-34527).',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `RpcAddPrinterDriverEx(dwFileCopyFlags=0x8014)` from Node ① to Node ②/③ (`spoolsv.exe`), and ⇠#1.2 bypasses `ValidateObjectAccess()`.',
+          'On the diagram, arrow #1→ sends `RpcAddPrinterDriverEx(dwFileCopyFlags=0x8014)` from Node ① to Node ②/③ (`spoolsv.exe`), and ⇠#1 bypasses `ValidateObjectAccess()`.',
         detectionAndEvidence:
           'Documented by Rapid7, CISA & Suricata SID 2033224: `MS-RPRN` Opnum 89 (`RpcAddPrinterDriverEx`) over `\\pipe\\spoolss` with flags `0x8014`.',
       },
@@ -223,7 +223,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'When an exploit script calls RpcAddPrinterDriverEx multiple times, Windows moves the previous copy of the DLL into backup numbered subfolders like C:\\Windows\\System32\\spool\\drivers\\x64\\3\\Old\\1\\evil.dll—a classic forensic indicator on disk.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ copies `evil.dll` from Node ①’s SMB share into Node ④ (`spoolsv.exe` Driver Loader), and ⇠#2.2 triggers `LoadLibraryW()` (logging Sysmon EventID 11 & 7).',
+          'On the diagram, arrow #2→ copies `evil.dll` from Node ①’s SMB share into Node ④ (`spoolsv.exe` Driver Loader), and ⇠#2 triggers `LoadLibraryW()` (logging Sysmon EventID 11 & 7).',
         detectionAndEvidence:
           'Documented by Elastic Security Labs: Sysmon EventID 11 (`FileCreate`) and EventID 7 (`ImageLoad` of unsigned DLL) in `C:\\Windows\\System32\\spool\\drivers\\x64\\3\\` by `spoolsv.exe`.',
       },
@@ -238,7 +238,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Why do security guides recommend disabling the Print Spooler service completely on Domain Controllers? Because a Domain Controller never needs to manage physical office paper printers, and stopping spoolsv.exe eliminates the entire MS-RPRN / MS-PAR attack surface (including both PrintNightmare and SpoolSample).',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ spawns Node ⑤ (`SYSTEM` Shell / Domain Admin Creation) from Node ④ while Node ⑥ (SIEM) alerts on `spoolsv.exe` spawning `cmd.exe`.',
+          'On the diagram, arrow #3→ spawns Node ⑤ (`SYSTEM` Shell / Domain Admin Creation) from Node ④ while Node ⑥ (SIEM) alerts on `spoolsv.exe` spawning `cmd.exe`.',
         detectionAndEvidence:
           'Documented in CISA AA21-200B: `Microsoft-Windows-PrintService/Admin` EventID 316 / 808 and Sysmon EventID 1 (`spoolsv.exe` spawning `cmd.exe` or `net.exe`).',
       },
@@ -269,7 +269,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Why is the Base64 string "eyJhbGciOiJub25l" such a reliable network detection signature? Because the ASCII JSON header `{"alg":"none"` always Base64URL-encodes to that exact 16-character prefix in the Authorization: Bearer header.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `GET /_api/web/siteusers` with `Bearer eyJhbGciOiJub25l...` from Node ① to Node ②/③ (SharePoint IIS Server), and ⇠#1.2 returns the XML list of site administrators.',
+          'On the diagram, arrow #1→ sends `GET /_api/web/siteusers` with `Bearer eyJhbGciOiJub25l...` from Node ① to Node ②/③ (SharePoint IIS Server), and ⇠#1 returns the XML list of site administrators.',
         detectionAndEvidence:
           'Documented by STAR Labs, Rapid7 & Suricata SID 2048312: `Authorization: Bearer eyJhbGciOiJub25l` header targeting `/_api/web/siteusers`.',
       },
@@ -284,7 +284,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Because CVE-2023-29357 only grants SharePoint application-level administrator privileges rather than direct OS command execution, the attacker needs a post-authentication SharePoint RCE primitive (Step 3) to run operating-system commands.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ validates the second Admin JWT inside Node ④ (OAuth2 JWT Claims Handler), and ⇠#2.2 establishes the impersonated Farm Admin session.',
+          'On the diagram, arrow #2→ validates the second Admin JWT inside Node ④ (OAuth2 JWT Claims Handler), and ⇠#2 establishes the impersonated Farm Admin session.',
         detectionAndEvidence:
           'Documented in SharePoint ULS Logs: `SPJsonWebSecurityTokenHandler` validating an `isloopback=true` token for an administrator `nameid` from an external IP.',
       },
@@ -299,7 +299,7 @@ export const BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES: Record<string, RawScenarioS
         howItWorksInPractice:
           'Because the malicious .NET assembly is stored inside the SharePoint SQL database and loaded directly into w3wp.exe memory via Assembly.Load(byte[]), no `.aspx` webshell file needs to be written to the IIS webroot on disk.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ imports and executes the `.bdcm` `DotNetAssembly` on Node ⑤ (BCS Runtime in `w3wp.exe`) while Node ⑥ (SIEM) flags `w3wp.exe` spawning `powershell.exe`.',
+          'On the diagram, arrow #3→ imports and executes the `.bdcm` `DotNetAssembly` on Node ⑤ (BCS Runtime in `w3wp.exe`) while Node ⑥ (SIEM) flags `w3wp.exe` spawning `powershell.exe`.',
         detectionAndEvidence:
           'Documented by STAR Labs & Microsoft MSRC: Sysmon EventID 1 (`w3wp.exe` spawning `cmd.exe` / `powershell.exe`) following `/_api/web/siteusers` access.',
       },

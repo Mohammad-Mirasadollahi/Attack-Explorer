@@ -202,4 +202,39 @@ level: high`,
   classtype:policy-violation; sid:9004120; rev:1;
 )`,
         mitigation: 'Enforce DNS Response Policy Zones (RPZ) and rate-limit outbound TXT/NULL queries to uncategorized domains.' } },
+    {
+      id: 'dns-3',
+      no: 3,
+      stageIndex: 3,
+      timestamp: '22:10:04.095',
+      sourceNodeId: 'attacker_ns',
+      targetNodeId: 'internal_dns',
+      sourceLabel: '45.133.1.99:53 (ns1.badactor-dns.net)',
+      targetLabel: '10.50.1.53 -> 10.50.1.12 (sync_agent.exe)',
+      sourceType: 'NETWORK',
+      protocolOrEventId: 'DNS TXT Response (TTL=0)',
+      shortAction: 'TXT C2 ACK & CMD',
+      info: 'answers="TXT ACK:001:CMD:SLEEP_60" TTL=0 -> Relayed to DB-BACKUP-02 (10.50.1.12)',
+      sizeOrCode: '188 B',
+      severity: 'CRITICAL',
+      mitreId: 'T1071.004',
+      explanation: 'Attacker authoritative Name Server (45.133.1.99) strips and reassembles the hex-encoded subdomain chunks into customers_pii.csv, then responds with a DNS TXT answer ("ACK:001:CMD:SLEEP_60", TTL=0) that the internal resolver relays back to sync_agent.exe (PID 4412) on DB-BACKUP-02.',
+      rawLog: `22:10:04.095210 IP 45.133.1.99.53 > 10.50.1.53.58192: 41902* 1/0/0 TXT "ACK:001:CMD:SLEEP_60" (ttl 0)
+[dnscat2-server] Chunk #001 reassembled -> customers_pii.csv (48 bytes appended: "4102,ali_rezaei,0912...")`,
+      detectionRule: {
+        type: 'SIGMA',
+        title: 'DNS TXT Response Carrying Encoded C2 Tasking with Zero TTL',
+        ruleCode: `title: Suspicious DNS TXT C2 Response with Zero TTL
+logsource:
+  category: dns
+detection:
+  selection:
+    qtype_name: 'TXT'
+    TTLs: '0.000000'
+    answers|contains:
+      - 'ACK:'
+      - 'CMD:'
+  condition: selection
+level: critical`,
+        mitigation: 'Block authoritative resolution to newly registered domains (NRDs), strip or inspect high-entropy DNS TXT responses at the recursive resolver, and isolate DB-BACKUP-02 (10.50.1.12).' } },
   ] };

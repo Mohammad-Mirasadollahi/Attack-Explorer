@@ -127,6 +127,19 @@ export function getRawScenarioStepGuide(
   return ALL_SCENARIO_STEP_GUIDES[scenarioId] || null;
 }
 
+const CIRCLED_NODE_NUMBERS = ['①', '②', '③', '④', '⑤', '⑥'];
+
+function formatNodeRef(
+  node: { chainOrder: number; label: string } | null | undefined,
+  fallbackOrder: number,
+  fallbackLabel: string
+): string {
+  const order = node?.chainOrder || fallbackOrder;
+  const circled = CIRCLED_NODE_NUMBERS[order - 1] || `#${order}`;
+  const label = node?.label || fallbackLabel;
+  return `Node ${circled} (#${order} ${label})`;
+}
+
 /**
  * Enhances a scenario's overview, stage descriptions, and telemetry explanations
  * with fluent, easy-to-understand, Story-to-Spec narratives strictly grounded
@@ -138,12 +151,57 @@ export function applyReadableStepGuidesToScenario(
   const guide = getRawScenarioStepGuide(scenario.id);
   if (!guide) return scenario;
 
+  const schematic = buildWhiteboardSchematic(
+    scenario,
+    1,
+    DEFAULT_ACTIVE_ENVIRONMENT
+  );
+  const siemNode =
+    schematic.nodes[5] ||
+    schematic.nodes[schematic.nodes.length - 1] ||
+    null;
+
+  const nodeSummaryList = schematic.nodes
+    .map((n) => {
+      const c = CIRCLED_NODE_NUMBERS[n.chainOrder - 1] || `#${n.chainOrder}`;
+      return `Node ${c} (#${n.chainOrder} ${n.label})`;
+    })
+    .join(' · ');
+
+  const flowRouteSummary = schematic.flows
+    .map((fl) => {
+      const fn = schematic.nodes.find((n) => n.id === fl.fromNodeId);
+      const tn = schematic.nodes.find((n) => n.id === fl.toNodeId);
+      const fc = fn ? CIRCLED_NODE_NUMBERS[fn.chainOrder - 1] || `#${fn.chainOrder}` : '①';
+      const tc = tn ? CIRCLED_NODE_NUMBERS[tn.chainOrder - 1] || `#${tn.chainOrder}` : '②';
+      return `Step #${fl.stepNo} (#${fl.forwardSeq}→ / ⇠#${fl.returnSeq}: Node ${fc} → Node ${tc})`;
+    })
+    .join(' → ');
+
+  const syncedTopologySummary = `On the diagram (${nodeSummaryList}): Follow ${flowRouteSummary}.`;
+
   const enhancedStages = scenario.stages.map((stage) => {
     const stepGuide = guide.steps.find((s) => s.stepNumber === stage.index);
     if (!stepGuide) return stage;
+    const flow =
+      schematic.flows.find((f) => f.stageIndex === stage.index) ||
+      schematic.flows[stage.index - 1] ||
+      null;
+    const fromNode =
+      (flow && schematic.nodes.find((n) => n.id === flow.fromNodeId)) ||
+      schematic.nodes[0] ||
+      null;
+    const toNode =
+      (flow && schematic.nodes.find((n) => n.id === flow.toNodeId)) ||
+      schematic.nodes[1] ||
+      null;
+    const forwardCode = flow ? `#${flow.forwardSeq}→` : `#${stage.index}→`;
+    const returnCode = flow ? `⇠#${flow.returnSeq}` : `⇠#${stage.index}`;
+    const syncedAlignment = `On the diagram, follow Step #${stage.index} / Link #${stage.index} (${forwardCode} ${flow?.label || stage.title} / ${returnCode} ${flow?.returnLabel || 'ACK'}) from ${formatNodeRef(fromNode, 1, 'Source')} to ${formatNodeRef(toNode, 2, 'Target')}, monitored by ${formatNodeRef(siemNode, 6, 'SIEM')}.`;
+
     return {
       ...stage,
-      description: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} ${stepGuide.diagramAlignment}`,
+      description: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} ${syncedAlignment}`,
     };
   });
 
@@ -158,7 +216,7 @@ export function applyReadableStepGuidesToScenario(
 
   return {
     ...scenario,
-    overview: `${guide.briefing.storyAnalogy} ${guide.briefing.plainSummary} ${guide.briefing.diagramTopologySummary}`,
+    overview: `${guide.briefing.storyAnalogy} ${guide.briefing.plainSummary} ${syncedTopologySummary}`,
     stages: enhancedStages,
     telemetry: enhancedTelemetry,
   };
@@ -166,7 +224,7 @@ export function applyReadableStepGuidesToScenario(
 
 /**
  * Builds the synchronized Step-by-Step Guide & Scenario Briefing model
- * aligned with the live diagram nodes (①..⑥), bidirectional flows (#N.1→ / ⇠#N.2),
+ * aligned with the live diagram nodes (①..⑥), bidirectional flows (#N→ / ⇠#N),
  * and autoplay cinematic phases.
  */
 export function buildDiagramStepGuideModel(
@@ -189,12 +247,33 @@ export function buildDiagramStepGuideModel(
     schematic.nodes[schematic.nodes.length - 2] ||
     schematic.nodes[schematic.nodes.length - 1] ||
     null;
+  const siemNode =
+    schematic.nodes[5] ||
+    schematic.nodes[schematic.nodes.length - 1] ||
+    null;
 
   const isActiveBriefing =
     activeStageIndex === 0 ||
     cinematicPhase === 'INTRO_SURVEY' ||
     cinematicPhase === 'INTRO_FOCUS_ORIGIN';
   const isOutroComplete = cinematicPhase === 'OUTRO_COMPLETE';
+
+  const nodeSummaryList = schematic.nodes
+    .map((n) => {
+      const c = CIRCLED_NODE_NUMBERS[n.chainOrder - 1] || `#${n.chainOrder}`;
+      return `Node ${c} (#${n.chainOrder} ${n.label})`;
+    })
+    .join(' · ');
+
+  const flowRouteSummary = schematic.flows
+    .map((fl) => {
+      const fn = schematic.nodes.find((n) => n.id === fl.fromNodeId);
+      const tn = schematic.nodes.find((n) => n.id === fl.toNodeId);
+      const fc = fn ? CIRCLED_NODE_NUMBERS[fn.chainOrder - 1] || `#${fn.chainOrder}` : '①';
+      const tc = tn ? CIRCLED_NODE_NUMBERS[tn.chainOrder - 1] || `#${tn.chainOrder}` : '②';
+      return `Step #${fl.stepNo} (#${fl.forwardSeq}→ / ⇠#${fl.returnSeq}: Node ${fc} → Node ${tc})`;
+    })
+    .join(' → ');
 
   const briefing: DiagramAlignedBriefingModel = {
     scenarioCode: scenario.code,
@@ -207,8 +286,7 @@ export function buildDiagramStepGuideModel(
       scenario.shortSubtitle,
     plainSummary: rawGuide?.briefing.plainSummary || scenario.overview,
     diagramTopologySummary:
-      rawGuide?.briefing.diagramTopologySummary ||
-      `Start at ${originNode?.label || 'Origin'} and follow the numbered steps through ${scenario.stages.length} stages to ${finalNode?.label || 'Target'}.`,
+      `On the diagram (${nodeSummaryList}): Follow ${flowRouteSummary}.`,
     documentedAdvisory:
       rawGuide?.briefing.documentedAdvisory ||
       `${scenario.code} · ${scenario.shortSubtitle}`,
@@ -258,16 +336,18 @@ export function buildDiagramStepGuideModel(
       ? 'COMPLETED'
       : 'UPCOMING';
 
+    const forwardCode = flow ? `#${flow.forwardSeq}→` : `#${stage.index}→`;
+    const returnCode = flow ? `⇠#${flow.returnSeq}` : `⇠#${stage.index}`;
+    const syncedAlignment = `On the diagram, follow Step #${stage.index} / Link #${stage.index} (${forwardCode} ${flow?.label || stage.title} / ${returnCode} ${flow?.returnLabel || 'ACK'}) from ${formatNodeRef(fromNode, 1, 'Source')} to ${formatNodeRef(toNode, 2, 'Target')}, monitored by ${formatNodeRef(siemNode, 6, 'SIEM')}.`;
+
     return {
       stepNumber: stage.index,
-      mitreId: rawStep?.mitreId || stage.mitreTechniqueId,
+      mitreId: stage.mitreTechniqueId || rawStep?.mitreId || scenario.code,
       plainTitle: rawStep?.plainTitle || stage.title,
       storyAnalogy: rawStep?.storyAnalogy || stage.subtitle,
       simpleExplanation: rawStep?.simpleExplanation || stage.description,
       howItWorksInPractice: rawStep?.howItWorksInPractice || stage.subtitle,
-      diagramAlignment:
-        rawStep?.diagramAlignment ||
-        `Follow #${stage.index}.1→ from ${fromNode?.label || 'Source'} to ${toNode?.label || 'Target'}.`,
+      diagramAlignment: syncedAlignment,
       detectionAndEvidence:
         rawStep?.detectionAndEvidence ||
         telemetryEvent?.info ||
@@ -278,10 +358,10 @@ export function buildDiagramStepGuideModel(
       toNodeBadge: toNode?.actionBadge || `Node ③ · ${toNode?.label || 'Target'}`,
       forwardFlowBadge: flow
         ? `#${flow.forwardSeq}→ ${flow.label}`
-        : `#${stage.index}.1→ ${telemetryEvent?.shortAction || stage.title}`,
+        : `#${stage.index}→ ${telemetryEvent?.shortAction || stage.title}`,
       returnFlowBadge: flow
         ? `⇠#${flow.returnSeq} ${flow.returnLabel}`
-        : `⇠#${stage.index}.2 ${telemetryEvent?.sizeOrCode || 'ACK'}`,
+        : `⇠#${stage.index} ${telemetryEvent?.sizeOrCode || 'ACK'}`,
       protocolOrEventId:
         telemetryEvent?.protocolOrEventId || stage.mitreTechniqueId,
       telemetryEvent,

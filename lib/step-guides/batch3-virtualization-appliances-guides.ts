@@ -25,7 +25,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Even if the attacker deletes the /var/core/core.vmdird.* file from disk, /var/log/vmware/vmdird/ and systemd journal logs still record the unexpected vmdird service exit/restart timestamp.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the DCERPC exploit from Node ① to Node ②/③ (vCenter `vmdird`), and ⇠#1.2 grants `root` execution on the VCSA.',
+          'On the diagram, arrow #1→ sends the DCERPC exploit from Node ① to Node ②/③ (vCenter `vmdird`), and ⇠#1 grants `root` execution on the VCSA.',
         detectionAndEvidence:
           'Documented by Mandiant & VMware VMSA-2023-0023: `vmdird` service crash/restart within minutes of interactive shell commands on vCenter.',
       },
@@ -40,7 +40,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Compromising a single vCenter Server hands the attacker root-equivalent credentials (vpxuser) to every underlying ESXi hypervisor managed by that vCenter instance.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ queries `VPX_HOST` and reads `symkey.dat` inside Node ④, and ⇠#2.2 yields the plaintext `vpxuser` passwords.',
+          'On the diagram, arrow #2→ queries `VPX_HOST` and reads `symkey.dat` inside Node ④, and ⇠#2 yields the plaintext `vpxuser` passwords.',
         detectionAndEvidence:
           'Documented by Mandiant: Auditd / shell history showing reads of `/etc/vmware-vpx/ssl/symkey.dat` and `vpxuser` SSH logins on ESXi hosts.',
       },
@@ -55,7 +55,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'By chaining AF_VSOCK with CVE-2023-20867 (a VMware Tools authentication bypass in vmtoolsd), UNC3886 can push commands and transfer files from the ESXi hypervisor straight into any guest Virtual Machine without a single network packet.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ installs `VIRTUALPITA` on Node ⑤ (ESXi Hypervisor `AF_VSOCK :5466`) while Node ⑥ (SIEM) flags the `CommunitySupported` VIB install.',
+          'On the diagram, arrow #3→ installs `VIRTUALPITA` on Node ⑤ (ESXi Hypervisor `AF_VSOCK :5466`) while Node ⑥ (SIEM) flags the `CommunitySupported` VIB install.',
         detectionAndEvidence:
           'Documented by Mandiant: ESXi `syslog.log` showing `AcceptanceLevel` lowered to `CommunitySupported`, unsigned VIB installs, and `lsof -A` listing `AF_VSOCK` listeners.',
       },
@@ -86,7 +86,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Because the vulnerability triggers inside the perimeter email security scanner itself before delivery, even emails addressed to non-existent or bounced recipients could trigger the exploit on unpatched appliances.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ delivers the SMTP `.tar` email from Node ① to Node ②/③ (Barracuda ESG `:25`), and ⇠#1.2 executes the injected Perl `qx()` shell command as `root`.',
+          'On the diagram, arrow #1→ delivers the SMTP `.tar` email from Node ① to Node ②/③ (Barracuda ESG `:25`), and ⇠#1 executes the injected Perl `qx()` shell command as `root`.',
         detectionAndEvidence:
           'Documented by Mandiant, CISA & Suricata SID 2045992: Inbound SMTP `.tar` attachments containing `\'|` (`0x27 0x7c`) in the tar member header.',
       },
@@ -101,7 +101,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Why use a libpcap sniffer (SEASPY) for persistence? Because even if a firewall blocks all ports except SMTP port 25, SEASPY inspects raw Ethernet frames arriving on port 25 before they reach the mail server and wakes up a reverse shell only when the attacker’s magic packet arrives.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ implants `SALTWATER` and `SEASPY` inside Node ④ (`bsmtp` & `BarracudaMailService`), and ⇠#2.2 activates the passive `eth0` PCAP listener.',
+          'On the diagram, arrow #2→ implants `SALTWATER` and `SEASPY` inside Node ④ (`bsmtp` & `BarracudaMailService`), and ⇠#2 activates the passive `eth0` PCAP listener.',
         detectionAndEvidence:
           'Documented in CISA MAR-10454006: YARA detection on modified `/usr/sbin/bsmtp` (`SALTWATER`) and `/usr/sbin/BarracudaMailService` (`SEASPY`).',
       },
@@ -116,7 +116,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Because UNC4841 compromised multiple layers of the appliance (SQLite triggers, kernel modules, and device SSL certificates), both Barracuda Networks and CISA issued the rare directive that all compromised ESG appliances must be completely decommissioned and replaced regardless of patch level.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ triggers `SUBMARINE` and exfiltrates `/mail/` spools from Node ⑤ while Node ⑥ (SIEM / NDR) detects the unexpected outbound TLS data transfer from the ESG.',
+          'On the diagram, arrow #3→ triggers `SUBMARINE` and exfiltrates `/mail/` spools from Node ⑤ while Node ⑥ (SIEM / NDR) detects the unexpected outbound TLS data transfer from the ESG.',
         detectionAndEvidence:
           'Documented by Mandiant & CISA: Malicious SQLite triggers in `/mail/config/`, `/etc/init.d/ee`, and large outbound HTTPS transfers initiated by the Barracuda ESG IP.',
       },
@@ -147,7 +147,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Whenever WSMA executes a CLI configuration command over HTTP, Cisco IOS XE writes a telltale syslog entry: `%SYS-5-CONFIG_I: Configured from http by console`.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `POST /%2577ebui_wsma_http` from Node ① to Node ②/③ (Cisco IOS XE Router), and ⇠#1.2 creates the `privilege 15` account.',
+          'On the diagram, arrow #1→ sends `POST /%2577ebui_wsma_http` from Node ① to Node ②/③ (Cisco IOS XE Router), and ⇠#1 creates the `privilege 15` account.',
         detectionAndEvidence:
           'Documented by Cisco Talos & Suricata SID 2048554: HTTP URI containing `/%2577ebui_wsma` and IOS syslog `%SYS-5-CONFIG_I: Configured from http by console`.',
       },
@@ -162,7 +162,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'When CVE-2023-20273 triggers, the router logs `%WEBUI-6-INSTALL_OPERATION_INFO: User: username, Install Operation: ADD` right as the attacker’s Linux root commands execute.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ exploits `/webui/rest/softwareMgmt/installAdd` inside Node ④, and ⇠#2.2 spawns a Linux `root` shell on BinOS.',
+          'On the diagram, arrow #2→ exploits `/webui/rest/softwareMgmt/installAdd` inside Node ④, and ⇠#2 spawns a Linux `root` shell on BinOS.',
         detectionAndEvidence:
           'Documented by Cisco Talos: Syslog `%WEBUI-6-INSTALL_OPERATION_INFO` immediately following `%SYS-5-CONFIG_I: Configured from http`.',
       },
@@ -177,7 +177,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Because BadCandy resides in volatile filesystem paths (/usr/binos/conf/nginx-conf/occo.conf) that are wiped on a full device reload, rebooting the router clears the implant—provided the admin also disables the Web UI or installs Cisco’s patch so the attacker cannot immediately re-exploit it.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ loads `BadCandy` (`oregon_http.lua`) into Node ⑤ (NGINX Worker) while Node ⑥ (SIEM) detects the `/webui/logoutconfirm.html?logon_hash=1` beacon.',
+          'On the diagram, arrow #3→ loads `BadCandy` (`oregon_http.lua`) into Node ⑤ (NGINX Worker) while Node ⑥ (SIEM) detects the `/webui/logoutconfirm.html?logon_hash=1` beacon.',
         detectionAndEvidence:
           'Documented by Cisco Talos & VulnCheck: Presence of `/usr/binos/conf/nginx-conf/occo.conf` and POST requests to `/webui/logoutconfirm.html?logon_hash=1`.',
       },
@@ -208,7 +208,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Even more remarkably, libike.so only decrypts the first 48 bytes of the Notify payload and leaves all bytes after offset 48 completely unencrypted in plaintext!',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the single UDP/500 `IKE_SA_INIT` packet from Node ① to Node ②/③ (Zyxel Firewall `ssod`), and ⇠#1.2 passes the 48-byte 3DES header check.',
+          'On the diagram, arrow #1→ sends the single UDP/500 `IKE_SA_INIT` packet from Node ① to Node ②/③ (Zyxel Firewall `ssod`), and ⇠#1 passes the 48-byte 3DES header check.',
         detectionAndEvidence:
           'Documented by Rapid7 & Suricata SID 2045893: Inbound UDP/500 IKEv2 Notify Type 14 (`|00 00 00 0e|`) packets exceeding 48 bytes with shell semicolons.',
       },
@@ -223,7 +223,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Why is calling system("echo ...") to write a log file a textbook C anti-pattern? Because invoking `/bin/sh -c` on network-supplied strings allows shell metacharacters (`;`, `|`, `` ` ``, `$()`) to execute arbitrary operating-system commands.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ triggers `system("echo ... >> /tmp/sdwan_vpndebug.log")` inside Node ④ (`ssod`), and ⇠#2.2 spawns `/bin/sh` as `root`.',
+          'On the diagram, arrow #2→ triggers `system("echo ... >> /tmp/sdwan_vpndebug.log")` inside Node ④ (`ssod`), and ⇠#2 spawns `/bin/sh` as `root`.',
         detectionAndEvidence:
           'Documented by TRAPA Security & Rapid7: `/tmp/sdwan_vpndebug.log` containing command output or `ssod` spawning `/bin/sh` and `curl`/`wget`.',
       },
@@ -238,7 +238,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Because UDP source IP addresses can be spoofed when no handshake is required, attackers could even trigger blind command execution across wide IP ranges in seconds.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ downloads and executes the root payload on Node ⑤ while Node ⑥ (WAN NDR / SIEM) alerts on the UDP/500 exploit and outbound `.sh` fetch.',
+          'On the diagram, arrow #3→ downloads and executes the root payload on Node ⑤ while Node ⑥ (WAN NDR / SIEM) alerts on the UDP/500 exploit and outbound `.sh` fetch.',
         detectionAndEvidence:
           'Documented in CISA KEV & Shadowserver: Zyxel firewalls initiating outbound HTTP requests to fetch `.sh` and MIPS64 ELF binaries immediately after receiving UDP/500 Notify Type 14 packets.',
       },
@@ -269,7 +269,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Compare the two multi-source approaches: watchTowr Labs first demonstrated a 2-step chain (uploading a file via CVE-2023-36846 and pointing PHPRC to that uploaded file), whereas VulnCheck showed that pointing PHPRC to `/dev/fd/0` eliminates the file upload entirely and works in a single fileless HTTP POST request.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `POST /webauth_operation.php?PHPRC=/dev/fd/0` from Node ① to Node ②/③ (Juniper J-Web Server), and ⇠#1.2 spawns `php-cgi` with `PHPRC=/dev/fd/0`.',
+          'On the diagram, arrow #1→ sends `POST /webauth_operation.php?PHPRC=/dev/fd/0` from Node ① to Node ②/③ (Juniper J-Web Server), and ⇠#1 spawns `php-cgi` with `PHPRC=/dev/fd/0`.',
         detectionAndEvidence:
           'Documented by watchTowr, VulnCheck & Suricata SID 2047892: HTTP POST requests containing `PHPRC=` in `/var/log/httpd.log`.',
       },
@@ -284,7 +284,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'Because both the fake php.ini (/dev/fd/0) and the prepended PHP script (data://text/plain;base64,...) exist strictly in memory streams, zero files are ever created in /var/tmp/ on the firewall.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ parses `/dev/fd/0` inside Node ④ (`php-cgi` Runtime), and ⇠#2.2 loads the inline `data://` PHP payload.',
+          'On the diagram, arrow #2→ parses `/dev/fd/0` inside Node ④ (`php-cgi` Runtime), and ⇠#2 loads the inline `data://` PHP payload.',
         detectionAndEvidence:
           'Documented by VulnCheck: Network packet inspection showing `allow_url_include` and `auto_prepend_file` inside HTTP POST bodies to J-Web.',
       },
@@ -299,7 +299,7 @@ export const BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES: Record<string, RawSce
         howItWorksInPractice:
           'In Junos OS, passwords encrypted with the reversible `$9$` format inside `juniper.conf` can be instantly decrypted offline using known Junos `$9$` decoding scripts.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `/bin/sh` on Node ⑤ (Junos Config & Shell) while Node ⑥ (SIEM) alerts on `php-cgi` spawning `/bin/sh`.',
+          'On the diagram, arrow #3→ executes `/bin/sh` on Node ⑤ (Junos Config & Shell) while Node ⑥ (SIEM) alerts on `php-cgi` spawning `/bin/sh`.',
         detectionAndEvidence:
           'Documented in Juniper JSA72300 & CISA KEV: `/var/log/httpd.log` entries for `/webauth_operation.php` and `php-cgi` spawning `/bin/sh` or `/usr/sbin/cli`.',
       },

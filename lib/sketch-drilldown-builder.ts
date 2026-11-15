@@ -17,82 +17,127 @@ export function buildEntityDrillDownData(
     '0x0000024A80014000 (Injected Beacon Heap & Socket Buffer)',
   ];
 
-  const malwareProcesses: EntityDrillDownData['malwareProcesses'] = [
-    {
-      step: 1,
-      apiOrProcess: 'Phishing Dropper -> CreateProcessW(CREATE_SUSPENDED)',
-      target: `${scenario.processTree[1]?.name || 'Invoice_Q4.exe'} (PID ${scenario.processTree[1]?.pid || 3104})`,
-      memoryAddress: '0x00400000 (PEB Base)',
-      status: 'EXECUTED' as const,
-      detail: 'Malware stage-1 loader unpacks from the delivery vector and calls CreateProcessW with CREATE_SUSPENDED = 0x00000004 (freezing the legitimate target container before its first instruction runs so its memory can be replaced quietly).' },
-    ...scenario.stages.map((stage, idx) => ({
-      step: idx + 2,
-      apiOrProcess:
-        stage.keySpecs[0]?.value ||
-        `${stage.mitreTechniqueName} (${stage.mitreTechniqueId})`,
-      target: `${stage.title} (${stage.mitreTechniqueId})`,
-      memoryAddress:
-        stageMemoryAddresses[idx % stageMemoryAddresses.length],
-      status: idx >= 1 ? ('INJECTED' as const) : ('EXECUTED' as const),
-      detail: stage.description })),
-  ];
+  const malwareProcesses: EntityDrillDownData['malwareProcesses'] =
+    scenario.stages.map((stage, idx) => {
+      const stageEv =
+        scenario.telemetry.find((t) => t.stageIndex === stage.index) ||
+        scenario.telemetry[idx] ||
+        null;
+      const proc =
+        scenario.processTree.find((p) => p.activeFromStage === stage.index) ||
+        scenario.processTree[Math.min(idx, Math.max(0, scenario.processTree.length - 1))] ||
+        null;
+
+      const apiOrProcess = stageEv
+        ? `${stageEv.shortAction} · ${stageEv.protocolOrEventId}`
+        : stage.keySpecs[0]?.value ||
+          `${stage.mitreTechniqueName} (${stage.mitreTechniqueId})`;
+
+      const target = proc
+        ? `${proc.name} (PID ${proc.pid}) · ${stage.title} (${stage.mitreTechniqueId})`
+        : stageEv
+        ? `${stageEv.targetLabel} · ${stage.title} (${stage.mitreTechniqueId})`
+        : `${stage.title} (${stage.mitreTechniqueId})`;
+
+      const memoryAddress =
+        stage.keySpecs.find((k) =>
+          /addr|base|rip|rcx|entrypoint|memory|offset|rwx|handle|section|size|ioc|hash/i.test(
+            k.term
+          )
+        )?.value ||
+        stageEv?.sizeOrCode ||
+        stageMemoryAddresses[idx % stageMemoryAddresses.length];
+
+      return {
+        step: stage.index,
+        apiOrProcess,
+        target,
+        memoryAddress,
+        status: idx >= 1 ? ('INJECTED' as const) : ('EXECUTED' as const),
+        detail: stage.description,
+      };
+    });
+
+  const primaryProc = scenario.processTree[0];
+  const secondaryProc =
+    scenario.processTree[scenario.processTree.length - 1] || primaryProc;
+  const firstEv = scenario.telemetry[0];
+  const lastEv =
+    scenario.telemetry[scenario.telemetry.length - 1] || firstEv;
 
   const laptopHostActivities: EntityDrillDownData['laptopHostActivities'] = [
     {
       category: 'EMAIL_OPEN',
-      title: '1. User Opens Phishing Email Attachment on Laptop',
+      title: `1. Initial Delivery & Stage-1 Trigger (${scenario.stages[0]?.mitreTechniqueId || scenario.code})`,
       artifactPath:
-        'C:\\Users\\s.ahmadi\\AppData\\Local\\Temp\\Invoice_Q4.pdf.exe',
-      eventIdBadge: 'Sysmon EID 11 (FileCreate)',
-      description: 'Outlook/Browser writes the disguised attachment to disk in the user Temp/Downloads folder (using a double extension like .pdf.exe so Windows hides the .exe suffix by default and tricks the user into launching code).' },
+        primaryProc?.commandLine ||
+        firstEv?.info ||
+        'C:\\Users\\Public\\Downloads\\Invoice_Q4.exe',
+      eventIdBadge: firstEv?.protocolOrEventId || 'Sysmon EID 1 / EID 11',
+      description:
+        scenario.stages[0]?.description ||
+        'Initial payload delivery and execution on the target host or perimeter service.',
+    },
     {
       category: 'PROCESS_SPAWN',
-      title: '2. Suspicious Child Process Creation on Host',
+      title: `2. Process / Execution Context on Host`,
       artifactPath:
-        scenario.processTree[scenario.processTree.length - 1]?.commandLine ||
+        secondaryProc?.commandLine ||
         'C:\\Windows\\System32\\svchost.exe',
-      eventIdBadge: 'Sysmon EID 1 & WinSec EID 4688',
-      description: 'Process creation logged simultaneously in Sysmon Event ID 1 and Windows Security Event ID 4688 with an abnormal parent process (exposing the attack because a genuine svchost.exe is always spawned by services.exe, never by a user-folder binary).' },
+      eventIdBadge:
+        scenario.telemetry[1]?.protocolOrEventId ||
+        'Sysmon EID 1 & WinSec EID 4688',
+      description:
+        scenario.stages[1]?.description ||
+        'Process creation and execution lineage logged with parent-child process telemetry and command-line arguments.',
+    },
     {
       category: 'MEMORY_TAMPER',
-      title: '3. Cross-Process Memory Injection & Tampering',
-      artifactPath: 'ntdll.dll!NtUnmapViewOfSection + VirtualAllocEx(RWX)',
-      eventIdBadge: 'Sysmon EID 10 & EID 25',
-      description: 'Malware modifies virtual memory inside the host process (allocating PAGE_EXECUTE_READWRITE = 0x40 so it can both write and execute shellcode in RAM without dropping a second .exe to disk) and redirects thread execution.' },
+      title: `3. Memory / Credential / Subsystem Manipulation`,
+      artifactPath:
+        secondaryProc?.apiCalls?.join(' -> ') ||
+        'ntdll.dll!NtUnmapViewOfSection + VirtualAllocEx(RWX)',
+      eventIdBadge:
+        scenario.telemetry[2]?.protocolOrEventId ||
+        'Sysmon EID 10 & EID 25',
+      description:
+        scenario.stages[2]?.description ||
+        'In-memory payload staging, credential access, or defense-evasion tampering inside the target process.',
+    },
     {
       category: 'REGISTRY_NET',
-      title: '4. Local Credential Harvest & Outbound Socket',
-      artifactPath: 'LSASS / Kerberos Ticket Cache -> TCP 445 / 443',
-      eventIdBadge: 'Sysmon EID 3 & WinSec 4624',
-      description: 'Compromised laptop initiates internal lateral scanning and outbound C2 beacon traffic over TCP 443 (blending into standard HTTPS web traffic while running under the trusted host binary’s digital signature).' },
+      title: `4. Post-Exploitation Persistence, Lateral Relay, or C2 Egress`,
+      artifactPath:
+        lastEv
+          ? `${lastEv.sourceLabel} -> ${lastEv.targetLabel} (${lastEv.shortAction})`
+          : 'LSASS / Kerberos Ticket Cache -> TCP 445 / 443',
+      eventIdBadge:
+        lastEv?.protocolOrEventId || 'Sysmon EID 3 & WinSec 4624',
+      description:
+        scenario.stages[scenario.stages.length - 1]?.description ||
+        'Compromised endpoint establishes outbound C2 communications or lateral movement across the internal network.',
+    },
   ];
 
-  const lateralMovementHops: EntityDrillDownData['lateralMovementHops'] = [
-    {
-      hop: 1,
-      sourceHost: '10.10.4.22 (Victim Laptop WKS-04)',
-      targetHost: '10.10.0.5 (CORP-DC01.corp.local)',
-      protocol: 'Kerberos TCP/88 & LDAP/389',
-      technique: 'T1558.003 · SPN Discovery & Ticket Request',
-      eventId: 'WinSec EID 4769 (0x17 RC4)',
-      summary: 'From the compromised laptop, the attacker queries Active Directory LDAP (port 389 — readable by all domain users by default) and requests RC4-encrypted service tickets (etype 0x17 — chosen so the ticket can be brute-forced offline on a GPU without triggering DC lockouts).' },
-    {
-      hop: 2,
-      sourceHost: '10.10.4.22 (Victim Laptop WKS-04)',
-      targetHost: '10.10.2.14 (SQL-PROD-01 / App Server)',
-      protocol: 'SMB2 TCP/445 · NTLM Pass-the-Hash',
-      technique: 'T1550.002 · Lateral Movement via SMB',
-      eventId: 'WinSec EID 4624 (LogonType=3)',
-      summary: 'Attacker authenticates laterally over SMB (TCP port 445) to the internal server using extracted hashes or cracked service credentials (producing a LogonType=3 network logon from a workstation IP).' },
-    {
-      hop: 3,
-      sourceHost: '10.10.2.14 (Internal Server)',
-      targetHost: 'SCM / Remote Service Execution',
-      protocol: 'DCERPC / SVCCTL (Service Control)',
-      technique: 'T1569.002 · Remote Service Creation',
-      eventId: 'System EID 7045 & Sysmon EID 1',
-      summary: 'A remote service payload is registered with the Service Control Manager (services.exe — which automatically runs the new service binary as NT AUTHORITY\\SYSTEM, completing privileged takeover of the target server).' },
-  ];
+  const lateralMovementHops: EntityDrillDownData['lateralMovementHops'] =
+    scenario.stages.slice(0, 3).map((st, idx) => {
+      const ev =
+        scenario.telemetry.find((t) => t.stageIndex === st.index) ||
+        scenario.telemetry[idx] ||
+        firstEv;
+      return {
+        hop: idx + 1,
+        sourceHost: ev?.sourceLabel || scenario.nodes[0]?.label || 'Origin Host',
+        targetHost:
+          ev?.targetLabel ||
+          scenario.nodes[Math.min(idx + 1, scenario.nodes.length - 1)]?.label ||
+          'Target Host',
+        protocol: ev?.protocolOrEventId || 'TCP / Internal Protocol',
+        technique: `${st.mitreTechniqueId} · ${st.mitreTechniqueName}`,
+        eventId: `${ev?.protocolOrEventId || st.mitreTechniqueId} (${ev?.sizeOrCode || 'OK'})`,
+        summary: st.description,
+      };
+    });
 
   return {
     nodeId: sketchNode.id,

@@ -25,7 +25,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Because service accounts like SVC_TABLEAU_ETL were frequently configured with static passwords and exempted from MFA to support legacy BI pipelines, possessing a single unrotated password gave UNC5537 immediate ACCOUNTADMIN or SYSADMIN access.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (UNC5537 Operator) to Node ②/③ (Snowflake Cloud Auth Gateway), and return arrow ⇠#1.2 issuing the authenticated session token.',
+          'On the diagram, follow arrow #1→ from Node ① (UNC5537 Operator) to Node ②/③ (Snowflake Cloud Auth Gateway), and return arrow ⇠#1 issuing the authenticated session token.',
         detectionAndEvidence:
           'Documented by Mandiant & Snowflake: `SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY` showing `FIRST_AUTHENTICATION_FACTOR = PASSWORD` and `SECOND_AUTHENTICATION_FACTOR IS NULL` from Mullvad VPN IPs.',
       },
@@ -40,7 +40,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Every SQL query and client driver string in Snowflake is immutably recorded in SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY and SESSIONS, exposing the literal "Rapeflake" and "DBeaver_DBeaverUltimate" application strings.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ dispatches the automated metadata discovery burst inside Node ④ (`FROSTBITE / Rapeflake`), and ⇠#2.2 returns the high-value table catalog.',
+          'On the diagram, arrow #2→ dispatches the automated metadata discovery burst inside Node ④ (`FROSTBITE / Rapeflake`), and ⇠#2 returns the high-value table catalog.',
         detectionAndEvidence:
           'Documented by Mandiant: `CLIENT_ENVIRONMENT` in `SNOWFLAKE.ACCOUNT_USAGE.SESSIONS` containing `"APPLICATION": "Rapeflake"` or `"DBeaver_DBeaverUltimate"`.',
       },
@@ -55,7 +55,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Staging data into an internal user stage (@~) or temporary stage via COPY INTO leverages Snowflake’s parallel virtual warehouse compute to dump gigabytes of records in seconds.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `COPY INTO @~` and `GET` against Node ⑤ (Snowflake Virtual Warehouse) while Node ⑥ (SIEM) flags the anomalous multi-gigabyte export.',
+          'On the diagram, arrow #3→ executes `COPY INTO @~` and `GET` against Node ⑤ (Snowflake Virtual Warehouse) while Node ⑥ (SIEM) flags the anomalous multi-gigabyte export.',
         detectionAndEvidence:
           'Documented by Mandiant & Snowflake: `QUERY_HISTORY` showing `QUERY_TYPE IN (\'COPY\', \'GET\')` with high `BYTES_WRITTEN_TO_RESULT` from `DBeaver_DBeaverUltimate`.',
       },
@@ -86,7 +86,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Because 169.254.169.254 is a non-routable link-local IP (RFC 3927) answered directly by the AWS Nitro hypervisor on the local virtual network interface, external firewalls cannot see or block traffic to it once an application inside the instance is tricked into making the request.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (External Attacker) to Node ②/③ (EC2 Web Proxy), and return arrow ⇠#1.2 revealing the attached IAM Role name (`WafProxyS3ReadRole`).',
+          'On the diagram, follow arrow #1→ from Node ① (External Attacker) to Node ②/③ (EC2 Web Proxy), and return arrow ⇠#1 revealing the attached IAM Role name (`WafProxyS3ReadRole`).',
         detectionAndEvidence:
           'Documented by AWS & Suricata SID 2028910: Incoming HTTP URI parameters containing `169.254.169.254` and CloudWatch metric `MetadataNoToken > 0`.',
       },
@@ -101,7 +101,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Why does IMDSv2 stop this attack? Because IMDSv2 requires the client to first send an HTTP PUT request with a custom X-aws-ec2-metadata-token-ttl-seconds header to obtain a secret token, and then pass that token in X-aws-ec2-metadata-token—two steps that classic GET-based SSRF vulnerabilities cannot perform.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ queries Node ④ (EC2 IMDSv1 `169.254.169.254`), and ⇠#2.2 returns the plaintext JSON credential bundle containing `ASIAIOSFODNN7EXAMPLE`.',
+          'On the diagram, arrow #2→ queries Node ④ (EC2 IMDSv1 `169.254.169.254`), and ⇠#2 returns the plaintext JSON credential bundle containing `ASIAIOSFODNN7EXAMPLE`.',
         detectionAndEvidence:
           'Documented by AWS Security: CloudWatch `MetadataNoToken` metric spikes and web proxy logs returning 1.3 KB JSON responses from `/latest/meta-data/iam/security-credentials/`.',
       },
@@ -116,7 +116,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Even if an attacker steals an EC2 IAM role’s STS token, defenders can render the stolen token useless outside the VPC by attaching an aws:SourceVpce or aws:VpcSourceIp condition to the IAM role policy.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `aws s3 sync` against Node ⑤ (AWS S3 Production Buckets) while Node ⑥ (GuardDuty & CloudTrail SIEM) fires `InstanceCredentialExfiltration.OutsideAWS`.',
+          'On the diagram, arrow #3→ executes `aws s3 sync` against Node ⑤ (AWS S3 Production Buckets) while Node ⑥ (GuardDuty & CloudTrail SIEM) fires `InstanceCredentialExfiltration.OutsideAWS`.',
         detectionAndEvidence:
           'Documented by AWS GuardDuty & CloudTrail: `userIdentity.type == "AssumedRole"` with principal `i-0a84b92c11e3f0412` calling `s3:GetObject` from an external non-AWS IP.',
       },
@@ -147,7 +147,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Why didn’t O_CLOEXEC protect runc? Because O_CLOEXEC only closes file descriptors at the exact moment execve() is called, whereas runc processes the container’s WORKDIR (chdir) slightly earlier during the init setup phase while fd 7 is still open.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Malicious OCI Image) to Node ②/③ (K8s Worker `runc 1.1.11`), and return arrow ⇠#1.2 executing `chdir("/proc/self/fd/7")`.',
+          'On the diagram, follow arrow #1→ from Node ① (Malicious OCI Image) to Node ②/③ (K8s Worker `runc 1.1.11`), and return arrow ⇠#1 executing `chdir("/proc/self/fd/7")`.',
         detectionAndEvidence:
           'Documented by Snyk & OpenContainers: Linux Auditd `SYSCALL chdir` with path `/proc/self/fd/7` (or `fd/8`, `fd/9`) inside `runc:[2:INIT]`.',
       },
@@ -162,7 +162,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'In the Linux kernel, once a process’s fs->pwd dentry points to a mount outside its root namespace, relative path lookups starting from "." or ".." resolve along the host mount tree rather than the container’s rootfs.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ anchors `task_struct->fs->pwd` inside Node ④ (`Leaked Host Cgroup FD`), and ⇠#2.2 exposes `(unreachable)/sys/fs/cgroup` to the container shell.',
+          'On the diagram, arrow #2→ anchors `task_struct->fs->pwd` inside Node ④ (`Leaked Host Cgroup FD`), and ⇠#2 exposes `(unreachable)/sys/fs/cgroup` to the container shell.',
         detectionAndEvidence:
           'Documented by Sysdig TRT & Falco: Runtime eBPF alert where a container process has `proc.cwd` starting with `(unreachable)` or `/proc/self/fd/`.',
       },
@@ -177,7 +177,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'OpenContainers patched CVE-2024-21626 in runc 1.1.12 by marking internal cgroup descriptors O_CLOEXEC properly, closing leaked fds before chdir, and verifying via getcwd() that the working directory is not "(unreachable)" outside the container root.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ traverses `../../../../` from Node ④ into Node ⑤ (Host Node Root Filesystem) while Node ⑥ (Sysdig Falco Sensor) alerts on the container breakout.',
+          'On the diagram, arrow #3→ traverses `../../../../` from Node ④ into Node ⑤ (Host Node Root Filesystem) while Node ⑥ (Sysdig Falco Sensor) alerts on the container breakout.',
         detectionAndEvidence:
           'Documented by Snyk & Sysdig: Auditd `openat` syscall from a containerized PID accessing `../../../../etc/shadow` or `../../../../etc/crontab`.',
       },
@@ -208,7 +208,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Because token forgery happens 100% offline using the stolen private signing key, the attacker never sends a password guess or MFA push to Microsoft Entra ID—generating zero failed-login alerts.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Storm-0558 Forgery Engine) to Node ②/③ (OWA Token Validator), and return arrow ⇠#1.2 accepting the MSA-signed signature.',
+          'On the diagram, follow arrow #1→ from Node ① (Storm-0558 Forgery Engine) to Node ②/③ (OWA Token Validator), and return arrow ⇠#1 accepting the MSA-signed signature.',
         detectionAndEvidence:
           'Documented by Microsoft Threat Intel & CISA AA23-193A: Token headers referencing the retired 2016 MSA consumer signing `kid` presented against enterprise Exchange Online endpoints.',
       },
@@ -223,7 +223,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'As Wiz Research highlighted, cryptographic signature verification alone is insufficient in multi-tenant cloud architectures unless the verifier strictly binds each signing key ID (kid) to its authorized issuer realm.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ exchanges the forged token inside Node ④ (`OWA Actor Token Broker`), and ⇠#2.2 issues an active Exchange Online session cookie.',
+          'On the diagram, arrow #2→ exchanges the forged token inside Node ④ (`OWA Actor Token Broker`), and ⇠#2 issues an active Exchange Online session cookie.',
         detectionAndEvidence:
           'Documented in CISA AA23-193A: Exchange audit records showing `AppId == "00000002-0000-0ff1-ce00-000000000000"` with an empty `ClientAppId` and no corresponding Entra ID `SignInLogs` entry.',
       },
@@ -238,7 +238,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'In response to this federal agency discovery, Microsoft revoked the compromised MSA key, patched cross-realm token validation, and made Purview MailItemsAccessed logging available across standard M365 licensing tiers.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ downloads mailbox items from Node ⑤ (Enterprise Mailboxes) while Node ⑥ (Purview & CISA AA23-193A Hunter) flags the `MailItemsAccessed` anomaly.',
+          'On the diagram, arrow #3→ downloads mailbox items from Node ⑤ (Enterprise Mailboxes) while Node ⑥ (Purview & CISA AA23-193A Hunter) flags the `MailItemsAccessed` anomaly.',
         detectionAndEvidence:
           'Documented in CISA AA23-193A: KQL query on `OfficeActivity` / `CloudAppEvents` where `Operation == "MailItemsAccessed"`, `AppId == "00000002-0000-0ff1-ce00-000000000000"`, and `ClientInfoString` contains `Action=ViaProxy`.',
       },
@@ -269,7 +269,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Many organizations mistakenly place their Entra Connect server in a standard Tier-1 server OU managed by general server administrators, unaware that local admin on Entra Connect equates to Domain Admin + Cloud Global Admin.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Foothold Operator) to Node ②/③ (Entra Connect Server `CORP-AADC01`), and return arrow ⇠#1.2 returning the encrypted XML blobs from `ADSync.mdf`.',
+          'On the diagram, follow arrow #1→ from Node ① (Foothold Operator) to Node ②/③ (Entra Connect Server `CORP-AADC01`), and return arrow ⇠#1 returning the encrypted XML blobs from `ADSync.mdf`.',
         detectionAndEvidence:
           'Documented by Microsoft & SigmaHQ: Sysmon EventID 1 showing `SqlLocalDB.exe info ADSync` or non-standard processes opening `C:\\Program Files\\Microsoft Azure AD Sync\\Data\\ADSync.mdf`.',
       },
@@ -284,7 +284,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Because miiserver.exe must decrypt the MSOL_ password unattended whenever the service restarts, the entire decryption chain resides locally on the Entra Connect host.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ loads `mcrypt.dll` and unprotects the DPAPI keyset inside Node ④ (`DPAPI & mcrypt.dll Decryptor`), and ⇠#2.2 outputs the plaintext `MSOL_9a8b7c6d5e4f` password.',
+          'On the diagram, arrow #2→ loads `mcrypt.dll` and unprotects the DPAPI keyset inside Node ④ (`DPAPI & mcrypt.dll Decryptor`), and ⇠#2 outputs the plaintext `MSOL_9a8b7c6d5e4f` password.',
         detectionAndEvidence:
           'Documented by SpecterOps & Mandiant: Sysmon EventID 7 (`ImageLoad`) where `mcrypt.dll` is loaded by any process other than `miiserver.exe` (such as `powershell.exe`).',
       },
@@ -299,7 +299,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Microsoft recommends treating Entra Connect as a Tier-0 asset, disabling Seamless SSO in favor of Primary Refresh Tokens (PRT), and rotating the AZUREADSSOACC$ Kerberos decryption key every 30 days.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `DCSync` and Seamless SSO ticket forgery against Node ⑤ (Domain Controller & Entra ID) while Node ⑥ (Defender for Identity & Sentinel) alerts on EventID 4662.',
+          'On the diagram, arrow #3→ executes `DCSync` and Seamless SSO ticket forgery against Node ⑤ (Domain Controller & Entra ID) while Node ⑥ (Defender for Identity & Sentinel) alerts on EventID 4662.',
         detectionAndEvidence:
           'Documented by Microsoft Defender for Identity: Windows Security EventID 4662 (`DS-Replication-Get-Changes-All` GUID `1131f6ad-9c07-11d1-f79f-00c04fc2dcd2`) initiated by `MSOL_*` from a non-Entra-Connect IP.',
       },
@@ -330,7 +330,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Why does AWS require iam:PassRole? Because compute services like Lambda, EC2, ECS, and Glue execute code using the IAM Role attached to them; if iam:PassRole is granted with a wildcard ("*"), any user who can create a compute resource can impersonate any role trusted by that service.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (`ci-dev-deployer`) to Node ②/③ (AWS IAM & Lambda Control Plane), and return arrow ⇠#1.2 confirming `CreateFunction20150331` with `LambdaAdminDeploymentRole`.',
+          'On the diagram, follow arrow #1→ from Node ① (`ci-dev-deployer`) to Node ②/③ (AWS IAM & Lambda Control Plane), and return arrow ⇠#1 confirming `CreateFunction20150331` with `LambdaAdminDeploymentRole`.',
         detectionAndEvidence:
           'Documented by Rhino Security Labs & Datadog: CloudTrail `CreateFunction20150331` event where `requestParameters.role` references an administrative or deployment IAM role.',
       },
@@ -345,7 +345,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'In CloudTrail, the AttachUserPolicy call appears as originating from AssumedRole/LambdaAdminDeploymentRole/metrics-health-sync-tmp rather than directly from the ci-dev-deployer IAM user.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ executes the Python handler inside Node ④ (Lambda Runtime) against Node ⑤ (AWS IAM Service), and ⇠#2.2 attaches `AdministratorAccess`.',
+          'On the diagram, arrow #2→ executes the Python handler inside Node ④ (Lambda Runtime) against Node ⑤ (AWS IAM Service), and ⇠#2 attaches `AdministratorAccess`.',
         detectionAndEvidence:
           'Documented by AWS GuardDuty: `PrivilegeEscalation:IAMUser/AdministrativePermissions` and CloudTrail `AttachUserPolicy` with `policyArn` ending in `:policy/AdministratorAccess` called by a Lambda execution role.',
       },
@@ -360,7 +360,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Organizations prevent even full account administrators from blinding audit logs by configuring an AWS Organizations Trail in a separate management account and applying a Service Control Policy (SCP) that explicitly denies cloudtrail:StopLogging and cloudtrail:DeleteTrail.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ sends `StopLogging` to Node ⑤ (AWS CloudTrail Service) while Node ⑥ (Datadog Cloud SIEM & GuardDuty) fires a critical alert.',
+          'On the diagram, arrow #3→ sends `StopLogging` to Node ⑤ (AWS CloudTrail Service) while Node ⑥ (Datadog Cloud SIEM & GuardDuty) fires a critical alert.',
         detectionAndEvidence:
           'Documented by MITRE T1562.008 & AWS GuardDuty: CloudTrail `eventName == "StopLogging"` or `DeleteTrail` and GuardDuty finding `Stealth:IAMUser/CloudTrailLoggingDisabled`.',
       },
@@ -391,7 +391,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'On Kubernetes nodes hosted on EC2, pods operate one network router hop inside the node; if HttpPutResponseHopLimit is >= 2, any compromised pod can reach the underlying EC2 worker node’s IMDS endpoint and steal the node-level IAM role.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (SCARLETEEL Operator) to Node ②/③ (EKS Workload Pod), and return arrow ⇠#1.2 harvesting the `eks-node-role` STS token.',
+          'On the diagram, follow arrow #1→ from Node ① (SCARLETEEL Operator) to Node ②/③ (EKS Workload Pod), and return arrow ⇠#1 harvesting the `eks-node-role` STS token.',
         detectionAndEvidence:
           'Documented by Sysdig TRT: Falco eBPF alert for downloading/executing `aws` or `trufflehog` inside a running container (`container_drift`).',
       },
@@ -406,7 +406,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'As Sysdig highlighted in their SCARLETEEL analysis, Terraform state files are a goldmine for cloud attackers: they not only contain plaintext secrets, but also map out every VPC, account ID, and S3 bucket across the organization.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ executes `s3:GetObject` on Node ④ (S3 Terraform State Backend), and ⇠#2.2 returns the plaintext `terraform-org-admin` `AKIA` key pair from `terraform.tfstate`.',
+          'On the diagram, arrow #2→ executes `s3:GetObject` on Node ④ (S3 Terraform State Backend), and ⇠#2 returns the plaintext `terraform-org-admin` `AKIA` key pair from `terraform.tfstate`.',
         detectionAndEvidence:
           'Documented by Sysdig TRT: AWS CloudTrail S3 Data Event `GetObject` on keys ending in `.tfstate` by an EKS worker node role (`eks-node-role`) rather than the CI/CD pipeline role.',
       },
@@ -421,7 +421,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'While SCARLETEEL sometimes deploys XMRig miners on compromised Kubernetes nodes, Sysdig proved that cryptomining is often a noisy distraction while the operators exfiltrate high-value intellectual property via S3 and Lambda APIs.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ pivots from Node ①/④ into Node ⑤ (Peered Production AWS Account) while Node ⑥ (Sysdig & CloudTrail SIEM) flags the Kali/Pacu `CreateAccessKey` and `GetFunction` calls.',
+          'On the diagram, arrow #3→ pivots from Node ①/④ into Node ⑤ (Peered Production AWS Account) while Node ⑥ (Sysdig & CloudTrail SIEM) flags the Kali/Pacu `CreateAccessKey` and `GetFunction` calls.',
         detectionAndEvidence:
           'Documented by Sysdig TRT & Permiso: CloudTrail `CreateAccessKey` / `GetFunction` calls with `userAgent` containing `kali` or `pacu` following `terraform.tfstate` access.',
       },
@@ -452,7 +452,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'As Wiz Research documented, unless an organization explicitly enables constraints/iam.automaticIamGrantsForDefaultServiceAccounts, newly created Compute Engine and App Engine default service accounts receive project-wide Editor rights.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (`ci-runner`) to Node ②/③ (GCP IAM API), and return arrow ⇠#1.2 listing `482910492810-compute@developer.gserviceaccount.com`.',
+          'On the diagram, follow arrow #1→ from Node ① (`ci-runner`) to Node ②/③ (GCP IAM API), and return arrow ⇠#1 listing `482910492810-compute@developer.gserviceaccount.com`.',
         detectionAndEvidence:
           'Documented by Google Cloud Audit Logs: `google.iam.admin.v1.ListServiceAccounts` called from an external non-GCP IP address (`198.51.100.73`).',
       },
@@ -467,7 +467,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Unlike short-lived metadata tokens on a GCE VM, a user-managed service account key JSON file does not expire for 10 years by default and can be used from anywhere on the internet unless blocked by VPC Service Controls.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ calls `CreateServiceAccountKey` on Node ④ (Default Compute Service Account), and ⇠#2.2 downloads `loot_key.json` (`keyId 9f8e7d6c5b`).',
+          'On the diagram, arrow #2→ calls `CreateServiceAccountKey` on Node ④ (Default Compute Service Account), and ⇠#2 downloads `loot_key.json` (`keyId 9f8e7d6c5b`).',
         detectionAndEvidence:
           'Documented by Google Cloud SCC & Mandiant: Admin Activity Audit Log `google.iam.admin.v1.CreateServiceAccountKey` where `principalEmail != resourceName`.',
       },
@@ -482,7 +482,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'In GCP Data Access audit logs, when a Compute Engine service account authenticates via a downloaded JSON key rather than the internal GCE metadata server, authenticationInfo.serviceAccountKeyName is populated with the exact key ID—giving defenders a 100% deterministic indicator of key theft.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `storage.objects.get` against Node ⑤ (GCS Bucket) while Node ⑥ (Google Cloud SCC & Chronicle SIEM) alerts on external key usage.',
+          'On the diagram, arrow #3→ executes `storage.objects.get` against Node ⑤ (GCS Bucket) while Node ⑥ (Google Cloud SCC & Chronicle SIEM) alerts on external key usage.',
         detectionAndEvidence:
           'Documented by Mandiant & Google Cloud SCC: Data Access Audit Log `storage.objects.get` by `*-compute@developer.gserviceaccount.com` with non-empty `authenticationInfo.serviceAccountKeyName` from an external IP.',
       },
@@ -513,7 +513,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'A .har file is not just a screenshot or timing chart; by specification, it is a full JSON archive of every HTTP request and response header, cookie, and POST body transmitted by the browser tab during recording.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Threat Actor) to Node ②/③ (Uploaded `.har` Capture), and return arrow ⇠#1.2 extracting `Cookie: sid=102f8a9c7e4b...`.',
+          'On the diagram, follow arrow #1→ from Node ① (Threat Actor) to Node ②/③ (Uploaded `.har` Capture), and return arrow ⇠#1 extracting `Cookie: sid=102f8a9c7e4b...`.',
         detectionAndEvidence:
           'Documented by Okta, Cloudflare & BeyondTrust: `.har` JSON files containing `"name": "sid"` and `"X-Okta-XsrfToken"` headers from `*-admin.okta.com`.',
       },
@@ -528,7 +528,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Why did BeyondTrust’s identity policy block the attacker at the console while other tenants allowed access? Because enforcing Admin Session IP Binding or device-bound Okta FastPass policies causes Okta to reject a valid sid cookie the moment the client IP or device posture changes.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ replays `Cookie: sid=...` into Node ④ (Okta Admin Console), and ⇠#2.2 grants Super Admin dashboard access under `externalSessionId=trs102f8a9c7e4b`.',
+          'On the diagram, arrow #2→ replays `Cookie: sid=...` into Node ④ (Okta Admin Console), and ⇠#2 grants Super Admin dashboard access under `externalSessionId=trs102f8a9c7e4b`.',
         detectionAndEvidence:
           'Documented by Cloudflare SIRT & Okta: Okta System Log showing a single `authenticationContext.externalSessionId` associated with `count_distinct(securityContext.asNumber) > 1` or changing `client.userAgent.os`.',
       },
@@ -543,7 +543,7 @@ export const BATCH5_CLOUD_SAAS_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         howItWorksInPractice:
           'Following this incident, Cloudflare released an open-source client-side HAR Sanitizer (har-sanitizer.pages.dev) that automatically strips Cookie, Set-Cookie, and Authorization values before engineers share .har files.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ calls `system.api_token.create` on Node ⑤ (Okta API Tokens) while Node ⑥ (Cloudflare/BeyondTrust SIRT SIEM) detects the ASN jump and revokes the session.',
+          'On the diagram, arrow #3→ calls `system.api_token.create` on Node ⑤ (Okta API Tokens) while Node ⑥ (Cloudflare/BeyondTrust SIRT SIEM) detects the ASN jump and revokes the session.',
         detectionAndEvidence:
           'Documented by Cloudflare SIRT & BeyondTrust: Okta System Log `system.api_token.create`, `user.account.privilege.grant`, or `system.idp.lifecycle.create` following an ASN change on `externalSessionId`.',
       },

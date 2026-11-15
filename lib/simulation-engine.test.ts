@@ -212,8 +212,8 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(netDevSubBoard.subFlows.length, 4);
     // Node #2 (hollowNetDev, chainOrder=2) preserves parent prefix "2"
     assert.equal(netDevSubBoard.subFlows[0].sequenceCode, '2.1');
-    assert.equal(netDevSubBoard.subFlows[0].forwardSeq, '2.1.1');
-    assert.equal(netDevSubBoard.subFlows[0].returnSeq, '2.1.2');
+    assert.equal(netDevSubBoard.subFlows[0].forwardSeq, '2.1');
+    assert.equal(netDevSubBoard.subFlows[0].returnSeq, '2.1');
     assert.equal(netDevSubBoard.backboneLinks[0].sequenceCode, 'L2.1');
     assert.equal(netDevSubBoard.subFlows[0].forwardArrows.length, 3);
 
@@ -223,10 +223,10 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       malwareSubBoard.subFlows.map((f) => f.sequenceCode),
       ['4.1', '4.2', '4.3', '4.4']
     );
-    assert.equal(malwareSubBoard.subFlows[0].forwardSeq, '4.1.1');
-    assert.equal(malwareSubBoard.subFlows[0].returnSeq, '4.1.2');
-    assert.equal(malwareSubBoard.subFlows[3].forwardSeq, '4.4.1');
-    assert.equal(malwareSubBoard.subFlows[3].returnSeq, '4.4.2');
+    assert.equal(malwareSubBoard.subFlows[0].forwardSeq, '4.1');
+    assert.equal(malwareSubBoard.subFlows[0].returnSeq, '4.1');
+    assert.equal(malwareSubBoard.subFlows[3].forwardSeq, '4.4');
+    assert.equal(malwareSubBoard.subFlows[3].returnSeq, '4.4');
 
     // Verify dynamic active step calculation inside nested view when stageIndex=3
     assert.equal(malwareSubBoard.subFlows[2].isCurrentStep, true);
@@ -236,14 +236,31 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(malwareSubBoard.zones.length, 4);
     assert.equal(malwareSubBoard.subNodes.length, 5);
 
-    // 3. Verify legacy EntityDrillDownData still works
+    // 3. Verify EntityDrillDownData maps malwareProcesses 1-to-1 with scenario.stages (1..N)
     const malwareDrillDown = buildEntityDrillDownData(
       hollowScenario,
       malwareNode
     );
-    assert.ok(malwareDrillDown.malwareProcesses.length >= 2);
+    assert.equal(
+      malwareDrillDown.malwareProcesses.length,
+      hollowScenario.stages.length
+    );
+    assert.deepEqual(
+      malwareDrillDown.malwareProcesses.map((p) => p.step),
+      hollowScenario.stages.map((s) => s.index)
+    );
     assert.ok(malwareDrillDown.laptopHostActivities.length >= 4);
     assert.ok(malwareDrillDown.lateralMovementHops.length >= 3);
+
+    // Verify all 85 scenarios have contiguous main-board sequence codes ['1', '2', ..., 'N']
+    for (const sc of ATTACK_SCENARIOS) {
+      const sch = buildWhiteboardSchematic(sc, 1);
+      assert.deepEqual(
+        sch.flows.map((f) => f.sequenceCode),
+        sc.stages.map((s) => `${s.index}`),
+        `${sc.id} must have contiguous flow sequence codes matching stages`
+      );
+    }
   });
 
   it('computeCinematicDirectorState orchestrates Prince-of-Persia intro survey, origin focus, dynamic step zoom/pan, and outro zoom-out', async () => {
@@ -311,7 +328,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(stageActive.phase, 'STAGE_ACTIVE');
     assert.ok(stageActive.camera.scale >= 1.15);
     assert.ok(stageActive.activeCallout !== null);
-    assert.ok(stageActive.activeCallout?.forwardTag.startsWith('#1.1→'));
+    assert.ok(stageActive.activeCallout?.forwardTag.startsWith('#1→'));
 
     // 5. Outro Complete (Zooms back out to full topology)
     const outroComplete = computeCinematicDirectorState(
@@ -970,13 +987,13 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
     const flowPill = formatConciseInternalFlowPill({
       sequenceCode: '1.1',
-      forwardSeq: '1.1.1',
-      returnSeq: '1.1.2',
+      forwardSeq: '1.1',
+      returnSeq: '1.1',
       label: 'Dispatch Request to Engine',
       returnLabel: 'RESP SESSION_OPEN',
     });
     assert.equal(flowPill.codeBadge, '#1.1');
-    assert.equal(flowPill.shortRoute, '(1.1.1→ · ⇠1.1.2)');
+    assert.equal(flowPill.shortRoute, '(1.1→ · ⇠1.1)');
     assert.equal(flowPill.shortRoute.includes('...'), false);
     assert.ok(flowPill.tooltipDetail.includes('Dispatch Request to Engine'));
 

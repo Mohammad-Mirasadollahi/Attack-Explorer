@@ -25,7 +25,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'C:\\Windows\\System32\\netsh.exe is a Microsoft-signed system binary present on every Windows machine. Its portproxy subcommand registers a persistent kernel/service-level TCP forwarder inside the IpHlpSvc service and saves the rule in the Registry (HKLM\\SYSTEM\\CurrentControlSet\\Services\\PortProxy\\v4tov4\\tcp — allowing the relay tunnel to automatically survive server reboots).',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ①/② (KV Botnet SOHO Relay) to Node ③ (Windows Server configuring `netsh interface portproxy`), and return arrow ⇠#1.2 confirming the registry port-forwarding rule.',
+          'On the diagram, follow arrow #1→ from Node ①/② (KV Botnet SOHO Relay) to Node ③ (Windows Server configuring `netsh interface portproxy`), and return arrow ⇠#1 confirming the registry port-forwarding rule.',
         detectionAndEvidence:
           'Documented in CISA AA23-144A: Sysmon EventID 1 (`netsh.exe interface portproxy add v4tov4`) and Registry EventID 13 under `Services\\PortProxy\\v4tov4\\tcp`.',
       },
@@ -40,7 +40,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'The ifm (Install From Media — originally designed so admins could build a new Domain Controller from a backup folder) command in ntdsutil.exe automatically spawns a temporary Volume Shadow Copy, extracts both Active Directory\\ntds.dit and registry\\SYSTEM (which holds the BootKey required to decrypt the hashes inside ntds.dit), and then deletes the temporary shadow copy to clean up.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ pivots from Node ③ to Node ④ (Domain Controller running `ntdsutil "ac i ntds" "ifm"`), and ⇠#2.2 writes `Active Directory\\ntds.dit` and `registry\\SYSTEM` to `C:\\Windows\\Temp\\`.',
+          'On the diagram, arrow #2→ pivots from Node ③ to Node ④ (Domain Controller running `ntdsutil "ac i ntds" "ifm"`), and ⇠#2 writes `Active Directory\\ntds.dit` and `registry\\SYSTEM` to `C:\\Windows\\Temp\\`.',
         detectionAndEvidence:
           'Documented in CISA AA23-144A: Sysmon EventID 1 showing `ntdsutil.exe` with `ifm` and `create full` arguments, plus Application EventID 325/326/327 (ESENT database creation in a temp folder).',
       },
@@ -55,7 +55,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Once the attacker possesses both ntds.dit and the SYSTEM registry hive offline, they use Impacket secretsdump.py on their own machine to extract every account’s NTLM hash—including the krbtgt account (allowing them to forge Golden Tickets and log in as any user at will without ever needing malware on the network).',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ exfiltrates the compressed `ntds.dit` archive from Node ④ through Node ③ to Node ⑤ while Node ⑥ (SIEM) alerts on the `ntdsutil` + `wevtutil` LotL sequence.',
+          'On the diagram, arrow #3→ exfiltrates the compressed `ntds.dit` archive from Node ④ through Node ③ to Node ⑤ while Node ⑥ (SIEM) alerts on the `ntdsutil` + `wevtutil` LotL sequence.',
         detectionAndEvidence:
           'Documented in CISA AA23-144A & Windows Security EventID 1102 (The audit log was cleared): `ntdsutil ifm` execution followed by archive creation and `wevtutil.exe cl`.',
       },
@@ -86,7 +86,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because each residential proxy IP sends only a tiny fraction of the total login attempts and stays well below the bad-password lockout threshold (e.g., 1 attempt per hour), traditional velocity-based brute-force rules do not fire—allowing the attacker to quietly log into the forgotten single-factor test account.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ①/② (Residential Proxy Pool) to Node ③ (Legacy Test Tenant Entra ID Sign-In), and return arrow ⇠#1.2 issuing the initial OAuth token.',
+          'On the diagram, follow arrow #1→ from Node ①/② (Residential Proxy Pool) to Node ③ (Legacy Test Tenant Entra ID Sign-In), and return arrow ⇠#1 issuing the initial OAuth token.',
         detectionAndEvidence:
           'Documented by Microsoft Threat Intelligence: Entra ID Sign-in Logs (`SigninLogs`) showing distributed password spray across residential proxy ASNs targeting single-factor legacy accounts.',
       },
@@ -101,7 +101,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'In Microsoft Entra ID, an application holding AppRoleAssignment.ReadWrite.All can call the Graph API (/servicePrincipals/{id}/appRoleAssignments) to self-assign full_access_as_app (Role ID dc890d15-9560-4a4c-9b7f-a736ec74ec40 — the highest application-level Exchange permission)—escalating from a forgotten test account to full tenant-wide mail access without touching a human admin’s account.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ uses the legacy OAuth app on Node ③ to create and privilege the rogue OAuth Service Principal on Node ④ (`Add app role assignment to service principal`), with ⇠#2.2 returning the OAuth2 `client_credentials` bearer token.',
+          'On the diagram, arrow #2→ uses the legacy OAuth app on Node ③ to create and privilege the rogue OAuth Service Principal on Node ④ (`Add app role assignment to service principal`), with ⇠#2 returning the OAuth2 `client_credentials` bearer token.',
         detectionAndEvidence:
           'Documented in Microsoft Entra Audit Logs: `Add servicePrincipal`, `Add servicePrincipal credentials`, and `Add app role assignment to service principal` for `full_access_as_app` (`dc890d15-9560-4a4c-9b7f-a736ec74ec40`).',
       },
@@ -116,7 +116,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because full_access_as_app is an application-level permission (Application Permission) rather than a delegated user permission (Delegated Permission), the OAuth Bearer token grants direct read/export access to any mailbox in the Exchange Online tenant without ever logging in as those users or triggering Conditional Access user-MFA policies.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ queries Node ⑤ (Exchange Online EWS `/EWS/Exchange.asmx` `MailItemsAccessed`) from Node ④, while Node ⑥ (Microsoft Sentinel / SIEM) correlates the Entra role grant with EWS `MailItemsAccessed` telemetry.',
+          'On the diagram, arrow #3→ queries Node ⑤ (Exchange Online EWS `/EWS/Exchange.asmx` `MailItemsAccessed`) from Node ④, while Node ⑥ (Microsoft Sentinel / SIEM) correlates the Entra role grant with EWS `MailItemsAccessed` telemetry.',
         detectionAndEvidence:
           'Documented in Microsoft Purview Unified Audit Log (`MailItemsAccessed` / `EWS`) correlated with Entra Service Principal sign-ins using `AppId` holding `full_access_as_app`.',
       },
@@ -147,7 +147,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Creating a local fallback account with username <name> privilege 15 secret <hash> allows the attacker to log directly into the router with full administrative authority whenever local authentication fallback is enabled or by bypassing centralized AAA checks.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ①/② into Node ③ (Telecom Edge/Core Router IOS XE), and return arrow ⇠#1.2 granting Privilege 15 CLI execution.',
+          'On the diagram, follow arrow #1→ from Node ①/② into Node ③ (Telecom Edge/Core Router IOS XE), and return arrow ⇠#1 granting Privilege 15 CLI execution.',
         detectionAndEvidence:
           'Documented in CISA/Cisco IOS XE advisories: `%SYS-5-CONFIG_I: Configured from http by console` and unexpected `username ... privilege 15` entries in AAA accounting logs.',
       },
@@ -162,7 +162,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Inside the Guest Shell Linux container, the attacker has a full bash environment with network access to the router’s interfaces—allowing them to compile and run custom C2 tunnels, SSH relays, and packet sniffers inside an isolated container where no traditional endpoint EDR agent can be installed.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ enables `iox` / `guestshell` inside Node ④ (Router Linux Guest Shell Container), and ⇠#2.2 launches the persistent Linux C2 tunnel.',
+          'On the diagram, arrow #2→ enables `iox` / `guestshell` inside Node ④ (Router Linux Guest Shell Container), and ⇠#2 launches the persistent Linux C2 tunnel.',
         detectionAndEvidence:
           'Documented in CISA Telecom Hardening Guide: IOS XE syslog `%IOX-6-GUESTSHELL_ENABLED` and unexpected `guestshell` NAT/VirtualPortGroup interfaces when Guest Shell is not used by operations.',
       },
@@ -177,7 +177,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because core telecom routers sit at the intersection of administrative management networks and subscriber trunks, passive packet capture on the router itself harvests authentication secrets in transit without generating noisy port scans across the internal network.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ captures credentials and pivots from Node ④ into Node ⑤ (Core Telecom Management & Routing Plane), while Node ⑥ (Telecom SIEM) correlates AAA and Guest Shell anomalies.',
+          'On the diagram, arrow #3→ captures credentials and pivots from Node ④ into Node ⑤ (Core Telecom Management & Routing Plane), while Node ⑥ (Telecom SIEM) correlates AAA and Guest Shell anomalies.',
         detectionAndEvidence:
           'Documented in CISA Telecom Advisory: unauthorized `monitor capture` (EPC) sessions, GRE/IPsec tunnel creation, and TACACS+ logins from router loopback addresses.',
       },
@@ -208,7 +208,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'When C:\\Windows\\System32\\spoolsv.exe (which runs as NT AUTHORITY\\SYSTEM) parses the malformed mpdw-constraints.js file inside the DriverStore\\FileRepository directory, a memory corruption / permission flaw (CVE-2022-38028) allows the low-privilege user to overwrite the printer driver’s PnPData / DriverFile path.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ③ (GooseEgg Launcher `doit.bat`) to Node ④ (`spoolsv.exe` Print Spooler CVE-2022-38028), and return arrow ⇠#1.2 corrupting the driver descriptor as `SYSTEM`.',
+          'On the diagram, follow arrow #1→ from Node ③ (GooseEgg Launcher `doit.bat`) to Node ④ (`spoolsv.exe` Print Spooler CVE-2022-38028), and return arrow ⇠#1 corrupting the driver descriptor as `SYSTEM`.',
         detectionAndEvidence:
           'Documented by Microsoft Threat Intelligence: modification of `mpdw-constraints.js` in the `DriverStore\\FileRepository` and anomalous Print Spooler registry edits.',
       },
@@ -223,7 +223,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Instead of injecting memory into a SYSTEM process from the outside (which Windows Protected Process Light and EDR memory hooks block), CVE-2022-38028 tricks spoolsv.exe into voluntarily loading wayzgoose.dll as if it were an official Microsoft printer driver.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ loads `wayzgoose.dll` into `spoolsv.exe` (`NT AUTHORITY\\SYSTEM`), and ⇠#2.2 confirms `SYSTEM` token acquisition.',
+          'On the diagram, arrow #2→ inside Node ④ loads `wayzgoose.dll` into `spoolsv.exe` (`NT AUTHORITY\\SYSTEM`), and ⇠#2 confirms `SYSTEM` token acquisition.',
         detectionAndEvidence:
           'Documented in Sysmon EventID 7 (ImageLoaded): `C:\\Windows\\System32\\spoolsv.exe` loading an unsigned DLL (`wayzgoose*.dll`) outside standard signed Microsoft print drivers.',
       },
@@ -238,7 +238,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'In Windows, any child process created via CreateProcess inherits the security token of its parent process by default. However, because a legitimate Print Spooler (spoolsv.exe) should only talk to printers and never spawn cmd.exe or powershell.exe, this parent-child relationship is a classic high-confidence detection signal.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ spawns the `SYSTEM` payload from Node ④ (`spoolsv.exe`) and connects to Node ⑤ (Forest Blizzard C2), while Node ⑥ (SIEM / Defender) triggers a critical alert.',
+          'On the diagram, arrow #3→ spawns the `SYSTEM` payload from Node ④ (`spoolsv.exe`) and connects to Node ⑤ (Forest Blizzard C2), while Node ⑥ (SIEM / Defender) triggers a critical alert.',
         detectionAndEvidence:
           'Documented in Sigma Rule `proc_creation_win_spoolsv_susp_child_processes` & Sysmon EventID 1: `ParentImage: C:\\Windows\\System32\\spoolsv.exe` spawning `cmd.exe` or `powershell.exe`.',
       },
@@ -269,7 +269,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Unlike traditional phishing kits that host a static HTML copy of a login page (which breaks when MFA challenges or dynamic JavaScript run), an AiTM reverse proxy relays every HTTP request and response between the victim’s browser and Microsoft Entra ID in real time.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ③ (Victim Browser) through Node ②/④ (Evilginx AiTM Reverse Proxy) to Node ⑤ (Real Identity Provider), and return arrow ⇠#1.2 rendering the live login page.',
+          'On the diagram, follow arrow #1→ from Node ③ (Victim Browser) through Node ②/④ (Evilginx AiTM Reverse Proxy) to Node ⑤ (Real Identity Provider), and return arrow ⇠#1 rendering the live login page.',
         detectionAndEvidence:
           'Documented by Microsoft Threat Intelligence: Entra Sign-in Logs showing login initiation from an untrusted proxy IP/ASN shortly after an email link click in Defender for Office 365.',
       },
@@ -284,7 +284,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because the victim’s TLS session terminates on the attacker’s Evilginx server before Evilginx opens a second TLS session to Microsoft, Evilginx can read and save every HTTP header—including Set-Cookie: ESTSAUTHPERSISTENT and ESTSAUTH—the instant MFA completes.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ relays the credentials + MFA challenge through Node ④ (Evilginx Proxy) to Node ⑤, and return arrow ⇠#2.2 returns the `Set-Cookie: ESTSAUTHPERSISTENT` session token captured by Evilginx.',
+          'On the diagram, arrow #2→ relays the credentials + MFA challenge through Node ④ (Evilginx Proxy) to Node ⑤, and return arrow ⇠#2 returns the `Set-Cookie: ESTSAUTHPERSISTENT` session token captured by Evilginx.',
         detectionAndEvidence:
           'Documented in MITRE T1539 & Microsoft Entra Identity Protection: high-risk AiTM sign-in alert where the TLS fingerprint (JA3) and IP of the MFA step belong to a reverse-proxy server.',
       },
@@ -299,7 +299,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Why did MFA fail to stop this? Because TOTP codes and push approvals only verify the login event, not the domain in the browser bar. Only phishing-resistant FIDO2 / WebAuthn passkeys (which cryptographically bind the login signature to the exact domain name login.microsoftonline.com) or Token Protection (device-bound session cookies) defeat AiTM proxies.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ replays the stolen `ESTSAUTHPERSISTENT` cookie from Node ①/④ directly against Node ⑤ (Exchange Online / Outlook), while Node ⑥ (SIEM) detects the same session ID used from two different IP addresses and ASNs.',
+          'On the diagram, arrow #3→ replays the stolen `ESTSAUTHPERSISTENT` cookie from Node ①/④ directly against Node ⑤ (Exchange Online / Outlook), while Node ⑥ (SIEM) detects the same session ID used from two different IP addresses and ASNs.',
         detectionAndEvidence:
           'Documented in Microsoft Sentinel & Entra Sign-in Logs: identical `UniqueTokenIdentifier` / `SessionId` replayed from a second IP address followed by `New-InboxRule` creation in Unified Audit Logs.',
       },
@@ -330,7 +330,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Normally, the ASA’s XML parser processes <host-scan-reply> during AnyConnect posture checks. Because the Line Dancer hook intercepts the buffer inside the lina process as soon as it spots the 32-byte magic header (before standard VPN authentication even finishes), the attacker can send commands without needing a valid VPN username or password.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (UAT4356 Operator) to Node ②/③ (Cisco ASA `/CSCOSSLC/config-auth`), and return arrow ⇠#1.2 passing the XML body to the hooked `lina` handler.',
+          'On the diagram, follow arrow #1→ from Node ① (UAT4356 Operator) to Node ②/③ (Cisco ASA `/CSCOSSLC/config-auth`), and return arrow ⇠#1 passing the XML body to the hooked `lina` handler.',
         detectionAndEvidence:
           'Documented by Cisco Talos (CVE-2024-20353): anomalous POST requests to `/CSCOSSLC/config-auth` with oversized `<host-scan-reply>` payloads from non-VPN client IPs.',
       },
@@ -345,7 +345,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because perimeter network appliances cannot run standard Windows/Linux EDR agents, modifying the running lina process in volatile RAM hides the implant from normal CLI checks—and can only be caught on-box by hashing the live memory text segment via verify /md5 system:memory/text.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ (`lina` Process Memory) invokes the Line Dancer shellcode dispatcher, and ⇠#2.2 returns the command output inside the HTTPS VPN response.',
+          'On the diagram, arrow #2→ inside Node ④ (`lina` Process Memory) invokes the Line Dancer shellcode dispatcher, and ⇠#2 returns the command output inside the HTTPS VPN response.',
         detectionAndEvidence:
           'Documented in Cisco Talos ArcaneDoor IOC Guide: `verify /md5 system:memory/text` hash mismatch on the running ASA `lina` text segment and unexpected gaps in ASA syslog sequence numbers.',
       },
@@ -360,7 +360,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Combining Line Runner (disk0: boot persistence via CVE-2024-20359) with Line Dancer (volatile RAM command execution inside lina) gives the attacker both reboot survival and zero-footprint daily operation.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ persists Line Runner on Node ④ (`disk0:`) and exfiltrates captured VPN sessions and configs to Node ⑤, while Node ⑥ (SIEM / Forensic Check) detects the `.private` boot archive and `memory/text` hash divergence.',
+          'On the diagram, arrow #3→ persists Line Runner on Node ④ (`disk0:`) and exfiltrates captured VPN sessions and configs to Node ⑤, while Node ⑥ (SIEM / Forensic Check) detects the `.private` boot archive and `memory/text` hash divergence.',
         detectionAndEvidence:
           'Documented in Cisco Advisory CVE-2024-20359 & NCSC Guidance: unauthorized files on `disk0:` boot paths and `system:memory/text` integrity verification failure.',
       },
@@ -391,7 +391,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'In FortiOS, sslvpnd and almost all system utilities are compiled into a single monolithic multi-call binary (/bin/init). By chaining Return-Oriented Programming (ROP) gadgets inside that binary, exploiting sslvpnd gives the attacker immediate code execution inside the underlying Linux OS of the firewall.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (APT Operator) to Node ②/③ (FortiGate `/remote/logincheck` `sslvpnd`), and return arrow ⇠#1.2 triggering the ROP chain and shell execution.',
+          'On the diagram, follow arrow #1→ from Node ① (APT Operator) to Node ②/③ (FortiGate `/remote/logincheck` `sslvpnd`), and return arrow ⇠#1 triggering the ROP chain and shell execution.',
         detectionAndEvidence:
           'Documented in Fortinet FG-IR-22-398 & MIVD Report: `Application sslvpnd crashed` entries in FortiOS crash logs (`diagnose debug crashlog read`) and anomalous requests to `/remote/logincheck`.',
       },
@@ -406,7 +406,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'By hooking user-space libc functions like readdir(), open(), and stat() via /etc/ld.so.preload, whenever an administrator runs a diagnostic CLI command on the FortiGate, the hooked library filters out any path containing the implant’s directory before returning the output to the terminal.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ writes the implant to `/data2` and hooks `/etc/ld.so.preload`, with ⇠#2.2 intercepting userland `libc` calls.',
+          'On the diagram, arrow #2→ inside Node ④ writes the implant to `/data2` and hooks `/etc/ld.so.preload`, with ⇠#2 intercepting userland `libc` calls.',
         detectionAndEvidence:
           'Documented by Dutch MIVD: presence of `/etc/ld.so.preload` hooks and unauthorized binaries inside `/data2/` or `/bin/smartctl` when inspected via offline disk/memory forensics.',
       },
@@ -421,7 +421,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because standard firmware upgrades replace the main rootfs image but preserve persistent flash partitions like /data2 alongside hooked boot components, simply installing a FortiOS patch without wiping and reformatting the appliance leaves COATHANGER active.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ persists across boot inside Node ④ and opens the TLS C2 channel to Node ⑤, while Node ⑥ (SIEM / Out-of-Band NetFlow) detects the undocumented outbound TLS sessions from the firewall’s external interface.',
+          'On the diagram, arrow #3→ persists across boot inside Node ④ and opens the TLS C2 channel to Node ⑤, while Node ⑥ (SIEM / Out-of-Band NetFlow) detects the undocumented outbound TLS sessions from the firewall’s external interface.',
         detectionAndEvidence:
           'Documented in MIVD COATHANGER Advisory: outbound TLS traffic initiated by the FortiGate appliance itself to unknown external IPs and modified hashes on `/bin/smartctl`.',
       },
@@ -452,7 +452,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'In a two-tier Apache + Tomcat AJP architecture, Tomcat does not re-verify passwords; it assumes the front-end Apache server already checked the user’s login before setting SC_A_REMOTE_USER. Smuggling a raw second AJP frame inside the socket stream lets an unauthenticated attacker inject SC_A_REMOTE_USER=admin directly into Tomcat.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① to Node ②/③ (F5 BIG-IP Apache `mod_proxy_ajp`), and return arrow ⇠#1.2 smuggling the forged `REMOTE_USER=admin` AJP packet into Node ④ (Tomcat `:8009`).',
+          'On the diagram, follow arrow #1→ from Node ① to Node ②/③ (F5 BIG-IP Apache `mod_proxy_ajp`), and return arrow ⇠#1 smuggling the forged `REMOTE_USER=admin` AJP packet into Node ④ (Tomcat `:8009`).',
         detectionAndEvidence:
           'Documented by ProjectDiscovery & F5 K000137353: `/var/log/httpd/httpd_errors` and Tomcat logs showing anomalous AJP header parsing and unauthenticated hits to `/tmui/Control/jspmap/`.',
       },
@@ -467,7 +467,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'When Tomcat processes the smuggled /tmui/Control/form request with SC_A_REMOTE_USER=admin, it communicates with the BIG-IP master control daemon (mcpd) to write the new administrator account into /config/bigip_user.conf.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ invokes the TMUI `UserCreate` handler as `admin`, and ⇠#2.2 registers the rogue administrator in `/config/bigip_user.conf`.',
+          'On the diagram, arrow #2→ inside Node ④ invokes the TMUI `UserCreate` handler as `admin`, and ⇠#2 registers the rogue administrator in `/config/bigip_user.conf`.',
         detectionAndEvidence:
           'Documented in `/var/log/audit` & `/var/log/ltm`: creation of a new user account with `role=admin` and `shell=bash` without a preceding interactive web login.',
       },
@@ -482,7 +482,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because an F5 BIG-IP sits at the front of the datacenter terminating TLS connections and load-balancing internal servers, root access on the appliance exposes both private TLS keys and direct network paths into internal application VLANs.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `tmsh run /util bash` on Node ⑤ (BIG-IP Root OS & SSL Vault) while Node ⑥ (SIEM) alerts on `auditd` `tmsh` bash execution.',
+          'On the diagram, arrow #3→ executes `tmsh run /util bash` on Node ⑤ (BIG-IP Root OS & SSL Vault) while Node ⑥ (SIEM) alerts on `auditd` `tmsh` bash execution.',
         detectionAndEvidence:
           'Documented in F5 K000137353 (`/var/log/audit`): `mcpd` / `tmsh` audit log entries showing `run /util bash -c` executed from `tmui` / `tomcat`.',
       },
@@ -513,7 +513,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because the authentication filter checked the raw un-normalized URI prefix (startswith("/api/v1/totp/user-backup-code")) before the backend web framework normalized "../" segments (CVE-2023-46805), any unauthenticated internet client can reach any internal REST API endpoint on the VPN appliance.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Attacker) to Node ②/③ (Ivanti VPN Gateway `/api/v1/totp/user-backup-code/../../license/keys-status/`), and return arrow ⇠#1.2 bypassing the auth filter.',
+          'On the diagram, follow arrow #1→ from Node ① (Attacker) to Node ②/③ (Ivanti VPN Gateway `/api/v1/totp/user-backup-code/../../license/keys-status/`), and return arrow ⇠#1 bypassing the auth filter.',
         detectionAndEvidence:
           'Documented in CISA ED 24-01 & Splunk SURGe: HTTP requests containing `/api/v1/totp/user-backup-code/..` or `/api/v1/cav/client/status/..`.',
       },
@@ -528,7 +528,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Why did the attacker chain two CVEs? Because CVE-2024-21887 (command injection in keys-status) normally required an administrator login, and CVE-2023-46805 (path traversal) only bypassed authentication without running code. Combining both inside a single HTTP URL turns them into a 1-packet unauthenticated root RCE.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ triggers `popen()` inside Node ④ (Ivanti Python REST Backend), and ⇠#2.2 executes the stage-1 payload as `root`.',
+          'On the diagram, arrow #2→ triggers `popen()` inside Node ④ (Ivanti Python REST Backend), and ⇠#2 executes the stage-1 payload as `root`.',
         detectionAndEvidence:
           'Documented by Volexity & Mandiant: Ivanti unallocated log / syslog entries showing `/api/v1/license/keys-status/;` followed by unexpected child processes of the `web` daemon.',
       },
@@ -543,7 +543,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'As Mandiant UNC5221 documented, the threat actor also patches ComponentIntegrity.pm (so Ivanti’s built-in Integrity Checker Tool reports "0 modified files" when an admin runs an internal self-check, which is why CISA ED 24-01 mandated running the external offline ICT snapshot tool).',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ implants WIREFIRE/ZIPLINE on Node ④ and harvests VPN user credentials via WARPWIRE on Node ⑤, while Node ⑥ (Splunk SIEM / External ICT) detects the `visits.py` modification and outbound traffic.',
+          'On the diagram, arrow #3→ implants WIREFIRE/ZIPLINE on Node ④ and harvests VPN user credentials via WARPWIRE on Node ⑤, while Node ⑥ (Splunk SIEM / External ICT) detects the `visits.py` modification and outbound traffic.',
         detectionAndEvidence:
           'Documented by Volexity (UTA0178) & Mandiant (UNC5221): modification of `visits.py`, `libsecure.so` (`ZIPLINE`), and `ComponentIntegrity.pm` discovered via external Integrity Checker Tool (ICT) snapshots.',
       },
@@ -574,7 +574,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'In the C standard library, snprintf(buf, size, fmt, ...) stops writing at size bytes to prevent a crash, but returns the theoretical total length of the formatted string. Passing that unchecked return value directly to the HTTP socket writer causes an out-of-bounds memory over-read (CVE-2023-4966) from the NetScaler packet engine (nsppe).',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the 24 KB `Host` header from Node ① to Node ②/③ (Citrix NetScaler `/oauth/idp/`), and ⇠#1.2 returns HTTP 200 OK leaking 131 KB of memory.',
+          'On the diagram, arrow #1→ sends the 24 KB `Host` header from Node ① to Node ②/③ (Citrix NetScaler `/oauth/idp/`), and ⇠#1 returns HTTP 200 OK leaking 131 KB of memory.',
         detectionAndEvidence:
           'Documented in Assetnote, CISA AA23-325A & Suricata SID 2048918: `GET /oauth/idp/.well-known/openid-configuration` with oversized `Host` header and >130 KB HTTP 200 response.',
       },
@@ -589,7 +589,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because the NSC_AAAC cookie represents an active server-side AAA session in NetScaler memory, even patching the appliance or resetting the victim’s Active Directory password does not kick the attacker out unless the administrator explicitly flushes active sessions on the appliance via kill aaa session -all and kill icaconnection -all.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ replays the leaked `NSC_AAAC` cookie on Node ③/④ (NetScaler Session Engine), and ⇠#2.2 grants VDI ICA desktop access without MFA.',
+          'On the diagram, arrow #2→ replays the leaked `NSC_AAAC` cookie on Node ③/④ (NetScaler Session Engine), and ⇠#2 grants VDI ICA desktop access without MFA.',
         detectionAndEvidence:
           'Documented in Splunk SURGe & NetScaler AAA Syslog (`ns.log`): Same `NSC_AAAC` session identifier active across two different client IP addresses / ASNs without a new authentication event.',
       },
@@ -604,7 +604,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Unlike PsExec or sc.exe (which register a new Windows Service and trigger System EventID 7045 on the target server), lateral movement via DCOM MMC20.Application abuses an already-registered Microsoft COM class over TCP/135.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ pivots from Node ④ (VDI Session) to Node ⑤ (Internal Server via DCOM `:135`) while Node ⑥ (Splunk SIEM) correlates the session hijack.',
+          'On the diagram, arrow #3→ pivots from Node ④ (VDI Session) to Node ⑤ (Internal Server via DCOM `:135`) while Node ⑥ (Splunk SIEM) correlates the session hijack.',
         detectionAndEvidence:
           'Documented in CISA AA23-325A & Mandiant: `mmc.exe -Embedding` spawned on remote servers via DCOM following Citrix ICA session IP change.',
       },
@@ -635,7 +635,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'TrueType fonts are not just static shapes; they contain a Turing-complete virtual machine (font hinting bytecode) designed in the early 1990s. Abusing the legacy ADJUST instruction corrupts the C++ vtable on the heap inside IMAgent before any UI notification is ever rendered.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ delivers the zero-click iMessage payload from Node ①/② to Node ③ (`IMAgent` FontParser), and ⇠#1.2 triggers RCE in userland.',
+          'On the diagram, arrow #1→ delivers the zero-click iMessage payload from Node ①/② to Node ③ (`IMAgent` FontParser), and ⇠#1 triggers RCE in userland.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT: MobileBackup/Sysdiagnose artifacts showing anomalous `IMAgent` attachment processing followed by immediate message deletion.',
       },
@@ -650,7 +650,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because the CPU’s MMU/PPL checks only apply to memory writes executed by the CPU cores themselves, instructing an on-chip peripheral DMA engine via MMIO registers to write to physical memory bypasses PPL page-table write protection.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ writes to physical MMIO DMA registers to overwrite kernel memory, with ⇠#2.2 granting full kernel read/write.',
+          'On the diagram, arrow #2→ inside Node ④ writes to physical MMIO DMA registers to overwrite kernel memory, with ⇠#2 granting full kernel read/write.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT (37C3 presentation): Physical MMIO range writes at `0x206040000` bypassing PPL page table restrictions.',
       },
@@ -665,7 +665,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Even though TriangleDB deletes its iMessage entry and runs only in RAM, iOS automatically records how many bytes of cellular/Wi-Fi data each process uses inside DataUsage.sqlite—leaving orphaned network-usage rows and timestamp gaps that Kaspersky’s triangle_check forensic tool uses to prove infection.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ deploys Node ⑤ (`TriangleDB` in RAM) and beacons out while Node ⑥ (Kaspersky MVT / SIEM) detects the `DataUsage.sqlite` & `OSAnalytics` anomalies.',
+          'On the diagram, arrow #3→ deploys Node ⑤ (`TriangleDB` in RAM) and beacons out while Node ⑥ (Kaspersky MVT / SIEM) detects the `DataUsage.sqlite` & `OSAnalytics` anomalies.',
         detectionAndEvidence:
           'Documented in Kaspersky `triangle_check` tool: Orphaned network usage records in `DataUsage.sqlite` for system processes and timestamp gaps in `OSAnalytics`.',
       },
@@ -696,7 +696,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Unlike KnownDLLs (such as kernel32.dll or ntdll.dll, which Windows forces every program to load exclusively from System32), version.dll is not on the Default KnownDLLs list—so any executable that imports version.dll without specifying LOAD_LIBRARY_SEARCH_SYSTEM32 will load a local version.dll from its own folder first.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ shows Node ③ (Signed `ecls.exe`) loading Node ④ (Malicious `version.dll` via CVE-2024-11859), with ⇠#1.2 logging Sysmon EventID 7.',
+          'On the diagram, arrow #1→ shows Node ③ (Signed `ecls.exe`) loading Node ④ (Malicious `version.dll` via CVE-2024-11859), with ⇠#1 logging Sysmon EventID 7.',
         detectionAndEvidence:
           'Documented in Sysmon EventID 7 & ESET Advisory CVE-2024-11859: `ecls.exe` loading unsigned `version.dll` from outside `System32`.',
       },
@@ -711,7 +711,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'By adding linker export forwarders in the malicious DLL’s Export Address Table (pointing functions like GetFileVersionInfoW to C:\\Windows\\System32\\version.GetFileVersionInfoW), the host program continues to work normally while the attacker’s decrypted shellcode runs in the same process memory.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ decrypts the TCESB payload into executable memory while proxying exports, and ⇠#2.2 confirms stage 2 initialization.',
+          'On the diagram, arrow #2→ inside Node ④ decrypts the TCESB payload into executable memory while proxying exports, and ⇠#2 confirms stage 2 initialization.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT: Dual loading of `version.dll` (both local unsigned and `System32` signed) inside `ecls.exe` process memory.',
       },
@@ -726,7 +726,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Why is this still detectable by defenders? Because ecls.exe is a standalone, offline on-demand file scanner that never connects to the internet during normal operation—meaning any Sysmon EventID 3 (NetworkConnect) log showing ecls.exe opening an outbound TCP/443 socket is an immediate indicator of compromise.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ connects Node ④ (`ecls.exe` / TCESB) to Node ⑤ (External C2) and triggers an alert on Node ⑥ (SIEM / EDR).',
+          'On the diagram, arrow #3→ connects Node ④ (`ecls.exe` / TCESB) to Node ⑤ (External C2) and triggers an alert on Node ⑥ (SIEM / EDR).',
         detectionAndEvidence:
           'Documented in Sysmon EventID 3 (NetworkConnect): Standalone command-line scanner `ecls.exe` initiating outbound TCP/443 connections.',
       },
@@ -757,7 +757,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Abusing a pre-installed inbox Windows driver (appid.sys — Living off the Land in the Kernel) completely sidesteps HVCI / Vulnerable Driver Blocklist checks because appid.sys is an official part of the Windows operating system.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ shows Node ③ (Userland Service Loader) opening a device handle to Node ④ (`appid.sys` Kernel Driver), with ⇠#1.2 returning the valid driver handle.',
+          'On the diagram, arrow #1→ shows Node ③ (Userland Service Loader) opening a device handle to Node ④ (`appid.sys` Kernel Driver), with ⇠#1 returning the valid driver handle.',
         detectionAndEvidence:
           'Documented in Avast & Microsoft CVE-2024-21338 Analysis: Non-standard service process opening device handle to `\\Device\\AppId` and issuing IOCTL `0x22A018`.',
       },
@@ -772,7 +772,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'When a thread calls NtWriteVirtualMemory, the kernel checks KTHREAD->PreviousMode: if it is 1 (UserMode), the kernel rejects any target address above 0x7FFFFFFEFFFF (protecting kernel space). Once CVE-2024-21338 flips PreviousMode to 0 (KernelMode), the thread can read and overwrite any address in the Windows kernel directly from user mode.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ sends IOCTL `0x22A018` inside Node ④ (`appid.sys!AipSmartHashImageFile`), and ⇠#2.2 flips `KTHREAD.PreviousMode = 0`.',
+          'On the diagram, arrow #2→ sends IOCTL `0x22A018` inside Node ④ (`appid.sys!AipSmartHashImageFile`), and ⇠#2 flips `KTHREAD.PreviousMode = 0`.',
         detectionAndEvidence:
           'Documented in Kernel Crash/ETW Telemetry: IOCTL `0x22A018` targeting `appid.sys` followed by `KTHREAD PreviousMode` modification.',
       },
@@ -787,7 +787,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'By surgically zeroing out the callback pointers registered by the security vendor’s kernel driver (.sys) and flipping the ProviderEnableInfo bit on the ETW Threat-Intelligence provider, Lazarus can subsequently dump LSASS and run malware with zero EDR alerts.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ overwrites Node ⑤ (Kernel Callback Arrays & ETW Handle) from Node ④ while Node ⑥ (SIEM) logs the sudden telemetry heartbeat drop.',
+          'On the diagram, arrow #3→ overwrites Node ⑤ (Kernel Callback Arrays & ETW Handle) from Node ④ while Node ⑥ (SIEM) logs the sudden telemetry heartbeat drop.',
         detectionAndEvidence:
           'Documented by Kaspersky & Avast: Kernel Patch Protection (PatchGuard) / Defender Kernel Integrity alert on `PspCreateProcessNotifyRoutine` and `EtwThreatIntProvRegHandle` tampering.',
       },
@@ -818,7 +818,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because TeamCity’s REST API endpoint for creating access tokens follows the URL template /app/rest/users/{userLocator}/tokens/{tokenName}, naming the token "RPC2" satisfies both the REST controller parameter and the /**/RPC2 authentication-bypass wildcard simultaneously (CVE-2023-42793).',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `POST /app/rest/users/id:1/tokens/RPC2` from Node ①/② to Node ③ (TeamCity Server), and ⇠#1.2 returns the plaintext admin Bearer token.',
+          'On the diagram, arrow #1→ sends `POST /app/rest/users/id:1/tokens/RPC2` from Node ①/② to Node ③ (TeamCity Server), and ⇠#1 returns the plaintext admin Bearer token.',
         detectionAndEvidence:
           'Documented in TeamCity `teamcity-javaLogging` / access logs: `POST /app/rest/users/id:1/tokens/RPC2` returning HTTP 200 followed by `DELETE /app/rest/users/id:1/tokens/RPC2`.',
       },
@@ -833,7 +833,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Although deleting the RPC2 token removes it from the current UI token table, the token creation and deletion events remain recorded in logs/teamcity-activities.log and child process creations are captured by endpoint telemetry.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ invokes `/app/rest/debug/processes` on Node ④ (TeamCity JVM Process Spawner), and ⇠#2.2 spawns the child shell process.',
+          'On the diagram, arrow #2→ invokes `/app/rest/debug/processes` on Node ④ (TeamCity JVM Process Spawner), and ⇠#2 spawns the child shell process.',
         detectionAndEvidence:
           'Documented by Mandiant: `POST /app/rest/debug/processes` in `teamcity-server.log` and `java.exe` spawning `whoami` / `nltest` / `curl`.',
       },
@@ -848,7 +848,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Compromising a CI/CD server gives the attacker a force-multiplier: they can both steal production cloud credentials stored in build variables and inject malicious code into software packages being built and signed by the server.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ extracts secrets from Node ⑤ (CI/CD Vault & AD) via Node ④ while Node ⑥ (SIEM) triggers on TeamCity child process and token anomalies.',
+          'On the diagram, arrow #3→ extracts secrets from Node ⑤ (CI/CD Vault & AD) via Node ④ while Node ⑥ (SIEM) triggers on TeamCity child process and token anomalies.',
         detectionAndEvidence:
           'Documented in Joint CISA Advisory & Mandiant: Creation of new TeamCity admin accounts in `teamcity-activities.log` and `GraphicalProton` OneDrive C2 beacons.',
       },
@@ -879,7 +879,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'In ASP.NET, a URL like /Page.aspx/extra is routed to the handler for /Page.aspx with Request.PathInfo set to "/extra". Because the security check tested Request.Path instead of Request.FilePath, a single trailing "/" bypassed the lock completely.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `GET /SetupWizard.aspx/anything` from Node ①/② to Node ③ (ScreenConnect Server), and ⇠#1.2 returns HTTP 200 SetupWizard form.',
+          'On the diagram, arrow #1→ sends `GET /SetupWizard.aspx/anything` from Node ①/② to Node ③ (ScreenConnect Server), and ⇠#1 returns HTTP 200 SetupWizard form.',
         detectionAndEvidence:
           'Documented by Splunk SURGe & Huntress: HTTP GET/POST requests matching `/SetupWizard.aspx/*` returning status 200 on an already provisioned server.',
       },
@@ -894,7 +894,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Because the Setup Wizard was designed for a fresh installation, completing the wizard resets App_Data\\User.xml from scratch and returns an authenticated administrator session cookie to the attacker’s browser.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ overwrites `App_Data\\User.xml` with the rogue admin account, and ⇠#2.2 returns an authenticated admin session cookie.',
+          'On the diagram, arrow #2→ inside Node ④ overwrites `App_Data\\User.xml` with the rogue admin account, and ⇠#2 returns an authenticated admin session cookie.',
         detectionAndEvidence:
           'Documented in Sysmon EventID 11 & ScreenConnect Audit Logs: Modification of `C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml` and `App_Extensions\\*.ashx` by `ScreenConnect.Service.exe`.',
       },
@@ -909,7 +909,7 @@ export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuide
         howItWorksInPractice:
           'Without needing a single exploit on the client workstations, the attacker uses ScreenConnect’s built-in "Backstage" command runner to execute arbitrary commands as NT AUTHORITY\\SYSTEM across hundreds or thousands of managed endpoints simultaneously.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ pushes remote commands from Node ④ to Node ⑤ (Managed Endpoints running `ScreenConnect.ClientService.exe`) while Node ⑥ (Splunk SIEM) alerts.',
+          'On the diagram, arrow #3→ pushes remote commands from Node ④ to Node ⑤ (Managed Endpoints running `ScreenConnect.ClientService.exe`) while Node ⑥ (Splunk SIEM) alerts.',
         detectionAndEvidence:
           'Documented by Huntress & Splunk SURGe: `ScreenConnect.ClientService.exe` spawning `cmd.exe` / `powershell.exe` from `C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd`.',
       },

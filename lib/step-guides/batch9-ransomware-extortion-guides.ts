@@ -27,7 +27,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because `QuickAssist.exe` is natively included in Windows 10/11 and communicates exclusively with legitimate `*.microsoft.com` relay servers over HTTPS, standard perimeter firewalls and web proxies allow the session by default.',
         diagramAlignment:
-          'Vector #1.1 links the Storm-1811 Operator through Microsoft Teams External Federation to the Workstation (`QuickAssist.exe Session`).',
+          'Step #1 (#1→ / ⇠#1) links the Storm-1811 Operator through Microsoft Teams External Federation to the Workstation (`QuickAssist.exe Session`).',
         detectionAndEvidence:
           'Correlating high-volume inbound SMTP spam spikes with external Microsoft Teams calls and Sysmon EventID 1 execution of `QuickAssist.exe`.',
       },
@@ -42,7 +42,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Closing all kernel handles held by an EDR process via `Backstab` renders the security sensor deaf and unable to inspect files or processes even if the main user-mode `.exe` appears running in Task Manager.',
         diagramAlignment:
-          'Vector #2.1 connects the Workstation (`QuickAssist.exe`) to the CISA AA24-131A / Defender XDR Sensor as `Backstab` and `netscan.exe` execute.',
+          'Step #2 (#2→ / ⇠#2) connects the Workstation (`QuickAssist.exe`) to the CISA AA24-131A / Defender XDR Sensor as `Backstab` and `netscan.exe` execute.',
         detectionAndEvidence:
           'Sysmon EventID 1 & 6 alerting on `QuickAssist.exe` spawning `cmd.exe`/`powershell.exe`/`msiexec.exe` and `backstab.exe` loading `PROCEXP.SYS`.',
       },
@@ -57,7 +57,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'By encrypting 64 bytes and skipping 128 bytes across large files, Black Basta corrupts multi-terabyte file servers in minutes before administrators can pull network cables.',
         diagramAlignment:
-          'Vector #3.1 traces the Workstation deploying `basta.exe` across Enterprise Shares (`.basta ChaCha20`).',
+          'Step #3 (#3→ / ⇠#3) traces the Workstation deploying `basta.exe` across Enterprise Shares (`.basta ChaCha20`).',
         detectionAndEvidence:
           'EDR behavioral blocking of `vssadmin.exe delete shadows` and detection of `.basta` file renames and `readme.faa.txt` ransom note creation.',
       },
@@ -89,7 +89,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Many administrators configured Duo/Azure MFA on their custom VPN tunnel group (`Corp-MFA-Tunnel`) but left the built-in `DefaultWEBVPNGroup` or `DefaultRAGroup` active with local/LDAP password-only authentication.',
         diagramAlignment:
-          'Vector #1.1 links the Akira Affiliate Operator to the Cisco ASA / AnyConnect VPN Appliance over TCP/UDP 443.',
+          'Step #1 (#1→ / ⇠#1) links the Akira Affiliate Operator to the Cisco ASA / AnyConnect VPN Appliance over TCP/UDP 443.',
         detectionAndEvidence:
           'Cisco ASA syslog `%ASA-6-722022` and `%ASA-6-113004` events showing logins to `DefaultWEBVPNGroup` or `DefaultRAGroup` from external hosting ASNs.',
       },
@@ -104,7 +104,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because backup servers require high-privilege access to every hypervisor and domain controller to perform backups, compromising the Veeam database gives the attacker immediate Tier-0 hypervisor credentials.',
         diagramAlignment:
-          'Vector #2.1 connects the Cisco ASA VPN to the Windows Jump Host (`Chisel & Mimikatz`) and triggers the CISA AA24-109A / Sophos MDR Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Cisco ASA VPN to the Windows Jump Host (`Chisel & Mimikatz`) and triggers the CISA AA24-109A / Sophos MDR Sensor.',
         detectionAndEvidence:
           'Sysmon EventID 1 for `chisel.exe` or `sqlcmd.exe` querying `[VeeamBackup].[dbo].[Credentials]` and DPAPI `CryptUnprotectData` calls on the Veeam server.',
       },
@@ -119,7 +119,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because most enterprises do not install EDR agents directly inside the proprietary VMware ESXi `VMkernel` OS, encrypting from the hypervisor shell bypasses all guest-OS Windows/Linux EDR agents installed inside the VMs.',
         diagramAlignment:
-          'Vector #3.1 traces the SSH pivot from the Windows Jump Host to the VMware ESXi Host (`esxcli + Rust Akira`).',
+          'Step #3 (#3→ / ⇠#3) traces the SSH pivot from the Windows Jump Host to the VMware ESXi Host (`esxcli + Rust Akira`).',
         detectionAndEvidence:
           'Forwarding ESXi `/var/log/shell.log` and `/var/log/hostd.log` to a SIEM to alert immediately on `esxcli vm process kill` and unauthorized ELF execution from `/tmp`.',
       },
@@ -151,7 +151,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Staging tools specifically inside `C:\\Users\\Public\\Music\\` is a consistent operational tradecraft hallmark of Play ransomware intrusions.',
         diagramAlignment:
-          'Vector #1.1 links the Play Ransomware Operator through the Compromised Perimeter to the Grixba `.NET` Scanner (`inf_g.exe`).',
+          'Step #1 (#1→ / ⇠#1) links the Play Ransomware Operator through the Compromised Perimeter to the Grixba `.NET` Scanner (`inf_g.exe`).',
         detectionAndEvidence:
           'Sysmon EventID 1 & 7 detecting unsigned `.NET` binaries in `C:\\Users\\Public\\Music\\` loading `Costura` assemblies and passing `-m:all` or `-m:s` command-line flags.',
       },
@@ -166,7 +166,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because `vssadmin.exe`, `wmic.exe`, and `powershell.exe` are never spawned during this step, detection rules that rely purely on process command-line strings completely miss both the `ntds.dit` theft and the shadow copy deletion.',
         diagramAlignment:
-          'Vector #2.1 connects the Grixba Scanner host to the AlphaVSS Shadow Access node while the CISA AA23-352A / Symantec EDR Sensor observes the `AlphaVSS.x64.dll` load.',
+          'Step #2 (#2→ / ⇠#2) connects the Grixba Scanner host to the AlphaVSS Shadow Access node while the CISA AA23-352A / Symantec EDR Sensor observes the `AlphaVSS.x64.dll` load.',
         detectionAndEvidence:
           'Sysmon EventID 7 (`ImageLoaded`) for `AlphaVSS.x64.dll` / `AlphaFS.dll` and Windows `VSSEvent` log monitoring for non-standard processes invoking `IVssBackupComponents`.',
       },
@@ -181,7 +181,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Encrypting only a few 1MB chunks per multi-gigabyte file reduces disk I/O by over 95%, allowing Play to corrupt terabytes of storage in minutes while keeping average file-entropy scores low enough to fool naive entropy-based ransomware detectors.',
         diagramAlignment:
-          'Vector #3.1 traces the AlphaVSS Shadow Access node into the `.play` Shares intermittent encryption phase.',
+          'Step #3 (#3→ / ⇠#3) traces the AlphaVSS Shadow Access node into the `.play` Shares intermittent encryption phase.',
         detectionAndEvidence:
           'Minifilter behavioral detection of `0x100000`-stride partial file overwrites, `.play` extension renames, and `0xdeadbeef` file footers.',
       },
@@ -213,7 +213,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'The shared use of `PortStarter` and `SilentKill` provided high-confidence forensic proof that Vice Society (`DEV-0832`) operators transitioned directly to the Rhysida ransomware payload in mid-2023.',
         diagramAlignment:
-          'Vector #1.1 links the Rhysida Affiliate to the `PortStarter` Go Backdoor (`Firewall Rule`) on the compromised host.',
+          'Step #1 (#1→ / ⇠#1) links the Rhysida Affiliate to the `PortStarter` Go Backdoor (`Firewall Rule`) on the compromised host.',
         detectionAndEvidence:
           'Sysmon EventID 1 for `netsh.exe advfirewall firewall add rule` spawned by unsigned Golang binaries in `C:\\ProgramData` and Windows Firewall EventID 2004.',
       },
@@ -228,7 +228,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Enabling `DisableRestrictedAdmin = 0` across the domain allows the operator to Pass-the-Hash over RDP (`mstsc.exe /restrictedadmin`) without exposing their own cleartext credentials on target hosts.',
         diagramAlignment:
-          'Vector #2.1 connects the `PortStarter` host to the `SilentKill` PowerShell Script (`g.ps1`) and triggers the CISA AA23-319A / Sekoia XDR Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the `PortStarter` host to the `SilentKill` PowerShell Script (`g.ps1`) and triggers the CISA AA23-319A / Sekoia XDR Sensor.',
         detectionAndEvidence:
           'PowerShell EventID 4104 capturing `SilentKill` service-termination loops and Registry EventID 13 modifications to `Lsa\\DisableRestrictedAdmin`.',
       },
@@ -243,7 +243,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Unlike most ransomware families that drop `.txt` or `.hta` ransom notes, Rhysida generates a standalone `.pdf` document (`CriticalBreachDetected.pdf`) in every encrypted directory.',
         diagramAlignment:
-          'Vector #3.1 traces `SilentKill` handing off to the `LibTomCrypt AES-256-CTR (.rhysida)` encryption stage across the enterprise.',
+          'Step #3 (#3→ / ⇠#3) traces `SilentKill` handing off to the `LibTomCrypt AES-256-CTR (.rhysida)` encryption stage across the enterprise.',
         detectionAndEvidence:
           'YARA rules matching `LibTomCrypt` constants in MinGW PE binaries, creation of `CriticalBreachDetected.pdf`, and `.rhysida` file extensions.',
       },
@@ -275,7 +275,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because the C2 IP and X.509 certificates are compiled directly into each binary right before deployment, every victim receives a distinct file hash.',
         diagramAlignment:
-          'Vector #1.1 links the BianLian Extortion C2 to the Golang mTLS Backdoor (`Windows/Linux`) over TCP port 443.',
+          'Step #1 (#1→ / ⇠#1) links the BianLian Extortion C2 to the Golang mTLS Backdoor (`Windows/Linux`) over TCP port 443.',
         detectionAndEvidence:
           'Sysmon EventID 1 & 3 identifying unsigned Golang binaries in `C:\\Windows\\Temp` or `C:\\ProgramData` containing Go symbols `main.backconnect`, `hashicorp/yamux`, and `armon/go-socks5`.',
       },
@@ -290,7 +290,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'By centralizing C2 and proxying inside a single lightweight Go binary that contains zero exploit code or encryption routines, BianLian minimizes its endpoint footprint across the domain.',
         diagramAlignment:
-          'Vector #2.1 connects the Golang mTLS Backdoor to the Embedded `go-socks5` Memory Proxy and triggers the CISA AA23-136A / Red Canary Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Golang mTLS Backdoor to the Embedded `go-socks5` Memory Proxy and triggers the CISA AA23-136A / Red Canary Sensor.',
         detectionAndEvidence:
           'Network and EDR telemetry showing a single non-DC host initiating rapid fan-out SMB (`445`) and LDAP (`389`) connections while maintaining a persistent external TLS stream.',
       },
@@ -305,7 +305,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Even when `rclone.exe` is renamed to `Win.exe` or `svchost.exe`, its PE version-info header (`OriginalFileName: rclone.exe`) and Go symbol table remain intact and detectable by YARA/Sysmon.',
         diagramAlignment:
-          'Vector #3.1 traces the `go-socks5` proxy and `SharpShares` discovery into Pure Exfiltration (`rclone / SharpShares`) out to the BianLian Mega/FTP Drop.',
+          'Step #3 (#3→ / ⇠#3) traces the `go-socks5` proxy and `SharpShares` discovery into Pure Exfiltration (`rclone / SharpShares`) out to the BianLian Mega/FTP Drop.',
         detectionAndEvidence:
           'Sysmon EventID 1 matching `OriginalFileName=rclone.exe` or command-line flags (`copy`, `--bwlimit`, `mega:`) and egress firewall blocks on `*.mega.co.nz`.',
       },
@@ -337,7 +337,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Both the outer HermeticWiper executable (signed by `Hermetica Digital Ltd` until revoked) and the inner `empntdrv.sys` kernel driver (signed by `CHENGDU YIWO Tech Development Co., Ltd.`) carried valid Authenticode signatures at the time of the attack.',
         diagramAlignment:
-          'Vector #1.1 links the Sandworm GPO Deployment and HermeticWiper binary to the Signed EaseUS Driver (`empntdrv.sys`).',
+          'Step #1 (#1→ / ⇠#1) links the Sandworm GPO Deployment and HermeticWiper binary to the Signed EaseUS Driver (`empntdrv.sys`).',
         detectionAndEvidence:
           'Sysmon EventID 6 (`DriverLoaded`) for `empntdrv.sys` or `C:\\Windows\\System32\\drivers\\??dr.sys` signed by `CHENGDU YIWO Tech Development Co., Ltd.`.',
       },
@@ -352,7 +352,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'By parsing the NTFS `$MFT` runlist fragments directly rather than using standard Windows file APIs, HermeticWiper could corrupt the exact physical sectors backing critical OS metadata even while Windows held those files locked.',
         diagramAlignment:
-          'Vector #2.1 connects the Signed EaseUS Driver to the ESET / SentinelOne / CISA MAR Sensor as `vss` and `CrashControl` are disabled.',
+          'Step #2 (#2→ / ⇠#2) connects the Signed EaseUS Driver to the ESET / SentinelOne / CISA MAR Sensor as `vss` and `CrashControl` are disabled.',
         detectionAndEvidence:
           'Windows System EventID 7040 (`vss` service disabled) and Registry EventID 13 (`CrashControl\\CrashDumpEnabled` set to `0`).',
       },
@@ -367,7 +367,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because the `$MFT` (which maps where every file resides on an NTFS volume) and `$MFTMirr` are overwritten with random bytes from `CryptGenRandom`, carving or recovering filesystem structure is rendered impossible in seconds without having to overwrite every gigabyte of the disk.',
         diagramAlignment:
-          'Vector #3.1 traces the EaseUS driver and HermeticWiper overwriting `PhysicalDrive0 MBR & NTFS $MFT Wiped`.',
+          'Step #3 (#3→ / ⇠#3) traces the EaseUS driver and HermeticWiper overwriting `PhysicalDrive0 MBR & NTFS $MFT Wiped`.',
         detectionAndEvidence:
           'Blocking `empntdrv.sys` via WDAC and behavioral EDR prevention blocking raw `WriteFile` operations to sector 0 of `\\\\.\\PhysicalDrive*`.',
       },
@@ -399,7 +399,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because `ukrop` had zero external library dependencies and brute-forced every conceivable Linux storage device path, it served as a universal embedded Linux/router/modem wiper.',
         diagramAlignment:
-          'Vector #1.1 links the Compromised SATCOM TR-069 ACS Server to the KA-SAT SurfBeam2 Modem (`ukrop ELF`).',
+          'Step #1 (#1→ / ⇠#1) links the Compromised SATCOM TR-069 ACS Server to the KA-SAT SurfBeam2 Modem (`ukrop ELF`).',
         detectionAndEvidence:
           'SATCOM management plane anomaly detection flagging mass TR-069 `Download` / command pushes and unsigned ELF execution in `/tmp`.',
       },
@@ -414,7 +414,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'By brute-forcing hundreds of device node names in a loop, AcidRain did not need to parse `/proc/partitions` or `sysfs` and worked across any embedded Linux distribution.',
         diagramAlignment:
-          'Vector #2.1 connects the SurfBeam2 Modem (`ukrop ELF`) to the Linux MTD & Block Subsystem and triggers the SentinelOne / Viasat SATCOM Telemetry sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the SurfBeam2 Modem (`ukrop ELF`) to the Linux MTD & Block Subsystem and triggers the SentinelOne / Viasat SATCOM Telemetry sensor.',
         detectionAndEvidence:
           'Embedded Linux syscall monitoring for processes opening `/dev/mtdblock*` or `/dev/mmcblk*` with `O_WRONLY`/`O_RDWR` outside legitimate firmware upgrade daemons.',
       },
@@ -429,7 +429,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Because `/dev/mtd0` holds the primary `U-Boot` bootloader on embedded MIPS routers and satellite modems, erasing `/dev/mtd0` rendered the modems physically unbootable and required physical hardware replacement or JTAG/SPI chip reflashing.',
         diagramAlignment:
-          'Vector #3.1 traces the Linux MTD Subsystem (`/dev/mtd0..99`) executing `MEMERASE` to leave Bricked SPI NOR/NAND Flash & Turbines.',
+          'Step #3 (#3→ / ⇠#3) traces the Linux MTD Subsystem (`/dev/mtd0..99`) executing `MEMERASE` to leave Bricked SPI NOR/NAND Flash & Turbines.',
         detectionAndEvidence:
           'Hardware write-protect strapping (`WP#` pin grounded) on bootloader SPI NOR flash regions so software `MEMUNLOCK`/`MEMERASE` IOCTLs are rejected by the flash chip hardware.',
       },
@@ -461,7 +461,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'Sandworm reused the exact same `ArguePatch` loader weeks later during the April 2022 electrical substation attack (`Industroyer2`) to schedule timed destruction of Windows servers.',
         diagramAlignment:
-          'Vector #1.1 links the Sandworm GPO Scheduled Task Push to the `ArguePatch` Loader (`Patched win32_remote.exe`).',
+          'Step #1 (#1→ / ⇠#1) links the Sandworm GPO Scheduled Task Push to the `ArguePatch` Loader (`Patched win32_remote.exe`).',
         detectionAndEvidence:
           'Sysmon EventID 1 for `win32_remote.exe` or `caddy.exe` spawned by the Task Scheduler (`svchost.exe -k netsvcs -p -s Schedule`) from `C:\\Users\\Public` or `SYSVOL`.',
       },
@@ -476,7 +476,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'This execution guardrail explains why responders during a CaddyWiper incident often found member workstations and application servers completely bricked while the Primary Domain Controller remained up and actively pushing the malicious GPO.',
         diagramAlignment:
-          'Vector #2.1 connects the `ArguePatch` Loader to the CaddyWiper (`DsRole Domain Controller Check`) node and triggers the ESET / Cisco Talos / CERT-UA Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the `ArguePatch` Loader to the CaddyWiper (`DsRole Domain Controller Check`) node and triggers the ESET / Cisco Talos / CERT-UA Sensor.',
         detectionAndEvidence:
           'Behavioral sandboxes and EDR sensors detecting stack-constructed strings for `DsRoleGetPrimaryDomainInformation`, `SeTakeOwnershipPrivilege`, and `PhysicalDrive` inside `win32_remote.exe`.',
       },
@@ -491,7 +491,7 @@ export const BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES: Record<string, RawScenario
         howItWorksInPractice:
           'By abusing the legitimate Windows kernel disk IOCTL `IOCTL_DISK_SET_DRIVE_LAYOUT_EX` (`0x0007C054`) rather than bringing a third-party kernel driver, CaddyWiper destroyed the disk partition table without needing a BYOVD driver.',
         diagramAlignment:
-          'Vector #3.1 traces the CaddyWiper check proceeding into `IOCTL_DISK_SET_DRIVE_LAYOUT_EX` Zeroing on member hosts.',
+          'Step #3 (#3→ / ⇠#3) traces the CaddyWiper check proceeding into `IOCTL_DISK_SET_DRIVE_LAYOUT_EX` Zeroing on member hosts.',
         detectionAndEvidence:
           'EDR kernel filter blocking `IOCTL_DISK_SET_DRIVE_LAYOUT_EX` (`0x0007C054`) with zeroed partition entries and alerting on rapid `SetNamedSecurityInfoA` ownership takeovers across `C:\\Users`.',
       },

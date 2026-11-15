@@ -25,7 +25,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Because ServerInfoAction inherits from ConfluenceActionSupport, which exposes a public getBootstrapStatusProvider() getter returning the global BootstrapStatusProvider bean, XWork’s ParametersInterceptor automatically resolves nested dot-notation properties and calls setSetupComplete(false) in JVM memory.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Storm-0062) to Node ②/③ (Confluence Tomcat `/server-info.action`), and return arrow ⇠#1.2 confirming `setupComplete=false`.',
+          'On the diagram, follow arrow #1→ from Node ① (Storm-0062) to Node ②/③ (Confluence Tomcat `/server-info.action`), and return arrow ⇠#1 confirming `setupComplete=false`.',
         detectionAndEvidence:
           'Documented in CISA AA23-289A & Rapid7: Tomcat `conf_access_log` entries for `/server-info.action` with `bootstrapStatusProvider.applicationConfig.setupComplete` in the query string or POST body.',
       },
@@ -40,7 +40,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Calling /setup/finishsetup.action is a critical operational security step for the attacker: if setupComplete were left as false, every employee visiting the company wiki would be redirected to the installation screen and immediately alert IT.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ posts to `/setup/setupadministrator.action` and `/setup/finishsetup.action` on Node ④, and ⇠#2.2 issues an authenticated administrator session.',
+          'On the diagram, arrow #2→ posts to `/setup/setupadministrator.action` and `/setup/finishsetup.action` on Node ④, and ⇠#2 issues an authenticated administrator session.',
         detectionAndEvidence:
           'Documented in CISA AA23-289A: HTTP 200/302 requests to `/setup/setupadministrator.action` and `/setup/finishsetup.action`, plus unexpected user additions to `confluence-administrators`.',
       },
@@ -55,7 +55,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Because Confluence plugins run inside the same Tomcat JVM process as the core application, a malicious OSGi plugin can both execute OS commands via Runtime.getRuntime().exec() and intercept cleartext passwords submitted by users logging into Confluence.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ uploads the `.jar` plugin to Node ⑤ (Atlassian UPM `/rest/plugins/1.0/`) and spawns `/bin/sh`, while Node ⑥ (SIEM) alerts on the Confluence `java` process spawning a shell.',
+          'On the diagram, arrow #3→ uploads the `.jar` plugin to Node ⑤ (Atlassian UPM `/rest/plugins/1.0/`) and spawns `/bin/sh`, while Node ⑥ (SIEM) alerts on the Confluence `java` process spawning a shell.',
         detectionAndEvidence:
           'Documented by Microsoft & CISA AA23-289A: `POST /rest/plugins/1.0/` followed by the Confluence `java` process spawning `/bin/sh`, `bash`, `cmd.exe`, or `powershell.exe`.',
       },
@@ -86,7 +86,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'In the OpenWire binary protocol, byte offset 4 specifies the command data structure type: 0x1F (31) routes the packet directly to ExceptionResponseMarshaller.tightUnmarshal(), which calls tightUnmarshalThrowable().',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① to Node ②/③ (ActiveMQ OpenWire TCP/61616), and return arrow ⇠#1.2 passing the class and URL strings to `createThrowable()`.',
+          'On the diagram, follow arrow #1→ from Node ① to Node ②/③ (ActiveMQ OpenWire TCP/61616), and return arrow ⇠#1 passing the class and URL strings to `createThrowable()`.',
         detectionAndEvidence:
           'Documented by Rapid7 & Suricata: TCP port 61616 packets with OpenWire command byte `0x1F` containing the ASCII string `ClassPathXmlApplicationContext`.',
       },
@@ -101,7 +101,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Because Apache ActiveMQ bundles spring-context in its default lib/ directory, org.springframework.context.support.ClassPathXmlApplicationContext is always present on the broker’s classpath and accepts an arbitrary http:// or https:// XML URL in its single-String constructor.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ fetches `http://185.220.101.44:8080/poc.xml` from Node ① into Node ③/④, and ⇠#2.2 logs `Loading XML bean definitions from URL` in `data/activemq.log`.',
+          'On the diagram, arrow #2→ fetches `http://185.220.101.44:8080/poc.xml` from Node ① into Node ③/④, and ⇠#2 logs `Loading XML bean definitions from URL` in `data/activemq.log`.',
         detectionAndEvidence:
           'Documented by Huntress & Rapid7: `data/activemq.log` entries stating `Refreshing org.springframework.context.support.ClassPathXmlApplicationContext` and `Loading XML bean definitions from URL`.',
       },
@@ -116,7 +116,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Apache patched CVE-2023-46604 in ActiveMQ 5.18.3 by adding a strict type check inside BaseDataStreamMarshaller.createThrowable(): if (!Throwable.class.isAssignableFrom(clazz)) throw new IOException(...).',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `ProcessBuilder.start()` on Node ④/⑤ to spawn `/bin/sh`, while Node ⑥ (Huntress EDR / SIEM) alerts on the ActiveMQ `java` process spawning a shell.',
+          'On the diagram, arrow #3→ executes `ProcessBuilder.start()` on Node ④/⑤ to spawn `/bin/sh`, while Node ⑥ (Huntress EDR / SIEM) alerts on the ActiveMQ `java` process spawning a shell.',
         detectionAndEvidence:
           'Documented by Huntress & Trend Micro: Sysmon EventID 1 / Auditd `EXECVE` showing `java` or `wrapper.exe` (ActiveMQ) spawning `cmd.exe`, `powershell.exe`, `msiexec.exe`, or `/bin/sh`.',
       },
@@ -147,7 +147,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Why did SetupCompleted.formSubmit() call performLogin("admin")? Because during day-one installation, after an admin finishes the setup wizard, clicking "Login" on the final confirmation screen was designed to log them straight into the dashboard automatically—and the developers forgot to block access to SetupCompleted after setup finished.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Bl00dy Operator) to Node ②/③ (PaperCut Web `/app?service=page/SetupCompleted`), and return arrow ⇠#1.2 issuing the authenticated Admin `JSESSIONID`.',
+          'On the diagram, follow arrow #1→ from Node ① (Bl00dy Operator) to Node ②/③ (PaperCut Web `/app?service=page/SetupCompleted`), and return arrow ⇠#1 issuing the authenticated Admin `JSESSIONID`.',
         detectionAndEvidence:
           'Documented in CISA AA23-131A & Horizon3.ai: HTTP requests to `/app?service=page/SetupCompleted` and POST requests containing `SetupCompleted/$Form`.',
       },
@@ -162,7 +162,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'PaperCut embeds the Mozilla Rhino JavaScript engine (org.mozilla.javascript) so administrators can write custom JavaScript policies for print jobs. When print.script.sandboxed is set to N, Rhino scripts can bridge directly into any Java class on the JVM classpath.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ updates `print-and-device.script.enabled=Y` and `print.script.sandboxed=N` on Node ④ (`ConfigEditor`), with ⇠#2.2 disabling the Rhino sandbox.',
+          'On the diagram, arrow #2→ updates `print-and-device.script.enabled=Y` and `print.script.sandboxed=N` on Node ④ (`ConfigEditor`), with ⇠#2 disabling the Rhino sandbox.',
         detectionAndEvidence:
           'Documented by Horizon3.ai & CISA AA23-131A: PaperCut `server.log` / Admin Audit entries showing modifications to `print-and-device.script.enabled` and `print.script.sandboxed`.',
       },
@@ -177,7 +177,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'On Windows, the PaperCut Application Server service (pc-app.exe) runs by default under NT AUTHORITY\\SYSTEM, meaning any command executed via Rhino’s Runtime.getRuntime().exec() immediately inherits full SYSTEM privileges.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `Runtime.getRuntime().exec()` inside Node ④/⑤ (`pc-app.exe` spawning `powershell.exe`), while Node ⑥ (Sysmon / Defender SIEM) triggers a critical alert.',
+          'On the diagram, arrow #3→ executes `Runtime.getRuntime().exec()` inside Node ④/⑤ (`pc-app.exe` spawning `powershell.exe`), while Node ⑥ (Sysmon / Defender SIEM) triggers a critical alert.',
         detectionAndEvidence:
           'Documented in CISA AA23-131A: Sysmon EventID 1 showing `C:\\Program Files\\PaperCut NG\\server\\bin\\win\\pc-app.exe` spawning `cmd.exe`, `powershell.exe`, `certutil.exe`, or `bitsadmin.exe`.',
       },
@@ -208,7 +208,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'macOS uses the AppleDouble format (files prefixed with ._ and starting with magic bytes 0x00051607) to serialize macOS-specific extended attributes and ACLs inside standard ZIP archives. When ArchiveService calls copyfile_unpack(), it restores com.apple.acl.text onto the target bundle immediately.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (Achilles Archive) to Node ② (Safari / ArchiveService), and return arrow ⇠#1.2 restoring the restrictive `com.apple.acl.text` rule.',
+          'On the diagram, follow arrow #1→ from Node ① (Achilles Archive) to Node ② (Safari / ArchiveService), and return arrow ⇠#1 restoring the restrictive `com.apple.acl.text` rule.',
         detectionAndEvidence:
           'Documented by Microsoft Threat Intel: ZIP archives containing `._*` AppleDouble entries with `com.apple.acl.text` rules specifying `deny` and `writeextattr`.',
       },
@@ -223,7 +223,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Because quarantine propagation in macOS Monterey and early Ventura was performed in user mode after archive extraction without stripping restrictive ACLs first, the kernel enforced the attacker’s ACL against the browser’s own setxattr() call.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ attempts `setxattr(com.apple.quarantine)` from Node ② to Node ③, and ⇠#2.2 returns `errno 13 (EACCES)` leaving `Update.app` unquarantined.',
+          'On the diagram, arrow #2→ attempts `setxattr(com.apple.quarantine)` from Node ② to Node ③, and ⇠#2 returns `errno 13 (EACCES)` leaving `Update.app` unquarantined.',
         detectionAndEvidence:
           'Documented by Microsoft & Apple HT213532: `setxattr` syscall failures (`EACCES`) for `com.apple.quarantine` on newly extracted bundles in `~/Downloads`.',
       },
@@ -238,7 +238,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'As Microsoft demonstrated, CVE-2022-42821 even bypassed Apple’s optional Lockdown Mode because Lockdown Mode’s binary execution policy also relied on the presence of com.apple.quarantine to identify untrusted external binaries.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ launches the unsigned Mach-O binary on Node ④/⑤ via `syspolicyd`, while Node ⑥ (Jamf Protect / Defender ESF) flags `ES_EVENT_TYPE_NOTIFY_EXEC` on an unsigned, unquarantined binary in `~/Downloads`.',
+          'On the diagram, arrow #3→ launches the unsigned Mach-O binary on Node ④/⑤ via `syspolicyd`, while Node ⑥ (Jamf Protect / Defender ESF) flags `ES_EVENT_TYPE_NOTIFY_EXEC` on an unsigned, unquarantined binary in `~/Downloads`.',
         detectionAndEvidence:
           'Documented by Jamf Threat Labs & Microsoft: Endpoint Security (`ES_EVENT_TYPE_NOTIFY_EXEC`) telemetry showing an unsigned Mach-O executing from `~/Downloads` with `has_quarantine == false`.',
       },
@@ -269,7 +269,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Why is CLFS.sys such a frequent target for ransomware zero-days (CVE-2022-24521, CVE-2022-37969, CVE-2023-23376, CVE-2023-28252)? Because .blf files live in user-writable folders on disk, yet CLFS.sys parses their internal structure offsets directly into Ring-0 kernel pool memory.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① (`clfs_eop.exe`) to Node ②/③ (`CLFS.sys` creating and reading `C:\\Users\\Public\\log.blf.blf`), and return arrow ⇠#1.2 accepting the forged CRC32 block.',
+          'On the diagram, follow arrow #1→ from Node ① (`clfs_eop.exe`) to Node ②/③ (`CLFS.sys` creating and reading `C:\\Users\\Public\\log.blf.blf`), and return arrow ⇠#1 accepting the forged CRC32 block.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT: Sysmon EventID 11 (`FileCreate`) showing `.blf` files created in `C:\\Users\\Public\\` or `%TEMP%` by non-system processes.',
       },
@@ -284,7 +284,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'By combining nt!SeSetAccessStateGenericMapping with CLFS!ClfsEarlierLsn (which returns 0xFFFFFFFF), the exploit constructs an arbitrary kernel write primitive that overwrites the privileges/Token field of its own EPROCESS structure.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ triggers `WriteMetadataBlock` from Node ②/③ into Node ④ (`ntoskrnl.exe` `EPROCESS` Token Swap), and ⇠#2.2 elevates PID 5520 to `NT AUTHORITY\\SYSTEM`.',
+          'On the diagram, arrow #2→ triggers `WriteMetadataBlock` from Node ②/③ into Node ④ (`ntoskrnl.exe` `EPROCESS` Token Swap), and ⇠#2 elevates PID 5520 to `NT AUTHORITY\\SYSTEM`.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT & Zscaler: YARA detection of `CreateLogFile` + `ClfsEarlierLsn` + `SeSetAccessStateGenericMapping` imports and kernel token elevation telemetry.',
       },
@@ -299,7 +299,7 @@ export const BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES: Record<string, RawScenar
         howItWorksInPractice:
           'Kaspersky GReAT captured this exact chain in February 2023 across multiple Windows Server intrusions, where affiliates used CVE-2023-28252 to jump from a compromised user session directly to SYSTEM before launching Nokoyawa.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ spawns `nokoyawa.exe` on Node ⑤ under `NT AUTHORITY\\SYSTEM`, while Node ⑥ (Kaspersky / Defender EDR) alerts on the elevated child process.',
+          'On the diagram, arrow #3→ spawns `nokoyawa.exe` on Node ⑤ under `NT AUTHORITY\\SYSTEM`, while Node ⑥ (Kaspersky / Defender EDR) alerts on the elevated child process.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT: Sysmon EventID 1 showing a binary in `C:\\Users\\Public\\` running as `NT AUTHORITY\\SYSTEM` and spawning `nokoyawa.exe` / `vssadmin.exe`.',
       },

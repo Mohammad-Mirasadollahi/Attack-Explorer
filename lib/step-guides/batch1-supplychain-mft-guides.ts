@@ -25,7 +25,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Why did Andres Freund catch this? Because parsing the symbol tables inside the backdoored liblzma.so.5.6.1 added ~500 milliseconds (~2.3 billion CPU cycles) to every failed SSH login, which Freund spotted while profiling Debian sid with perf.',
         diagramAlignment:
-          'On the diagram, follow arrow #1.1→ from Node ① to Node ②/③ (Linux `sshd` loading `libsystemd.so.0 -> liblzma.so.5.6.1`), and return arrow ⇠#1.2 confirming the poisoned library load.',
+          'On the diagram, follow arrow #1→ from Node ① to Node ②/③ (Linux `sshd` loading `libsystemd.so.0 -> liblzma.so.5.6.1`), and return arrow ⇠#1 confirming the poisoned library load.',
         detectionAndEvidence:
           'Documented by Andres Freund, Red Hat & CISA: `ldd /usr/sbin/sshd` showing `liblzma.so.5.6.0` or `5.6.1` and ~500ms `sshd` CPU spike.',
       },
@@ -40,7 +40,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'By executing inside an IFUNC resolver during dynamic linking, the backdoor modifies the in-memory GOT pointer for RSA_public_decrypt before OpenSSH’s main() function or privilege-separation sandbox even initializes.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ triggers `crc64_resolve() -> _get_cpuid()` inside Node ④ (`liblzma` IFUNC Hook), and ⇠#2.2 redirects `RSA_public_decrypt@GOT`.',
+          'On the diagram, arrow #2→ triggers `crc64_resolve() -> _get_cpuid()` inside Node ④ (`liblzma` IFUNC Hook), and ⇠#2 redirects `RSA_public_decrypt@GOT`.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT: In-memory GOT redirection of `RSA_public_decrypt` inside `liblzma_la-crc64-fast.o`.',
       },
@@ -55,7 +55,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Because the hooked RSA_public_decrypt executes inside the privileged sshd monitor process before authentication completes, the command runs with full root privileges and leaves zero failed-login entries in /var/log/auth.log.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes `system()` on Node ⑤ (Pre-Auth Root Shell) while Node ⑥ (Linux Auditd / eBPF SIEM) flags `sshd` spawning `/bin/sh` prior to authentication.',
+          'On the diagram, arrow #3→ executes `system()` on Node ⑤ (Pre-Auth Root Shell) while Node ⑥ (Linux Auditd / eBPF SIEM) flags `sshd` spawning `/bin/sh` prior to authentication.',
         detectionAndEvidence:
           'Documented by Kaspersky GReAT & CISA: Auditd `SYSCALL execve` showing `sshd [priv]` spawning `/bin/sh` before `USER_AUTH` completion.',
       },
@@ -86,7 +86,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Why go through moveitisapi.dll instead of calling SILMachine2.aspx directly? Because MOVEit blocks external clients from passing sensitive session variables directly to SILMachine2.aspx, whereas the trusted moveitisapi.dll proxy passes X-siLock-SessVar headers right through.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the `/guestaccess.aspx` + `/moveitisapi/moveitisapi.dll` requests from Node ① to Node ②/③ (MOVEit IIS Server), and ⇠#1.2 executes the injected SQL statement.',
+          'On the diagram, arrow #1→ sends the `/guestaccess.aspx` + `/moveitisapi/moveitisapi.dll` requests from Node ① to Node ②/③ (MOVEit IIS Server), and ⇠#1 executes the injected SQL statement.',
         detectionAndEvidence:
           'Documented by Huntress & Mandiant: IIS W3SVC logs showing `POST /guestaccess.aspx` immediately followed by `POST /moveitisapi/moveitisapi.dll action=m2`.',
       },
@@ -101,7 +101,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'The moment the attacker sends their first HTTP request to /human2.aspx, IIS’s worker process (w3wp.exe) automatically invokes the .NET C# compiler (csc.exe) to compile human2.aspx into a DLL inside Temporary ASP.NET Files—leaving a high-confidence Sysmon EventID 1 artifact.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ deserializes the session gadget and spawns `csc.exe` to compile `human2.aspx`, with ⇠#2.2 confirming webshell readiness.',
+          'On the diagram, arrow #2→ inside Node ④ deserializes the session gadget and spawns `csc.exe` to compile `human2.aspx`, with ⇠#2 confirming webshell readiness.',
         detectionAndEvidence:
           'Documented in CISA AA23-158A & Huntress: Sysmon EventID 1 (`w3wp.exe` spawning `csc.exe` for `human2.cmdline`) and EventID 11 (`C:\\MOVEitTransfer\\wwwroot\\human2.aspx`).',
       },
@@ -116,7 +116,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Sending X-siLock-Step1: -2 instructs LEMURLOOT to create or delete a rogue administrator account named "HealthCheck Service" so the attacker can erase their session traces after exfiltration.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ queries Node ⑤ (MOVEit SQL DB & Azure Blob Storage) from Node ④ (`human2.aspx`), while Node ⑥ (SIEM) alerts on `human2.aspx` traffic.',
+          'On the diagram, arrow #3→ queries Node ⑤ (MOVEit SQL DB & Azure Blob Storage) from Node ④ (`human2.aspx`), while Node ⑥ (SIEM) alerts on `human2.aspx` traffic.',
         detectionAndEvidence:
           'Documented by Mandiant & CISA AA23-158A: HTTP requests to `/human2.aspx` with `X-siLock-Comment` and `X-siLock-Step1` headers.',
       },
@@ -147,7 +147,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Why is this vulnerability called "regreSSHion"? Because OpenSSH originally fixed this exact signal-handler race in 2006 (CVE-2006-5051) by adding #ifdef DO_LOG_SAFE_IN_SIGHAND to sigdie(), but an unrelated code cleanup in October 2020 (OpenSSH 8.5p1) accidentally deleted that #ifdef guard.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends the heap-grooming SSH auth packets from Node ① to Node ②/③ (Linux `sshd` Server), and ⇠#1.2 arms the 120s `LoginGraceTime` alarm.',
+          'On the diagram, arrow #1→ sends the heap-grooming SSH auth packets from Node ① to Node ②/③ (Linux `sshd` Server), and ⇠#1 arms the 120s `LoginGraceTime` alarm.',
         detectionAndEvidence:
           'Documented by Qualys TRU & CISA: High-rate bursts of `Timeout before authentication for <IP>` in `/var/log/auth.log` across thousands of connections.',
       },
@@ -162,7 +162,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Why wasn’t OpenBSD vulnerable to CVE-2024-6387? Because OpenBSD’s syslog_r() implementation is explicitly designed to be async-signal-safe and never calls malloc() or fopen(), whereas Linux’s glibc syslog() dynamically allocates heap memory.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ triggers `grace_alarm_handler -> sigdie -> syslog()` inside Node ④, and ⇠#2.2 allocates the overlapping 320-byte `_IO_FILE` chunk.',
+          'On the diagram, arrow #2→ triggers `grace_alarm_handler -> sigdie -> syslog()` inside Node ④, and ⇠#2 allocates the overlapping 320-byte `_IO_FILE` chunk.',
         detectionAndEvidence:
           'Documented by Qualys TRU: `sshd` child processes crashing with `SIGABRT` / `SIGSEGV` in `libc.so.6` during unsuccessful race attempts.',
       },
@@ -177,7 +177,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Although winning the ASLR + timing race takes ~10,000 connections (roughly 3 to 6 hours against default MaxStartups), every failed attempt simply closes a child process while the master sshd daemon automatically forks fresh children.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ dispatches `_IO_wfile_jumps` on Node ⑤ (Pre-Auth Root Execution) while Node ⑥ (SIEM) alerts on the timeout flood and `sshd` child shell.',
+          'On the diagram, arrow #3→ dispatches `_IO_wfile_jumps` on Node ⑤ (Pre-Auth Root Execution) while Node ⑥ (SIEM) alerts on the timeout flood and `sshd` child shell.',
         detectionAndEvidence:
           'Documented by Qualys TRU & CISA: Auditd `SYSCALL execve` from `sshd` with `uid=0` following repeated `Timeout before authentication` events.',
       },
@@ -208,7 +208,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Encrypting a serialized Java object does not provide authentication if the encryption key is hardcoded inside the client/server software binary itself.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ sends `POST /goanywhere/lic/accept (bundle=...$2)` from Node ① to Node ②/③ (GoAnywhere Tomcat Server), and ⇠#1.2 decrypts the bundle in memory.',
+          'On the diagram, arrow #1→ sends `POST /goanywhere/lic/accept (bundle=...$2)` from Node ① to Node ②/③ (GoAnywhere Tomcat Server), and ⇠#1 decrypts the bundle in memory.',
         detectionAndEvidence:
           'Documented by Huntress & Suricata SID 2043881: Unauthenticated `POST /goanywhere/lic/accept` requests on TCP port 8000/8001.',
       },
@@ -223,7 +223,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'As Huntress discovered, when the gadget chain finishes executing its payload inside readObject(), it throws a java.lang.reflect.InvocationTargetException that GoAnywhere writes directly into userdata/logs/goanywhere.log—giving defenders a forensic timestamp of every exploit attempt.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ inside Node ④ (`CommonsBeanutils1` Deserializer) executes the `TemplatesImpl` translet and spawns `cmd.exe`, with ⇠#2.2 logging `InvocationTargetException`.',
+          'On the diagram, arrow #2→ inside Node ④ (`CommonsBeanutils1` Deserializer) executes the `TemplatesImpl` translet and spawns `cmd.exe`, with ⇠#2 logging `InvocationTargetException`.',
         detectionAndEvidence:
           'Documented by Huntress: `BeanComparator.compare` & `PriorityQueue.readObject` stack trace in `userdata/logs/goanywhere.log` paired with `tomcat9.exe` spawning `cmd.exe`.',
       },
@@ -238,7 +238,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'By targeting Managed File Transfer (MFT) appliances like GoAnywhere and MOVEit, CL0P bypassed endpoint EDR on user laptops and went straight to the central server where organizations store unencrypted financial, healthcare, and HR batch files.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ deploys Node ⑤ (`TrueBot` & `Cobalt Strike`) and exfiltrates MFT data while Node ⑥ (SIEM) correlates the child processes.',
+          'On the diagram, arrow #3→ deploys Node ⑤ (`TrueBot` & `Cobalt Strike`) and exfiltrates MFT data while Node ⑥ (SIEM) correlates the child processes.',
         detectionAndEvidence:
           'Documented by Mandiant & CISA: `tomcat9.exe` -> `cmd.exe` -> `powershell.exe` -> `rundll32.exe` loading unsigned DLLs from `C:\\ProgramData\\`.',
       },
@@ -269,7 +269,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Why split the malware across three files (3CXDesktopApp.exe + ffmpeg.dll + d3dcompiler_47.dll)? Because 3CXDesktopApp.exe keeps its valid 3CX digital signature, ffmpeg.dll contains only a tiny RC4 reader with no C2 URLs, and the encrypted shellcode sits inert inside d3dcompiler_47.dll.',
         diagramAlignment:
-          'On the diagram, arrow #1.1→ shows Node ③ (`3CXDesktopApp.exe`) sideloading Node ④ (`ffmpeg.dll` & `d3dcompiler_47.dll`), and ⇠#1.2 decrypts the `0xFEEDFACE` RC4 shellcode into memory.',
+          'On the diagram, arrow #1→ shows Node ③ (`3CXDesktopApp.exe`) sideloading Node ④ (`ffmpeg.dll` & `d3dcompiler_47.dll`), and ⇠#1 decrypts the `0xFEEDFACE` RC4 shellcode into memory.',
         detectionAndEvidence:
           'Documented by CrowdStrike, Mandiant & Kaspersky: Sysmon EventID 7 loading unsigned `ffmpeg.dll` (`SHA256: 7986bbae...`) and `0xFEEDFACE` marker in `d3dcompiler_47.dll`.',
       },
@@ -284,7 +284,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Even after GitHub took down the IconStorages repository, the shellcode also contained a fallback list of hardcoded C2 domains disguised to look like Akamai, Azure, and Microsoft storage services.',
         diagramAlignment:
-          'On the diagram, arrow #2.1→ fetches `icon*.ico` from Node ① (GitHub `IconStorages` Dead-Drop) to Node ④, and ⇠#2.2 returns the AES-GCM encrypted C2 string.',
+          'On the diagram, arrow #2→ fetches `icon*.ico` from Node ① (GitHub `IconStorages` Dead-Drop) to Node ④, and ⇠#2 returns the AES-GCM encrypted C2 string.',
         detectionAndEvidence:
           'Documented by SentinelOne, Huntress & Mandiant: `3CXDesktopApp.exe` querying `raw.githubusercontent.com/IconStorages/*` or `akamaicontainer.com`.',
       },
@@ -299,7 +299,7 @@ export const BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES: Record<string, RawScenarioStepG
         howItWorksInPractice:
           'Mandiant subsequently traced how the 3CX supply chain attack itself began: Lazarus had earlier trojanized the website installer for Trading Technologies’ X_TRADER software, which an employee at 3CX downloaded—creating a supply-chain-to-supply-chain cascade.',
         diagramAlignment:
-          'On the diagram, arrow #3.1→ executes Node ⑤ (`ICONICSTEALER` & `Gopuram`) inside `3CXDesktopApp.exe` while Node ⑥ (EDR / SIEM) flags the browser database reads and C2 beacon.',
+          'On the diagram, arrow #3→ executes Node ⑤ (`ICONICSTEALER` & `Gopuram`) inside `3CXDesktopApp.exe` while Node ⑥ (EDR / SIEM) flags the browser database reads and C2 beacon.',
         detectionAndEvidence:
           'Documented by CrowdStrike, Mandiant & Kaspersky GReAT: `3CXDesktopApp.exe` reading Chrome/Edge `User Data\\Default\\History` and loading `Gopuram` in memory.',
       },

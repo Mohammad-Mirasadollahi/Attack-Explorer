@@ -120,8 +120,8 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(stepGuide.effectiveScope, 'EXPANDED_NODE');
     assert.equal(stepGuide.internalSteps.length, 4);
     assert.equal(stepGuide.internalSteps[0].sequenceCode, '2.1');
-    assert.equal(stepGuide.internalSteps[0].forwardSeq, '2.1.1');
-    assert.equal(stepGuide.internalSteps[0].returnSeq, '2.1.2');
+    assert.equal(stepGuide.internalSteps[0].forwardSeq, '2.1');
+    assert.equal(stepGuide.internalSteps[0].returnSeq, '2.1');
 
     // SIEM Logs in EXPANDED_NODE reflect the 4 internal sub-board flows
     const scopedLogs = buildScopedCorrelatedLogs(expandedScope);
@@ -506,8 +506,8 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     for (const ex of mainSeq.exchanges) {
       assert.ok(ex.initiatorLabel.length > 0);
       assert.ok(ex.receiverLabel.length > 0);
-      assert.ok(ex.forwardSeq.endsWith('.1'));
-      assert.ok(ex.returnSeq.endsWith('.2'));
+      assert.equal(ex.forwardSeq, ex.sequenceCode);
+      assert.equal(ex.returnSeq, ex.sequenceCode);
       assert.ok(ex.storyAnalogy.length > 40);
       assert.ok(ex.technicalBridge.length > 40);
       assert.ok(ex.underTheHood.length > 40);
@@ -528,8 +528,8 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(expandedSeq.effectiveScope, 'EXPANDED_NODE');
     assert.equal(expandedSeq.exchanges.length, 4);
     assert.equal(expandedSeq.exchanges[0].sequenceCode, '4.1');
-    assert.equal(expandedSeq.exchanges[0].forwardSeq, '4.1.1');
-    assert.equal(expandedSeq.exchanges[0].returnSeq, '4.1.2');
+    assert.equal(expandedSeq.exchanges[0].forwardSeq, '4.1');
+    assert.equal(expandedSeq.exchanges[0].returnSeq, '4.1');
   });
 
   it('builds structure-specific Documentation Architecture Blueprints, multi-depth Parent->Child cascading process waterfalls, and step-level diagrams across all 85 scenarios', () => {

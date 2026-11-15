@@ -27,7 +27,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'SUNSPOT checks the command-line arguments of `MsBuild.exe`, verifies target file hashes with MD5, acquires a mutex, replaces `InventoryManager.cs`, logs any compilation errors to an AES-encrypted log at `C:\\Windows\\Temp\\vmware-vmdmp.log`, and restores the original `.cs` file before the build finishes and enters the code-signing step.',
         diagramAlignment:
-          'Vector #1.1 links the APT29 operator and the TeamCity / MSBuild Server as `InventoryManager.cs` is swapped during compilation.',
+          'Step #1 (#1→ / ⇠#1) links the APT29 operator and the TeamCity / MSBuild Server as `InventoryManager.cs` is swapped during compilation.',
         detectionAndEvidence:
           'Sysmon EventID 11 file modifications to `.cs` source files by non-SCM processes (`taskhostsvc.exe`) during active `MsBuild.exe` execution, and post-build reproducible compilation verification.',
       },
@@ -42,7 +42,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'By encoding the victim’s internal domain name into the DNS DGA query, APT29 could passively inspect DNS lookups at their authoritative nameserver and selectively reply with a CNAME record pointing to a Stage-2 server only for high-value government and technology targets.',
         diagramAlignment:
-          'Vector #2.1 traces the Orion Server (`SolarWinds.BusinessLayerHost.exe`) sending the encoded DNS beacon to `*.avsvmcloud.com` while the EDR & DNS Sensor observes the CNAME resolution.',
+          'Step #2 (#2→ / ⇠#2) traces the Orion Server (`SolarWinds.BusinessLayerHost.exe`) sending the encoded DNS beacon to `*.avsvmcloud.com` while the EDR & DNS Sensor observes the CNAME resolution.',
         detectionAndEvidence:
           'Sysmon EventID 22 DNS queries from `SolarWinds.BusinessLayerHost.exe` to `*.avsvmcloud.com` returning CNAME redirects to non-SolarWinds IP space.',
       },
@@ -57,7 +57,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Using the stolen ADFS `EncryptedPFX` blob and Distributed Key Manager (DKM) decryption key from Active Directory, the attacker mints arbitrary SAML 2.0 tokens offline to access Microsoft 365 and Azure resources.',
         diagramAlignment:
-          'Vector #3.1 connects the Orion Server to the AD Federation Services (SAML) node as TEARDROP extracts the token-signing certificate.',
+          'Step #3 (#3→ / ⇠#3) connects the Orion Server to the AD Federation Services (SAML) node as TEARDROP extracts the token-signing certificate.',
         detectionAndEvidence:
           'EDR detection of IFEO `Debugger` registry keys on `dllhost.exe` and unexpected remote WMI/PowerShell access to ADFS configuration databases and DKM containers in Active Directory.',
       },
@@ -89,7 +89,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Over 23,000 repositories using syntax like `uses: tj-actions/changed-files@v45` immediately pulled the malicious commit `dist/index.js` bundle on their next CI run without changing a single line of their own workflow YAML.',
         diagramAlignment:
-          'Vector #1.1 links the Attacker Tag Repointing node to the GitHub Action Tag (`@v45 -> 0e58ed8`) as mutable tags are force-updated.',
+          'Step #1 (#1→ / ⇠#1) links the Attacker Tag Repointing node to the GitHub Action Tag (`@v45 -> 0e58ed8`) as mutable tags are force-updated.',
         detectionAndEvidence:
           'GitHub Audit Log events for force-updated tags and SCA policy scanners enforcing full 40-character commit SHA pinning in `.github/workflows/*.yml`.',
       },
@@ -104,7 +104,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Even if a workflow step did not explicitly pass a secret into `tj-actions/changed-files` via `env:`, the parent `Runner.Worker` process holds job-level secrets and the runner’s ephemeral `GITHUB_TOKEN` in heap memory, allowing `memdump.py` to extract them via regular expressions.',
         diagramAlignment:
-          'Vector #2.1 connects the GitHub Action Tag to the Ubuntu GitHub Runner (`Runner.Worker`) and the StepSecurity / Wiz Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the GitHub Action Tag to the Ubuntu GitHub Runner (`Runner.Worker`) and the StepSecurity / Wiz Sensor.',
         detectionAndEvidence:
           'Linux eBPF / Harden-Runner alerts on `/usr/bin/python3` running as root (`UID 0`) opening `/proc/[pid]/mem` of `Runner.Worker`.',
       },
@@ -119,7 +119,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'For public repositories with public Actions logs, the attacker simply queried the GitHub REST API to download workflow logs containing the double-Base64 output and decoded the harvested AWS, npm, PyPI, and GitHub tokens offline.',
         diagramAlignment:
-          'Vector #3.1 traces the exfiltrated double-Base64 secret output from the Ubuntu GitHub Runner back to the Attacker Log Scraper and into Production AWS / NPM / GitHub Secrets.',
+          'Step #3 (#3→ / ⇠#3) traces the exfiltrated double-Base64 secret output from the Ubuntu GitHub Runner back to the Attacker Log Scraper and into Production AWS / NPM / GitHub Secrets.',
         detectionAndEvidence:
           'Scanning historical GitHub Actions workflow logs for long double-Base64 strings emitted during the `tj-actions/changed-files` step and immediately rotating all secrets.',
       },
@@ -151,7 +151,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'The tampering remained undetected until a security-conscious customer verified the downloaded script against the published SHA-256 checksum in Codecov’s GitHub repository and noticed the hash mismatch.',
         diagramAlignment:
-          'Vector #1.1 links the Attacker node to the Codecov GCS Bucket (`codecov.io/bash`) where the hosted script is overwritten.',
+          'Step #1 (#1→ / ⇠#1) links the Attacker node to the Codecov GCS Bucket (`codecov.io/bash`) where the hosted script is overwritten.',
         detectionAndEvidence:
           'Cloud storage object integrity monitoring and automated CI checks comparing downloaded script SHA-256 hashes against signed release manifests.',
       },
@@ -166,7 +166,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           '`$(git remote -v)` captured the repository URL (often containing embedded OAuth tokens like `https://x-access-token:ghp_...@github.com/...`), and `$(env)` dumped every environment variable exported into the CI runner (`AWS_SECRET_ACCESS_KEY`, `DATABASE_URL`, `NPM_TOKEN`, GPG keys).',
         diagramAlignment:
-          'Vector #2.1 connects the Codecov GCS Bucket to the Enterprise CI Runner and out to the Attacker Collector (`178.62.86.114`) while the Egress Proxy logs the raw IP connection.',
+          'Step #2 (#2→ / ⇠#2) connects the Codecov GCS Bucket to the Enterprise CI Runner and out to the Attacker Collector (`178.62.86.114`) while the Egress Proxy logs the raw IP connection.',
         detectionAndEvidence:
           'CI runner egress logs showing outbound HTTP POST requests to `178.62.86.114` or `104.248.94.23` and process telemetry showing `curl` spawned with `$(env)` command substitution.',
       },
@@ -181,7 +181,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Several high-profile software vendors had their private repositories cloned or GPG signing keys exposed through the CI environment dump, requiring enterprise-wide secret and certificate rotation.',
         diagramAlignment:
-          'Vector #3.1 traces the Attacker Collector pivoting with stolen CI credentials into Private Git Repos & Cloud Production Keys.',
+          'Step #3 (#3→ / ⇠#3) traces the Attacker Collector pivoting with stolen CI credentials into Private Git Repos & Cloud Production Keys.',
         detectionAndEvidence:
           'GitHub Audit Log `git.clone` events originating from non-CI IP addresses using machine/bot account tokens.',
       },
@@ -213,7 +213,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'The attacker also modified `/userFilterTableRpt.asp` in memory/disk to execute SQL commands and stage the malicious Kaseya Agent Procedure across all tenant organizations managed by the VSA server.',
         diagramAlignment:
-          'Vector #1.1 links the REvil Affiliate Operator to the MSP Kaseya VSA Server (`/dl.asp`) as authentication is bypassed and `agent.crt` is staged.',
+          'Step #1 (#1→ / ⇠#1) links the REvil Affiliate Operator to the MSP Kaseya VSA Server (`/dl.asp`) as authentication is bypassed and `agent.crt` is staged.',
         detectionAndEvidence:
           'IIS web server logs showing POST requests to `/dl.asp` and `/userFilterTableRpt.asp` with User-Agent `Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; SV1; SE)` and creation of `agent.crt`.',
       },
@@ -228,7 +228,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Before running the command, the batch line used `ping 127.0.0.1 -n 4979 > nul` as a timed delay so all downstream endpoints downloaded `agent.crt` before simultaneous execution began, preventing the VSA server from being overwhelmed.',
         diagramAlignment:
-          'Vector #2.1 connects the MSP Kaseya VSA Server to the Managed Endpoint (`AgentMon.exe`) and triggers alerts on the Huntress MDR / Sysmon Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the MSP Kaseya VSA Server to the Managed Endpoint (`AgentMon.exe`) and triggers alerts on the Huntress MDR / Sysmon Sensor.',
         detectionAndEvidence:
           'Sysmon EventID 1 showing `AgentMon.exe` spawning `cmd.exe` with `Set-MpPreference` and `certutil.exe -decode c:\\kworking\\agent.crt c:\\kworking\\agent.exe`.',
       },
@@ -243,7 +243,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Because `MsMpEng.exe` carries a valid Microsoft digital signature, naive process-allowlisting rules treated the executing process as benign while `mpsvc.dll` ran REvil’s multi-threaded encryption routine inside its address space.',
         diagramAlignment:
-          'Vector #3.1 traces `MsMpEng.exe` side-loading `mpsvc.dll` on the Managed Endpoint to encrypt Downstream Customer File Shares.',
+          'Step #3 (#3→ / ⇠#3) traces `MsMpEng.exe` side-loading `mpsvc.dll` on the Managed Endpoint to encrypt Downstream Customer File Shares.',
         detectionAndEvidence:
           'Sysmon EventID 7 (`ImageLoaded`) showing `C:\\Windows\\MsMpEng.exe` (executing outside `ProgramData\\Microsoft\\Windows Defender`) loading `C:\\Windows\\mpsvc.dll`.',
       },
@@ -275,7 +275,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'GitHub expands `${{ github.head_ref }}` as a raw text macro prior to invoking `/bin/bash`, turning a branch name into arbitrary remote code execution inside the privileged CI runner.',
         diagramAlignment:
-          'Vector #1.1 links the Crafted PR Branch to the GitHub Actions (`pull_request_target`) workflow runner.',
+          'Step #1 (#1→ / ⇠#1) links the Crafted PR Branch to the GitHub Actions (`pull_request_target`) workflow runner.',
         detectionAndEvidence:
           'Static workflow analysis (e.g., `zizmor` or `actionlint`) flagging `pull_request_target` workflows that interpolate `github.head_ref` or PR titles in `run:` blocks.',
       },
@@ -290,7 +290,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Comparing the files inside the published `.whl` archive on PyPI against the corresponding Git commit in `ultralytics/ultralytics` revealed code in `downloads.py` that never existed in the public Git commit history.',
         diagramAlignment:
-          'Vector #2.1 connects the GitHub Actions workflow to the PyPI Registry (`ultralytics 8.3.41/45`) while the Sigstore / PyPI Attestation Auditor flags the provenance discrepancy.',
+          'Step #2 (#2→ / ⇠#2) connects the GitHub Actions workflow to the PyPI Registry (`ultralytics 8.3.41/45`) while the Sigstore / PyPI Attestation Auditor flags the provenance discrepancy.',
         detectionAndEvidence:
           'PyPI provenance attestation verification (PEP 740) and diffing published wheel contents against signed Git tags (`git-pypi-diff`).',
       },
@@ -305,7 +305,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Although `ls /tmp` no longer shows `ultralytics_runner`, inspecting `/proc/<pid>/exe` on Linux reveals the symlink `/tmp/ultralytics_runner (deleted)` alongside outbound Stratum TCP traffic on port 8080.',
         diagramAlignment:
-          'Vector #3.1 traces the PyPI Registry wheel installation onto AI Training Cluster / Colab GPU Nodes and outbound Stratum mining traffic to the attacker pool.',
+          'Step #3 (#3→ / ⇠#3) traces the PyPI Registry wheel installation onto AI Training Cluster / Colab GPU Nodes and outbound Stratum mining traffic to the attacker pool.',
         detectionAndEvidence:
           'Linux EDR alerts for processes executing from `/tmp/* (deleted)` and outbound connections to `connect.consrensys.com:8080`.',
       },
@@ -337,7 +337,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Because many upstream libraries declare loose semver ranges (such as `^0.7.0` or `^2.0.0`), any developer or CI job running `npm install` without a strict lockfile automatically pulled the newly published malicious version.',
         diagramAlignment:
-          'Vector #1.1 links the Hijacked NPM Account to the NPM Registry (`ua-parser-js / coa / rc`) as the trojanized versions are published.',
+          'Step #1 (#1→ / ⇠#1) links the Hijacked NPM Account to the NPM Registry (`ua-parser-js / coa / rc`) as the trojanized versions are published.',
         detectionAndEvidence:
           'SCA package diff scanners (e.g., Socket.dev or Sonatype Nexus Firewall) blocking newly published versions that introduce `preinstall` or `postinstall` scripts.',
       },
@@ -352,7 +352,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'On Linux workstations and CI containers, the script instead executed `preinstall.sh` to download and run an ELF cryptominer binary (`jsextension`).',
         diagramAlignment:
-          'Vector #2.1 connects the NPM Registry to the Developer Workstation (`npm install`) and out to the Attacker Payload Server while the Endpoint EDR observes `node.exe -> cmd.exe`.',
+          'Step #2 (#2→ / ⇠#2) connects the NPM Registry to the Developer Workstation (`npm install`) and out to the Attacker Payload Server while the Endpoint EDR observes `node.exe -> cmd.exe`.',
         detectionAndEvidence:
           'Sysmon EventID 1 process tree showing `node.exe` spawning `cmd.exe /c compile.bat` and `curl.exe` downloading `.dll` or `.exe` binaries into `node_modules`.',
       },
@@ -367,7 +367,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Because developers frequently hold privileged AWS, GitHub, and production SSH credentials on their laptops, CISA warned that any workstation that installed these versions had to be treated as fully compromised.',
         diagramAlignment:
-          'Vector #3.1 traces the Developer Workstation executing `regsvr32.exe -s create.dll` to harvest the Browser Session Vault & Cloud Tokens.',
+          'Step #3 (#3→ / ⇠#3) traces the Developer Workstation executing `regsvr32.exe -s create.dll` to harvest the Browser Session Vault & Cloud Tokens.',
         detectionAndEvidence:
           'Sysmon EventID 1 & 7 showing `regsvr32.exe` loading an unsigned DLL (`create.dll` / `sdd.dll`) from a `node_modules` directory.',
       },
@@ -399,7 +399,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'When ownership of the `polyfill.io` DNS domain changed hands in 2024, the new owner automatically inherited the ability to execute arbitrary JavaScript inside the first-party origin of every website still referencing that `<script>` tag.',
         diagramAlignment:
-          'Vector #1.1 links the Rogue CDN Operator (`cdn.polyfill.io`) to the Enterprise Web Portal embedding the unverified `<script>` tag.',
+          'Step #1 (#1→ / ⇠#1) links the Rogue CDN Operator (`cdn.polyfill.io`) to the Enterprise Web Portal embedding the unverified `<script>` tag.',
         detectionAndEvidence:
           'Client-side script inventory scanners (Cloudflare Page Shield, Sansec) enumerating external `<script>` tags lacking `integrity` attributes or referencing deprecated domains.',
       },
@@ -414,7 +414,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'The injected code also wrapped its execution in a `15-second setTimeout` delay so automated headless browser scanners that only observe a page for 3–5 seconds after load would mark the script as clean.',
         diagramAlignment:
-          'Vector #2.1 connects the Rogue CDN Operator to the End-User Mobile Browser Session and triggers the Sansec Scanner / Cloudflare Page Shield alert.',
+          'Step #2 (#2→ / ⇠#2) connects the Rogue CDN Operator to the End-User Mobile Browser Session and triggers the Sansec Scanner / Cloudflare Page Shield alert.',
         detectionAndEvidence:
           'Multi-User-Agent synthetic monitoring comparing script payloads returned for mobile vs. desktop headers over extended execution windows (>20 seconds).',
       },
@@ -429,7 +429,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'To neutralize the blast radius across the web, Cloudflare deployed automatic edge URL rewriting to swap `cdn.polyfill.io` with a clean mirror at `cdnjs.cloudflare.com/polyfill`, and the domain registrar placed `polyfill.io` on `clientHold`.',
         diagramAlignment:
-          'Vector #3.1 traces the End-User Mobile Browser Session executing the payload inside the DOM Session Context & Redirect Target.',
+          'Step #3 (#3→ / ⇠#3) traces the End-User Mobile Browser Session executing the payload inside the DOM Session Context & Redirect Target.',
         detectionAndEvidence:
           'Content-Security-Policy (`CSP`) violation telemetry alerting on unauthorized script loads from `www.googie-anaiytics.com` and removal of all `polyfill.io` references.',
       },
@@ -461,7 +461,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Auditing the npm registry metadata against GitHub showed that versions `1.1.5–1.1.7` had no corresponding Git tags, pull requests, or GitHub Actions release runs in Ledger’s source repository.',
         diagramAlignment:
-          'Vector #1.1 links the Angel Drainer Operator to the NPM & jsDelivr CDN (`@ledgerhq/connect-kit`) as the unauthorized versions are published.',
+          'Step #1 (#1→ / ⇠#1) links the Angel Drainer Operator to the NPM & jsDelivr CDN (`@ledgerhq/connect-kit`) as the unauthorized versions are published.',
         detectionAndEvidence:
           'Registry monitors (Socket / Checkmarx / Phylum) alerting when an npm package version is published without a matching GitHub tag or OIDC provenance attestation.',
       },
@@ -476,7 +476,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'This design bypassed build-time dependency pinning completely: every time a user loaded a dApp frontend in their browser, the browser fetched the latest `1.x` build directly from `cdn.jsdelivr.net`.',
         diagramAlignment:
-          'Vector #2.1 connects the NPM & jsDelivr CDN to the Downstream Web3 dApp Frontend and triggers the Blockaid Web3 Runtime Scanner.',
+          'Step #2 (#2→ / ⇠#2) connects the NPM & jsDelivr CDN to the Downstream Web3 dApp Frontend and triggers the Blockaid Web3 Runtime Scanner.',
         detectionAndEvidence:
           'Frontend runtime monitoring (Blockaid) detecting unexpected script changes and newly injected WalletConnect Project IDs in live dApp DOMs.',
       },
@@ -491,7 +491,7 @@ export const BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES: Record<string, RawScenarioStep
         howItWorksInPractice:
           'Ledger hardware wallets themselves remained secure, but users who blindly approved the malicious transaction prompt on their wallet screen authorized the transfer; Ledger and WalletConnect contained the incident within hours by revoking the rogue WalletConnect Project ID, purging jsDelivr’s cache, and shipping pinned v1.1.8.',
         diagramAlignment:
-          'Vector #3.1 traces the Downstream Web3 dApp Frontend prompting the User Web3 Wallet (`Permit2 / SetApprovalForAll`) to authorize the Angel Drainer operator.',
+          'Step #3 (#3→ / ⇠#3) traces the Downstream Web3 dApp Frontend prompting the User Web3 Wallet (`Permit2 / SetApprovalForAll`) to authorize the Angel Drainer operator.',
         detectionAndEvidence:
           'Wallet-level transaction simulation (Blockaid) flagging `eth_signTypedData_v4` (`Permit2`) and `setApprovalForAll` calls targeting known drainer spender addresses.',
       },

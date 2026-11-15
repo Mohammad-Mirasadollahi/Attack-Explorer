@@ -1244,11 +1244,11 @@ function materializeInternalBoard(
 
   const inboundParentSeqs = parentFlows
     .filter((pf) => pf.toNodeId === parentNode.id)
-    .map((pf) => `#${pf.forwardSeq}→`);
+    .map((pf) => `#${pf.sequenceCode}→`);
 
   const outboundParentSeqs = parentFlows
     .filter((pf) => pf.fromNodeId === parentNode.id)
-    .map((pf) => `#${pf.forwardSeq}→`);
+    .map((pf) => `#${pf.sequenceCode}→`);
 
   const internalSeqChain = subFlows.map((sf) => sf.sequenceCode);
 
@@ -1265,7 +1265,7 @@ function materializeInternalBoard(
     outboundParentSeqs,
     lineageBadgeText: `In: ${inLabel} ▸ Node #${parentSequenceCode} [${internalChainText}] ▸ Out: ${outLabel}` };
 
-  const archNoteText = `Expanded internal visual board for Node #${parentSequenceCode} "${parentNode.label}" (${hostSystemLabel}). Sequence numbers are preserved hierarchically (${internalChainText} with forward #${parentSequenceCode}.N.1→ and return ⇠#${parentSequenceCode}.N.2).`;
+  const archNoteText = `Expanded internal visual board for Node #${parentSequenceCode} "${parentNode.label}" (${hostSystemLabel}). Sequence numbers are preserved hierarchically (${internalChainText} with forward #${parentSequenceCode}.N→ and return ⇠#${parentSequenceCode}.N).`;
 
   return {
     parentNode,

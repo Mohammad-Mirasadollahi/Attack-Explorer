@@ -27,7 +27,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'By setting only `EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS` (omitting `EFI_VARIABLE_RUNTIME_ACCESS`), user-mode and kernel-mode security tools running after Windows boots cannot query or delete the NVRAM variable without rebooting.',
         diagramAlignment:
-          'Vector #1.1 links the BlackLotus User-Mode Installer to the EFI System Partition & NVRAM (`MOK`) as vulnerable signed bootloaders are written.',
+          'Step #1 (#1→ / ⇠#1) links the BlackLotus User-Mode Installer to the EFI System Partition & NVRAM (`MOK`) as vulnerable signed bootloaders are written.',
         detectionAndEvidence:
           'Sysmon EventID 11 file creation events inside `\\Device\\HarddiskVolume1\\EFI\\` and calls to `ZwSetSystemEnvironmentValueEx`.',
       },
@@ -42,7 +42,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Because the exploit runs after UEFI firmware verifies `bootmgfw.efi`’s genuine Microsoft signature but before `ExitBootServices()`, BlackLotus hijacks the boot chain without modifying the motherboard’s physical SPI flash.',
         diagramAlignment:
-          'Vector #2.1 connects the EFI System Partition & NVRAM to the Vulnerable `winload.efi` (`CVE-2022-21894`) while the ESET / CISA TPM Attestation sensor flags the PCR[4]/PCR[7] digest mismatch.',
+          'Step #2 (#2→ / ⇠#2) connects the EFI System Partition & NVRAM to the Vulnerable `winload.efi` (`CVE-2022-21894`) while the ESET / CISA TPM Attestation sensor flags the PCR[4]/PCR[7] digest mismatch.',
         detectionAndEvidence:
           'TPM 2.0 Measured Boot attestation logs (WBCL) showing an outdated `winload.efi` hash in `PCR[4]` or `PCR[7]` Secure Boot policy changes.',
       },
@@ -57,7 +57,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Remediation required applying Microsoft’s `DBX` UEFI revocation update (KB5025885)—which adds the vulnerable bootloaders’ hashes to the motherboard’s UEFI NVRAM `DBX`—and wiping the EFI System Partition.',
         diagramAlignment:
-          'Vector #3.1 traces the patched `winload.efi` deploying the Ring-0 Kernel Driver & Disabled HVCI state and connecting back to the attacker C2.',
+          'Step #3 (#3→ / ⇠#3) traces the patched `winload.efi` deploying the Ring-0 Kernel Driver & Disabled HVCI state and connecting back to the attacker C2.',
         detectionAndEvidence:
           'Windows CodeIntegrity / System Event Logs reporting unexpected HVCI/VBS disablement across reboots and network connections initiated by `winlogon.exe`.',
       },
@@ -89,7 +89,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'While newer versions of Sysinternals Process Explorer (`v17.0+`) added security descriptor checks restricting driver access, version `16.32` permitted any local administrator process to open its device object.',
         diagramAlignment:
-          'Vector #1.1 links the AuKill User-Mode Controller to the SCM Service (`PROCEXP152.SYS v16.32`) during driver installation.',
+          'Step #1 (#1→ / ⇠#1) links the AuKill User-Mode Controller to the SCM Service (`PROCEXP152.SYS v16.32`) during driver installation.',
         detectionAndEvidence:
           'Sysmon EventID 6 (`DriverLoaded`) for `PROCEXP152.SYS` (version `16.32`) where the parent/creator process is not a signed `procexp.exe` or `procexp64.exe` binary.',
       },
@@ -104,7 +104,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Normally, Windows blocks user-mode administrators from opening `PROCESS_TERMINATE` handles to `PsProtectedSignerAntimalware-Light` (PPL) processes, but a `ZwOpenProcess` call originating from a Ring-0 kernel driver (`KernelMode` previous mode) bypasses PPL checks completely.',
         diagramAlignment:
-          'Vector #2.1 connects the `PROCEXP152.SYS` service to the `DeviceIoControl (0x8335003C / 0004)` dispatch handler and triggers the Sophos X-Ops / Elastic WDAC sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the `PROCEXP152.SYS` service to the `DeviceIoControl (0x8335003C / 0004)` dispatch handler and triggers the Sophos X-Ops / Elastic WDAC sensor.',
         detectionAndEvidence:
           'ETW `Microsoft-Windows-Kernel-File` events showing non-Sysinternals binaries opening `\\Device\\PROCEXP152` and issuing IOCTLs `0x8335003C` or `0x83350004`.',
       },
@@ -119,7 +119,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           '`AuKill` keeps its worker threads running in the background during encryption so if the Windows Service Control Manager attempts to restart a crashed EDR service, `AuKill` kills the new PID within milliseconds.',
         diagramAlignment:
-          'Vector #3.1 traces the `DeviceIoControl` handler neutralizing Terminated PPL EDR & AV Services.',
+          'Step #3 (#3→ / ⇠#3) traces the `DeviceIoControl` handler neutralizing Terminated PPL EDR & AV Services.',
         detectionAndEvidence:
           'Enabling Microsoft’s Vulnerable Driver Blocklist (`SiPolicy.p7b` + HVCI) to prevent `PROCEXP152.SYS` v16.32 from loading in the first place.',
       },
@@ -151,7 +151,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Because `poortry.sys` was a brand-new custom binary rather than a known historical vulnerable driver, hash-based vulnerable driver blocklists did not block it until Microsoft revoked the underlying WHQL certificates in `ADV220005`.',
         diagramAlignment:
-          'Vector #1.1 links the STONESTOP User-Mode Loader to the WHQL-Signed `POORTRY.sys` Driver as it loads into Ring 0.',
+          'Step #1 (#1→ / ⇠#1) links the STONESTOP User-Mode Loader to the WHQL-Signed `POORTRY.sys` Driver as it loads into Ring 0.',
         detectionAndEvidence:
           'Sysmon EventID 6 driver loads from temp/user directories (`C:\\Windows\\Temp\\`, `C:\\ProgramData\\`) and enforcement of Microsoft ADV220005 / KB5020779 certificate revocations.',
       },
@@ -166,7 +166,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           '`POORTRY` also unlinked registry (`CmUnRegisterCallback`) and object (`ObUnRegisterCallbacks`) filter callbacks and removed minifilter filesystem callbacks registered by endpoint security sensors.',
         diagramAlignment:
-          'Vector #2.1 connects the WHQL-Signed `POORTRY.sys` Driver to `ntoskrnl PspCreateProcessNotifyRoutine` and triggers the Mandiant / CrowdStrike Falcon Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the WHQL-Signed `POORTRY.sys` Driver to `ntoskrnl PspCreateProcessNotifyRoutine` and triggers the Mandiant / CrowdStrike Falcon Sensor.',
         detectionAndEvidence:
           'EDR kernel callback integrity watchdogs that periodically verify their own function pointers remain present in `PspCreateProcessNotifyRoutine` and `ObRegisterCallbacks`.',
       },
@@ -181,7 +181,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'UNC3944 (Scattered Spider) and multiple ransomware affiliates used `STONESTOP`/`POORTRY` on high-value telecom, BPO, and financial servers to silence EDR telemetry prior to credential dumping and VMware ESXi takeover.',
         diagramAlignment:
-          'Vector #3.1 traces the `ntoskrnl` tampering node to the Blinded Kernel Telemetry & LSASS Dump stage.',
+          'Step #3 (#3→ / ⇠#3) traces the `ntoskrnl` tampering node to the Blinded Kernel Telemetry & LSASS Dump stage.',
         detectionAndEvidence:
           'Enabling Windows Credential Guard (Virtualization-Based Security `LsaIso.exe`) so LSASS secrets reside in VTL1 hypervisor memory unreachable even from Ring-0 VTL0 kernel drivers.',
       },
@@ -213,7 +213,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Standard administrator checks like `ps aux` displayed a convincing Linux system daemon name, while disk-based antivirus scans found nothing because the executable file had already been unlinked.',
         diagramAlignment:
-          'Vector #1.1 links the Red Menshen Operator to the Masqueraded Shell (`/dev/shm/kdmtmpflush`) during initial RAM staging.',
+          'Step #1 (#1→ / ⇠#1) links the Red Menshen Operator to the Masqueraded Shell (`/dev/shm/kdmtmpflush`) during initial RAM staging.',
         detectionAndEvidence:
           'Scanning `/proc/[0-9]*/exe` symlinks for `/dev/shm/* (deleted)` and comparing `/proc/[pid]/comm` against the actual binary path in `/proc/[pid]/exe`.',
       },
@@ -228,7 +228,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Because `AF_PACKET` sockets do not bind a TCP or UDP port, `netstat -tlpn`, `ss -tlpn`, and external port scanners (`nmap`) show zero open backdoor ports—and the attacker can send the magic packet to any port (even ports blocked by `iptables` or already used by Apache/SSH on port 443/22).',
         diagramAlignment:
-          'Vector #2.1 connects the Linux Host `eth0` (`Before iptables`) to the Raw Socket BPF Filter (`0x7255 / 0x5293`) and triggers the PwC / Sandfly / Elastic Linux Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Linux Host `eth0` (`Before iptables`) to the Raw Socket BPF Filter (`0x7255 / 0x5293`) and triggers the PwC / Sandfly / Elastic Linux Sensor.',
         detectionAndEvidence:
           'Running `ss -0pb` on Linux to enumerate `AF_PACKET` raw sockets and their attached BPF bytecode filters (specifically looking for decimal constants `29269` (`0x7255`) and `21139` (`0x5293`)).',
       },
@@ -243,7 +243,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'As soon as the interactive session ended, BPFDoor executed `iptables -t nat -D PREROUTING ...` to delete the temporary NAT redirection rule and return to passive dormancy.',
         diagramAlignment:
-          'Vector #3.1 traces the Magic Packet from the Red Menshen Operator through `eth0` and the Raw Socket BPF Filter to activate the Masqueraded Shell.',
+          'Step #3 (#3→ / ⇠#3) traces the Magic Packet from the Red Menshen Operator through `eth0` and the Raw Socket BPF Filter to activate the Masqueraded Shell.',
         detectionAndEvidence:
           'Network IDS rules matching `0x7255` / `0x5293` magic payloads and Linux auditd monitoring for `setsockopt` (`SO_ATTACH_FILTER`) and unexpected `iptables -t nat` invocations.',
       },
@@ -275,7 +275,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Because the infection resides entirely inside the motherboard’s SPI flash chip, replacing the SSD/NVMe drive or reinstalling Windows from a clean ISO has zero effect on the rootkit.',
         diagramAlignment:
-          'Vector #1.1 links the Motherboard SPI Flash (`CSMCORE DXE`) to the Boot Chain (`bootmgfw -> winload.efi`) as `HandleProtocol` is hooked.',
+          'Step #1 (#1→ / ⇠#1) links the Motherboard SPI Flash (`CSMCORE DXE`) to the Boot Chain (`bootmgfw -> winload.efi`) as `HandleProtocol` is hooked.',
         detectionAndEvidence:
           'Dumping the SPI flash ROM via `CHIPSEC` or UEFI firmware scanners and detecting modifications to the `CSMCORE` DXE module entry point and `.reloc` section.',
       },
@@ -290,7 +290,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Because `bootmgfw.efi`, `winload.efi`, and `ntoskrnl.exe` on the disk partition are never modified on disk, offline disk forensics and file-hash checks report 100% clean Microsoft system binaries.',
         diagramAlignment:
-          'Vector #2.1 connects the Boot Chain (`bootmgfw -> winload.efi`) to the Kaspersky GReAT Firmware Scanner and into the Windows Kernel handoff.',
+          'Step #2 (#2→ / ⇠#2) connects the Boot Chain (`bootmgfw -> winload.efi`) to the Kaspersky GReAT Firmware Scanner and into the Windows Kernel handoff.',
         detectionAndEvidence:
           'Pre-OS boot integrity verification and kernel memory scanning comparing in-RAM `.text` sections of `ntoskrnl.exe` against the clean on-disk PE image.',
       },
@@ -305,7 +305,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Once Windows networking initialized, the kernel implant resolved its C2 domain via raw kernel sockets (`tdi.sys`) to fetch second-stage user/kernel payloads.',
         diagramAlignment:
-          'Vector #3.1 traces the `winload.efi` hook into the Patched `ntoskrnl.exe` & Kernel Implant and out to the CosmicStrand C2 Server.',
+          'Step #3 (#3→ / ⇠#3) traces the `winload.efi` hook into the Patched `ntoskrnl.exe` & Kernel Implant and out to the CosmicStrand C2 Server.',
         detectionAndEvidence:
           'Live kernel memory forensics (`Volatility` / EDR kernel integrity scan) detecting inline hooks on `ntoskrnl.exe!ZwCreateSection` and patched bytes at `ntoskrnl.exe!KiFilterFiberContext`.',
       },
@@ -337,7 +337,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Regardless of the randomized `.sys` filename on disk, the driver’s `DriverEntry` routine always creates the fixed device symbolic link `\\\\.\\ZemanaAntiMalware` (or `\\\\.\\B94B8021-5217-4091-96E5-6353272B9429`).',
         diagramAlignment:
-          'Vector #1.1 links the `Terminator.exe` User-Mode Binary to the Signed Zemana Driver (`zam64.sys`) as the randomized service is loaded.',
+          'Step #1 (#1→ / ⇠#1) links the `Terminator.exe` User-Mode Binary to the Signed Zemana Driver (`zam64.sys`) as the randomized service is loaded.',
         detectionAndEvidence:
           'Sysmon EventID 6 matching the SHA-256 hash, PE `OriginalFileName` (`zam64.sys` / `zamguard64.sys`), or `Zemana Ltd.` certificate thumbprint regardless of filename.',
       },
@@ -352,7 +352,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Once a PID is registered via `0x80002010`, `zam64.sys` unlocks its full suite of administrative IOCTLs—including process termination, registry manipulation, and direct SCSI/disk read-write—for that caller.',
         diagramAlignment:
-          'Vector #2.1 connects the Signed Zemana Driver (`zam64.sys`) to the `IOCTL 0x80002010` Allowlist Bypass node and triggers the SentinelOne / CrowdStrike Behavioral IOA.',
+          'Step #2 (#2→ / ⇠#2) connects the Signed Zemana Driver (`zam64.sys`) to the `IOCTL 0x80002010` Allowlist Bypass node and triggers the SentinelOne / CrowdStrike Behavioral IOA.',
         detectionAndEvidence:
           'Kernel ETW / EDR behavioral monitoring alerting on any process opening `\\\\.\\ZemanaAntiMalware` and issuing `IOCTL 0x80002010`.',
       },
@@ -367,7 +367,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Modern EDRs neutralize Terminator prior to `0x80002048` by blocking the load of `zam64.sys` at `NtLoadDriver` / `DriverLoad` time using behavioral prevention and kernel blocklists.',
         diagramAlignment:
-          'Vector #3.1 traces the Allowlist Bypass node invoking `IOCTL 0x80002048` Ring-0 Process Kill against endpoint security agents.',
+          'Step #3 (#3→ / ⇠#3) traces the Allowlist Bypass node invoking `IOCTL 0x80002048` Ring-0 Process Kill against endpoint security agents.',
         detectionAndEvidence:
           'Pre-execution blocking of `zam64.sys` via Microsoft Vulnerable Driver Blocklist and EDR driver-load prevention policies.',
       },
@@ -399,7 +399,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'If an administrator runs `cat /etc/ld.so.preload`, `ls /usr/lib`, or `ldd /bin/ls` using standard dynamically linked system binaries, Symbiote’s hooked `fopen` and `getdents64` functions filter out its own filenames and return empty/clean results.',
         diagramAlignment:
-          'Vector #1.1 links the Symbiote C2 Operator to `/etc/ld.so.preload (liblinux.so)` as the shared library infects all dynamic processes.',
+          'Step #1 (#1→ / ⇠#1) links the Symbiote C2 Operator to `/etc/ld.so.preload (liblinux.so)` as the shared library infects all dynamic processes.',
         detectionAndEvidence:
           'Inspecting `/etc/ld.so.preload` and `/proc/1/maps` using a **statically compiled** binary (which does not use `ld-linux.so` and is immune to `LD_PRELOAD` userland hooks) or kernel-level eBPF sensors.',
       },
@@ -414,7 +414,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Harvesting outbound `ssh` and `scp` credentials from compromised jump boxes allowed the attackers to pivot laterally across segmented banking infrastructure.',
         diagramAlignment:
-          'Vector #2.1 connects `/etc/ld.so.preload (liblinux.so)` to the Hooked `sshd` / PAM Credential Harvester and triggers the BlackBerry / Intezer Static ELF Scanner.',
+          'Step #2 (#2→ / ⇠#2) connects `/etc/ld.so.preload (liblinux.so)` to the Hooked `sshd` / PAM Credential Harvester and triggers the BlackBerry / Intezer Static ELF Scanner.',
         detectionAndEvidence:
           'Kernel-level eBPF / `auditd` monitoring of `/proc/[pid]/maps` on `sshd` for unexpected shared objects outside `/lib/security/` and `/usr/lib/x86_64-linux-gnu/`.',
       },
@@ -429,7 +429,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Symbiote also hooked `fopen("/proc/net/tcp")` and removed lines matching its active connections so `netstat` and `ss` could not see its sockets either.',
         diagramAlignment:
-          'Vector #3.1 traces `/etc/ld.so.preload` hooking the `tcpdump / libpcap` BPF Scrubber while exfiltrating data to the Symbiote DNS / HTTPS C2 Operator.',
+          'Step #3 (#3→ / ⇠#3) traces `/etc/ld.so.preload` hooking the `tcpdump / libpcap` BPF Scrubber while exfiltrating data to the Symbiote DNS / HTTPS C2 Operator.',
         detectionAndEvidence:
           'Capturing network traffic from an out-of-band switch SPAN port / network tap rather than on the host, and comparing `ss` output against raw kernel socket tables via eBPF.',
       },
@@ -461,7 +461,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Consumer anti-cheat drivers are engineered with sweeping Ring-0 process and memory inspection capabilities to catch game cheats, making them prime targets for standalone BYOVD weaponization on enterprise servers.',
         diagramAlignment:
-          'Vector #1.1 links the `kill_svc.exe` Ransomware Dropper to the Signed Anti-Cheat Driver (`mhyprot2.sys`) as it loads onto the server.',
+          'Step #1 (#1→ / ⇠#1) links the `kill_svc.exe` Ransomware Dropper to the Signed Anti-Cheat Driver (`mhyprot2.sys`) as it loads onto the server.',
         detectionAndEvidence:
           'Sysmon EventID 6 (`DriverLoaded`) alerting whenever `mhyprot2.sys` (or any driver signed by `miHoYo Co., Ltd.`) is loaded on an enterprise workstation or server.',
       },
@@ -476,7 +476,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           'Because researchers had previously reverse-engineered `mhyprot2.sys`’s `MT19937-64` key derivation and published open-source PoCs on GitHub (`evil-mhyprot-cli`), ransomware developers copied the exact handshake routine directly into `kill_svc.exe`.',
         diagramAlignment:
-          'Vector #2.1 connects the Signed Anti-Cheat Driver (`mhyprot2.sys`) to the `IOCTL 0x80034000` MT64 Handshake node and triggers the Trend Micro / Mandiant EDR Sensor.',
+          'Step #2 (#2→ / ⇠#2) connects the Signed Anti-Cheat Driver (`mhyprot2.sys`) to the `IOCTL 0x80034000` MT64 Handshake node and triggers the Trend Micro / Mandiant EDR Sensor.',
         detectionAndEvidence:
           'Monitoring `CreateFileW` handles to `\\Device\\mhyprot2` and behavioral detection of `0x80034000` / `0x81034000` IOCTL sequences.',
       },
@@ -491,7 +491,7 @@ export const BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES: Record<string, RawScenari
         howItWorksInPractice:
           '`mhyprot2.sys` also exposes `IOCTL 0x81054000` and `0x81064000` for arbitrary kernel/process memory reads (`MmCopyVirtualMemory`), giving attackers both an EDR killer and a kernel memory reader in a single signed binary.',
         diagramAlignment:
-          'Vector #3.1 traces the MT64 Handshake invoking `IOCTL 0x81034000` Ring-0 AV Wipe & Lock.',
+          'Step #3 (#3→ / ⇠#3) traces the MT64 Handshake invoking `IOCTL 0x81034000` Ring-0 AV Wipe & Lock.',
         detectionAndEvidence:
           'Blocking `mhyprot2.sys` via Microsoft Vulnerable Driver Blocklist / WDAC and alerting on sudden simultaneous termination (Sysmon EventID 5) of multiple AV/EDR services.',
       },
