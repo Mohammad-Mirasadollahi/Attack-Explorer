@@ -57,7 +57,6 @@ import {
 import { DraggableDiagramNode } from './DraggableDiagramNode';
 import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
-import { formatConciseInternalFlowPill } from '@/lib/ui-text-standards';
 import {
   KEYBOARD_PAN_STEP_PX,
   resolveKeyboardShortcutCommand,
@@ -200,9 +199,8 @@ export function AttackVisualizer({
     Record<string, Record<string, NodeOffsetDelta>>
   >({});
 
-  // Visibility toggles for Top Toolbar and Bottom Sub-Node Dock
+  // Visibility toggle for Top Toolbar
   const [topBarHidden, setTopBarHidden] = useState<boolean>(false);
-  const [bottomDockHidden, setBottomDockHidden] = useState<boolean>(false);
 
   // Force-Directed Auto-Layout state per board scope
   const [autoLayoutModeByScope, setAutoLayoutModeByScope] = useState<
@@ -246,6 +244,12 @@ export function AttackVisualizer({
   );
 
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [nodeContextMenu, setNodeContextMenu] = useState<{
+    node: WhiteboardSketchNode;
+    x: number;
+    y: number;
+    isSubBoard: boolean;
+  } | null>(null);
   const [diagramTooltipsEnabled, setDiagramTooltipsEnabled] =
     useState<boolean>(true);
   const [diagramTooltipCollapsed, setDiagramTooltipCollapsed] =
@@ -369,6 +373,7 @@ export function AttackVisualizer({
         spacePressedRef.current = true;
       } else if (e.key === 'Escape') {
         setMultiSelectedNodeIds([]);
+        setNodeContextMenu(null);
         hideMarqueeEl();
       }
     };
@@ -852,6 +857,10 @@ export function AttackVisualizer({
       const targetEl = e.target instanceof Element ? e.target : null;
       if (!targetEl) return;
 
+      if (!targetEl.closest('[data-testid="diagram-node-context-menu"]')) {
+        setNodeContextMenu(null);
+      }
+
       if (
         targetEl.closest('[data-testid="responsive-mobile-zones-view"]') ||
         targetEl.closest('[data-testid="canvas-interaction-toolbar"]') ||
@@ -859,7 +868,6 @@ export function AttackVisualizer({
         targetEl.closest('[data-testid="playback-control-bar"]') ||
         targetEl.closest('[data-testid="show-playback-bar-btn"]') ||
         targetEl.closest('[data-testid="show-canvas-top-bar-btn"]') ||
-        targetEl.closest('[data-testid="show-bottom-dock-btn"]') ||
         targetEl.closest('.canvas-interactive-node') ||
         targetEl.closest('.canvas-interactive-zone') ||
         targetEl.closest('.canvas-interactive-control') ||
@@ -1416,6 +1424,7 @@ export function AttackVisualizer({
     (clickedNode: WhiteboardSketchNode, e: React.MouseEvent<HTMLElement>) => {
       e.stopPropagation();
       setHoveredNodeId(null);
+      setNodeContextMenu(null);
       if (didDragObjectRef.current) {
         didDragObjectRef.current = false;
         return;
@@ -1443,6 +1452,7 @@ export function AttackVisualizer({
       e.stopPropagation();
       e.preventDefault();
       setHoveredNodeId(null);
+      setNodeContextMenu(null);
       if (didDragObjectRef.current) {
         didDragObjectRef.current = false;
         return;
@@ -1451,6 +1461,46 @@ export function AttackVisualizer({
       handleNodeExpand(clickedNode);
     },
     [handleNodeExpand, internalSubBoard]
+  );
+
+  const handleDiagramNodeContextMenu = useCallback(
+    (clickedNode: WhiteboardSketchNode, e: React.MouseEvent<HTMLElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearHoverOpenTimeout();
+      clearHoverTimeout();
+      setHoveredNodeId(null);
+
+      const boardRect = boardContainerRef.current?.getBoundingClientRect();
+      const nodeRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const rawX =
+        e.clientX > 0 && boardRect
+          ? e.clientX - boardRect.left
+          : boardRect
+            ? nodeRect.left - boardRect.left + nodeRect.width / 2
+            : 240;
+      const rawY =
+        e.clientY > 0 && boardRect
+          ? e.clientY - boardRect.top
+          : boardRect
+            ? nodeRect.bottom - boardRect.top + 8
+            : 180;
+
+      const menuW = 285;
+      const menuH = 148;
+      const maxW = boardRect?.width || 1100;
+      const maxH = boardRect?.height || 620;
+      const clampedX = Math.max(12, Math.min(maxW - menuW - 12, Math.round(rawX)));
+      const clampedY = Math.max(12, Math.min(maxH - menuH - 12, Math.round(rawY)));
+
+      setNodeContextMenu({
+        node: clickedNode,
+        x: clampedX,
+        y: clampedY,
+        isSubBoard: Boolean(internalSubBoard),
+      });
+    },
+    [clearHoverOpenTimeout, clearHoverTimeout, internalSubBoard]
   );
 
   const handleSelectAllNodes = useCallback(() => {
@@ -2356,6 +2406,7 @@ export function AttackVisualizer({
                         onHoverChange={handleNodeHoverChange}
                         onNodeClick={handleDiagramNodeClick}
                         onNodeDoubleClick={handleDiagramNodeDoubleClick}
+                        onNodeContextMenu={handleDiagramNodeContextMenu}
                       />
                   );
                 })}
@@ -2366,9 +2417,96 @@ export function AttackVisualizer({
           </CanvasController>
           </div>
 
+          {/* Right-Click Context Menu for Diagram Nodes (Expand Internal Pipeline & Detailed Drill-Down) */}
+          <AnimatePresence>
+            {nodeContextMenu && (
+              <motion.div
+                key={`node-context-menu-${nodeContextMenu.node.id}`}
+                role="menu"
+                aria-label={`Actions for ${nodeContextMenu.node.label}`}
+                data-testid="diagram-node-context-menu"
+                data-node-id={nodeContextMenu.node.id}
+                initial={{ opacity: 0, scale: 0.94, y: 4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 2 }}
+                transition={{ duration: 0.14, ease: 'easeOut' }}
+                style={{
+                  left: `${nodeContextMenu.x}px`,
+                  top: `${nodeContextMenu.y}px`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="absolute z-50 w-72 rounded-xl bg-white/98 dark:bg-zinc-900/98 border border-zinc-200/90 dark:border-zinc-700/90 shadow-2xl p-2 backdrop-blur-md flex flex-col gap-1.5"
+              >
+                <div className="px-2.5 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200/70 dark:border-zinc-800 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-bold">
+                        #{nodeContextMenu.node.sequenceCode || nodeContextMenu.node.chainOrder}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        {nodeContextMenu.isSubBoard
+                          ? 'INTERNAL SUB-NODE'
+                          : 'EXPANDABLE NODE'}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-xs font-extrabold text-zinc-900 dark:text-white leading-snug break-words">
+                      {nodeContextMenu.node.label}
+                    </div>
+                  </div>
+                </div>
+
+                {!nodeContextMenu.isSubBoard ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid="context-menu-expand-node-btn"
+                    onClick={() => {
+                      const target = nodeContextMenu.node;
+                      setNodeContextMenu(null);
+                      handleNodeExpand(target);
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-left transition-colors cursor-pointer flex items-start gap-2.5 shadow-xs"
+                  >
+                    <Maximize2 className="w-4 h-4 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-extrabold leading-snug flex items-center justify-between gap-1.5">
+                        <span>Expand Inside Node</span>
+                        <span className="px-1.5 py-0.5 rounded bg-white/20 font-mono text-[9.5px]">
+                          Sub-Board
+                        </span>
+                      </div>
+                      <div className="mt-0.5 text-[10.5px] text-indigo-100 leading-snug break-words">
+                        Enter inside {nodeContextMenu.node.label} to inspect internal sub-nodes &amp; telemetry in detail
+                      </div>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid="context-menu-back-to-parent-btn"
+                    onClick={() => {
+                      setNodeContextMenu(null);
+                      handleBackToMainTopology();
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-left transition-colors cursor-pointer flex items-center gap-2 text-xs font-bold"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                    <span>Back to Parent Topology View</span>
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Viewport-Clamped, Collision-Aware Diagram Node Hover Tooltip (Rendered at Board Container Scope) */}
           <AnimatePresence>
-            {hoveredNode && (
+            {hoveredNode && !nodeContextMenu && (
               <NodeHoverTooltip
                 key={`hover-tooltip-${hoveredNode.id}`}
                 node={hoveredNode}
@@ -2384,31 +2522,6 @@ export function AttackVisualizer({
               />
             )}
           </AnimatePresence>
-
-          {/* Bottom-Center Floating "Show Details" Pill when Inside SubBoard and Bottom Dock is Hidden */}
-          {internalSubBoard && activeInternalSubNode && bottomDockHidden && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30"
-            >
-              <WorkbenchIconTooltip
-                label="Show Internal Node Details Bar"
-                detail={`Restore the bottom inspection bar for ${activeInternalSubNode.label}`}
-                placement="top"
-              >
-                <button
-                  type="button"
-                  data-testid="show-bottom-dock-btn"
-                  onClick={() => setBottomDockHidden(false)}
-                  aria-label="Show Internal Node Details Bar"
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 text-zinc-700 dark:text-zinc-200 hover:text-indigo-600 dark:hover:text-indigo-400 border border-zinc-200/90 dark:border-zinc-700 text-[11px] font-mono font-semibold shadow-md backdrop-blur-md transition-colors cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Show Details</span>
-                </button>
-              </WorkbenchIconTooltip>
-            </div>
-          )}
 
           {/* Bottom-Left: Active Camera Status HUD (Pinned in Viewport) */}
           {(activeStageIndex > 0 || director.phase !== 'OVERVIEW') && (
@@ -2516,134 +2629,6 @@ export function AttackVisualizer({
           </div>
         </div>
       </div>
-
-      {/* Bottom Dock when expanded inside a node (with Hide toggle & zero-truncation pills) */}
-      <AnimatePresence initial={false}>
-        {internalSubBoard && activeInternalSubNode && !bottomDockHidden && (
-          <motion.div
-            key={`subboard-dock-${expandedSketchNode?.id}`}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-            onClick={(e) => e.stopPropagation()}
-            data-testid="internal-subnode-inspector-bar"
-            className="relative z-20 px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1.5 shrink-0 min-w-0"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 min-w-0 text-xs text-zinc-500 dark:text-zinc-400">
-                <WorkbenchIconTooltip
-                  label={activeInternalSubNode.actionBadge}
-                  detail={`Internal Stage Role · ${activeInternalSubNode.label}`}
-                  placement="top"
-                >
-                  <span className="font-mono font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
-                    {activeInternalSubNode.actionBadge.split('·')[0]?.trim() ||
-                      activeInternalSubNode.actionBadge}
-                </span>
-                </WorkbenchIconTooltip>
-                <span aria-hidden="true">·</span>
-                <WorkbenchIconTooltip
-                  label={activeInternalSubNode.label}
-                  detail={activeInternalSubNode.sublabel}
-                  placement="top"
-                >
-                  <span className="font-semibold text-zinc-900 dark:text-white whitespace-nowrap">
-                  {activeInternalSubNode.label}
-                </span>
-                </WorkbenchIconTooltip>
-                <span aria-hidden="true">·</span>
-                <WorkbenchIconTooltip
-                  label="Service Endpoint & Process Context"
-                  detail={activeInternalSubNode.sublabel}
-                  placement="top"
-                >
-                  <span className="font-mono text-[11px] whitespace-nowrap">
-                    {activeInternalSubNode.sublabel.split('·')[0]?.trim() ||
-                      activeInternalSubNode.sublabel}
-                </span>
-                </WorkbenchIconTooltip>
-                {activeInternalSubNode.hostContext && (
-                  <WorkbenchIconTooltip
-                    label="Parent Host System"
-                    detail={activeInternalSubNode.hostContext}
-                    placement="top"
-                  >
-                  <span
-                    data-testid="internal-dock-host-context"
-                      className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10.5px] font-medium border border-indigo-200/80 dark:border-indigo-800/70 whitespace-nowrap"
-                  >
-                    {activeInternalSubNode.hostContext}
-                  </span>
-                  </WorkbenchIconTooltip>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-              <div
-                  className="flex flex-wrap items-center gap-1 min-w-0"
-                role="group"
-                aria-label="Internal Communication Links"
-              >
-                {internalSubBoard.subFlows.map((fl) => {
-                  const isFlowSelected = selectedTelemetryId === fl.id;
-                    const conciseFlowPill = formatConciseInternalFlowPill(fl);
-                  return (
-                      <WorkbenchIconTooltip
-                      key={fl.id}
-                        label={conciseFlowPill.tooltipTitle}
-                        detail={conciseFlowPill.tooltipDetail}
-                        placement="top"
-                      >
-                        <button
-                      type="button"
-                      data-testid={`internal-link-pill-${fl.stepNo}`}
-                      onClick={() => {
-                        setSelectedInternalSubNodeId(fl.toNodeId);
-                        onSelectTelemetry(fl.telemetryEvent);
-                      }}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono border transition-colors cursor-pointer whitespace-nowrap ${
-                        isFlowSelected
-                          ? 'bg-rose-600 text-white border-rose-600 font-semibold'
-                          : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                          <span className="font-bold shrink-0">
-                            {conciseFlowPill.codeBadge}
-                      </span>
-                          <span>{conciseFlowPill.shortRoute}</span>
-                    </button>
-                      </WorkbenchIconTooltip>
-                  );
-                })}
-                </div>
-
-                {/* Hide Bottom Dock Button so user can maximize diagram space */}
-                <WorkbenchIconTooltip
-                  label="Hide Bottom Details Bar"
-                  detail="Collapse this bottom bar to maximize vertical diagram space"
-                  placement="top"
-                >
-                  <button
-                    type="button"
-                    data-testid="hide-bottom-dock-btn"
-                    onClick={() => setBottomDockHidden(true)}
-                    aria-label="Hide Bottom Details Bar"
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-mono font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 border border-zinc-200/80 dark:border-zinc-700 transition-colors cursor-pointer shrink-0"
-                  >
-                    <EyeOff className="w-3 h-3" />
-                    <span>Hide</span>
-                  </button>
-                </WorkbenchIconTooltip>
-              </div>
-            </div>
-
-            <p className="w-full text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
-              {activeInternalSubNode.internalSummary}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Interactive Keyboard Shortcuts & Canvas Navigation Overlay */}
       <KeyboardShortcutsModal

@@ -94,18 +94,6 @@ export function buildEntityDrillDownData(
       summary: 'A remote service payload is registered with the Service Control Manager (services.exe — which automatically runs the new service binary as NT AUTHORITY\\SYSTEM, completing privileged takeover of the target server).' },
   ];
 
-  const packets: EntityDrillDownData['packets'] = scenario.telemetry.map(
-    (ev) => ({
-      id: ev.id,
-      timestamp: ev.timestamp,
-      protocol: ev.protocolOrEventId,
-      src: ev.sourceLabel,
-      dst: ev.targetLabel,
-      flagsOrSize: ev.sizeOrCode,
-      payloadPreview: ev.info,
-      event: ev })
-  );
-
   return {
     nodeId: sketchNode.id,
     nodeLabel: sketchNode.label,
@@ -117,5 +105,5 @@ export function buildEntityDrillDownData(
     malwareProcesses,
     laptopHostActivities,
     lateralMovementHops,
-    packets };
+  };
 }

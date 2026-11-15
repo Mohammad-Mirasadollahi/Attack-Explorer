@@ -813,10 +813,14 @@ export function AttackExplorerWorkbench() {
                   onScopeOverrideChange={setInspectorScopeOverride}
                   activeTab={inspectorTab}
                   onTabChange={setInspectorTab}
-                  onCloseInspectorPage={() => setInspectorOpen(false)}
+                  onCloseInspectorPage={() => {
+                    setInspectorScopeOverride(null);
+                    setInspectorOpen(false);
+                  }}
                   onReturnToRememberedDiagram={
                     handleReturnToLastVisitedDiagram
                   }
+                  sidebarOpen={sidebarOpen}
                   width={inspectorWidth}
                   onResizeWidth={setInspectorWidth}
                 />
@@ -829,15 +833,10 @@ export function AttackExplorerWorkbench() {
                     currentStage={stageView.currentStage}
                     scopeContext={inspectorScopeContext}
                     selectedTelemetry={selectedTelemetry}
-                    onOpenInspectorPage={() => setInspectorOpen(true)}
-                    onOpenMainScenarioInspectorPage={() => {
-                      setInspectorScopeOverride('MAIN_SCENARIO');
+                    onOpenInspectorPage={() => {
+                      setInspectorScopeOverride(null);
+                      setSidebarOpen(true);
                       setInspectorOpen(true);
-                    }}
-                    onClearSectionSelection={() => {
-                      setSelectedNodeId(null);
-                      setSelectedInternalSubNodeId(null);
-                      setSelectedTelemetryId(null);
                     }}
                   />
 

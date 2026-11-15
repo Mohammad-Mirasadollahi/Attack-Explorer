@@ -597,6 +597,250 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
       `All 6 structural diagram archetypes should be represented across the 85 scenarios, got: ${Array.from(archetypesSeen).join(', ')}`
     );
   });
+
+  it('FloatingHoverInspectorTrigger removes the redundant Main Page button, uses diagramScope, and bounds summary height with vertical scroll so Open Main Scenario Page / Open Dedicated Section Page is always visible', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const inspectorSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/InspectorPanel.tsx'),
+      'utf8'
+    );
+
+    const triggerSection = inspectorSrc.slice(
+      inspectorSrc.indexOf('export function FloatingHoverInspectorTrigger'),
+      inspectorSrc.indexOf('export function InspectorPanel')
+    );
+
+    assert.equal(
+      triggerSection.includes('hover-card-open-main-page-btn'),
+      false,
+      'FloatingHoverInspectorTrigger must not render a Main Page button next to Open Dedicated Section Page'
+    );
+    assert.equal(
+      triggerSection.includes('MAIN PAGE SCENARIO INSPECTOR'),
+      false,
+      'FloatingHoverInspectorTrigger must not label the header MAIN PAGE SCENARIO INSPECTOR'
+    );
+    assert.equal(
+      triggerSection.includes("scopeContext.diagramScope === 'INTERNAL_SUBNODE'"),
+      true,
+      'FloatingHoverInspectorTrigger must resolve activeTargetNode from diagramScope'
+    );
+    assert.equal(
+      triggerSection.includes('hover-card-scrollable-summary'),
+      true,
+      'FloatingHoverInspectorTrigger must wrap the summary in a scrollable container'
+    );
+    assert.equal(
+      triggerSection.includes('overflow-y-auto'),
+      true,
+      'FloatingHoverInspectorTrigger summary container must enable vertical scrolling'
+    );
+    assert.equal(
+      triggerSection.includes('Open Main Scenario Page'),
+      true,
+      'FloatingHoverInspectorTrigger must keep the Open Main Scenario Page button beneath the scrollable text'
+    );
+  });
+
+  it('AttackSidebar, AttackLibrary, and InspectorPanel enforce default-collapsed categories, remove redundant category filter bars and Back logo, and provide a collapsible Left Navigation Panel + Overview Title Card', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+
+    const sidebarSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackSidebar.tsx'),
+      'utf8'
+    );
+    const librarySrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackLibrary.tsx'),
+      'utf8'
+    );
+    const inspectorSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/InspectorPanel.tsx'),
+      'utf8'
+    );
+
+    // 1. AttackSidebar removes redundant [ All | Malware | DFIR | AD/Net ] bar & defaults categories to collapsed
+    assert.equal(
+      sidebarSrc.includes('aria-label="Attack categories"'),
+      false,
+      'AttackSidebar must remove the redundant Attack categories filter bar'
+    );
+    assert.equal(
+      sidebarSrc.includes('aria-label="Vector categories"'),
+      false,
+      'AttackSidebar must remove the redundant Vector categories filter bar'
+    );
+    assert.equal(
+      /setExpandedGroups\]\s*=\s*useState<\s*Record<string,\s*boolean>\s*>\(\s*\{\}\s*\)/.test(
+        sidebarSrc
+      ),
+      true,
+      'AttackSidebar must initialize expandedGroups to empty {} (collapsed by default)'
+    );
+    assert.equal(
+      /setExpandedVectorGroups\]\s*=\s*useState<\s*Record<string,\s*boolean>\s*>\(\s*\{\}\s*\)/.test(
+        sidebarSrc
+      ),
+      true,
+      'AttackSidebar must initialize expandedVectorGroups to empty {} (collapsed by default)'
+    );
+
+    // 2. AttackLibrary removes redundant domainTabs filter bar & defaults categories to collapsed
+    assert.equal(
+      librarySrc.includes('domainTabs'),
+      false,
+      'AttackLibrary must remove the redundant domainTabs filter bar'
+    );
+    assert.equal(
+      librarySrc.includes('LIBRARY_CATEGORY_GROUPS'),
+      true,
+      'AttackLibrary must group scenario cards into collapsible categories'
+    );
+
+    // 3. InspectorPanel removes logo next to Back button, uses unified sidebarOpen for Left Navigation Panel (no duplicate collapse button), removes Main Scenario Page buttons, and moves Scope Badge + Title into Overview Card
+    assert.equal(
+      inspectorSrc.includes('inspector-logo-return-btn'),
+      false,
+      'InspectorPanel must not render the brand logo next to Back to Diagram'
+    );
+    assert.equal(
+      inspectorSrc.includes('AnimeBrandLogo'),
+      false,
+      'InspectorPanel must not import or render AnimeBrandLogo'
+    );
+    assert.equal(
+      inspectorSrc.includes('inspector-scope-breadcrumb-bar'),
+      false,
+      'InspectorPanel must remove the top breadcrumb bar'
+    );
+    assert.equal(
+      inspectorSrc.includes('data-testid="inspector-left-nav-sidebar"'),
+      true,
+      'InspectorPanel must render the left navigation sidebar'
+    );
+    assert.equal(
+      inspectorSrc.includes('data-testid="inspector-left-nav-collapse-btn"'),
+      false,
+      'InspectorPanel must not render a second duplicate collapse button; it uses the unified top header toggle via sidebarOpen'
+    );
+    assert.equal(
+      inspectorSrc.includes('inspector-scope-main-btn'),
+      false,
+      'InspectorPanel must remove the Main Scenario Page scope button in the left panel'
+    );
+    assert.equal(
+      inspectorSrc.includes('inspector-switch-to-main-page-btn'),
+      false,
+      'InspectorPanel must remove the Main Scenario Page button in the stage filter card'
+    );
+    assert.equal(
+      inspectorSrc.includes('data-testid="inspector-overview-title-card"'),
+      true,
+      'InspectorPanel must render the scope badge and title inside a card on the Overview page'
+    );
+
+    // 4. AttackVisualizer removes bottom sub-node details dock; AttackHeader removes Right Inspector toggle; RawTablesView removes Captured Packets & SIEM while keeping 3 tables; LogInspector & SelectedTelemetryDetail have no internal scrollbars
+    const visualizerSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackVisualizer.tsx'),
+      'utf8'
+    );
+    const headerSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackHeader.tsx'),
+      'utf8'
+    );
+    const rawTablesSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/canvas/RawTablesView.tsx'),
+      'utf8'
+    );
+    const logInspectorSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/LogInspector.tsx'),
+      'utf8'
+    );
+    const telemetryDetailSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/SelectedTelemetryDetail.tsx'),
+      'utf8'
+    );
+
+    assert.equal(
+      visualizerSrc.includes('internal-subnode-inspector-bar'),
+      false,
+      'AttackVisualizer must remove the bottom sub-node details bar'
+    );
+    assert.equal(
+      headerSrc.includes('toggle-right-inspector-btn'),
+      false,
+      'AttackHeader must remove the Toggle Right Forensic Inspector & Telemetry Panel button next to About'
+    );
+    assert.equal(
+      rawTablesSrc.includes('Captured Packets & SIEM'),
+      false,
+      'RawTablesView must remove Captured Packets & SIEM tab'
+    );
+    assert.equal(
+      rawTablesSrc.includes('raw-table-packets-section'),
+      false,
+      'RawTablesView must remove the packets table section'
+    );
+    assert.equal(
+      rawTablesSrc.includes('Malware & Memory Table') &&
+        rawTablesSrc.includes('Host Artifacts & Process Tree') &&
+        rawTablesSrc.includes('Lateral Movement Hops'),
+      true,
+      'RawTablesView must preserve the remaining 3 forensic tables'
+    );
+    assert.equal(
+      logInspectorSrc.includes('max-h-44'),
+      false,
+      'LogInspector Raw Logs and Sigma rules must not have max-h-44 internal scrollbars'
+    );
+    assert.equal(
+      telemetryDetailSrc.includes('overflow-x-auto'),
+      false,
+      'SelectedTelemetryDetail Raw Logs and Sigma rules must not have internal scrollbars'
+    );
+
+    // 5. Full-width layout with balanced edge spacing and wide Technical Explanation / Description / Summary columns
+    assert.equal(
+      rawTablesSrc.includes('max-w-6xl'),
+      false,
+      'RawTablesView must span the full available width without max-w-6xl restriction'
+    );
+    assert.equal(
+      rawTablesSrc.includes('data-testid="raw-tables-full-width-container"'),
+      true,
+      'RawTablesView must render the full-width container with balanced horizontal padding'
+    );
+    assert.equal(
+      rawTablesSrc.includes('lg:table-fixed'),
+      true,
+      'RawTablesView tables must use lg:table-fixed to enforce compact metadata columns and wide explanation columns'
+    );
+    assert.equal(
+      rawTablesSrc.includes('data-testid="raw-table-technical-explanation-col"') &&
+        rawTablesSrc.includes('lg:w-[53%]'),
+      true,
+      'RawTablesView must allocate 53% width to the Technical Explanation and Summary columns'
+    );
+
+    // 6. Focused Section Identity Card only on OVERVIEW tab, and Right-Click Context Menu with Expand on Diagram Nodes
+    assert.equal(
+      inspectorSrc.includes(
+        "resolvedActiveTab === 'OVERVIEW' && activeInspectNode"
+      ),
+      true,
+      'InspectorPanel must render inspector-section-identity-card ONLY when resolvedActiveTab === OVERVIEW'
+    );
+    assert.equal(
+      visualizerSrc.includes('data-testid="diagram-node-context-menu"') &&
+        visualizerSrc.includes('data-testid="context-menu-expand-node-btn"'),
+      true,
+      'AttackVisualizer must render a right-click context menu with Expand Inside Node button on diagram nodes'
+    );
+  });
 });
+
+
+
 
 

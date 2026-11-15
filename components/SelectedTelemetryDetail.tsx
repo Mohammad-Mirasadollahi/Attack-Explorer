@@ -93,8 +93,8 @@ export function SelectedTelemetryDetail({
         </button>
       </div>
 
-      {/* Spacious Scrollable Detail Body */}
-      <div className="flex-1 overflow-auto p-4 space-y-5">
+      {/* Spacious Detail Body (Uses Main Page Scroll) */}
+      <div className="flex-1 p-4 space-y-5">
         {/* Title & Unboxed Metadata */}
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-indigo-600 dark:text-indigo-400 tabular-nums">
@@ -197,7 +197,7 @@ export function SelectedTelemetryDetail({
 
           {artifactTab === 'RAW_LOG' ? (
             <div
-              className="p-3 bg-zinc-950 text-zinc-200 font-mono text-[10.5px] leading-relaxed overflow-x-auto rounded-xl border border-zinc-800"
+              className="p-3 bg-zinc-950 text-zinc-200 font-mono text-[10.5px] leading-relaxed rounded-xl border border-zinc-800 break-words"
               dir="ltr"
             >
               {rawLines.map((line, idx) => {
@@ -236,7 +236,7 @@ export function SelectedTelemetryDetail({
             <div className="space-y-2.5">
               <pre
                 dir="ltr"
-                className="p-3 bg-zinc-950 text-emerald-300 font-mono text-[10.5px] leading-relaxed overflow-x-auto rounded-xl border border-zinc-800 whitespace-pre-wrap"
+                className="p-3 bg-zinc-950 text-emerald-300 font-mono text-[10.5px] leading-relaxed rounded-xl border border-zinc-800 whitespace-pre-wrap break-words"
               >
                 {selectedTelemetry.detectionRule.ruleCode}
               </pre>

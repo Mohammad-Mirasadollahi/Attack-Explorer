@@ -82,12 +82,12 @@ export function SequenceView({
 
   return (
     <div
-      className="relative flex-1 w-full h-full overflow-auto p-4 pb-16 sm:p-6 bg-white dark:bg-[#09090B]"
+      className="relative w-full p-4 sm:p-6 bg-white dark:bg-[#09090B]"
       dir="ltr"
       data-testid="sequence-view"
       data-active-environment={activeEnvironment}
     >
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Active Environment & Scope Architecture Banner */}
         <div
           data-testid="sequence-env-banner"
@@ -334,8 +334,8 @@ export function SequenceView({
                   {/* Visual Initiator (Sender) ⇄ Receiver (Target) Swimlane Box */}
                   <div className="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/70 border border-zinc-200/80 dark:border-zinc-800/90">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
-                      {/* Left Column: Initiator (Sender) */}
-                      <div className="lg:col-span-3 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
+                      {/* Left Column: Initiator (Sender) — Compact */}
+                      <div className="lg:col-span-3 xl:col-span-2 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
                         <div className="space-y-1">
                           <div className="flex items-center justify-between gap-1">
                             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
@@ -357,8 +357,8 @@ export function SequenceView({
                         </div>
                       </div>
 
-                      {/* Center Column: Bidirectional Forward (#N.1) & Return (#N.2) Exchange Arrows */}
-                      <div className="lg:col-span-6 flex flex-col justify-center space-y-2.5 px-1">
+                      {/* Center Column: Bidirectional Forward (#N.1) & Return (#N.2) Exchange Explanations — Wide */}
+                      <div className="lg:col-span-6 xl:col-span-8 flex flex-col justify-center space-y-2.5 px-1">
                         {/* Forward Request Track (#N.1 ──▶) */}
                         <div className="p-2.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1">
                           <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
@@ -374,7 +374,7 @@ export function SequenceView({
                             </span>
                           </div>
                           <div className="h-0.5 w-full bg-rose-500/70 rounded-full" />
-                          <p className="text-[11.5px] font-mono text-zinc-700 dark:text-zinc-300 leading-snug break-words">
+                          <p className="text-[11.5px] font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
                             {ex.forwardPayloadSummary}
                           </p>
                         </div>
@@ -394,14 +394,14 @@ export function SequenceView({
                             </span>
                           </div>
                           <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
-                          <p className="text-[11.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
+                          <p className="text-[11.5px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
                             {ex.returnDescription}
                           </p>
                         </div>
                       </div>
 
-                      {/* Right Column: Receiver (Target) */}
-                      <div className="lg:col-span-3 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
+                      {/* Right Column: Receiver (Target) — Compact */}
+                      <div className="lg:col-span-3 xl:col-span-2 p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
                         <div className="space-y-1">
                           <div className="flex items-center justify-between gap-1">
                             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">

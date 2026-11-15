@@ -27,7 +27,6 @@ import { SelectedTelemetryDetail } from './SelectedTelemetryDetail';
 import { StepByStepGuidePanel } from './StepByStepGuidePanel';
 import { InspectorContextMiniMap } from './InspectorContextMiniMap';
 import { SketchNodeIcon } from './SketchNodeIcons';
-import { AnimeBrandLogo } from './AnimeBrandLogo';
 import { SequenceView } from './canvas/SequenceView';
 import { ProcessMemoryView } from './canvas/ProcessMemoryView';
 import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
@@ -102,6 +101,8 @@ interface InspectorPanelProps {
   onCloseInspectorPage?: () => void;
   /** Return to the last visited diagram stored in memory when clicking Attack Explorer logo */
   onReturnToRememberedDiagram?: () => void;
+  /** Controlled visibility of the left navigation panel via the single main top-header button */
+  sidebarOpen?: boolean;
   /** Controlled width in px (kept for API compatibility) */
   width?: number;
   onResizeWidth?: (nextWidth: number) => void;
@@ -113,17 +114,17 @@ export interface FloatingHoverInspectorTriggerProps {
   scopeContext: InspectorScopeContext;
   selectedTelemetry: TelemetryEvent | null;
   onOpenInspectorPage: () => void;
-  onOpenMainScenarioInspectorPage?: () => void;
-  onClearSectionSelection?: () => void;
 }
 
 /**
  * Floating Hover Inspector Option rendered on the active diagram/workbench page.
  * - Shows a compact floating pill in its resting state.
- * - Expands smoothly on hover (`onMouseEnter`) to preview the active target:
- *   - Main Scenario explanation summary if on the main page with no section clicked
- *   - Clicked Section (Node / Expanded Sub-Board / Internal Sub-Node / Telemetry Flow) summary if a section was clicked
- * - Clicking opens the dedicated full-screen Inspector page for that exact target.
+ * - Expands smoothly on hover (`onMouseEnter`) up to a bounded viewport height
+ *   with an internal vertical scrollbar for long descriptions so the bottom
+ *   action button ("Open Main Scenario Page" / "Open Dedicated Section Page")
+ *   is always visible.
+ * - Never renders a redundant "Main Page" button on the hover card (users return
+ *   to the main topology via the diagram's Back button).
  */
 export function FloatingHoverInspectorTrigger({
   scenario,
@@ -131,34 +132,35 @@ export function FloatingHoverInspectorTrigger({
   scopeContext,
   selectedTelemetry,
   onOpenInspectorPage,
-  onOpenMainScenarioInspectorPage,
-  onClearSectionSelection,
 }: FloatingHoverInspectorTriggerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const activeStageIndex = currentStage ? currentStage.index : 0;
   const activeTargetNode =
-    scopeContext.effectiveScope === 'INTERNAL_SUBNODE' &&
-    scopeContext.focusedInternalSubNode
-      ? scopeContext.focusedInternalSubNode
-      : scopeContext.effectiveScope === 'EXPANDED_NODE' &&
+    scopeContext.diagramScope === 'INTERNAL_SUBNODE' &&
+    (scopeContext.selectedSubNode || scopeContext.focusedInternalSubNode)
+      ? scopeContext.selectedSubNode || scopeContext.focusedInternalSubNode
+      : scopeContext.diagramScope === 'EXPANDED_NODE' &&
         scopeContext.expandedParentNode
       ? scopeContext.expandedParentNode
       : scopeContext.selectedMainNode;
 
   const targetTypeBadge = selectedTelemetry
     ? `PACKET · ${selectedTelemetry.protocolOrEventId}`
-    : scopeContext.effectiveScope === 'INTERNAL_SUBNODE' &&
-      scopeContext.focusedInternalSubNode
-    ? `SUB-NODE · #${scopeContext.focusedInternalSubNode.chainOrder}`
-    : scopeContext.effectiveScope === 'EXPANDED_NODE' &&
+    : scopeContext.diagramScope === 'INTERNAL_SUBNODE' &&
+      (scopeContext.selectedSubNode || scopeContext.focusedInternalSubNode)
+    ? `SUB-NODE · #${
+        (scopeContext.selectedSubNode || scopeContext.focusedInternalSubNode)!
+          .chainOrder
+      }`
+    : scopeContext.diagramScope === 'EXPANDED_NODE' &&
       scopeContext.expandedParentNode
     ? `PIPELINE · #${scopeContext.expandedParentNode.chainOrder}`
     : scopeContext.selectedMainNode
     ? `SECTION · NODE #${scopeContext.selectedMainNode.chainOrder}`
     : activeStageIndex > 0
     ? `STAGE S${activeStageIndex} · ${scenario.code}`
-    : `MAIN PAGE · ${scenario.code}`;
+    : `SCENARIO · ${scenario.code}`;
 
   const targetHeadline = selectedTelemetry
     ? `${selectedTelemetry.sourceLabel || selectedTelemetry.sourceNodeId} → ${selectedTelemetry.targetLabel || selectedTelemetry.targetNodeId}`
@@ -179,6 +181,8 @@ export function FloatingHoverInspectorTrigger({
     : scenario.overview;
 
   const activeZoneLabel =
+    scopeContext.selectedSubNodeZone?.title ||
+    scopeContext.focusedInternalSubNodeZone?.title ||
     scopeContext.selectedMainNodeZone?.title ||
     scopeContext.expandedParentNodeZone?.title ||
     activeTargetNode?.zoneLabel ||
@@ -190,6 +194,7 @@ export function FloatingHoverInspectorTrigger({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
       className="fixed top-14 right-3.5 z-40 flex flex-col items-end pointer-events-auto"
     >
       {/* Compact Hover Trigger Pill */}
@@ -235,7 +240,7 @@ export function FloatingHoverInspectorTrigger({
         <ArrowUpRight className="w-3.5 h-3.5 opacity-80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
       </motion.button>
 
-      {/* Expandable Hover Preview Card */}
+      {/* Expandable Hover Preview Card (Bounded Height + Scrollable Summary + Pinned Footer CTA) */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -244,9 +249,9 @@ export function FloatingHoverInspectorTrigger({
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             data-testid="floating-hover-inspector-preview-card"
-            className="mt-2 w-80 sm:w-96 rounded-2xl bg-white/98 dark:bg-zinc-900/98 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl p-3.5 backdrop-blur-md text-left flex flex-col gap-2.5"
+            className="mt-2 w-80 sm:w-96 max-h-[min(60vh,380px)] rounded-2xl bg-white/98 dark:bg-zinc-900/98 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl p-3.5 backdrop-blur-md text-left flex flex-col gap-2.5 overflow-hidden"
           >
-            <div className="flex items-start justify-between gap-2.5 border-b border-zinc-100 dark:border-zinc-800 pb-2">
+            <div className="shrink-0 flex items-start justify-between gap-2.5 border-b border-zinc-100 dark:border-zinc-800 pb-2">
               <div className="flex items-center gap-2.5 min-w-0">
                 {activeTargetNode && (
                   <div className="w-11 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-800/90 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 p-1">
@@ -261,7 +266,7 @@ export function FloatingHoverInspectorTrigger({
                   <div className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                     {activeTargetNode || selectedTelemetry
                       ? `CLICKED SECTION · ${activeZoneLabel}`
-                      : 'MAIN PAGE SCENARIO INSPECTOR'}
+                      : 'SCENARIO INSPECTOR'}
                   </div>
                   <div className="text-xs font-extrabold text-zinc-900 dark:text-white leading-snug break-words">
                     {targetHeadline}
@@ -278,40 +283,31 @@ export function FloatingHoverInspectorTrigger({
               </span>
             </div>
 
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
-              {targetSummary}
-            </p>
+            <div
+              data-testid="hover-card-scrollable-summary"
+              onWheel={(e) => e.stopPropagation()}
+              className="flex-1 min-h-0 max-h-[min(34vh,210px)] overflow-y-auto overscroll-contain pr-1.5"
+            >
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
+                {targetSummary}
+              </p>
+            </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="shrink-0 flex items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
               <button
                 type="button"
                 data-testid="hover-card-open-dedicated-page-btn"
                 onClick={onOpenInspectorPage}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors cursor-pointer"
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   {activeTargetNode || selectedTelemetry
                     ? 'Open Dedicated Section Page'
                     : 'Open Main Scenario Page'}
                 </span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 shrink-0" />
               </button>
-
-              {(activeTargetNode || selectedTelemetry) &&
-                onOpenMainScenarioInspectorPage && (
-                  <button
-                    type="button"
-                    data-testid="hover-card-open-main-page-btn"
-                    onClick={() => {
-                      onClearSectionSelection?.();
-                      onOpenMainScenarioInspectorPage();
-                    }}
-                    className="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-[10.5px] font-mono font-semibold transition-colors cursor-pointer"
-                  >
-                    Main Page
-                  </button>
-                )}
             </div>
           </motion.div>
         )}
@@ -338,16 +334,13 @@ export function InspectorPanel({
   onSelectNode,
   onExpandedNodeChange,
   onSelectInternalSubNode,
-  onScopeOverrideChange,
   activeTab: controlledActiveTab,
   onTabChange,
   onCloseInspectorPage,
-  onReturnToRememberedDiagram,
+  sidebarOpen = true,
 }: InspectorPanelProps) {
   const [internalActiveTab, setInternalActiveTab] =
     useState<InspectorTab>('OVERVIEW');
-  const [forceMainScenarioView, setForceMainScenarioView] =
-    useState<boolean>(false);
 
   const rawActiveTab = controlledActiveTab ?? internalActiveTab;
   const handleSelectTab = (nextTab: InspectorTab) => {
@@ -359,12 +352,11 @@ export function InspectorPanel({
   const sourcesProfile = getScenarioAttribution(scenario);
   const activeStageIndex = currentStage ? currentStage.index : 0;
 
-  const effectiveScope: InspectorScopeMode = forceMainScenarioView
-    ? 'MAIN_SCENARIO'
-    : scopeContext?.effectiveScope || 'MAIN_SCENARIO';
+  const effectiveScope: InspectorScopeMode =
+    scopeContext?.effectiveScope || 'MAIN_SCENARIO';
 
   const effectiveScopeContext = useMemo<InspectorScopeContext>(() => {
-    const baseCtx =
+    return (
       scopeContext ||
       resolveInspectorScopeContext({
         scenario,
@@ -373,28 +365,9 @@ export function InspectorPanel({
         selectedNodeId: null,
         expandedNodeId: null,
         selectedInternalSubNodeId: null,
-      });
-
-    if (forceMainScenarioView) {
-      return {
-        ...baseCtx,
-        effectiveScope: 'MAIN_SCENARIO',
-        selectedMainNode: null,
-        expandedNode: null,
-        expandedParentNode: null,
-        selectedSubNode: null,
-        focusedInternalSubNode: null,
-      };
-    }
-
-    return baseCtx;
-  }, [
-    scopeContext,
-    scenario,
-    activeStageIndex,
-    activeEnvironment,
-    forceMainScenarioView,
-  ]);
+      })
+    );
+  }, [scopeContext, scenario, activeStageIndex, activeEnvironment]);
 
   const scopedMemory = useMemo(
     () =>
@@ -415,53 +388,41 @@ export function InspectorPanel({
       : rawActiveTab;
 
   const isInspectingSpecificMainNode = Boolean(
-    !forceMainScenarioView &&
-      effectiveScope === 'MAIN_SCENARIO' &&
-      scopeContext?.selectedMainNode
+    effectiveScope === 'MAIN_SCENARIO' && scopeContext?.selectedMainNode
   );
 
   // Build miniature topological context map model for top-left of the page
   const miniMapModel = useMemo(() => {
     if (!scopeContext) return null;
-    const effectiveCtx: InspectorScopeContext = forceMainScenarioView
-      ? {
-          ...scopeContext,
-          effectiveScope: 'MAIN_SCENARIO',
-          selectedMainNode: null,
-        }
-      : scopeContext;
     return buildInspectorMiniMapModel(
-      effectiveCtx,
+      scopeContext,
       selectedTelemetry,
       activeStageIndex,
       scenario.stages.length
     );
   }, [
     scopeContext,
-    forceMainScenarioView,
     selectedTelemetry,
     activeStageIndex,
     scenario.stages.length,
   ]);
 
-  const activeInspectNode =
-    !forceMainScenarioView && scopeContext
-      ? scopeContext.effectiveScope === 'INTERNAL_SUBNODE' &&
-        scopeContext.focusedInternalSubNode
-        ? scopeContext.focusedInternalSubNode
-        : scopeContext.effectiveScope === 'EXPANDED_NODE' &&
-          scopeContext.expandedParentNode
-        ? scopeContext.expandedParentNode
-        : scopeContext.selectedMainNode
-      : null;
+  const activeInspectNode = scopeContext
+    ? scopeContext.effectiveScope === 'INTERNAL_SUBNODE' &&
+      scopeContext.focusedInternalSubNode
+      ? scopeContext.focusedInternalSubNode
+      : scopeContext.effectiveScope === 'EXPANDED_NODE' &&
+        scopeContext.expandedParentNode
+      ? scopeContext.expandedParentNode
+      : scopeContext.selectedMainNode
+    : null;
 
-  const activeInspectZone =
-    !forceMainScenarioView && scopeContext
-      ? scopeContext.effectiveScope !== 'MAIN_SCENARIO'
-        ? scopeContext.focusedInternalSubNodeZone ||
-          scopeContext.expandedParentNodeZone
-        : scopeContext.selectedMainNodeZone
-      : null;
+  const activeInspectZone = scopeContext
+    ? scopeContext.effectiveScope !== 'MAIN_SCENARIO'
+      ? scopeContext.focusedInternalSubNodeZone ||
+        scopeContext.expandedParentNodeZone
+      : scopeContext.selectedMainNodeZone
+    : null;
 
   const pageTitle = selectedTelemetry
     ? `Packet Telemetry: ${selectedTelemetry.protocolOrEventId} (${selectedTelemetry.sourceLabel || selectedTelemetry.sourceNodeId} → ${selectedTelemetry.targetLabel || selectedTelemetry.targetNodeId})`
@@ -482,13 +443,13 @@ export function InspectorPanel({
         id: 'OVERVIEW',
         label: 'Overview & Deep-Dive',
         testId: 'inspector-tab-overview',
-        icon: <BookOpen className="w-3.5 h-3.5" />,
+        icon: <BookOpen className="w-3.5 h-3.5 shrink-0" />,
       },
       {
         id: 'STEP_GUIDE',
         label: `Steps (${scenario.stages.length})`,
         testId: 'inspector-tab-steps',
-        icon: <ListChecks className="w-3.5 h-3.5" />,
+        icon: <ListChecks className="w-3.5 h-3.5 shrink-0" />,
       },
     ];
 
@@ -497,7 +458,7 @@ export function InspectorPanel({
         id: 'SEQUENCE',
         label: `Sequence (${scopedSequence.exchanges.length})`,
         testId: 'inspector-tab-sequence',
-        icon: <GitCommitHorizontal className="w-3.5 h-3.5" />,
+        icon: <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />,
       });
     }
 
@@ -506,7 +467,7 @@ export function InspectorPanel({
         id: 'MEMORY',
         label: `Memory (${scopedMemory.memoryBlocks.length})`,
         testId: 'inspector-tab-memory',
-        icon: <Cpu className="w-3.5 h-3.5" />,
+        icon: <Cpu className="w-3.5 h-3.5 shrink-0" />,
       });
     }
 
@@ -518,13 +479,13 @@ export function InspectorPanel({
           scenario.telemetry.length
         })`,
         testId: 'inspector-tab-logs',
-        icon: <Terminal className="w-3.5 h-3.5" />,
+        icon: <Terminal className="w-3.5 h-3.5 shrink-0" />,
       },
       {
         id: 'SOURCES',
         label: 'Sources & Intel',
         testId: 'inspector-tab-sources',
-        icon: <Scale className="w-3.5 h-3.5" />,
+        icon: <Scale className="w-3.5 h-3.5 shrink-0" />,
       }
     );
 
@@ -545,156 +506,76 @@ export function InspectorPanel({
       aria-label="Full-Screen Forensic Inspector Page"
       data-testid="inspector-full-page"
       data-inspector-scope={effectiveScope}
-      className="flex-1 w-full h-full min-h-0 bg-[#F4F4F5]/90 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 flex flex-col overflow-hidden"
+      className="flex-1 w-full h-full min-h-0 bg-[#F4F4F5]/90 dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 flex flex-row overflow-hidden"
     >
-      {/* Dedicated Full-Screen Inspector Top Navigation & Scope Bar */}
-      <div
-        data-testid="inspector-scope-breadcrumb-bar"
-        className="shrink-0 px-4 sm:px-6 py-2.5 bg-white/95 dark:bg-zinc-950/95 border-b border-zinc-200/90 dark:border-zinc-800/90 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 z-20"
-      >
-        {/* Left: Attack Explorer Memory Return Logo + Back to Diagram Button + Active Scope Badge */}
-        <div className="flex flex-wrap items-center gap-2.5 min-w-0">
-          {onReturnToRememberedDiagram && (
-            <div
-              data-testid="inspector-logo-return-btn"
-              title="Click Attack Explorer logo to return to your last visited diagram in memory"
-              className="flex items-center"
-            >
-              <AnimeBrandLogo
-                size="sm"
-                showWordmark={false}
-                onClick={onReturnToRememberedDiagram}
-              />
-            </div>
-          )}
-
-          {onCloseInspectorPage && (
-            <button
-              type="button"
-              data-testid="inspector-back-to-diagram-btn"
-              onClick={onCloseInspectorPage}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-900 text-xs font-bold shadow-2xs transition-colors cursor-pointer shrink-0"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Diagram</span>
-            </button>
-          )}
-
-          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
-
-          <div className="flex flex-col min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span
-                data-testid="inspector-scope-badge"
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/70 font-mono text-[10px] font-bold"
+      {/* Dedicated Left Navigation Panel (Controlled by Single Main Header Collapse Button) */}
+      {sidebarOpen && (
+        <nav
+          aria-label="Inspector Navigation Sidebar"
+          data-testid="inspector-left-nav-sidebar"
+          className="shrink-0 w-[232px] sm:w-[244px] h-full p-3 bg-white/95 dark:bg-zinc-950/95 border-r border-zinc-200/90 dark:border-zinc-800/90 backdrop-blur-md flex flex-col justify-between transition-all duration-200 z-20"
+        >
+          <div className="flex flex-col gap-3 min-h-0 overflow-y-auto workbench-scrollbar">
+            {/* Top Action Row: Back to Diagram (No Logo, No Duplicate Collapse Button) */}
+            {onCloseInspectorPage && (
+              <button
+                type="button"
+                data-testid="inspector-back-to-diagram-btn"
+                title="Back to Diagram"
+                onClick={onCloseInspectorPage}
+                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-900 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
               >
-                <Layers className="w-3 h-3 shrink-0" />
-                <span>
-                  {forceMainScenarioView
-                    ? `MAIN SCENARIO · ${scenario.code}`
-                    : scopeContext?.scopeBadgeLabel || `SCENARIO · ${scenario.code}`}
-                </span>
-              </span>
-
-              <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 font-mono text-[10px] font-semibold">
-                {activeStageIndex > 0
-                  ? `Stage S${activeStageIndex} of ${scenario.stages.length}`
-                  : `All ${scenario.stages.length} Stages`}
-              </span>
-            </div>
-
-            <h1
-              data-testid="inspector-scope-title"
-              className="text-sm sm:text-base font-extrabold text-zinc-950 dark:text-white leading-tight break-words mt-0.5"
-            >
-              {pageTitle}
-            </h1>
-          </div>
-        </div>
-
-        {/* Center/Right: Scope Switcher (Clicked Section vs Main Page) + Primary View Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Scope Mode Switcher when a node, sub-board, or packet is active */}
-          {scopeContext &&
-            (scopeContext.selectedMainNode ||
-              scopeContext.isInsideSubBoard ||
-              selectedTelemetry) && (
-              <div
-                role="group"
-                aria-label="Inspector Scope Switcher"
-                className="flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800"
-              >
-                <button
-                  type="button"
-                  data-testid="inspector-scope-focused-section-btn"
-                  onClick={() => {
-                    setForceMainScenarioView(false);
-                    onScopeOverrideChange?.(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-colors cursor-pointer ${
-                    !forceMainScenarioView
-                      ? 'bg-indigo-600 text-white shadow-2xs'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                  }`}
-                >
-                  Focused Section
-                </button>
-                <button
-                  type="button"
-                  data-testid="inspector-scope-main-btn"
-                  onClick={() => {
-                    setForceMainScenarioView(true);
-                    onScopeOverrideChange?.('MAIN_SCENARIO');
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-colors cursor-pointer ${
-                    forceMainScenarioView
-                      ? 'bg-indigo-600 text-white shadow-2xs'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                  }`}
-                >
-                  Main Scenario Page
-                </button>
-              </div>
+                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                <span>Back to Diagram</span>
+              </button>
             )}
 
-          {/* Context-Aware Primary Full-Page Tabs */}
-          <div
-            role="tablist"
-            aria-label="Inspector View Tabs"
-            className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800"
-          >
-            {visibleTabs.map((tab) => {
-              const isSelected = resolvedActiveTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  data-testid={tab.testId}
-                  aria-selected={isSelected}
-                  onClick={() => handleSelectTab(tab.id)}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-2xs border border-zinc-200/80 dark:border-zinc-700'
-                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
-                  }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+            <div className="h-px w-full bg-zinc-200/80 dark:bg-zinc-800/80" />
+
+            {/* Primary Full-Page View Tabs */}
+            <div
+              role="tablist"
+              aria-label="Inspector View Tabs"
+              className="flex flex-col gap-1"
+            >
+              <span className="px-2 pb-1 text-[9.5px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                INSPECTOR VIEWS
+              </span>
+              {visibleTabs.map((tab) => {
+                const isSelected = resolvedActiveTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    data-testid={tab.testId}
+                    aria-selected={isSelected}
+                    aria-label={tab.label}
+                    title={tab.label}
+                    onClick={() => handleSelectTab(tab.id)}
+                    className={`inline-flex items-center gap-2 px-3 py-2 text-left rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-50/90 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-2xs border border-indigo-200/80 dark:border-indigo-800/80'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/80 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 border border-transparent'
+                    }`}
+                  >
+                    {tab.icon}
+                    <span className="leading-snug break-words">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </div>
+        </nav>
+      )}
 
       {/* Main Full-Screen Scrollable Unified Single-Column Documentation Body */}
-      <div className="flex-1 min-h-0 overflow-y-auto workbench-scrollbar">
+      <div className="flex-1 min-w-0 min-h-0 overflow-y-auto workbench-scrollbar transition-all duration-200">
         <div
           data-testid="inspector-unified-single-column-layout"
-          className="max-w-[1480px] mx-auto p-4 sm:p-6 flex flex-col gap-5"
+          className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-5"
         >
-          {/* 1. Unified Stage Filter & Section Scope Strip (Merged across top of page) */}
+          {/* 1. Unified Stage Filter Strip */}
           <section
             data-testid="inspector-main-scenario-stage-card"
             className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 px-4 py-3 shadow-sm flex flex-wrap items-center justify-between gap-3"
@@ -732,39 +613,25 @@ export function InspectorPanel({
               ))}
             </div>
 
-            {activeInspectNode && (
-              <div className="flex items-center gap-2">
-                {!scopeContext?.isInsideSubBoard &&
-                  scopeContext?.selectedMainNode &&
-                  onExpandedNodeChange && (
-                    <button
-                      type="button"
-                      data-testid="inspector-open-node-subboard-btn"
-                      onClick={() => {
-                        onExpandedNodeChange(scopeContext.selectedMainNode!.id);
-                        onCloseInspectorPage?.();
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                      <span>Expand Internal Pipeline on Diagram</span>
-                    </button>
-                  )}
-
-                <button
-                  type="button"
-                  data-testid="inspector-switch-to-main-page-btn"
-                  onClick={() => {
-                    onSelectNode?.(null);
-                    onSelectInternalSubNode?.(null);
-                    onClearTelemetrySelection();
-                  }}
-                  className="px-3 py-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-mono font-semibold transition-colors cursor-pointer"
-                >
-                  Main Scenario Page
-                </button>
-              </div>
-            )}
+            {activeInspectNode &&
+              !scopeContext?.isInsideSubBoard &&
+              scopeContext?.selectedMainNode &&
+              onExpandedNodeChange && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    data-testid="inspector-open-node-subboard-btn"
+                    onClick={() => {
+                      onExpandedNodeChange(scopeContext.selectedMainNode!.id);
+                      onCloseInspectorPage?.();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>Expand Internal Pipeline on Diagram</span>
+                  </button>
+                </div>
+              )}
           </section>
 
           {/* 2. Selected Packet / Telemetry Deep-Dive Banner (when a flow packet is clicked) */}
@@ -782,8 +649,8 @@ export function InspectorPanel({
             </div>
           )}
 
-          {/* 3. Merged Focused Section Technical Identity & Forensic Specs Banner (when inspecting a specific node) */}
-          {activeInspectNode && (
+          {/* 3. Merged Focused Section Technical Identity & Forensic Specs Banner (Shown ONLY on Overview page when inspecting a specific node) */}
+          {resolvedActiveTab === 'OVERVIEW' && activeInspectNode && (
             <section
               data-testid="inspector-section-identity-card"
               className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-4 sm:p-5 shadow-sm flex flex-col gap-3.5"
@@ -829,7 +696,7 @@ export function InspectorPanel({
                 {/* Forensic Artifacts List */}
                 {activeInspectNode.originalNode?.details?.artifacts &&
                   activeInspectNode.originalNode.details.artifacts.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 max-w-xl">
+                    <div className="flex flex-wrap gap-1.5">
                       {activeInspectNode.originalNode.details.artifacts.map(
                         (art, idx) => (
                           <span
@@ -892,6 +759,37 @@ export function InspectorPanel({
               ===================================================================== */}
           {resolvedActiveTab === 'OVERVIEW' && (
             <div className="flex flex-col gap-5">
+              {/* Dedicated Overview Scenario / Section Title & Scope Card */}
+              <section
+                data-testid="inspector-overview-title-card"
+                className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 px-5 py-4 shadow-sm flex flex-col gap-2"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    data-testid="inspector-scope-badge"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/70 font-mono text-[10.5px] font-bold"
+                  >
+                    <Layers className="w-3 h-3 shrink-0" />
+                    <span>
+                      {scopeContext?.scopeBadgeLabel ||
+                        `SCENARIO · ${scenario.code}`}
+                    </span>
+                  </span>
+
+                  <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-mono text-[10.5px] font-semibold">
+                    {activeStageIndex > 0
+                      ? `Stage S${activeStageIndex} of ${scenario.stages.length}`
+                      : `All ${scenario.stages.length} Stages`}
+                  </span>
+                </div>
+
+                <h1
+                  data-testid="inspector-scope-title"
+                  className="text-base sm:text-lg font-extrabold text-zinc-950 dark:text-white leading-snug break-words"
+                >
+                  {pageTitle}
+                </h1>
+              </section>
               {/* Context-Aware Documented Virtual Memory Forensics Callout */}
               {scopedMemory.hasDocumentedMemory && (
                 <section
@@ -941,17 +839,14 @@ export function InspectorPanel({
                   selectedTelemetry={selectedTelemetry}
                   filterStageIndex={activeStageIndex > 0 ? activeStageIndex : null}
                   onSelectNode={(nodeId) => {
-                    setForceMainScenarioView(false);
                     onClearTelemetrySelection();
                     onSelectNode?.(nodeId);
                   }}
                   onSelectInternalSubNode={(subNodeId) => {
-                    setForceMainScenarioView(false);
                     onClearTelemetrySelection();
                     onSelectInternalSubNode?.(subNodeId);
                   }}
                   onSelectTelemetry={(ev) => {
-                    setForceMainScenarioView(false);
                     onSelectTelemetry(ev);
                   }}
                   onReturnToDiagram={() => onCloseInspectorPage?.()}
@@ -1298,7 +1193,6 @@ export function InspectorPanel({
                             type="button"
                             data-testid={`inspector-directory-node-${node.id}`}
                             onClick={() => {
-                              setForceMainScenarioView(false);
                               onSelectNode?.(node.id);
                             }}
                             className="text-left p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-all cursor-pointer flex items-start gap-3"
@@ -1398,9 +1292,9 @@ export function InspectorPanel({
                               data-testid={`stage-structural-conduit-${st.index}`}
                               className="rounded-xl border border-indigo-200/80 dark:border-indigo-500/30 bg-white dark:bg-zinc-900 p-3 space-y-2.5"
                             >
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-center text-[11px] font-mono">
-                                {/* Initiator */}
-                                <div className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/60">
+                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch text-[11px] font-mono">
+                                {/* Initiator (Compact 3/12) */}
+                                <div className="lg:col-span-3 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/60 flex flex-col justify-center">
                                   <div className="text-[9.5px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">
                                     INITIATOR · #{stageDiagram.conduit.initiatorNumber}
                                   </div>
@@ -1412,8 +1306,8 @@ export function InspectorPanel({
                                   </div>
                                 </div>
 
-                                {/* Forward & Return Action Conduit */}
-                                <div className="p-2.5 rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 flex flex-col gap-1">
+                                {/* Forward & Return Action Conduit (Wide 6/12 = 50% width for Technical Explanation) */}
+                                <div className="lg:col-span-6 p-2.5 rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 flex flex-col justify-center gap-1">
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[9.5px] font-extrabold">
                                       {stageDiagram.conduit.forwardArrowCode}
@@ -1431,8 +1325,8 @@ export function InspectorPanel({
                                   </div>
                                 </div>
 
-                                {/* Target & SIEM Catch */}
-                                <div className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20">
+                                {/* Target & SIEM Catch (Compact 3/12) */}
+                                <div className="lg:col-span-3 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20 flex flex-col justify-center">
                                   <div className="text-[9.5px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300">
                                     TARGET · #{stageDiagram.conduit.targetNumber} ──▶ SENSOR
                                   </div>

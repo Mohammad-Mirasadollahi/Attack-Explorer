@@ -24,7 +24,6 @@ import {
   Library,
   Network,
   PanelLeft,
-  PanelRight,
   Scale,
   Search,
   SearchCode,
@@ -196,15 +195,19 @@ export function AttackHeader({
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block shrink-0" />
 
           <WorkbenchIconTooltip
-            label="Scenarios"
+            label={inspectorOpen ? 'Inspector Navigation' : 'Scenarios'}
             badge={sidebarOpen ? 'OPEN' : 'PANEL'}
-            detail="Toggle Attack Scenarios & Operational Playbooks"
+            detail={
+              inspectorOpen
+                ? 'Toggle Left Inspector Views Navigation Panel'
+                : 'Toggle Attack Scenarios & Operational Playbooks'
+            }
             align="left"
           >
             <button
               type="button"
               data-testid="toggle-left-sidebar-btn"
-              aria-label="Scenarios"
+              aria-label={inspectorOpen ? 'Inspector Navigation' : 'Scenarios'}
               onClick={onToggleSidebar}
               className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
                 sidebarOpen
@@ -651,27 +654,6 @@ export function AttackHeader({
               </motion.button>
             </WorkbenchIconTooltip>
           )}
-
-          <WorkbenchIconTooltip
-            label="Inspector"
-            badge={inspectorOpen ? 'OPEN' : 'PANEL'}
-            detail="Toggle Right Forensic Inspector & Telemetry Panel"
-            align="right"
-          >
-            <button
-              type="button"
-              data-testid="toggle-right-inspector-btn"
-              aria-label="Inspector"
-              onClick={onToggleInspector}
-              className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
-                inspectorOpen
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-2xs'
-                  : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <PanelRight className="w-4 h-4 shrink-0" />
-            </button>
-          </WorkbenchIconTooltip>
 
           {/* Consolidated Slide-Out Settings Drawer Trigger */}
           <WorkbenchIconTooltip

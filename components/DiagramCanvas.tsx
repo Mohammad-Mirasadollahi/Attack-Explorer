@@ -162,8 +162,6 @@ export function DiagramCanvas({
           activeEnvironment={activeEnvironment}
           selectedNodeId={selectedNodeId}
           onSelectNode={onSelectNode}
-          selectedTelemetryId={selectedTelemetryId}
-          onSelectTelemetry={onSelectTelemetry}
         />
       )}
     </motion.div>

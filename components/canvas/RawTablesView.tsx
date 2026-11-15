@@ -1,27 +1,27 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import {
-  AttackScenario,
-  TelemetryEvent } from '@/lib/attack-scenarios';
+import { AttackScenario } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
   ComputedStageView,
   DEFAULT_ACTIVE_ENVIRONMENT,
-  getActiveEnvironmentProfile } from '@/lib/simulation-engine';
+  getActiveEnvironmentProfile,
+} from '@/lib/simulation-engine';
 import {
   buildEntityDrillDownData,
   buildWhiteboardSchematic,
-  DrillDownArchetype } from '@/lib/sketch-zones-and-drilldown';
-import { Bug, Laptop, Network, Radio, ShieldAlert } from 'lucide-react';
+  DrillDownArchetype,
+} from '@/lib/sketch-zones-and-drilldown';
+import { Bug, Laptop, Network, ShieldAlert } from 'lucide-react';
+
+type RawTableTabId = Exclude<DrillDownArchetype, 'PACKET_AND_GATEWAY'>;
 
 interface RawTablesViewProps {
   scenario: AttackScenario;
   stageView: ComputedStageView;
   selectedNodeId: string | null;
   onSelectNode: (nodeId: string | null) => void;
-  selectedTelemetryId: string | null;
-  onSelectTelemetry: (event: TelemetryEvent) => void;
   activeEnvironment?: ActiveEnvironmentId;
 }
 
@@ -30,9 +30,8 @@ export function RawTablesView({
   stageView,
   selectedNodeId,
   onSelectNode,
-  selectedTelemetryId,
-  onSelectTelemetry,
-  activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT }: RawTablesViewProps) {
+  activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
+}: RawTablesViewProps) {
   const activeStageIndex = stageView.currentStage
     ? stageView.currentStage.index
     : 0;
@@ -50,7 +49,8 @@ export function RawTablesView({
     [sketchNodes, selectedNodeId]
   );
 
-  const [activeTab, setActiveTab] = useState<DrillDownArchetype>('PACKET_AND_GATEWAY');
+  const [activeTab, setActiveTab] =
+    useState<RawTableTabId>('MALWARE_PROCESSES');
 
   const drillDown = useMemo(
     () => buildEntityDrillDownData(scenario, activeNode),
@@ -58,51 +58,52 @@ export function RawTablesView({
   );
 
   const sectionTabs: Array<{
-    id: DrillDownArchetype;
+    id: RawTableTabId;
     label: string;
     icon: React.ReactNode;
     count: number;
   }> = [
     {
-      id: 'PACKET_AND_GATEWAY',
-      label: 'Captured Packets & SIEM',
-      icon: <Radio className="w-3.5 h-3.5" />,
-      count: drillDown.packets.length },
-    {
       id: 'MALWARE_PROCESSES',
       label: 'Malware & Memory Table',
       icon: <Bug className="w-3.5 h-3.5" />,
-      count: drillDown.malwareProcesses.length },
+      count: drillDown.malwareProcesses.length,
+    },
     {
       id: 'LAPTOP_HOST_ACTIVITY',
       label: 'Host Artifacts & Process Tree',
       icon: <Laptop className="w-3.5 h-3.5" />,
-      count: drillDown.laptopHostActivities.length },
+      count: drillDown.laptopHostActivities.length,
+    },
     {
       id: 'LATERAL_MOVEMENT',
       label: 'Lateral Movement Hops',
       icon: <Network className="w-3.5 h-3.5" />,
-      count: drillDown.lateralMovementHops.length },
+      count: drillDown.lateralMovementHops.length,
+    },
   ];
 
   return (
     <div
-      className="relative flex-1 w-full h-full overflow-auto p-3 pb-16 sm:p-6 bg-white dark:bg-[#09090B]"
+      className="relative flex-1 w-full h-full overflow-y-auto workbench-scrollbar px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-16 bg-white dark:bg-[#09090B] transition-all duration-200"
       dir="ltr"
       data-testid="raw-tables-view"
       data-active-environment={activeEnvironment}
     >
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div
+        data-testid="raw-tables-full-width-container"
+        className="w-full space-y-5"
+      >
         {/* Top Control Bar: Node Selector + Forensic Table Type Switcher */}
         <div className="bg-zinc-50/70 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 min-w-0">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <h2
-                  title="Raw Forensic Tables & Captured Network Packets"
+                  title="Raw Forensic Tables & Process Artifacts"
                   className="text-sm font-semibold text-zinc-900 dark:text-white min-w-0 leading-snug"
                 >
-                  Raw Forensic Tables & Captured Network Packets
+                  Raw Forensic Tables & Process Artifacts
                 </h2>
                 <span
                   data-testid="raw-tables-env-badge"
@@ -187,64 +188,6 @@ export function RawTablesView({
         </div>
 
         {/* Table Content Area */}
-        {activeTab === 'PACKET_AND_GATEWAY' && (
-          <div
-            className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden"
-            dir="ltr"
-            data-testid="raw-table-packets-section"
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-zinc-50/90 dark:bg-zinc-900/80 border-b border-zinc-200/80 dark:border-zinc-800 text-[11px] font-mono font-semibold uppercase text-zinc-500 dark:text-zinc-400">
-                  <tr>
-                    <th className="py-3 px-4 w-24">STEP</th>
-                    <th className="py-3 px-4 w-28">TIME</th>
-                    <th className="py-3 px-4 w-36">PROTOCOL / EID</th>
-                    <th className="py-3 px-4 w-56">SOURCE → DESTINATION</th>
-                    <th className="py-3 px-4 w-36">SIZE / CODE</th>
-                    <th className="py-3 px-4">RAW PAYLOAD / FORENSIC SUMMARY</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/70 text-xs font-mono">
-                  {drillDown.packets.map((pkt, idx) => {
-                    const isSelected = selectedTelemetryId === pkt.event.id;
-                    return (
-                      <tr
-                        key={pkt.id}
-                        onClick={() => onSelectTelemetry(pkt.event)}
-                        className={`cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-indigo-50/80 dark:bg-indigo-950/40'
-                            : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40'
-                        }`}
-                      >
-                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-white tabular-nums whitespace-nowrap">
-                          #{idx + 1} · S{pkt.event.stageIndex}
-                        </td>
-                        <td className="py-3 px-4 text-zinc-500 tabular-nums whitespace-nowrap">
-                          {pkt.timestamp}
-                        </td>
-                        <td className="py-3 px-4 font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
-                          {pkt.protocol}
-                        </td>
-                        <td className="py-3 px-4 text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
-                          {pkt.src} → {pkt.dst}
-                        </td>
-                        <td className="py-3 px-4 text-rose-600 dark:text-rose-400 font-medium whitespace-nowrap">
-                          {pkt.flagsOrSize}
-                        </td>
-                        <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300 break-words leading-relaxed min-w-[320px]">
-                          {pkt.payloadPreview}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'MALWARE_PROCESSES' && (
           <div
             className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden"
@@ -252,37 +195,50 @@ export function RawTablesView({
             data-testid="raw-table-malware-section"
           >
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full lg:table-fixed text-left border-collapse">
                 <thead className="bg-zinc-50/90 dark:bg-zinc-900/80 border-b border-zinc-200/80 dark:border-zinc-800 text-[11px] font-mono font-semibold uppercase text-zinc-500 dark:text-zinc-400">
                   <tr>
-                    <th className="py-3 px-4 w-20">STEP</th>
-                    <th className="py-3 px-4 w-64">WIN32 API / SYSCALL</th>
-                    <th className="py-3 px-4 w-52">TARGET PROCESS / MODULE</th>
-                    <th className="py-3 px-4 w-48">MEMORY ADDRESS / PERM</th>
-                    <th className="py-3 px-4">TECHNICAL EXPLANATION</th>
+                    <th className="py-3 px-3 w-14 lg:w-[5%] whitespace-nowrap">
+                      STEP
+                    </th>
+                    <th className="py-3 px-3 w-44 lg:w-[16%]">
+                      API / SYSCALL / LOADER
+                    </th>
+                    <th className="py-3 px-3 w-36 lg:w-[13%]">
+                      TARGET PROCESS
+                    </th>
+                    <th className="py-3 px-3 w-40 lg:w-[13%]">
+                      VIRTUAL MEMORY ADDRESS
+                    </th>
+                    <th
+                      data-testid="raw-table-technical-explanation-col"
+                      className="py-3 px-4 min-w-[340px] lg:w-[53%]"
+                    >
+                      TECHNICAL EXPLANATION
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/70 text-xs">
                   {drillDown.malwareProcesses.map((proc) => (
                     <tr
                       key={proc.step}
-                      className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40"
+                      className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40 align-top"
                     >
-                      <td className="py-3 px-4 font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
+                      <td className="py-3 px-3 font-mono font-semibold text-zinc-900 dark:text-white tabular-nums whitespace-nowrap">
                         #{proc.step}
                       </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-rose-600 dark:text-rose-400">
+                      <td className="py-3 px-3 font-mono font-semibold text-rose-600 dark:text-rose-400 break-words leading-snug">
                         {proc.apiOrProcess}
                       </td>
-                      <td className="py-3 px-4 font-mono text-indigo-600 dark:text-indigo-400">
+                      <td className="py-3 px-3 font-mono text-indigo-600 dark:text-indigo-400 break-words leading-snug">
                         {proc.target}
                       </td>
-                      <td className="py-3 px-4 font-mono text-zinc-600 dark:text-zinc-300 tabular-nums">
+                      <td className="py-3 px-3 font-mono text-zinc-600 dark:text-zinc-300 tabular-nums break-words leading-snug">
                         {proc.memoryAddress}
                       </td>
                       <td
                         dir="ltr"
-                        className="py-3 px-4 text-zinc-600 dark:text-zinc-300 leading-relaxed"
+                        className="py-3 px-4 text-zinc-700 dark:text-zinc-200 leading-relaxed break-words"
                       >
                         {proc.detail}
                       </td>
@@ -295,43 +251,54 @@ export function RawTablesView({
         )}
 
         {activeTab === 'LAPTOP_HOST_ACTIVITY' && (
-          <div className="space-y-6" data-testid="raw-table-host-section">
+          <div className="space-y-5" data-testid="raw-table-host-section">
             <div
               className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl overflow-hidden"
               dir="ltr"
             >
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full lg:table-fixed text-left border-collapse">
                   <thead className="bg-zinc-50/90 dark:bg-zinc-900/80 border-b border-zinc-200/80 dark:border-zinc-800 text-[11px] font-mono font-semibold uppercase text-zinc-500 dark:text-zinc-400">
                     <tr>
-                      <th className="py-3 px-4 w-32">CATEGORY</th>
-                      <th className="py-3 px-4 w-36">EVENT ID</th>
-                      <th className="py-3 px-4 w-56">ARTIFACT TITLE</th>
-                      <th className="py-3 px-4 w-64">PATH / COMMAND</th>
-                      <th className="py-3 px-4">DESCRIPTION</th>
+                      <th className="py-3 px-3 w-24 lg:w-[9%] whitespace-nowrap">
+                        CATEGORY
+                      </th>
+                      <th className="py-3 px-3 w-32 lg:w-[11%]">EVENT ID</th>
+                      <th className="py-3 px-3 w-40 lg:w-[14%]">
+                        ARTIFACT TITLE
+                      </th>
+                      <th className="py-3 px-3 w-44 lg:w-[16%]">
+                        PATH / COMMAND
+                      </th>
+                      <th
+                        data-testid="raw-table-host-description-col"
+                        className="py-3 px-4 min-w-[340px] lg:w-[50%]"
+                      >
+                        DESCRIPTION
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/70 text-xs">
                     {drillDown.laptopHostActivities.map((act, i) => (
                       <tr
                         key={i}
-                        className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40"
+                        className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40 align-top"
                       >
-                        <td className="py-3 px-4 font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+                        <td className="py-3 px-3 font-mono font-semibold text-indigo-600 dark:text-indigo-400 break-words leading-snug">
                           {act.category}
                         </td>
-                        <td className="py-3 px-4 font-mono text-amber-600 dark:text-amber-400 font-semibold">
+                        <td className="py-3 px-3 font-mono text-amber-600 dark:text-amber-400 font-semibold break-words leading-snug">
                           {act.eventIdBadge}
                         </td>
-                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-white">
+                        <td className="py-3 px-3 font-semibold text-zinc-900 dark:text-white break-words leading-snug">
                           {act.title}
                         </td>
-                        <td className="py-3 px-4 font-mono text-rose-600 dark:text-rose-400 break-all">
+                        <td className="py-3 px-3 font-mono text-rose-600 dark:text-rose-400 break-all leading-snug">
                           {act.artifactPath}
                         </td>
                         <td
                           dir="ltr"
-                          className="py-3 px-4 text-zinc-600 dark:text-zinc-300 leading-relaxed"
+                          className="py-3 px-4 text-zinc-700 dark:text-zinc-200 leading-relaxed break-words"
                         >
                           {act.description}
                         </td>
@@ -391,37 +358,50 @@ export function RawTablesView({
             data-testid="raw-table-lateral-section"
           >
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full lg:table-fixed text-left border-collapse">
                 <thead className="bg-zinc-50/90 dark:bg-zinc-900/80 border-b border-zinc-200/80 dark:border-zinc-800 text-[11px] font-mono font-semibold uppercase text-zinc-500 dark:text-zinc-400">
                   <tr>
-                    <th className="py-3 px-4 w-20">HOP</th>
-                    <th className="py-3 px-4 w-56">SOURCE → TARGET HOST</th>
-                    <th className="py-3 px-4 w-44">PROTOCOL / PORT</th>
-                    <th className="py-3 px-4 w-48">TECHNIQUE / EVENT ID</th>
-                    <th className="py-3 px-4">SUMMARY</th>
+                    <th className="py-3 px-3 w-14 lg:w-[5%] whitespace-nowrap">
+                      HOP
+                    </th>
+                    <th className="py-3 px-3 w-44 lg:w-[16%]">
+                      SOURCE → TARGET HOST
+                    </th>
+                    <th className="py-3 px-3 w-36 lg:w-[12%]">
+                      PROTOCOL / PORT
+                    </th>
+                    <th className="py-3 px-3 w-40 lg:w-[14%]">
+                      TECHNIQUE / EVENT ID
+                    </th>
+                    <th
+                      data-testid="raw-table-lateral-summary-col"
+                      className="py-3 px-4 min-w-[340px] lg:w-[53%]"
+                    >
+                      SUMMARY
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/70 text-xs">
                   {drillDown.lateralMovementHops.map((hop) => (
                     <tr
                       key={hop.hop}
-                      className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40"
+                      className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40 align-top"
                     >
-                      <td className="py-3 px-4 font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
+                      <td className="py-3 px-3 font-mono font-semibold text-zinc-900 dark:text-white tabular-nums whitespace-nowrap">
                         #{hop.hop}
                       </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-zinc-900 dark:text-white">
+                      <td className="py-3 px-3 font-mono font-semibold text-zinc-900 dark:text-zinc-100 break-words leading-snug">
                         {hop.sourceHost} → {hop.targetHost}
                       </td>
-                      <td className="py-3 px-4 font-mono text-indigo-600 dark:text-indigo-400 font-medium">
+                      <td className="py-3 px-3 font-mono text-indigo-600 dark:text-indigo-400 font-medium break-words leading-snug">
                         {hop.protocol}
                       </td>
-                      <td className="py-3 px-4 font-mono text-amber-600 dark:text-amber-400">
+                      <td className="py-3 px-3 font-mono text-amber-600 dark:text-amber-400 break-words leading-snug">
                         {hop.technique} · {hop.eventId}
                       </td>
                       <td
                         dir="ltr"
-                        className="py-3 px-4 text-zinc-600 dark:text-zinc-300 leading-relaxed"
+                        className="py-3 px-4 text-zinc-700 dark:text-zinc-200 leading-relaxed break-words"
                       >
                         {hop.summary}
                       </td>

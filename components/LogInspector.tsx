@@ -249,7 +249,7 @@ export function LogInspector({
                     <div
                       dir="ltr"
                       onClick={() => onSelectTelemetry?.(item.event)}
-                      className="bg-zinc-950 text-zinc-200 font-mono text-[10.5px] leading-relaxed p-2.5 rounded-lg border border-zinc-800 overflow-x-auto max-h-44 cursor-pointer"
+                      className="bg-zinc-950 text-zinc-200 font-mono text-[10.5px] leading-relaxed p-3 rounded-lg border border-zinc-800 break-words cursor-pointer"
                     >
                       {logLines.map((line, lineIdx) => {
                         const tokens = tokenizeLogLineForHighlight(line);
@@ -292,7 +292,7 @@ export function LogInspector({
                     </div>
                   ) : (
                     <div dir="ltr" className="space-y-2">
-                      <pre className="p-2.5 bg-zinc-950 text-emerald-300 font-mono text-[10.5px] leading-relaxed overflow-x-auto max-h-44 rounded-lg border border-zinc-800 whitespace-pre-wrap">
+                      <pre className="p-3 bg-zinc-950 text-emerald-300 font-mono text-[10.5px] leading-relaxed rounded-lg border border-zinc-800 whitespace-pre-wrap break-words">
                         {item.event.detectionRule.ruleCode}
                       </pre>
                       <div

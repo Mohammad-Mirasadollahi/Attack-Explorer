@@ -477,16 +477,6 @@ export interface EntityDrillDownData {
     eventId: string;
     summary: string;
   }[];
-  packets: {
-    id: string;
-    timestamp: string;
-    protocol: string;
-    src: string;
-    dst: string;
-    flagsOrSize: string;
-    payloadPreview: string;
-    event: TelemetryEvent;
-  }[];
 }
 
 export const NETWORK_ZONE_COLUMNS: NetworkZoneColumn[] = [

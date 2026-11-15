@@ -2,11 +2,21 @@
 
 import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { AttackCategory} from '@/lib/attack-scenarios';
+import { AttackCategory } from '@/lib/attack-scenarios';
 import {
   AttackLibraryItem,
-  queryAttackLibrary } from '@/lib/attack-library-service';
-import { Grid, LayoutGrid, Play, Search, ShieldAlert, X } from 'lucide-react';
+  queryAttackLibrary,
+} from '@/lib/attack-library-service';
+import {
+  ChevronDown,
+  ChevronRight,
+  Grid,
+  LayoutGrid,
+  Play,
+  Search,
+  ShieldAlert,
+  X,
+} from 'lucide-react';
 import { AttackLibraryMatrix } from './AttackLibraryMatrix';
 
 interface AttackLibraryProps {
@@ -16,36 +26,55 @@ interface AttackLibraryProps {
   onSelectScenario: (scenarioId: string, stageIndex?: number) => void;
 }
 
+const LIBRARY_CATEGORY_GROUPS: Array<{
+  id: Exclude<AttackCategory, 'ALL'>;
+  label: string;
+}> = [
+  { id: 'MALWARE', label: 'Malware & Execution Techniques' },
+  { id: 'LOG_ANALYSIS', label: 'DFIR, SIEM & Log Forensics' },
+  { id: 'ACTIVE_DIRECTORY', label: 'Active Directory, Cloud & Network' },
+];
+
 export function AttackLibrary({
   isOpen,
   onClose,
   activeScenarioId,
-  onSelectScenario }: AttackLibraryProps) {
+  onSelectScenario,
+}: AttackLibraryProps) {
   const [libraryView, setLibraryView] = useState<'CARDS' | 'MATRIX'>('CARDS');
-  const [categoryFilter, setCategoryFilter] = useState<AttackCategory>('ALL');
   const [searchText, setSearchText] = useState<string>('');
+  const [expandedCategories, setExpandedCategories] = useState<
+    Record<string, boolean>
+  >({});
 
   const data = useMemo(
     () =>
       queryAttackLibrary({
-        category: categoryFilter,
+        category: 'ALL',
         mitrePhase: 'ALL',
         severity: 'ALL',
-        search: searchText }),
-    [categoryFilter, searchText]
+        search: searchText,
+      }),
+    [searchText]
   );
+
+  const groupedItems = useMemo(() => {
+    return LIBRARY_CATEGORY_GROUPS.map((group) => ({
+      ...group,
+      items: data.items.filter((item) => item.category === group.id),
+    })).filter((group) => group.items.length > 0);
+  }, [data.items]);
 
   if (!isOpen) return null;
 
-  const domainTabs: Array<{
-    id: AttackCategory;
-    label: string;
-  }> = [
-    { id: 'ALL', label: 'All' },
-    { id: 'MALWARE', label: 'Malware' },
-    { id: 'LOG_ANALYSIS', label: 'DFIR & Logs' },
-    { id: 'ACTIVE_DIRECTORY', label: 'AD & Network' },
-  ];
+  const isSearching = searchText.trim().length > 0;
+
+  const toggleCategoryGroup = (groupId: string) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
 
   const handleLaunchScenario = (scenarioId: string, stageIndex?: number) => {
     onSelectScenario(scenarioId, stageIndex);
@@ -126,26 +155,14 @@ export function AttackLibrary({
           </div>
         </div>
 
-        {/* Single Clean Filter Row */}
+        {/* Single Clean Search Row */}
         <div className="px-6 py-3 bg-zinc-50/60 dark:bg-zinc-900/40 border-b border-zinc-200/70 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1">
-            {domainTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setCategoryFilter(tab.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg cursor-pointer transition-colors ${
-                  categoryFilter === tab.id
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-800'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
+            {data.items.length} Documented Scenarios Across{' '}
+            {groupedItems.length} Categories
+          </span>
 
-          <div className="relative w-64">
+          <div className="relative w-72">
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -161,72 +178,111 @@ export function AttackLibrary({
         {/* Spacious Content Grid */}
         <div className="flex-1 overflow-auto p-6">
           {libraryView === 'CARDS' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {data.items.map((item: AttackLibraryItem) => {
-                const isCurrent = item.scenarioId === activeScenarioId;
+            <div className="space-y-3">
+              {groupedItems.map((group) => {
+                const isCollapsed = isSearching
+                  ? false
+                  : !expandedCategories[group.id];
                 return (
-                  <article
-                    key={item.scenarioId}
-                    className={`rounded-2xl border p-5 flex flex-col justify-between gap-4 transition-all min-w-0 overflow-hidden ${
-                      isCurrent
-                        ? 'border-indigo-500 bg-indigo-50/15 dark:bg-indigo-950/15'
-                        : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-zinc-300 dark:hover:border-zinc-700'
-                    }`}
+                  <section
+                    key={group.id}
+                    className="rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-zinc-900/30 overflow-hidden"
                   >
-                    <div className="space-y-2.5 min-w-0">
-                      <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono text-zinc-500">
-                        <span
-                          title={`${item.code} · ${item.tacticName}`}
-                          className="truncate min-w-0"
-                        >
-                          <strong className="text-zinc-900 dark:text-white">
-                            {item.code}
-                          </strong>{' '}
-                          · {item.tacticName}
-                        </span>
-                        <span
-                          title={item.severity}
-                          className="text-rose-600 dark:text-rose-400 font-semibold shrink-0"
-                        >
-                          {item.severity}
-                        </span>
-                      </div>
-
-                      <h3
-                        title={item.name}
-                        className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug truncate"
-                      >
-                        {item.name}
-                      </h3>
-
-                      <p
-                        title={item.overview}
-                        className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words"
-                      >
-                        {item.overview}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 min-w-0">
-                      <span
-                        dir="ltr"
-                        title={`${item.stageCount} steps · ${item.logSources.join(' · ')}`}
-                        className="text-[11px] font-mono text-zinc-400 truncate min-w-0 flex-1"
-                      >
-                        {item.stageCount} steps · {item.logSources.join(' · ')}
+                    <button
+                      type="button"
+                      aria-expanded={!isCollapsed}
+                      onClick={() => toggleCategoryGroup(group.id)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-zinc-100/70 dark:hover:bg-zinc-900/70 transition-colors cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                        {isCollapsed ? (
+                          <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-zinc-400 shrink-0" />
+                        )}
+                        <span>{group.label}</span>
                       </span>
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-800 text-[11px] font-mono font-bold text-zinc-600 dark:text-zinc-300">
+                        {group.items.length}
+                      </span>
+                    </button>
 
-                      <button
-                        type="button"
-                        title={`Open Scenario: ${item.name}`}
-                        onClick={() => handleLaunchScenario(item.scenarioId)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-xs font-medium rounded-lg shrink-0 cursor-pointer whitespace-nowrap"
-                      >
-                        <Play className="w-3 h-3 fill-current" />
-                        <span>Open Scenario</span>
-                      </button>
-                    </div>
-                  </article>
+                    {!isCollapsed && (
+                      <div className="p-4 pt-2 border-t border-zinc-200/70 dark:border-zinc-800/70 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {group.items.map((item: AttackLibraryItem) => {
+                          const isCurrent =
+                            item.scenarioId === activeScenarioId;
+                          return (
+                            <article
+                              key={item.scenarioId}
+                              className={`rounded-2xl border p-5 flex flex-col justify-between gap-4 transition-all min-w-0 overflow-hidden ${
+                                isCurrent
+                                  ? 'border-indigo-500 bg-indigo-50/15 dark:bg-indigo-950/15'
+                                  : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:border-zinc-300 dark:hover:border-zinc-700'
+                              }`}
+                            >
+                              <div className="space-y-2.5 min-w-0">
+                                <div className="flex items-center justify-between gap-2 min-w-0 text-xs font-mono text-zinc-500">
+                                  <span
+                                    title={`${item.code} · ${item.tacticName}`}
+                                    className="break-words min-w-0"
+                                  >
+                                    <strong className="text-zinc-900 dark:text-white">
+                                      {item.code}
+                                    </strong>{' '}
+                                    · {item.tacticName}
+                                  </span>
+                                  <span
+                                    title={item.severity}
+                                    className="text-rose-600 dark:text-rose-400 font-semibold shrink-0"
+                                  >
+                                    {item.severity}
+                                  </span>
+                                </div>
+
+                                <h3
+                                  title={item.name}
+                                  className="text-sm font-semibold text-zinc-900 dark:text-white leading-snug break-words"
+                                >
+                                  {item.name}
+                                </h3>
+
+                                <p
+                                  title={item.overview}
+                                  className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed break-words"
+                                >
+                                  {item.overview}
+                                </p>
+                              </div>
+
+                              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 min-w-0">
+                                <span
+                                  dir="ltr"
+                                  title={`${item.stageCount} steps · ${item.logSources.join(' · ')}`}
+                                  className="text-[11px] font-mono text-zinc-400 break-words min-w-0 flex-1"
+                                >
+                                  {item.stageCount} steps ·{' '}
+                                  {item.logSources.join(' · ')}
+                                </span>
+
+                                <button
+                                  type="button"
+                                  title={`Open Scenario: ${item.name}`}
+                                  onClick={() =>
+                                    handleLaunchScenario(item.scenarioId)
+                                  }
+                                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-xs font-medium rounded-lg shrink-0 cursor-pointer whitespace-nowrap"
+                                >
+                                  <Play className="w-3 h-3 fill-current" />
+                                  <span>Open Scenario</span>
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
                 );
               })}
             </div>

@@ -49,6 +49,10 @@ export interface DraggableDiagramNodeProps {
     node: WhiteboardSketchNode,
     e: React.MouseEvent<HTMLElement>
   ) => void;
+  onNodeContextMenu?: (
+    node: WhiteboardSketchNode,
+    e: React.MouseEvent<HTMLElement>
+  ) => void;
   onHoverChange: (nodeId: string | null) => void;
 }
 
@@ -79,6 +83,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
   onToggleMultiSelect,
   onNodeClick,
   onNodeDoubleClick,
+  onNodeContextMenu,
   onHoverChange,
 }: DraggableDiagramNodeProps) {
   const nodeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -151,7 +156,11 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         if (e.button !== 0) return;
         onStartNodeGroupDrag(node, e);
       }}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onNodeContextMenu?.(node, e);
+      }}
       onMouseEnter={() => {
         if (!skipSpring) onHoverChange(node.id);
       }}

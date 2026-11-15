@@ -32,11 +32,10 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { OperationalGuideIcon } from './OperationalGuideIcon';
-import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 
 interface AttackSidebarProps {
-  category: AttackCategory;
-  onSelectCategory: (cat: AttackCategory) => void;
+  category?: AttackCategory;
+  onSelectCategory?: (cat: AttackCategory) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   displayedScenarios: AttackScenario[];
@@ -52,9 +51,29 @@ interface AttackSidebarProps {
   ) => void;
 }
 
+const VECTOR_CATEGORY_GROUPS: Array<{
+  groupKey: Exclude<AttackVectorCategory, 'ALL'>;
+  label: string;
+}> = [
+  {
+    groupKey: 'INITIAL_ACCESS',
+    label: 'Initial Access & Perimeter Delivery',
+  },
+  {
+    groupKey: 'EXECUTION_EVASION',
+    label: 'Execution, Memory & Kernel Evasion',
+  },
+  {
+    groupKey: 'CREDENTIAL_LATERAL',
+    label: 'Credential Access & Lateral Movement',
+  },
+  {
+    groupKey: 'C2_IMPACT',
+    label: 'Command & Control & Ransomware Impact',
+  },
+];
+
 export function AttackSidebar({
-  category,
-  onSelectCategory,
   searchQuery,
   onSearchChange,
   displayedScenarios,
@@ -70,14 +89,17 @@ export function AttackSidebar({
     'SCENARIOS'
   );
   const [vectorSearchQuery, setVectorSearchQuery] = useState<string>('');
-  const [vectorCategory, setVectorCategory] =
-    useState<AttackVectorCategory>('ALL');
 
   const [internalSortBy, setInternalSortBy] =
     useState<ScenarioSortOption>('DEFAULT');
   const [internalGroupBy, setInternalGroupBy] =
     useState<ScenarioGroupByMode>('CATEGORY');
-  const [collapsedGroups, setCollapsedGroups] = useState<
+
+  // All scenario category groups and vector category groups remain COLLAPSED by default until the user clicks to expand them
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedVectorGroups, setExpandedVectorGroups] = useState<
     Record<string, boolean>
   >({});
 
@@ -101,80 +123,32 @@ export function AttackSidebar({
   };
 
   const toggleGroupCollapse = (groupKey: string) => {
-    setCollapsedGroups((prev) => ({
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  };
+
+  const toggleVectorGroupCollapse = (groupKey: string) => {
+    setExpandedVectorGroups((prev) => ({
       ...prev,
       [groupKey]: !prev[groupKey],
     }));
   };
 
   const filteredVectors = useMemo(
-    () => filterAttackVectorLibrary(vectorSearchQuery, vectorCategory),
-    [vectorSearchQuery, vectorCategory]
+    () => filterAttackVectorLibrary(vectorSearchQuery, 'ALL'),
+    [vectorSearchQuery]
   );
 
-  const vectorCategories: Array<{
-    id: AttackVectorCategory;
-    label: string;
-    tooltip: string;
-  }> = [
-    { id: 'ALL', label: 'All', tooltip: 'All Pre-Defined Attack Vectors' },
-    {
-      id: 'INITIAL_ACCESS',
-      label: 'Initial',
-      tooltip: 'Initial Access & Perimeter Delivery Vectors',
-    },
-    {
-      id: 'EXECUTION_EVASION',
-      label: 'Evasion',
-      tooltip: 'Process Execution, Memory Injection & Kernel Evasion Vectors',
-    },
-    {
-      id: 'CREDENTIAL_LATERAL',
-      label: 'Lateral',
-      tooltip: 'Credential Access & Lateral Movement Vectors',
-    },
-    {
-      id: 'C2_IMPACT',
-      label: 'C2/Impact',
-      tooltip: 'Command & Control and Ransomware Impact Vectors',
-    },
-  ];
-
-  const categories: Array<{
-    id: AttackCategory;
-    label: string;
-    tooltip: string;
-    count: number;
-  }> = [
-    {
-      id: 'ALL',
-      label: 'All',
-      tooltip: 'All Attack Scenarios',
-      count: ATTACK_SCENARIOS.length,
-    },
-    {
-      id: 'MALWARE',
-      label: 'Malware',
-      tooltip: 'Malware & Process Execution Scenarios',
-      count: ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE').length,
-    },
-    {
-      id: 'LOG_ANALYSIS',
-      label: 'DFIR',
-      tooltip: 'DFIR & Log Forensics Scenarios',
-      count: ATTACK_SCENARIOS.filter((s) => s.category === 'LOG_ANALYSIS')
-        .length,
-    },
-    {
-      id: 'ACTIVE_DIRECTORY',
-      label: 'AD/Net',
-      tooltip: 'Active Directory, Identity & Network Exfiltration Scenarios',
-      count: ATTACK_SCENARIOS.filter(
-        (s) =>
-          s.category === 'ACTIVE_DIRECTORY' || s.category === 'NETWORK_WEB'
-      ).length,
-    },
-  ];
+  const categorizedVectorGroups = useMemo(
+    () =>
+      VECTOR_CATEGORY_GROUPS.map((vg) => ({
+        ...vg,
+        vectors: filteredVectors.filter((v) => v.category === vg.groupKey),
+      })).filter((vg) => vg.vectors.length > 0),
+    [filteredVectors]
+  );
 
   const sortedScenarios = useMemo(
     () => sortScenarios(displayedScenarios, sortBy),
@@ -323,54 +297,6 @@ export function AttackSidebar({
               />
             </div>
 
-            {/* Clean Segmented Category Filter */}
-            <div
-              role="tablist"
-              aria-label="Attack categories"
-              className="flex items-center justify-between gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900"
-            >
-              {categories.map((cat) => {
-                const isSelected = category === cat.id;
-                return (
-                  <WorkbenchIconTooltip
-                    key={cat.id}
-                    label={cat.tooltip}
-                    badge={`${cat.count} SCENARIOS`}
-                    side="bottom"
-                  >
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={isSelected}
-                      onClick={() => onSelectCategory(cat.id)}
-                      className="relative py-1 px-2 text-[11px] font-medium rounded-md text-center transition-colors cursor-pointer whitespace-nowrap"
-                    >
-                      {isSelected && (
-                        <motion.span
-                          layoutId="sidebarCategoryActivePill"
-                          transition={{
-                            type: 'spring',
-                            stiffness: 400,
-                            damping: 30,
-                          }}
-                          className="absolute inset-0 rounded-md bg-white dark:bg-zinc-800 shadow-2xs"
-                        />
-                      )}
-                      <span
-                        className={`relative z-10 block whitespace-nowrap ${
-                          isSelected
-                            ? 'text-zinc-900 dark:text-white font-semibold'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
-                        }`}
-                      >
-                        {cat.label}
-                      </span>
-                    </button>
-                  </WorkbenchIconTooltip>
-                );
-              })}
-            </div>
-
             {/* Sort & Categorize Controls */}
             <div className="grid grid-cols-1 gap-1.5 pt-0.5">
               <div className="relative flex items-center min-w-0">
@@ -414,7 +340,7 @@ export function AttackSidebar({
           </>
         ) : (
           <>
-            {/* Attack Vector Search & Drag-and-Drop Filter Header */}
+            {/* Attack Vector Search Header */}
             <div className="relative w-full">
               <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -428,44 +354,16 @@ export function AttackSidebar({
               />
             </div>
 
-            <div
-              role="tablist"
-              aria-label="Attack vector tactic filter"
-              className="flex flex-wrap items-center justify-between gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-900"
-            >
-              {vectorCategories.map((vc) => {
-                const isSelected = vectorCategory === vc.id;
-                return (
-                  <button
-                    key={vc.id}
-                    type="button"
-                    role="tab"
-                    data-testid={`vector-category-tab-${vc.id}`}
-                    aria-selected={isSelected}
-                    onClick={() => setVectorCategory(vc.id)}
-                    className={`py-1 px-1.5 text-[10px] font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                      isSelected
-                        ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-300 font-semibold shadow-2xs'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                    }`}
-                  >
-                    {vc.label}
-                  </button>
-                );
-              })}
-            </div>
-
             <div className="px-2 py-1 rounded-md bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/70 text-[10px] font-mono text-amber-800 dark:text-amber-200 leading-snug">
-              Drag any attack vector onto the canvas or click{' '}
-              <span className="font-bold">+ Canvas</span> to inject it into the
-              graph.
+              Expand a category below, then drag any vector onto the canvas or click{' '}
+              <span className="font-bold">+ Canvas</span>.
             </div>
           </>
         )}
       </div>
 
-      {/* Body: Categorized Scenario List OR Draggable Attack Vector Library */}
-      <div className="flex-1 overflow-y-auto p-3 pb-14 space-y-3">
+      {/* Body: Categorized Scenario List OR Categorized Draggable Attack Vector Library */}
+      <div className="flex-1 overflow-y-auto p-3 pb-14 space-y-2.5">
         {sidebarMode === 'SCENARIOS' ? (
           sortedScenarios.length === 0 ? (
             <div className="py-8 text-center text-xs text-zinc-400">
@@ -477,11 +375,13 @@ export function AttackSidebar({
             </ul>
           ) : (
             categorizedGroups.map((group) => {
-              const isCollapsed = !!collapsedGroups[group.groupKey];
+              const isExpanded = Boolean(expandedGroups[group.groupKey]);
+              const isCollapsed = !isExpanded;
               return (
                 <div
                   key={group.groupKey}
                   data-testid={`sidebar-category-group-${group.groupKey}`}
+                  data-group-collapsed={isCollapsed ? 'true' : 'false'}
                   className="space-y-1 min-w-0"
                 >
                   <button
@@ -490,23 +390,23 @@ export function AttackSidebar({
                     aria-expanded={!isCollapsed}
                     title={`${group.label} (${group.scenarios.length} scenarios)`}
                     onClick={() => toggleGroupCollapse(group.groupKey)}
-                    className="w-full min-w-0 flex items-center justify-between gap-1.5 px-1.5 py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md transition-colors cursor-pointer text-left"
+                    className="w-full min-w-0 flex items-center justify-between gap-1.5 px-2 py-1.5 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-50/80 dark:bg-zinc-900/70 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-200/70 dark:border-zinc-800/80 rounded-lg transition-colors cursor-pointer text-left"
                   >
-                    <span className="flex items-center gap-1 min-w-0">
+                    <span className="flex items-center gap-1.5 min-w-0">
                       {isCollapsed ? (
-                        <ChevronRight className="w-3 h-3 shrink-0" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                       ) : (
-                        <ChevronDown className="w-3 h-3 shrink-0" />
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                       )}
                       <span className="leading-snug">{group.label}</span>
                     </span>
-                    <span className="text-[10.5px] font-mono tabular-nums text-zinc-400 dark:text-zinc-500 shrink-0">
+                    <span className="px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-[10px] font-mono tabular-nums text-zinc-600 dark:text-zinc-400 shrink-0">
                       {group.scenarios.length}
                     </span>
                   </button>
 
                   {!isCollapsed && (
-                    <ul className="space-y-1">
+                    <ul className="space-y-1 pt-0.5">
                       {group.scenarios.map((sc) => renderScenarioItem(sc))}
                     </ul>
                   )}
@@ -514,7 +414,7 @@ export function AttackSidebar({
               );
             })
           )
-        ) : filteredVectors.length === 0 ? (
+        ) : categorizedVectorGroups.length === 0 ? (
           <div
             data-testid="sidebar-vectors-empty"
             className="py-8 text-center text-xs text-zinc-400"
@@ -524,58 +424,99 @@ export function AttackSidebar({
         ) : (
           <div
             data-testid="sidebar-attack-vectors-list"
-            className="space-y-2"
+            className="space-y-2.5"
           >
-            {filteredVectors.map((vec) => (
-              <div
-                key={vec.id}
-                draggable={true}
-                onDragStart={(e) => handleVectorDragStart(vec, e)}
-                data-testid={`draggable-attack-vector-${vec.id}`}
-                data-vector-id={vec.id}
-                className="group relative rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 p-2.5 transition-all cursor-grab active:cursor-grabbing space-y-1.5"
-              >
-                <div className="flex items-center justify-between gap-1.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <GripVertical className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500 shrink-0" />
-                    <span className="px-1.5 py-0.5 rounded bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-mono text-[9.5px] font-bold shrink-0">
-                      {vec.mitreId}
-                    </span>
-                    <span className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
-                      {vec.tacticLabel}
-                    </span>
-                  </div>
-
+            {categorizedVectorGroups.map((vGroup) => {
+              const isExpanded = Boolean(
+                expandedVectorGroups[vGroup.groupKey]
+              );
+              const isCollapsed = !isExpanded;
+              return (
+                <div
+                  key={vGroup.groupKey}
+                  data-testid={`sidebar-vector-group-${vGroup.groupKey}`}
+                  data-group-collapsed={isCollapsed ? 'true' : 'false'}
+                  className="space-y-1.5 min-w-0"
+                >
                   <button
                     type="button"
-                    data-testid={`inject-attack-vector-btn-${vec.id}`}
-                    aria-label={`Inject ${vec.name} into canvas`}
-                    onClick={() => onInjectAttackVector?.(vec.id)}
-                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-[9.5px] font-semibold transition-colors cursor-pointer shrink-0"
+                    data-testid={`sidebar-vector-group-header-${vGroup.groupKey}`}
+                    aria-expanded={!isCollapsed}
+                    title={`${vGroup.label} (${vGroup.vectors.length} vectors)`}
+                    onClick={() => toggleVectorGroupCollapse(vGroup.groupKey)}
+                    className="w-full min-w-0 flex items-center justify-between gap-1.5 px-2 py-1.5 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-50/80 dark:bg-zinc-900/70 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-200/70 dark:border-zinc-800/80 rounded-lg transition-colors cursor-pointer text-left"
                   >
-                    <Plus className="w-2.5 h-2.5" />
-                    <span>Canvas</span>
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      {isCollapsed ? (
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      )}
+                      <span className="leading-snug">{vGroup.label}</span>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-[10px] font-mono tabular-nums text-zinc-600 dark:text-zinc-400 shrink-0">
+                      {vGroup.vectors.length}
+                    </span>
                   </button>
-                </div>
 
-                <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
-                  {vec.name}
-                </div>
+                  {!isCollapsed && (
+                    <div className="space-y-2 pt-0.5">
+                      {vGroup.vectors.map((vec) => (
+                        <div
+                          key={vec.id}
+                          draggable={true}
+                          onDragStart={(e) => handleVectorDragStart(vec, e)}
+                          data-testid={`draggable-attack-vector-${vec.id}`}
+                          data-vector-id={vec.id}
+                          className="group relative rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 p-2.5 transition-all cursor-grab active:cursor-grabbing space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <GripVertical className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500 shrink-0" />
+                              <span className="px-1.5 py-0.5 rounded bg-indigo-600/15 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-mono text-[9.5px] font-bold shrink-0">
+                                {vec.mitreId}
+                              </span>
+                              <span className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
+                                {vec.tacticLabel}
+                              </span>
+                            </div>
 
-                <div className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug break-words">
-                  {vec.activitySummary}
-                </div>
+                            <button
+                              type="button"
+                              data-testid={`inject-attack-vector-btn-${vec.id}`}
+                              aria-label={`Inject ${vec.name} into canvas`}
+                              onClick={() => onInjectAttackVector?.(vec.id)}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-[9.5px] font-semibold transition-colors cursor-pointer shrink-0"
+                            >
+                              <Plus className="w-2.5 h-2.5" />
+                              <span>Canvas</span>
+                            </button>
+                          </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-1 pt-0.5 text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
-                  <span>{vec.actionBadge}</span>
-                  <span>{vec.protocolBadge}</span>
+                          <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                            {vec.name}
+                          </div>
+
+                          <div className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug break-words">
+                            {vec.activitySummary}
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-1 pt-0.5 text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
+                            <span>{vec.actionBadge}</span>
+                            <span>{vec.protocolBadge}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
     </motion.aside>
   );
 }
+
 
