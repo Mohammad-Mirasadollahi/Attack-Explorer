@@ -18,9 +18,7 @@ import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 import { WorkbenchLayoutMode } from '@/lib/layout-preference';
 import {
   Cloud,
-  Cpu,
   Crosshair,
-  GitCommitHorizontal,
   Keyboard,
   Laptop,
   Library,
@@ -155,24 +153,10 @@ export function AttackHeader({
       icon: <Network className="w-4 h-4 shrink-0" />,
     },
     {
-      id: 'SEQUENCE',
-      label: 'Sequence',
-      tooltip: 'Chronological Attack Sequence Flow View',
-      badge: 'VIEW 2',
-      icon: <GitCommitHorizontal className="w-4 h-4 shrink-0" />,
-    },
-    {
-      id: 'PROCESS_MEMORY',
-      label: 'Memory',
-      tooltip: 'Process Virtual Memory & Syscall Forensic View',
-      badge: 'VIEW 3',
-      icon: <Cpu className="w-4 h-4 shrink-0" />,
-    },
-    {
       id: 'RAW_TABLES',
       label: 'Tables & Packets',
       tooltip: 'Raw Telemetry Tables & Bidirectional Packet Inspector',
-      badge: 'VIEW 4',
+      badge: 'VIEW 2',
       icon: <Table2 className="w-4 h-4 shrink-0" />,
     },
   ];

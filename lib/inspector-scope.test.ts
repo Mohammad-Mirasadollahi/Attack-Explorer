@@ -4,10 +4,12 @@ import { ATTACK_SCENARIOS } from './attack-scenarios';
 import {
   buildInspectorMiniMapModel,
   buildScopedCorrelatedLogs,
+  buildScopedSequenceModel,
   buildScopedStepGuideModel,
   formatExpandedNodeScopeLabel,
   formatInternalSubNodeScopeLabel,
   resolveInspectorScopeContext,
+  resolveScopedMemoryForensics,
   resolveScopedTelemetrySelection,
 } from './inspector-scope';
 import {
@@ -308,13 +310,16 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.ok(miniMapSubNode.minimalBackgroundNodes.length >= 1);
   });
 
-  it('persists and restores the last visited diagram snapshot in memory for the Attack Explorer logo return action', () => {
+  it('persists and restores the complete workbench snapshot (stage, node, expanded node, subnode, telemetry, viewMode, inspectorOpen, inspectorTab, scopeOverride, theme, speed)', () => {
     clearDiagramMemoryForTesting();
 
     const fallback = readLastVisitedDiagramSnapshot('process-hollowing');
     assert.equal(fallback.scenarioId, 'process-hollowing');
     assert.equal(fallback.activeStageIndex, 0);
     assert.equal(fallback.expandedNodeId, null);
+    assert.equal(fallback.viewMode, 'TOPOLOGY');
+    assert.equal(fallback.inspectorOpen, false);
+    assert.equal(fallback.inspectorTab, 'OVERVIEW');
 
     saveLastVisitedDiagramSnapshot({
       scenarioId: 'dns-tunneling-exfil',
@@ -325,6 +330,12 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
       selectedInternalSubNodeId: 'sub_node_2',
       selectedTelemetryId: 'dns-ev-2',
       tacticalMode: true,
+      viewMode: 'RAW_TABLES',
+      inspectorOpen: true,
+      inspectorTab: 'SEQUENCE',
+      inspectorScopeOverride: 'EXPANDED_NODE',
+      isDark: true,
+      playbackSpeed: 2,
     });
 
     const restored = readLastVisitedDiagramSnapshot('process-hollowing');
@@ -336,7 +347,184 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(restored.selectedInternalSubNodeId, 'sub_node_2');
     assert.equal(restored.selectedTelemetryId, 'dns-ev-2');
     assert.equal(restored.tacticalMode, true);
+    assert.equal(restored.viewMode, 'RAW_TABLES');
+    assert.equal(restored.inspectorOpen, true);
+    assert.equal(restored.inspectorTab, 'SEQUENCE');
+    assert.equal(restored.inspectorScopeOverride, 'EXPANDED_NODE');
+    assert.equal(restored.isDark, true);
+    assert.equal(restored.playbackSpeed, 2);
 
     clearDiagramMemoryForTesting();
   });
+
+  it('strictly grounds Memory forensics visibility: shows Memory ONLY when documented memoryBlocks exist AND the current Inspector section involves memory; never fabricates memory', () => {
+    // 1. Scenario WITH documented memoryBlocks (process-hollowing)
+    const hollowing = ATTACK_SCENARIOS.find(
+      (s) => s.id === 'process-hollowing'
+    )!;
+    const hollowingSchematic = buildWhiteboardSchematic(
+      hollowing,
+      0,
+      'WORKSTATION'
+    );
+
+    // Overview (Stage 0) -> hasDocumentedMemory === true
+    const overviewScope = resolveInspectorScopeContext({
+      scenario: hollowing,
+      activeStageIndex: 0,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: null,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    const overviewMem = resolveScopedMemoryForensics(overviewScope, null);
+    assert.equal(overviewMem.hasDocumentedMemory, true);
+    assert.equal(overviewMem.memoryBlocks.length, 3);
+
+    // Stage 2 (NtUnmapViewOfSection memory unmapping) -> hasDocumentedMemory === true
+    const stage2Scope = resolveInspectorScopeContext({
+      scenario: hollowing,
+      activeStageIndex: 2,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: null,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    assert.equal(
+      resolveScopedMemoryForensics(stage2Scope, null).hasDocumentedMemory,
+      true
+    );
+
+    // Stage 5 (Outbound HTTPS C2 Beacon - pure network stage) -> hasDocumentedMemory === false
+    const stage5Scope = resolveInspectorScopeContext({
+      scenario: hollowing,
+      activeStageIndex: 5,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: null,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    assert.equal(
+      resolveScopedMemoryForensics(stage5Scope, null).hasDocumentedMemory,
+      false
+    );
+
+    // Selecting Network Firewall or C2 Server node in process-hollowing -> hasDocumentedMemory === false
+    const fwNode = hollowingSchematic.nodes.find((n) => n.isNetworkDevice)!;
+    const fwScope = resolveInspectorScopeContext({
+      scenario: hollowing,
+      activeStageIndex: 0,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: fwNode.id,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    assert.equal(
+      resolveScopedMemoryForensics(fwScope, null).hasDocumentedMemory,
+      false
+    );
+
+    // Selecting/Expanding the Malware Process node in process-hollowing -> hasDocumentedMemory === true
+    const malwareNode = hollowingSchematic.nodes.find(
+      (n) => n.id === 'malware_sandbox_node'
+    )!;
+    const expandedMalwareScope = resolveInspectorScopeContext({
+      scenario: hollowing,
+      activeStageIndex: 2,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: malwareNode.id,
+      expandedNodeId: malwareNode.id,
+      selectedInternalSubNodeId: null,
+    });
+    assert.equal(
+      resolveScopedMemoryForensics(expandedMalwareScope, null)
+        .hasDocumentedMemory,
+      true
+    );
+
+    // 2. Scenarios WITHOUT documented memoryBlocks (e.g., dns-tunneling-exfil, ad-kerberoasting)
+    const dnsScenario = ATTACK_SCENARIOS.find(
+      (s) => s.id === 'dns-tunneling-exfil'
+    )!;
+    const dnsOverviewScope = resolveInspectorScopeContext({
+      scenario: dnsScenario,
+      activeStageIndex: 0,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: null,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    const dnsMem = resolveScopedMemoryForensics(dnsOverviewScope, null);
+    assert.equal(dnsMem.hasDocumentedMemory, false);
+    assert.equal(dnsMem.memoryBlocks.length, 0);
+
+    // Expanding a host node in dns-tunneling-exfil must NOT fabricate memory blocks or VAD/RAM subnodes
+    const dnsExpandedHostScope = resolveInspectorScopeContext({
+      scenario: dnsScenario,
+      activeStageIndex: 1,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: 'victim_laptop_node',
+      expandedNodeId: 'victim_laptop_node',
+      selectedInternalSubNodeId: null,
+    });
+    assert.equal(
+      resolveScopedMemoryForensics(dnsExpandedHostScope, null)
+        .hasDocumentedMemory,
+      false
+    );
+    assert.ok(
+      dnsExpandedHostScope.internalSubBoard!.subNodes.every(
+        (sn) => !sn.label.includes('VAD') && !sn.sublabel.includes('0x00400000')
+      ),
+      'Non-memory scenarios must never fabricate VAD or 0x00400000 sub-nodes'
+    );
+  });
+
+  it('builds a structured Story-to-Spec Sequence model (buildScopedSequenceModel) across Main Scenario, Selected Node, and Expanded Sub-Board scopes', () => {
+    const scenario = ATTACK_SCENARIOS.find(
+      (s) => s.id === 'process-hollowing'
+    )!;
+
+    // 1. Full Scenario Sequence Model
+    const mainScope = resolveInspectorScopeContext({
+      scenario,
+      activeStageIndex: 0,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: null,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    const mainSeq = buildScopedSequenceModel(mainScope, null);
+    assert.equal(mainSeq.hasDocumentedSequence, true);
+    assert.equal(mainSeq.exchanges.length, scenario.telemetry.length);
+    assert.ok(mainSeq.participants.length >= 3);
+    for (const ex of mainSeq.exchanges) {
+      assert.ok(ex.initiatorLabel.length > 0);
+      assert.ok(ex.receiverLabel.length > 0);
+      assert.ok(ex.forwardSeq.endsWith('.1'));
+      assert.ok(ex.returnSeq.endsWith('.2'));
+      assert.ok(ex.storyAnalogy.length > 40);
+      assert.ok(ex.technicalBridge.length > 40);
+      assert.ok(ex.underTheHood.length > 40);
+      assert.ok(ex.detectionAndEvidence.length > 30);
+    }
+
+    // 2. Expanded Node Sequence Model
+    const expandedScope = resolveInspectorScopeContext({
+      scenario,
+      activeStageIndex: 2,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: 'malware_sandbox_node',
+      expandedNodeId: 'malware_sandbox_node',
+      selectedInternalSubNodeId: null,
+    });
+    const expandedSeq = buildScopedSequenceModel(expandedScope, null);
+    assert.equal(expandedSeq.hasDocumentedSequence, true);
+    assert.equal(expandedSeq.effectiveScope, 'EXPANDED_NODE');
+    assert.equal(expandedSeq.exchanges.length, 4);
+    assert.equal(expandedSeq.exchanges[0].sequenceCode, '4.1');
+    assert.equal(expandedSeq.exchanges[0].forwardSeq, '4.1.1');
+    assert.equal(expandedSeq.exchanges[0].returnSeq, '4.1.2');
+  });
 });
+

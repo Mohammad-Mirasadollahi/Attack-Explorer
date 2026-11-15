@@ -15,8 +15,11 @@ import {
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import {
   buildInspectorMiniMapModel,
+  buildScopedSequenceModel,
   InspectorScopeContext,
   InspectorScopeMode,
+  resolveInspectorScopeContext,
+  resolveScopedMemoryForensics,
 } from '@/lib/inspector-scope';
 import { ThreatIntelCard } from './ThreatIntelCard';
 import { LogInspector } from './LogInspector';
@@ -25,6 +28,8 @@ import { StepByStepGuidePanel } from './StepByStepGuidePanel';
 import { InspectorContextMiniMap } from './InspectorContextMiniMap';
 import { SketchNodeIcon } from './SketchNodeIcons';
 import { AnimeBrandLogo } from './AnimeBrandLogo';
+import { SequenceView } from './canvas/SequenceView';
+import { ProcessMemoryView } from './canvas/ProcessMemoryView';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -37,6 +42,7 @@ import {
   BookOpen,
   Cpu,
   ExternalLink,
+  GitCommitHorizontal,
   Layers,
   ListChecks,
   Maximize2,
@@ -60,6 +66,14 @@ export function clampInspectorWidth(width: number): number {
   );
 }
 
+export type InspectorTab =
+  | 'OVERVIEW'
+  | 'STEP_GUIDE'
+  | 'SEQUENCE'
+  | 'MEMORY'
+  | 'SIEM_LOGS'
+  | 'SOURCES';
+
 interface InspectorPanelProps {
   scenario: AttackScenario;
   currentStage: AttackStage | null;
@@ -80,6 +94,9 @@ interface InspectorPanelProps {
   onExpandedNodeChange?: (nodeId: string | null) => void;
   onSelectInternalSubNode?: (subNodeId: string | null) => void;
   onScopeOverrideChange?: (override: InspectorScopeMode | null) => void;
+  /** Controlled active tab for persistence across reloads */
+  activeTab?: InspectorTab;
+  onTabChange?: (tab: InspectorTab) => void;
   /** Close full-screen inspector page and return to the active diagram */
   onCloseInspectorPage?: () => void;
   /** Return to the last visited diagram stored in memory when clicking Attack Explorer logo */
@@ -88,8 +105,6 @@ interface InspectorPanelProps {
   width?: number;
   onResizeWidth?: (nextWidth: number) => void;
 }
-
-type InspectorTab = 'OVERVIEW' | 'STEP_GUIDE' | 'SIEM_LOGS' | 'SOURCES';
 
 export interface FloatingHoverInspectorTriggerProps {
   scenario: AttackScenario;
@@ -323,12 +338,21 @@ export function InspectorPanel({
   onExpandedNodeChange,
   onSelectInternalSubNode,
   onScopeOverrideChange,
+  activeTab: controlledActiveTab,
+  onTabChange,
   onCloseInspectorPage,
   onReturnToRememberedDiagram,
 }: InspectorPanelProps) {
-  const [activeTab, setActiveTab] = useState<InspectorTab>('OVERVIEW');
+  const [internalActiveTab, setInternalActiveTab] =
+    useState<InspectorTab>('OVERVIEW');
   const [forceMainScenarioView, setForceMainScenarioView] =
     useState<boolean>(false);
+
+  const rawActiveTab = controlledActiveTab ?? internalActiveTab;
+  const handleSelectTab = (nextTab: InspectorTab) => {
+    setInternalActiveTab(nextTab);
+    onTabChange?.(nextTab);
+  };
 
   const envProfile = getActiveEnvironmentProfile(activeEnvironment);
   const sourcesProfile = getScenarioAttribution(scenario);
@@ -337,6 +361,57 @@ export function InspectorPanel({
   const effectiveScope: InspectorScopeMode = forceMainScenarioView
     ? 'MAIN_SCENARIO'
     : scopeContext?.effectiveScope || 'MAIN_SCENARIO';
+
+  const effectiveScopeContext = useMemo<InspectorScopeContext>(() => {
+    const baseCtx =
+      scopeContext ||
+      resolveInspectorScopeContext({
+        scenario,
+        activeStageIndex,
+        activeEnvironment,
+        selectedNodeId: null,
+        expandedNodeId: null,
+        selectedInternalSubNodeId: null,
+      });
+
+    if (forceMainScenarioView) {
+      return {
+        ...baseCtx,
+        effectiveScope: 'MAIN_SCENARIO',
+        selectedMainNode: null,
+        expandedNode: null,
+        expandedParentNode: null,
+        selectedSubNode: null,
+        focusedInternalSubNode: null,
+      };
+    }
+
+    return baseCtx;
+  }, [
+    scopeContext,
+    scenario,
+    activeStageIndex,
+    activeEnvironment,
+    forceMainScenarioView,
+  ]);
+
+  const scopedMemory = useMemo(
+    () =>
+      resolveScopedMemoryForensics(effectiveScopeContext, selectedTelemetry),
+    [effectiveScopeContext, selectedTelemetry]
+  );
+
+  const scopedSequence = useMemo(
+    () => buildScopedSequenceModel(effectiveScopeContext, selectedTelemetry),
+    [effectiveScopeContext, selectedTelemetry]
+  );
+
+  const resolvedActiveTab: InspectorTab =
+    rawActiveTab === 'MEMORY' && !scopedMemory.hasDocumentedMemory
+      ? 'OVERVIEW'
+      : rawActiveTab === 'SEQUENCE' && !scopedSequence.hasDocumentedSequence
+      ? 'OVERVIEW'
+      : rawActiveTab;
 
   const isInspectingSpecificMainNode = Boolean(
     !forceMainScenarioView &&
@@ -394,6 +469,74 @@ export function InspectorPanel({
     : currentStage
     ? `Stage ${currentStage.index}: ${currentStage.title}`
     : scenario.name;
+
+  const visibleTabs = useMemo(() => {
+    const tabs: Array<{
+      id: InspectorTab;
+      label: string;
+      testId: string;
+      icon: React.ReactNode;
+    }> = [
+      {
+        id: 'OVERVIEW',
+        label: 'Overview & Deep-Dive',
+        testId: 'inspector-tab-overview',
+        icon: <BookOpen className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'STEP_GUIDE',
+        label: `Steps (${scenario.stages.length})`,
+        testId: 'inspector-tab-steps',
+        icon: <ListChecks className="w-3.5 h-3.5" />,
+      },
+    ];
+
+    if (scopedSequence.hasDocumentedSequence) {
+      tabs.push({
+        id: 'SEQUENCE',
+        label: `Sequence (${scopedSequence.exchanges.length})`,
+        testId: 'inspector-tab-sequence',
+        icon: <GitCommitHorizontal className="w-3.5 h-3.5" />,
+      });
+    }
+
+    if (scopedMemory.hasDocumentedMemory) {
+      tabs.push({
+        id: 'MEMORY',
+        label: `Memory (${scopedMemory.memoryBlocks.length})`,
+        testId: 'inspector-tab-memory',
+        icon: <Cpu className="w-3.5 h-3.5" />,
+      });
+    }
+
+    tabs.push(
+      {
+        id: 'SIEM_LOGS',
+        label: `SIEM Logs (${
+          scopeContext?.scopedTelemetryEvents.length ||
+          scenario.telemetry.length
+        })`,
+        testId: 'inspector-tab-logs',
+        icon: <Terminal className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'SOURCES',
+        label: 'Sources & Intel',
+        testId: 'inspector-tab-sources',
+        icon: <Scale className="w-3.5 h-3.5" />,
+      }
+    );
+
+    return tabs;
+  }, [
+    scenario.stages.length,
+    scenario.telemetry.length,
+    scopeContext?.scopedTelemetryEvents.length,
+    scopedSequence.hasDocumentedSequence,
+    scopedSequence.exchanges.length,
+    scopedMemory.hasDocumentedMemory,
+    scopedMemory.memoryBlocks.length,
+  ]);
 
   return (
     <aside
@@ -513,44 +656,14 @@ export function InspectorPanel({
               </div>
             )}
 
-          {/* 4 Primary Full-Page Tabs */}
+          {/* Context-Aware Primary Full-Page Tabs */}
           <div
             role="tablist"
             aria-label="Inspector View Tabs"
-            className="flex items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800"
+            className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800"
           >
-            {(
-              [
-                {
-                  id: 'OVERVIEW',
-                  label: 'Overview & Deep-Dive',
-                  testId: 'inspector-tab-overview',
-                  icon: <BookOpen className="w-3.5 h-3.5" />,
-                },
-                {
-                  id: 'STEP_GUIDE',
-                  label: `Steps (${scenario.stages.length})`,
-                  testId: 'inspector-tab-steps',
-                  icon: <ListChecks className="w-3.5 h-3.5" />,
-                },
-                {
-                  id: 'SIEM_LOGS',
-                  label: `SIEM Logs (${
-                    scopeContext?.scopedTelemetryEvents.length ||
-                    scenario.telemetry.length
-                  })`,
-                  testId: 'inspector-tab-logs',
-                  icon: <Terminal className="w-3.5 h-3.5" />,
-                },
-                {
-                  id: 'SOURCES',
-                  label: 'Sources & Intel',
-                  testId: 'inspector-tab-sources',
-                  icon: <Scale className="w-3.5 h-3.5" />,
-                },
-              ] as const
-            ).map((tab) => {
-              const isSelected = activeTab === tab.id;
+            {visibleTabs.map((tab) => {
+              const isSelected = resolvedActiveTab === tab.id;
               return (
                 <button
                   key={tab.id}
@@ -558,7 +671,7 @@ export function InspectorPanel({
                   role="tab"
                   data-testid={tab.testId}
                   aria-selected={isSelected}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleSelectTab(tab.id)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-2xs border border-zinc-200/80 dark:border-zinc-700'
@@ -812,8 +925,49 @@ export function InspectorPanel({
             )}
 
             {/* TAB 1: OVERVIEW & DEEP-DIVE */}
-            {activeTab === 'OVERVIEW' && (
+            {resolvedActiveTab === 'OVERVIEW' && (
               <div className="flex flex-col gap-5">
+                {/* Context-Aware Documented Virtual Memory Forensics Callout (ONLY rendered when documented memory exists for this active section) */}
+                {scopedMemory.hasDocumentedMemory && (
+                  <section
+                    data-testid="inspector-overview-memory-callout"
+                    className="rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                        <Cpu className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          DOCUMENTED VIRTUAL MEMORY FORENSICS IN THIS SECTION (
+                          {scopedMemory.memoryBlocks.length} VAD REGIONS)
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                        {scopedMemory.scopeExplanation}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {scopedMemory.memoryBlocks.map((mb, idx) => (
+                          <span
+                            key={`${mb.address}-${idx}`}
+                            className="px-2 py-0.5 rounded text-[10.5px] font-mono bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-rose-200/80 dark:border-rose-800/70"
+                          >
+                            {mb.address} · {mb.section} ({mb.permissions})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="inspector-overview-open-memory-btn"
+                      onClick={() => handleSelectTab('MEMORY')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
+                    >
+                      <Cpu className="w-3.5 h-3.5" />
+                      <span>Open Memory Forensics</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </section>
+                )}
+
                 {/* CASE A: Clicked Main Topology Node Dedicated Page (`selectedMainNode`) */}
                 {isInspectingSpecificMainNode && scopeContext?.selectedMainNode ? (
                   <div
@@ -864,7 +1018,7 @@ export function InspectorPanel({
                       )}
                     </section>
 
-                    {/* 2. Connected Inbound & Outbound Telemetry Arms ("دست‌هایی که بهش وصل هستن") */}
+                    {/* 2. Connected Inbound & Outbound Telemetry Arms */}
                     <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
@@ -1274,7 +1428,7 @@ export function InspectorPanel({
             )}
 
             {/* TAB 2: STEP-BY-STEP GUIDE */}
-            {activeTab === 'STEP_GUIDE' && (
+            {resolvedActiveTab === 'STEP_GUIDE' && (
               <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
                 <StepByStepGuidePanel
                   scenario={scenario}
@@ -1282,7 +1436,7 @@ export function InspectorPanel({
                   cinematicPhase={cinematicPhase}
                   isPlaying={isPlaying}
                   activeEnvironment={activeEnvironment}
-                  scopeContext={scopeContext}
+                  scopeContext={effectiveScopeContext}
                   onSelectStage={onSelectStage}
                   onSelectTelemetry={onSelectTelemetry}
                   onSelectInternalSubNode={onSelectInternalSubNode}
@@ -1293,8 +1447,36 @@ export function InspectorPanel({
               </div>
             )}
 
-            {/* TAB 3: SIEM / EDR LOGS */}
-            {activeTab === 'SIEM_LOGS' && (
+            {/* TAB 3: CHRONOLOGICAL SEQUENCE (STORY-TO-SPEC REQUEST/RESPONSE) */}
+            {resolvedActiveTab === 'SEQUENCE' &&
+              scopedSequence.hasDocumentedSequence && (
+                <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
+                  <SequenceView
+                    scenario={scenario}
+                    scopeContext={effectiveScopeContext}
+                    selectedTelemetryId={selectedTelemetry?.id || null}
+                    onSelectTelemetry={onSelectTelemetry}
+                    onSelectStage={onSelectStage}
+                    activeEnvironment={activeEnvironment}
+                  />
+                </div>
+              )}
+
+            {/* TAB 4: DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE) */}
+            {resolvedActiveTab === 'MEMORY' &&
+              scopedMemory.hasDocumentedMemory && (
+                <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
+                  <ProcessMemoryView
+                    scenario={scenario}
+                    activeEnvironment={activeEnvironment}
+                    scopeContext={effectiveScopeContext}
+                    selectedTelemetry={selectedTelemetry}
+                  />
+                </div>
+              )}
+
+            {/* TAB 5: SIEM / EDR LOGS */}
+            {resolvedActiveTab === 'SIEM_LOGS' && (
               <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
                 <LogInspector
                   scenario={scenario}
@@ -1303,13 +1485,13 @@ export function InspectorPanel({
                   onSelectTelemetry={onSelectTelemetry}
                   onSelectStage={onSelectStage}
                   activeEnvironment={activeEnvironment}
-                  scopeContext={scopeContext}
+                  scopeContext={effectiveScopeContext}
                 />
               </div>
             )}
 
-            {/* TAB 4: THREAT INTEL & SOURCES */}
-            {activeTab === 'SOURCES' && (
+            {/* TAB 6: THREAT INTEL & SOURCES */}
+            {resolvedActiveTab === 'SOURCES' && (
               <div className="flex flex-col gap-5">
                 <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
                   <ThreatIntelCard scenario={scenario} />

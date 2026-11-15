@@ -1,4 +1,7 @@
-import { AttackScenario, TelemetryEvent } from './attack-scenarios';
+import {
+  AttackScenario,
+  TelemetryEvent,
+} from './attack-scenarios';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
@@ -621,7 +624,7 @@ export function buildScopedCorrelatedLogs(
  * Builds the deterministic miniature topological context map model for the top-left
  * corner of the Full-Screen Inspector Page.
  * - Shows the active Zone + Focused Node(s) in full scaled-down visual detail
- * - Shows connected flows ("دست‌هایی که بهش وصل هستن") and neighbor nodes in minimal connected style
+ * - Shows connected flows and neighbor nodes in minimal connected style
  * - Shows the rest of the board's zones/nodes/flows in minimal wireframe silhouette style
  */
 export function buildInspectorMiniMapModel(
@@ -942,3 +945,651 @@ export function buildInspectorMiniMapModel(
     allFlows,
   };
 }
+
+export type ScenarioProcessEntry = AttackScenario['processTree'][number];
+export type ScenarioMemoryBlock = NonNullable<
+  ScenarioProcessEntry['memoryBlocks']
+>[number];
+
+export interface ScopedMemoryForensicsModel {
+  hasDocumentedMemory: boolean;
+  scopeExplanation: string;
+  memoryProcesses: ScenarioProcessEntry[];
+  memoryBlocks: Array<
+    ScenarioMemoryBlock & {
+      processId: string;
+      processName: string;
+      processPid: number;
+    }
+  >;
+  relatedProcessTree: ScenarioProcessEntry[];
+}
+
+const MEMORY_DOC_REGEX =
+  /\b(memory|ram|vad|rwx|page_execute|peb|unmap|ntunmapviewofsection|virtualalloc|virtualprotect|writeprocessmemory|0x[0-9a-f]{4,}|heap|buffer|section|shellcode|inject|hollow|amsi|pe header|mz header|image is replaced|processtampering|etwti)\b/i;
+
+function isNonMemoryInfrastructureNode(
+  node: WhiteboardSketchNode | null | undefined
+): boolean {
+  if (!node) return false;
+  if (node.isNetworkDevice) return true;
+  if (
+    node.iconType === 'SIEM_SENSOR' ||
+    node.iconType === 'FIREWALL_ROUTER' ||
+    node.iconType === 'CORE_SWITCH' ||
+    node.iconType === 'WAF_REVERSE_PROXY' ||
+    node.iconType === 'DNS_RESOLVER' ||
+    node.iconType === 'PHISHING_GATEWAY' ||
+    node.iconType === 'ATTACKER'
+  ) {
+    return true;
+  }
+  const origRole = node.originalNode?.role;
+  if (
+    origRole === 'attacker' ||
+    origRole === 'firewall_siem' ||
+    origRole === 'dns_resolver' ||
+    origRole === 'domain_controller'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Determines whether the currently active Inspector target/scope has documented
+ * virtual memory forensics (`memoryBlocks`) in the scenario specification AND
+ * whether the current section/node/stage's documented explanation actually involves memory.
+ * Never fabricates or invents memory blocks when none exist in the scenario documentation.
+ */
+export function resolveScopedMemoryForensics(
+  scopeContext: InspectorScopeContext,
+  selectedTelemetry: TelemetryEvent | null = null
+): ScopedMemoryForensicsModel {
+  const { scenario, effectiveScope, activeStageIndex } = scopeContext;
+  const allMemoryProcesses = (scenario.processTree || []).filter(
+    (proc) => Array.isArray(proc.memoryBlocks) && proc.memoryBlocks.length > 0
+  );
+
+  // Rule 1: If the scenario itself has no documented memoryBlocks, never invent any.
+  if (allMemoryProcesses.length === 0) {
+    return {
+      hasDocumentedMemory: false,
+      scopeExplanation: '',
+      memoryProcesses: [],
+      memoryBlocks: [],
+      relatedProcessTree: [],
+    };
+  }
+
+  let isMemoryRelevantInCurrentSection = false;
+  let scopeExplanation = '';
+
+  // Case A: A specific telemetry packet/event is selected
+  if (selectedTelemetry) {
+    const telemetryText = [
+      selectedTelemetry.sourceType,
+      selectedTelemetry.protocolOrEventId,
+      selectedTelemetry.shortAction || '',
+      selectedTelemetry.info,
+      selectedTelemetry.explanation || '',
+      selectedTelemetry.rawLog || '',
+    ].join(' ');
+    isMemoryRelevantInCurrentSection =
+      selectedTelemetry.sourceType === 'MEMORY_SCAN' ||
+      MEMORY_DOC_REGEX.test(telemetryText);
+    if (isMemoryRelevantInCurrentSection) {
+      scopeExplanation = `Documented virtual memory regions (VAD) correlated with selected telemetry event ${selectedTelemetry.protocolOrEventId} (${selectedTelemetry.shortAction || selectedTelemetry.info}).`;
+    }
+  }
+  // Case B: Inside an expanded node's internal sub-node
+  else if (
+    effectiveScope === 'INTERNAL_SUBNODE' &&
+    scopeContext.selectedSubNode &&
+    scopeContext.expandedNode
+  ) {
+    const parentNode = scopeContext.expandedNode;
+    const subNode = scopeContext.selectedSubNode;
+    if (
+      !isNonMemoryInfrastructureNode(parentNode) &&
+      !isNonMemoryInfrastructureNode(subNode) &&
+      subNode.iconType !== 'PACKET_ENGINE'
+    ) {
+      const subNodeDocText = [
+        subNode.label,
+        subNode.sublabel,
+        subNode.internalSummary,
+        subNode.activitySummary,
+        ...scopeContext.relatedSubFlows.map(
+          (f) =>
+            `${f.label} ${f.telemetryEvent.protocolOrEventId} ${f.telemetryEvent.info}`
+        ),
+      ].join(' ');
+      isMemoryRelevantInCurrentSection =
+        subNode.iconType === 'KERNEL_MEMORY' ||
+        MEMORY_DOC_REGEX.test(subNodeDocText);
+      if (isMemoryRelevantInCurrentSection) {
+        scopeExplanation = `Documented virtual memory layout (VAD) for internal component "${subNode.label}" (${subNode.sublabel}) inside ${parentNode.label}.`;
+      }
+    }
+  }
+  // Case C: Inside an expanded node sub-board
+  else if (effectiveScope === 'EXPANDED_NODE' && scopeContext.expandedNode) {
+    const expNode = scopeContext.expandedNode;
+    if (!isNonMemoryInfrastructureNode(expNode)) {
+      const expDocText = [
+        expNode.label,
+        expNode.sublabel,
+        expNode.activitySummary,
+        expNode.internalSummary,
+        expNode.originalNode?.details?.description || '',
+        ...(expNode.originalNode?.details?.artifacts || []),
+        ...(scopeContext.internalSubBoard?.subNodes || []).map(
+          (sn) => `${sn.label} ${sn.internalSummary}`
+        ),
+      ].join(' ');
+      isMemoryRelevantInCurrentSection =
+        expNode.iconType === 'KERNEL_MEMORY' ||
+        expNode.originalNode?.role === 'memory' ||
+        MEMORY_DOC_REGEX.test(expDocText);
+      if (isMemoryRelevantInCurrentSection) {
+        scopeExplanation = `Documented process virtual memory layout (VAD) inside expanded node "${expNode.label}" (${expNode.sublabel}).`;
+      }
+    }
+  }
+  // Case D: Main Scenario with a specific main node selected
+  else if (
+    effectiveScope === 'MAIN_SCENARIO' &&
+    scopeContext.selectedMainNode
+  ) {
+    const mainNode = scopeContext.selectedMainNode;
+    if (!isNonMemoryInfrastructureNode(mainNode)) {
+      const mainDocText = [
+        mainNode.label,
+        mainNode.sublabel,
+        mainNode.activitySummary,
+        mainNode.internalSummary,
+        mainNode.originalNode?.details?.description || '',
+        ...(mainNode.originalNode?.details?.artifacts || []),
+      ].join(' ');
+      isMemoryRelevantInCurrentSection =
+        mainNode.iconType === 'KERNEL_MEMORY' ||
+        mainNode.originalNode?.role === 'memory' ||
+        MEMORY_DOC_REGEX.test(mainDocText);
+      if (isMemoryRelevantInCurrentSection) {
+        scopeExplanation = `Documented virtual memory regions (VAD) associated with node "${mainNode.label}" (${mainNode.sublabel}).`;
+      }
+    }
+  }
+  // Case E: Main Scenario (Overview or Stage selected, no node selected)
+  else {
+    if (activeStageIndex === 0) {
+      isMemoryRelevantInCurrentSection = true;
+      scopeExplanation = `Documented virtual memory layout (VAD) and process hollowing / injection forensics for scenario ${scenario.code} (${scenario.name}).`;
+    } else {
+      const stageObj =
+        scenario.stages[activeStageIndex - 1] || scenario.stages[0];
+      const stageTelemetry = scenario.telemetry.filter(
+        (t) => t.stageIndex === activeStageIndex
+      );
+      const stageDocText = [
+        stageObj?.title || '',
+        stageObj?.subtitle || '',
+        stageObj?.description || '',
+        ...(stageObj?.keySpecs || []).map((ks) => `${ks.term} ${ks.value}`),
+        ...stageTelemetry.map(
+          (t) =>
+            `${t.sourceType} ${t.protocolOrEventId} ${t.shortAction || ''} ${t.info} ${t.explanation || ''}`
+        ),
+      ].join(' ');
+      isMemoryRelevantInCurrentSection = MEMORY_DOC_REGEX.test(stageDocText);
+      if (isMemoryRelevantInCurrentSection && stageObj) {
+        scopeExplanation = `Documented virtual memory regions (VAD) active during Stage ${activeStageIndex}: ${stageObj.title}.`;
+      }
+    }
+  }
+
+  if (!isMemoryRelevantInCurrentSection) {
+    return {
+      hasDocumentedMemory: false,
+      scopeExplanation: '',
+      memoryProcesses: [],
+      memoryBlocks: [],
+      relatedProcessTree: [],
+    };
+  }
+
+  const memoryBlocks = allMemoryProcesses.flatMap((proc) =>
+    (proc.memoryBlocks || []).map((mb) => ({
+      ...mb,
+      processId: String(proc.pid),
+      processName: proc.name,
+      processPid: proc.pid,
+    }))
+  );
+
+  return {
+    hasDocumentedMemory: memoryBlocks.length > 0,
+    scopeExplanation,
+    memoryProcesses: allMemoryProcesses,
+    memoryBlocks,
+    relatedProcessTree: scenario.processTree || [],
+  };
+}
+
+export interface ScopedSequenceParticipant {
+  id: string;
+  badge: string;
+  label: string;
+  sublabel: string;
+  zoneLabel: string;
+  roleSummary: string;
+}
+
+export interface ScopedSequenceExchangeItem {
+  id: string;
+  stepNumber: number;
+  stageIndex: number;
+  sequenceCode: string;
+  forwardSeq: string;
+  returnSeq: string;
+  plainTitle: string;
+  actionTitle: string;
+  mitreId: string;
+  protocolOrEventId: string;
+  timestamp: string;
+  severity: TelemetryEvent['severity'];
+  initiatorNodeId: string;
+  initiatorBadge: string;
+  initiatorLabel: string;
+  initiatorSublabel: string;
+  initiatorZoneLabel: string;
+  receiverNodeId: string;
+  receiverBadge: string;
+  receiverLabel: string;
+  receiverSublabel: string;
+  receiverZoneLabel: string;
+  forwardFlowBadge: string;
+  forwardPayloadSummary: string;
+  returnFlowBadge: string;
+  returnLabel: string;
+  returnDescription: string;
+  continuationHint: string;
+  storyAnalogy: string;
+  technicalBridge: string;
+  underTheHood: string;
+  detectionAndEvidence: string;
+  keySpecs: string[];
+  telemetryEvent: TaggedTelemetryEvent;
+  isActiveExchange: boolean;
+  isSelectedPacket: boolean;
+}
+
+export interface ScopedSequenceModel {
+  hasDocumentedSequence: boolean;
+  effectiveScope: InspectorScopeMode;
+  scopeTitle: string;
+  scopeBriefing: string;
+  participants: ScopedSequenceParticipant[];
+  exchanges: ScopedSequenceExchangeItem[];
+}
+
+/**
+ * Builds a structured, Story-to-Spec Sequence Model (`ScopedSequenceModel`)
+ * scoped to the active Inspector target (Main Scenario, Selected Node, Expanded Node,
+ * or Internal Sub-Node). Never fabricates sequences if none exist in the documentation.
+ */
+export function buildScopedSequenceModel(
+  scopeContext: InspectorScopeContext,
+  selectedTelemetry: TelemetryEvent | null = null
+): ScopedSequenceModel {
+  const { scenario, effectiveScope, activeStageIndex, activeEnvironment } =
+    scopeContext;
+
+  // Case 1: Inside an Expanded Node or Internal Sub-Node
+  if (
+    effectiveScope !== 'MAIN_SCENARIO' &&
+    scopeContext.internalSubBoard &&
+    scopeContext.expandedNode
+  ) {
+    const parentNode = scopeContext.expandedNode;
+    const subBoard = scopeContext.internalSubBoard;
+    const subZoneById = new Map(subBoard.zones.map((z) => [z.id, z]));
+    const internalSteps = scopeContext.internalSteps;
+
+    if (internalSteps.length === 0) {
+      return {
+        hasDocumentedSequence: false,
+        effectiveScope,
+        scopeTitle: scopeContext.scopeTitle,
+        scopeBriefing: '',
+        participants: [],
+        exchanges: [],
+      };
+    }
+
+    const participantIds = new Set<string>();
+    for (const st of internalSteps) {
+      if (st.fromSubNode) participantIds.add(st.fromSubNode.id);
+      if (st.toSubNode) participantIds.add(st.toSubNode.id);
+    }
+
+    const participants: ScopedSequenceParticipant[] = subBoard.subNodes
+      .filter((sn) => participantIds.has(sn.id))
+      .map((sn) => {
+        const zone = subZoneById.get(sn.zoneId);
+        return {
+          id: sn.id,
+          badge: `#${sn.sequenceCode || `${parentNode.chainOrder}.${sn.chainOrder}`} · ${sn.actionBadge}`,
+          label: sn.label,
+          sublabel: sn.sublabel,
+          zoneLabel: zone ? `${zone.code} · ${zone.title}` : sn.zoneLabel || 'Internal Zone',
+          roleSummary: sn.internalSummary || sn.activitySummary || '',
+        };
+      });
+
+    const exchanges: ScopedSequenceExchangeItem[] = internalSteps.map(
+      (st, idx) => {
+        const fromZone = st.fromSubNode
+          ? subZoneById.get(st.fromSubNode.zoneId)
+          : null;
+        const toZone = st.toSubNode
+          ? subZoneById.get(st.toSubNode.zoneId)
+          : null;
+        const initiatorLabel = st.fromSubNode?.label || st.flow.fromNodeId;
+        const receiverLabel = st.toSubNode?.label || st.flow.toNodeId;
+        const initiatorSublabel =
+          st.fromSubNode?.sublabel || parentNode.sublabel;
+        const receiverSublabel = st.toSubNode?.sublabel || parentNode.sublabel;
+
+        const technicalBridge =
+          `Initiator "${initiatorLabel}" (${initiatorSublabel}) invokes ${st.title} (${st.protocolOrEventId}, ${st.mitreId}) toward Receiver "${receiverLabel}" (${receiverSublabel}). ` +
+          `${st.telemetryEvent.info}`;
+
+        const underTheHood =
+          `Forward Request (#${st.forwardSeq} ──▶): ${initiatorLabel} dispatches ${st.title} over ${st.protocolOrEventId}. ` +
+          `${st.fromSubNode?.internalSummary || ''} ` +
+          `Return Channel (◀── #${st.returnSeq}): ${st.returnDescription}`;
+
+        const envProfile = getActiveEnvironmentProfile(activeEnvironment);
+        const detectionAndEvidence =
+          `Captured via ${st.telemetryEvent.sourceType} (${st.protocolOrEventId} · ${st.mitreId} · ${envProfile.telemetryTag}). ` +
+          `Raw Telemetry Indicator: ${st.telemetryEvent.rawLog}`;
+
+        return {
+          id: st.flow.id,
+          stepNumber: idx + 1,
+          stageIndex: st.flow.stageIndex || activeStageIndex || 1,
+          sequenceCode: st.sequenceCode,
+          forwardSeq: st.forwardSeq,
+          returnSeq: st.returnSeq,
+          plainTitle: `Internal Sequence #${st.sequenceCode}: ${initiatorLabel} ──▶ ${receiverLabel}`,
+          actionTitle: st.title,
+          mitreId: st.mitreId,
+          protocolOrEventId: st.protocolOrEventId,
+          timestamp: st.telemetryEvent.timestamp,
+          severity: st.telemetryEvent.severity,
+          initiatorNodeId: st.fromSubNode?.id || st.flow.fromNodeId,
+          initiatorBadge: st.fromSubNode
+            ? `#${st.fromSubNode.sequenceCode || st.sequenceCode} · ${st.fromSubNode.actionBadge}`
+            : `#${st.sequenceCode} · SRC`,
+          initiatorLabel,
+          initiatorSublabel,
+          initiatorZoneLabel: fromZone
+            ? `${fromZone.code} · ${fromZone.title}`
+            : st.fromSubNode?.zoneLabel || 'Internal Pipeline',
+          receiverNodeId: st.toSubNode?.id || st.flow.toNodeId,
+          receiverBadge: st.toSubNode
+            ? `#${st.toSubNode.sequenceCode || st.sequenceCode} · ${st.toSubNode.actionBadge}`
+            : `#${st.sequenceCode} · DST`,
+          receiverLabel,
+          receiverSublabel,
+          receiverZoneLabel: toZone
+            ? `${toZone.code} · ${toZone.title}`
+            : st.toSubNode?.zoneLabel || 'Internal Pipeline',
+          forwardFlowBadge: st.forwardFlowBadge,
+          forwardPayloadSummary: st.telemetryEvent.info,
+          returnFlowBadge: st.returnFlowBadge,
+          returnLabel: st.flow.returnLabel || 'Execution Status / ACK',
+          returnDescription: st.returnDescription,
+          continuationHint:
+            st.continuationHint ||
+            (idx < internalSteps.length - 1
+              ? `Next in pipeline: proceeds to #${internalSteps[idx + 1].sequenceCode} (${internalSteps[idx + 1].title}).`
+              : `Completes internal pipeline inside ${parentNode.label}.`),
+          storyAnalogy: st.storyAnalogy,
+          technicalBridge,
+          underTheHood,
+          detectionAndEvidence,
+          keySpecs: [
+            `Seq #${st.sequenceCode} (#${st.forwardSeq} / #${st.returnSeq})`,
+            st.protocolOrEventId,
+            st.mitreId,
+            st.telemetryEvent.sourceType,
+          ],
+          telemetryEvent: st.telemetryEvent,
+          isActiveExchange: st.isCurrentStep,
+          isSelectedPacket: Boolean(
+            selectedTelemetry &&
+              (selectedTelemetry.id === st.telemetryEvent.id ||
+                selectedTelemetry.id === st.flow.id)
+          ),
+        };
+      }
+    );
+
+    const scopeBriefing =
+      effectiveScope === 'INTERNAL_SUBNODE' && scopeContext.selectedSubNode
+        ? `Showing ${exchanges.length} documented internal request/response sequence exchange(s) directly connected to sub-node "${scopeContext.selectedSubNode.label}" inside "${parentNode.label}".`
+        : `Showing all ${exchanges.length} documented internal request/response sequence exchanges inside expanded node "${parentNode.label}" (${parentNode.sublabel}).`;
+
+    return {
+      hasDocumentedSequence: exchanges.length > 0,
+      effectiveScope,
+      scopeTitle: scopeContext.scopeTitle,
+      scopeBriefing,
+      participants,
+      exchanges,
+    };
+  }
+
+  // Case 2: Main Scenario Topology (Full Scenario or Selected Main Node)
+  const { zones, nodes, flows } = scopeContext.schematic;
+  if (flows.length === 0) {
+    return {
+      hasDocumentedSequence: false,
+      effectiveScope,
+      scopeTitle: scopeContext.scopeTitle,
+      scopeBriefing: '',
+      participants: [],
+      exchanges: [],
+    };
+  }
+
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  const zoneById = new Map(zones.map((z) => [z.id, z]));
+  const scenarioGuide = buildDiagramStepGuideModel(
+    scenario,
+    activeStageIndex,
+    'OVERVIEW',
+    activeEnvironment
+  );
+  const stepCardByNumber = new Map(
+    scenarioGuide.steps.map((s) => [s.stepNumber, s])
+  );
+
+  const selectedMainNode = scopeContext.selectedMainNode;
+  const scopedFlows = selectedMainNode
+    ? flows.filter(
+        (fl) =>
+          fl.fromNodeId === selectedMainNode.id ||
+          fl.toNodeId === selectedMainNode.id
+      )
+    : flows;
+
+  if (scopedFlows.length === 0) {
+    return {
+      hasDocumentedSequence: false,
+      effectiveScope,
+      scopeTitle: scopeContext.scopeTitle,
+      scopeBriefing: '',
+      participants: [],
+      exchanges: [],
+    };
+  }
+
+  const participantIds = new Set<string>();
+  for (const fl of scopedFlows) {
+    participantIds.add(fl.fromNodeId);
+    participantIds.add(fl.toNodeId);
+  }
+
+  const participants: ScopedSequenceParticipant[] = nodes
+    .filter((n) => participantIds.has(n.id))
+    .map((n) => {
+      const z = zoneById.get(n.zoneId);
+      return {
+        id: n.id,
+        badge: `#${n.chainOrder} · ${n.actionBadge}`,
+        label: n.label,
+        sublabel: n.sublabel,
+        zoneLabel: z ? `${z.code} · ${z.title}` : n.zoneLabel || 'Network Zone',
+        roleSummary: n.activitySummary || n.internalSummary || '',
+      };
+    });
+
+  const exchanges: ScopedSequenceExchangeItem[] = scopedFlows.map((fl, idx) => {
+    const srcNode = nodeById.get(fl.fromNodeId) || null;
+    const dstNode = nodeById.get(fl.toNodeId) || null;
+    const srcZone = srcNode ? zoneById.get(srcNode.zoneId) : null;
+    const dstZone = dstNode ? zoneById.get(dstNode.zoneId) : null;
+    const stepCard = stepCardByNumber.get(fl.stepNo) || null;
+    const stageObj =
+      scenario.stages[(fl.stageIndex || fl.stepNo) - 1] || scenario.stages[0];
+    const taggedEv = tagTelemetryEventWithEnvironment(
+      fl.telemetryEvent,
+      activeEnvironment
+    );
+
+    const sequenceCode = fl.sequenceCode || `${fl.stepNo}`;
+    const forwardSeq = fl.forwardSeq || `${sequenceCode}.1`;
+    const returnSeq = fl.returnSeq || `${sequenceCode}.2`;
+
+    const initiatorLabel =
+      srcNode?.label || fl.telemetryEvent.sourceLabel || fl.fromNodeId;
+    const receiverLabel =
+      dstNode?.label || fl.telemetryEvent.targetLabel || fl.toNodeId;
+    const initiatorSublabel = srcNode?.sublabel || 'Initiator Node';
+    const receiverSublabel = dstNode?.sublabel || 'Receiver Node';
+
+    const returnLabel = fl.returnLabel || 'ACK / Status Response';
+    const returnDescription =
+      fl.traceMeta?.returnDescription ||
+      `${receiverLabel} returns ${returnLabel} back to ${initiatorLabel}.`;
+    const continuationHint =
+      fl.traceMeta?.continuationHint ||
+      (idx < scopedFlows.length - 1
+        ? `Next in kill-chain: advances to Sequence #${scopedFlows[idx + 1].stepNo} (${scopedFlows[idx + 1].label}).`
+        : `Final sequence step in this scope.`);
+
+    const plainTitle = stepCard
+      ? `Seq #${sequenceCode} · ${stepCard.plainTitle}`
+      : `Seq #${sequenceCode} · ${initiatorLabel} ──▶ ${receiverLabel}`;
+
+    const storyAnalogy =
+      stepCard?.storyAnalogy ||
+      `Think of ${initiatorLabel} sending a direct operational command (${fl.label}) to ${receiverLabel} and waiting for confirmation (${returnLabel}) before the next stage can proceed.`;
+
+    const technicalBridge =
+      stepCard?.simpleExplanation ||
+      `Initiator "${initiatorLabel}" (${initiatorSublabel}) transmits ${fl.label} (${taggedEv.protocolOrEventId}, ${taggedEv.mitreId}) to Receiver "${receiverLabel}" (${receiverSublabel}). ${taggedEv.info}`;
+
+    const underTheHood =
+      stepCard?.howItWorksInPractice ||
+      `Forward Request (#${forwardSeq} ──▶): ${initiatorLabel} executes ${fl.label} toward ${receiverLabel}. Return Response (◀── #${returnSeq}): ${returnDescription}`;
+
+    const detectionAndEvidence =
+      stepCard?.detectionAndEvidence ||
+      `Captured by ${taggedEv.sourceType} (${taggedEv.protocolOrEventId} · ${taggedEv.mitreId}). Raw Evidence: ${taggedEv.rawLog}`;
+
+    const isActiveExchange =
+      activeStageIndex === 0 || fl.stageIndex === activeStageIndex;
+
+    const stageSpecs = (stageObj?.keySpecs || []).map(
+      (ks) => `${ks.term}: ${ks.value}`
+    );
+
+    return {
+      id: fl.id,
+      stepNumber: fl.stepNo,
+      stageIndex: fl.stageIndex,
+      sequenceCode,
+      forwardSeq,
+      returnSeq,
+      plainTitle,
+      actionTitle: fl.label,
+      mitreId: taggedEv.mitreId,
+      protocolOrEventId: taggedEv.protocolOrEventId,
+      timestamp: taggedEv.timestamp,
+      severity: taggedEv.severity,
+      initiatorNodeId: srcNode?.id || fl.fromNodeId,
+      initiatorBadge: srcNode
+        ? `#${srcNode.chainOrder} · ${srcNode.actionBadge}`
+        : `#${fl.stepNo} · SRC`,
+      initiatorLabel,
+      initiatorSublabel,
+      initiatorZoneLabel: srcZone
+        ? `${srcZone.code} · ${srcZone.title}`
+        : srcNode?.zoneLabel || 'Network Zone',
+      receiverNodeId: dstNode?.id || fl.toNodeId,
+      receiverBadge: dstNode
+        ? `#${dstNode.chainOrder} · ${dstNode.actionBadge}`
+        : `#${fl.stepNo} · DST`,
+      receiverLabel,
+      receiverSublabel,
+      receiverZoneLabel: dstZone
+        ? `${dstZone.code} · ${dstZone.title}`
+        : dstNode?.zoneLabel || 'Network Zone',
+      forwardFlowBadge: `#${forwardSeq} ──▶ ${fl.label}`,
+      forwardPayloadSummary: taggedEv.info,
+      returnFlowBadge: `◀── #${returnSeq} ${returnLabel}`,
+      returnLabel,
+      returnDescription,
+      continuationHint,
+      storyAnalogy,
+      technicalBridge,
+      underTheHood,
+      detectionAndEvidence,
+      keySpecs:
+        stageSpecs.length > 0
+          ? stageSpecs
+          : [
+              `Seq #${sequenceCode} (#${forwardSeq} / #${returnSeq})`,
+              taggedEv.protocolOrEventId,
+              taggedEv.mitreId,
+              taggedEv.sourceType,
+            ],
+      telemetryEvent: taggedEv,
+      isActiveExchange,
+      isSelectedPacket: Boolean(
+        selectedTelemetry &&
+          (selectedTelemetry.id === taggedEv.id ||
+            selectedTelemetry.id === fl.id)
+      ),
+    };
+  });
+
+  const scopeBriefing = selectedMainNode
+    ? `Showing ${exchanges.length} documented request/response sequence exchange(s) directly involving Node #${selectedMainNode.chainOrder} "${selectedMainNode.label}" (${selectedMainNode.sublabel}).`
+    : `Showing all ${exchanges.length} documented end-to-end sequence exchanges across ${participants.length} participating nodes for ${scenario.code}: ${scenario.name}.`;
+
+  return {
+    hasDocumentedSequence: exchanges.length > 0,
+    effectiveScope,
+    scopeTitle: scopeContext.scopeTitle,
+    scopeBriefing,
+    participants,
+    exchanges,
+  };
+}
+

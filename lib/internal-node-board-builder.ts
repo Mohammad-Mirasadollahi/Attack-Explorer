@@ -270,12 +270,17 @@ export function buildInternalNodeSubBoard(
     );
   }
 
+  const hasScenarioMemoryBlocks = scenario.processTree.some(
+    (p) => Array.isArray(p.memoryBlocks) && p.memoryBlocks.length > 0
+  );
+
   // 2. VICTIM LAPTOP / HOST INTERNAL VISUAL BOARD
   if (parentNode.archetype === 'LAPTOP_HOST_ACTIVITY') {
     const procs = scenario.processTree;
     const p0 = procs[0];
     const p1 = procs[1] || procs[0];
     const p2 = procs[2] || p1;
+    const firstMemBlock = procs.flatMap((p) => p.memoryBlocks || [])[0];
 
     const zones: NetworkZoneColumn[] = [
       {
@@ -302,18 +307,31 @@ export function buildInternalNodeSubBoard(
         subnetBadge: `PID ${p0?.pid || 4120} -> ${p1?.pid || 5820}`,
         accentHex: '#D97706',
         bgTintClass: 'bg-amber-500/5' },
-      {
-        id: 'INTERNAL_SUBZONE_C',
-        code: 'VAD · RAM & NTDLL',
-        title: 'VIRTUAL MEMORY (VAD) & NTDLL',
-        subtitle: 'Private RWX Pages & Syscall Gate',
-        xStart: 705,
-        xEnd: 1045,
-        yStart: 22,
-        yEnd: 465,
-        subnetBadge: 'VAD · PAGE_EXECUTE_READWRITE',
-        accentHex: '#E11D48',
-        bgTintClass: 'bg-rose-500/5' },
+      hasScenarioMemoryBlocks
+        ? {
+            id: 'INTERNAL_SUBZONE_C',
+            code: 'VAD · RAM & NTDLL',
+            title: 'VIRTUAL MEMORY (VAD) & NTDLL',
+            subtitle: 'Private RWX Pages & Syscall Gate',
+            xStart: 705,
+            xEnd: 1045,
+            yStart: 22,
+            yEnd: 465,
+            subnetBadge: `VAD · ${firstMemBlock?.permissions || 'PAGE_EXECUTE_READWRITE'}`,
+            accentHex: '#E11D48',
+            bgTintClass: 'bg-rose-500/5' }
+        : {
+            id: 'INTERNAL_SUBZONE_C',
+            code: 'RUNTIME · OS API',
+            title: 'COMMAND & SUBSYSTEM EXECUTION',
+            subtitle: 'Runtime Arguments & OS API Dispatch',
+            xStart: 705,
+            xEnd: 1045,
+            yStart: 22,
+            yEnd: 465,
+            subnetBadge: `RUNTIME · ${scenario.stages[0]?.mitreTechniqueId || 'OS-EXEC'}`,
+            accentHex: '#E11D48',
+            bgTintClass: 'bg-rose-500/5' },
       {
         id: 'INTERNAL_SUBZONE_D',
         code: 'RING-0 · ETW/SYSMON',
@@ -353,20 +371,35 @@ export function buildInternalNodeSubBoard(
         wy: 360,
         isCompromised: true,
         internalSummary: p1
-            ? `Child process (${p1.commandLine}) invoking ${p1.apiCalls.join(', ')} (spawned to stage or inject the payload under a trusted or background process context).`
+            ? `Child process (${p1.commandLine}) invoking ${p1.apiCalls.join(', ')} (spawned to execute the documented stage actions under the host session).`
             : 'Malicious child process spawned inside the host user session (inheriting the parent’s security token).' },
-      {
-        id: `${parentNode.id}_sub_vad_memory`,
-        zoneId: 'INTERNAL_SUBZONE_C',
-        iconType: 'KERNEL_MEMORY',
-        label: p2 ? `${p2.name} Memory Space` : 'Virtual Memory (VAD / RWX)',
-        sublabel: '0x00400000 · NTDLL Syscalls',
-        actionBadge: 'HOST ③ · Memory & Syscall Space',
-        wx: 875,
-        wy: 215,
-        isCompromised: true,
-        internalSummary: p2?.memoryBlocks?.[0]?.description ||
-            'Virtual Address Descriptor (VAD) region where code injection, hollowing, or in-memory execution takes place (using private memory pages so no unpacked malware file is written to disk).' },
+      hasScenarioMemoryBlocks
+        ? {
+            id: `${parentNode.id}_sub_vad_memory`,
+            zoneId: 'INTERNAL_SUBZONE_C',
+            iconType: 'KERNEL_MEMORY',
+            label: p2 ? `${p2.name} Memory Space` : 'Virtual Memory (VAD / RWX)',
+            sublabel: `${firstMemBlock?.address || '0x00400000'} · ${firstMemBlock?.section || 'NTDLL Syscalls'}`,
+            actionBadge: 'HOST ③ · Memory & Syscall Space',
+            wx: 875,
+            wy: 215,
+            isCompromised: true,
+            internalSummary:
+              firstMemBlock?.description ||
+              'Virtual Address Descriptor (VAD) region where documented code injection, hollowing, or in-memory execution takes place.' }
+        : {
+            id: `${parentNode.id}_sub_vad_memory`,
+            zoneId: 'INTERNAL_SUBZONE_C',
+            iconType: 'PROCESS_THREAD',
+            label: p2 ? `${p2.name} Runtime Engine` : 'OS Command & API Dispatcher',
+            sublabel: `${scenario.telemetry[1]?.protocolOrEventId || scenario.stages[0]?.mitreTechniqueId || 'OS Subsystem'} · Active`,
+            actionBadge: 'HOST ③ · Runtime Execution',
+            wx: 875,
+            wy: 215,
+            isCompromised: true,
+            internalSummary: p2
+              ? `Executes ${p2.commandLine} and dispatches ${p2.apiCalls.join(', ') || scenario.telemetry[0]?.shortAction || 'documented OS operations'} within the host environment.`
+              : `Executes ${scenario.telemetry[0]?.shortAction || scenario.stages[0]?.title || 'documented host operations'} via the operating system subsystem.` },
       {
         id: `${parentNode.id}_sub_cred_net`,
         zoneId: 'INTERNAL_SUBZONE_D',
@@ -377,18 +410,18 @@ export function buildInternalNodeSubBoard(
         wx: 1190,
         wy: 195,
         isCompromised: true,
-        internalSummary: 'Accesses host network sockets, Kerberos ticket cache, or local files (allowing the payload to harvest credentials or beacon out under the host process’s identity).' },
+        internalSummary: 'Accesses host network sockets, authentication ticket cache, or local files (allowing the process to communicate or operate under the host identity).' },
       {
         id: `${parentNode.id}_sub_sysmon_agent`,
         zoneId: 'INTERNAL_SUBZONE_D',
         iconType: 'SIEM_SENSOR',
         label: 'Sysmon / ETW Kernel Sensor',
-        sublabel: 'EID 1 · 4688 · 25 · 4104',
+        sublabel: 'EID 1 · 4688 · 3 · 22',
         actionBadge: 'HOST ⑤ · Kernel Telemetry Hook',
         wx: 1355,
         wy: 390,
         isCompromised: false,
-        internalSummary: 'Kernel callbacks (PsSetCreateProcessNotifyRoutineEx & ETW — running in Ring 0 so user-mode malware cannot hide process spawns or cross-process memory writes) record every anomaly.' },
+        internalSummary: 'Kernel telemetry sensors (Sysmon & Windows Security Auditing running in Ring 0) record process creation, command-line arguments, and network/file events.' },
     ];
 
     const flowBlueprints: InternalFlowBlueprint[] = [
@@ -402,45 +435,63 @@ export function buildInternalNodeSubBoard(
         packetKind: 'MALWARE_DROP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Parent process invokes the OS process creation API (CreateProcessW / execve) to spawn the child loader or shell process (logged in Sysmon EventID 1 with full command-line arguments).' },
-      {
-        fromIdx: 1,
-        toIdx: 2,
-        shortAction: 'NTDLL VirtualAlloc / WriteMem',
-        protocolOrEventId: 'WIN32 / NTDLL API',
-        sizeOrCode: '0x00400000',
-        sourceType: 'WIN32_API',
-        packetKind: 'SYSCALL',
-        curveOffset: -38,
-        returnOffset: 38,
-        summary: 'Child process allocates executable memory pages (PAGE_EXECUTE_READWRITE = 0x40) and writes or unmaps payload sections directly in RAM (avoiding disk-based file scanners).' },
+        summary: 'Parent process invokes the OS process creation API (CreateProcessW / execve) to spawn the child process (logged in Sysmon EventID 1 with full command-line arguments).' },
+      hasScenarioMemoryBlocks
+        ? {
+            fromIdx: 1,
+            toIdx: 2,
+            shortAction: 'NTDLL VirtualAlloc / WriteMem',
+            protocolOrEventId: 'WIN32 / NTDLL API',
+            sizeOrCode: firstMemBlock?.address || '0x00400000',
+            sourceType: 'WIN32_API',
+            packetKind: 'SYSCALL',
+            curveOffset: -38,
+            returnOffset: 38,
+            summary: `Child process interacts with documented virtual memory (${firstMemBlock?.address || '0x00400000'} · ${firstMemBlock?.section || 'PE section'} [${firstMemBlock?.permissions || 'RWX'}]): ${firstMemBlock?.description || 'allocating and modifying memory pages in RAM.'}` }
+        : {
+            fromIdx: 1,
+            toIdx: 2,
+            shortAction: p1?.apiCalls?.[0] || scenario.telemetry[0]?.shortAction || 'Invoke OS Runtime API',
+            protocolOrEventId: scenario.telemetry[0]?.protocolOrEventId || 'WIN32 / OS API',
+            sizeOrCode: 'EXEC_OK',
+            sourceType: scenario.telemetry[0]?.sourceType || 'WIN_EVENT',
+            packetKind: 'SYSCALL',
+            curveOffset: -38,
+            returnOffset: 38,
+            summary: `Child process dispatches ${p1?.apiCalls?.join(', ') || scenario.telemetry[0]?.shortAction || 'documented OS commands'} to the runtime execution subsystem (${scenario.telemetry[0]?.info || scenario.stages[0]?.description}).` },
       {
         fromIdx: 2,
         toIdx: 3,
-        shortAction: 'Thread Resume -> Socket / Token',
+        shortAction: hasScenarioMemoryBlocks
+          ? 'Thread Resume -> Socket / Token'
+          : 'Runtime Dispatch -> Socket / I/O',
         protocolOrEventId: 'Winsock / LSA API',
         sizeOrCode: 'HANDLE_OK',
         sourceType: 'WIN32_API',
         packetKind: 'LATERAL_HOP',
         curveOffset: -38,
         returnOffset: 38,
-        summary: 'Hijacked or in-memory thread resumes execution and opens outbound network sockets or reads local authentication tokens (operating inside the trusted host process).' },
+        summary: 'Active process opens outbound network sockets, queries authentication tokens, or performs local I/O operations under the host process identity.' },
       {
         fromIdx: 2,
         toIdx: 4,
         shortAction: 'ETW / Sysmon Kernel Callback',
-        protocolOrEventId: 'Sysmon EID 25 / EDR',
+        protocolOrEventId:
+          scenario.telemetry[scenario.telemetry.length - 1]?.protocolOrEventId ||
+          'Sysmon / EDR',
         sizeOrCode: 'LOG_COMMITTED',
-        sourceType: 'MEMORY_SCAN',
+        sourceType: hasScenarioMemoryBlocks ? 'MEMORY_SCAN' : 'SYSMON',
         packetKind: 'C2_EXFIL',
         curveOffset: 42,
         returnOffset: -42,
-        summary: 'Kernel sensor detects unbacked executable memory or process image replacement (comparing in-memory code against the signed file on disk) and commits a forensic event log.' },
+        summary: hasScenarioMemoryBlocks
+          ? 'Kernel sensor detects unbacked executable memory or process image replacement (comparing in-memory code against the signed file on disk) and commits a forensic event log.'
+          : 'Kernel sensor captures the process execution, command-line parameters, and socket/protocol telemetry and commits a forensic event log.' },
     ];
 
     const backboneLinks: NetworkBackboneLink[] = [
       { id: 'int-host-1', x1: 175, y1: 210, x2: 520, y2: 360, label: 'Process Table', linkType: 'INTERNAL_BUS' },
-      { id: 'int-host-2', x1: 520, y1: 360, x2: 875, y2: 215, label: 'Syscall Gate', linkType: 'INTERNAL_BUS' },
+      { id: 'int-host-2', x1: 520, y1: 360, x2: 875, y2: 215, label: hasScenarioMemoryBlocks ? 'Syscall Gate' : 'Runtime Pipe', linkType: 'INTERNAL_BUS' },
       { id: 'int-host-3', x1: 875, y1: 215, x2: 1190, y2: 195, label: 'Winsock Bus', linkType: 'INTERNAL_BUS' },
       { id: 'int-host-4', x1: 875, y1: 215, x2: 1355, y2: 390, label: 'ETW Hook', linkType: 'SPAN_MIRROR' },
     ];
@@ -450,7 +501,9 @@ export function buildInternalNodeSubBoard(
       parentNode,
       'ENDPOINT HOST INTERNAL ARCHITECTURE',
       `Inside Host System: ${parentNode.label}`,
-      'User-Space Delivery -> Parent-Child Process Tree -> Virtual Memory (VAD/NTDLL) -> Socket & Kernel Sysmon Hooks',
+      hasScenarioMemoryBlocks
+        ? 'User-Space Delivery -> Parent-Child Process Tree -> Virtual Memory (VAD/NTDLL) -> Socket & Kernel Sysmon Hooks'
+        : 'User-Space Delivery -> Parent-Child Process Tree -> Runtime Command & API Execution -> Socket & Kernel Telemetry Hooks',
       zones,
       backboneLinks,
       subNodeBlueprints,
@@ -460,8 +513,197 @@ export function buildInternalNodeSubBoard(
     );
   }
 
-  // 3. MALWARE PAYLOAD / IN-MEMORY PROCESS INTERNAL VISUAL BOARD
+  // 3. MALWARE PAYLOAD / PROCESS INTERNAL VISUAL BOARD
   if (parentNode.archetype === 'MALWARE_PROCESSES') {
+    if (!hasScenarioMemoryBlocks) {
+      const procs = scenario.processTree;
+      const pPrimary = procs[procs.length - 1] || procs[0];
+      const ev0 = scenario.telemetry[0];
+      const ev1 = scenario.telemetry[1] || ev0;
+      const evLast = scenario.telemetry[scenario.telemetry.length - 1] || ev0;
+
+      const zones: NetworkZoneColumn[] = [
+        {
+          id: 'INTERNAL_SUBZONE_A',
+          code: 'STAGE-1 · ENTRY',
+          title: 'PROCESS INITIALIZATION & ARGS',
+          subtitle: 'Command-Line & Execution Context',
+          xStart: 18,
+          xEnd: 335,
+          yStart: 135,
+          yEnd: 615,
+          subnetBadge: `PID ${pPrimary?.pid || 4812} · INIT`,
+          accentHex: '#E11D48',
+          bgTintClass: 'bg-rose-500/5' },
+        {
+          id: 'INTERNAL_SUBZONE_B',
+          code: 'STAGE-2 · PREP',
+          title: 'TARGET & PROTOCOL PREPARATION',
+          subtitle: 'Configuration & Resource Lookup',
+          xStart: 355,
+          xEnd: 685,
+          yStart: 22,
+          yEnd: 445,
+          subnetBadge: `${ev0?.protocolOrEventId || 'CONFIG'} · STAGE`,
+          accentHex: '#D97706',
+          bgTintClass: 'bg-amber-500/5' },
+        {
+          id: 'INTERNAL_SUBZONE_C',
+          code: 'STAGE-3 · ENGINE',
+          title: 'CORE TECHNIQUE EXECUTION',
+          subtitle: `${scenario.code} Operational Engine`,
+          xStart: 705,
+          xEnd: 1045,
+          yStart: 145,
+          yEnd: 628,
+          subnetBadge: `${scenario.code} · CORE OPS`,
+          accentHex: '#0284C7',
+          bgTintClass: 'bg-sky-500/5' },
+        {
+          id: 'INTERNAL_SUBZONE_D',
+          code: 'STAGE-4 · OUTPUT',
+          title: 'OUTBOUND CHANNEL & IMPACT',
+          subtitle: 'Network / System Action & Telemetry',
+          xStart: 1065,
+          xEnd: 1462,
+          yStart: 22,
+          yEnd: 615,
+          subnetBadge: `${evLast?.protocolOrEventId || 'OUTPUT'} · COMMIT`,
+          accentHex: '#7C3AED',
+          bgTintClass: 'bg-violet-500/5' },
+      ];
+
+      const subNodeBlueprints: SubNodeBlueprint[] = [
+        {
+          id: `${parentNode.id}_sub_unpacker`,
+          zoneId: 'INTERNAL_SUBZONE_A',
+          iconType: 'PROCESS_THREAD',
+          label: pPrimary ? `${pPrimary.name} Entry` : 'Process Command Initializer',
+          sublabel: pPrimary ? `PID ${pPrimary.pid} · ${pPrimary.integrity}` : 'Command & Argument Parser',
+          actionBadge: 'PROC ① · Process Init',
+          wx: 175,
+          wy: 345,
+          isCompromised: true,
+          internalSummary: pPrimary
+            ? `Initializes ${pPrimary.name} (PID ${pPrimary.pid}) with command line: ${pPrimary.commandLine}`
+            : `Initializes the execution context for ${parentNode.label} (${parentNode.sublabel}).` },
+        {
+          id: `${parentNode.id}_sub_evasion`,
+          zoneId: 'INTERNAL_SUBZONE_B',
+          iconType: 'MALWARE_PAYLOAD',
+          label: 'Target & Parameter Builder',
+          sublabel: pPrimary?.apiCalls?.[0] || ev0?.shortAction || 'Parameter Setup',
+          actionBadge: 'PROC ② · Target Setup',
+          wx: 520,
+          wy: 205,
+          isCompromised: true,
+          internalSummary: `Prepares the operational parameters and API/protocol arguments (${pPrimary?.apiCalls?.join(', ') || ev0?.shortAction || scenario.stages[0]?.title}).` },
+        {
+          id: `${parentNode.id}_sub_rwx_writer`,
+          zoneId: 'INTERNAL_SUBZONE_C',
+          iconType: 'MALWARE_PAYLOAD',
+          label: `${scenario.code} Execution Core`,
+          sublabel: ev1?.protocolOrEventId || scenario.stages[0]?.mitreTechniqueId || 'Core Action',
+          actionBadge: 'PROC ③ · Core Technique',
+          wx: 875,
+          wy: 355,
+          isCompromised: true,
+          internalSummary: ev1?.info || scenario.stages[0]?.description || `Executes the core ${scenario.name} technique.` },
+        {
+          id: `${parentNode.id}_sub_thread_hijack`,
+          zoneId: 'INTERNAL_SUBZONE_D',
+          iconType: 'PACKET_ENGINE',
+          label: 'Protocol / System Dispatcher',
+          sublabel: evLast?.shortAction || 'Outbound Dispatch',
+          actionBadge: 'PROC ④ · Action Dispatch',
+          wx: 1190,
+          wy: 195,
+          isCompromised: true,
+          internalSummary: `Dispatches ${evLast?.shortAction || 'the active stage operation'} over ${evLast?.protocolOrEventId || 'the target channel'}.` },
+        {
+          id: `${parentNode.id}_sub_c2_module`,
+          zoneId: 'INTERNAL_SUBZONE_D',
+          iconType: 'SIEM_SENSOR',
+          label: 'Telemetry & Detection Trail',
+          sublabel: evLast?.protocolOrEventId || 'SIEM / Audit Evidence',
+          actionBadge: 'PROC ⑤ · Forensic Evidence',
+          wx: 1355,
+          wy: 390,
+          isCompromised: false,
+          internalSummary: evLast?.detectionRule?.title
+            ? `Captures ${evLast.protocolOrEventId} evidence matched by ${evLast.detectionRule.type} rule "${evLast.detectionRule.title}".`
+            : `Records the resulting ${evLast?.protocolOrEventId || 'system'} forensic telemetry trail.` },
+      ];
+
+      const flowBlueprints: InternalFlowBlueprint[] = [
+        {
+          fromIdx: 0,
+          toIdx: 1,
+          shortAction: pPrimary?.apiCalls?.[0] || ev0?.shortAction || 'Initialize Parameters',
+          protocolOrEventId: ev0?.protocolOrEventId || 'Process Init',
+          sizeOrCode: 'INIT_OK',
+          sourceType: ev0?.sourceType || 'WIN_EVENT',
+          packetKind: 'SYSCALL',
+          curveOffset: -38,
+          returnOffset: 38,
+          summary: `Process entry parses command-line arguments and prepares the target parameters (${ev0?.info || scenario.stages[0]?.subtitle}).` },
+        {
+          fromIdx: 1,
+          toIdx: 2,
+          shortAction: ev1?.shortAction || 'Execute Core Technique',
+          protocolOrEventId: ev1?.protocolOrEventId || scenario.code,
+          sizeOrCode: ev1?.sizeOrCode || 'EXEC_STAGE',
+          sourceType: ev1?.sourceType || 'WIN_EVENT',
+          packetKind: 'MALWARE_DROP',
+          curveOffset: -38,
+          returnOffset: 38,
+          summary: ev1?.explanation || ev1?.info || scenario.stages[0]?.description },
+        {
+          fromIdx: 2,
+          toIdx: 3,
+          shortAction: evLast?.shortAction || 'Dispatch Output Action',
+          protocolOrEventId: evLast?.protocolOrEventId || 'Channel I/O',
+          sizeOrCode: evLast?.sizeOrCode || 'DISPATCHED',
+          sourceType: evLast?.sourceType || 'NETWORK',
+          packetKind: 'LATERAL_HOP',
+          curveOffset: -38,
+          returnOffset: 38,
+          summary: evLast?.info || `Core engine transmits or commits ${evLast?.shortAction || 'the final operation'}.` },
+        {
+          fromIdx: 3,
+          toIdx: 4,
+          shortAction: 'Commit Forensic Audit Trail',
+          protocolOrEventId: evLast?.protocolOrEventId || 'SIEM / Audit',
+          sizeOrCode: 'EVIDENCE_LOGGED',
+          sourceType: evLast?.sourceType || 'SYSMON',
+          packetKind: 'C2_EXFIL',
+          curveOffset: 42,
+          returnOffset: -42,
+          summary: evLast?.detectionRule?.mitigation || `Logs the documented telemetry event (${evLast?.protocolOrEventId || scenario.code}) for defender detection.` },
+      ];
+
+      const backboneLinks: NetworkBackboneLink[] = [
+        { id: 'int-mal-1', x1: 175, y1: 345, x2: 520, y2: 205, label: 'Arg Pipe', linkType: 'INTERNAL_BUS' },
+        { id: 'int-mal-2', x1: 520, y1: 205, x2: 875, y2: 355, label: 'Exec Bus', linkType: 'INTERNAL_BUS' },
+        { id: 'int-mal-3', x1: 875, y1: 355, x2: 1190, y2: 195, label: 'Dispatch Pipe', linkType: 'INTERNAL_BUS' },
+        { id: 'int-mal-4', x1: 1190, y1: 195, x2: 1355, y2: 390, label: 'Audit Tap', linkType: 'SPAN_MIRROR' },
+      ];
+
+      return materializeInternalBoard(
+        scenario,
+        parentNode,
+        'PROCESS INTERNAL EXECUTION PIPELINE',
+        `Inside Process: ${parentNode.label}`,
+        'Process Initialization -> Parameter Setup -> Core Technique Execution -> Action Dispatch & Telemetry Trail',
+        zones,
+        backboneLinks,
+        subNodeBlueprints,
+        flowBlueprints,
+        parentFlows,
+        activeStageIndex
+      );
+    }
+
     const zones: NetworkZoneColumn[] = [
       {
         id: 'INTERNAL_SUBZONE_A',

@@ -11,9 +11,7 @@ import { CanvasViewMode } from './DiagramCanvas';
 import {
   Check,
   Cloud,
-  Cpu,
   Crosshair,
-  GitCommitHorizontal,
   Laptop,
   Library,
   Monitor,
@@ -99,16 +97,6 @@ export function SettingsDrawer({
       id: 'TOPOLOGY',
       label: 'Diagram (Topology)',
       icon: <Network className="w-3.5 h-3.5 shrink-0" />,
-    },
-    {
-      id: 'SEQUENCE',
-      label: 'Sequence Flow',
-      icon: <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />,
-    },
-    {
-      id: 'PROCESS_MEMORY',
-      label: 'Process Memory',
-      icon: <Cpu className="w-3.5 h-3.5 shrink-0" />,
     },
     {
       id: 'RAW_TABLES',

@@ -41,6 +41,7 @@ import {
   DEFAULT_INSPECTOR_WIDTH,
   FloatingHoverInspectorTrigger,
   InspectorPanel,
+  InspectorTab,
 } from './InspectorPanel';
 import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
@@ -57,6 +58,7 @@ import {
   WorkbenchLayoutMode,
 } from '@/lib/layout-preference';
 import {
+  hasStoredDiagramSnapshot,
   readLastVisitedDiagramSnapshot,
   saveLastVisitedDiagramSnapshot,
 } from '@/lib/diagram-memory-store';
@@ -78,7 +80,10 @@ export function AttackExplorerWorkbench() {
 
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
-      if (shouldSkipIntroFromSearch(window.location.search)) {
+      if (
+        shouldSkipIntroFromSearch(window.location.search) ||
+        hasStoredDiagramSnapshot()
+      ) {
         setShowIntro(false);
       }
     });
@@ -169,6 +174,7 @@ export function AttackExplorerWorkbench() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   // Inspector is now a dedicated full-screen page (closed by default on the diagram page, opened via Hover Inspector trigger or Header button)
   const [inspectorOpen, setInspectorOpen] = useState<boolean>(false);
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>('OVERVIEW');
   const [inspectorWidth, setInspectorWidth] = useState<number>(
     DEFAULT_INSPECTOR_WIDTH
   );
@@ -178,7 +184,7 @@ export function AttackExplorerWorkbench() {
   const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
-  // Restore last visited diagram state from memory on mount
+  // Restore last visited workbench state from localStorage on mount
   const [memoryHydrated, setMemoryHydrated] = useState<boolean>(false);
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
@@ -201,30 +207,44 @@ export function AttackExplorerWorkbench() {
       setSelectedInternalSubNodeId(remembered.selectedInternalSubNodeId);
       setSelectedTelemetryId(remembered.selectedTelemetryId);
       setTacticalMode(remembered.tacticalMode);
+      setViewMode(remembered.viewMode);
+      setInspectorOpen(remembered.inspectorOpen);
+      setInspectorTab(remembered.inspectorTab);
+      setInspectorScopeOverride(remembered.inspectorScopeOverride);
+      setIsDark(remembered.isDark);
+      setPlaybackSpeed(remembered.playbackSpeed);
       setMemoryHydrated(true);
     });
     return () => window.cancelAnimationFrame(rafId);
   }, []);
 
-  // Automatically save the active diagram state in memory whenever the user visits/interacts with the diagram
+  // Automatically save the complete workbench state in localStorage whenever the user interacts with stage, node, or view configuration
   useEffect(() => {
     if (!memoryHydrated) return;
-    if (viewMode === 'TOPOLOGY' && !inspectorOpen) {
-      saveLastVisitedDiagramSnapshot({
-        scenarioId: selectedScenarioId,
-        activeStageIndex,
-        activeEnvironment,
-        expandedNodeId,
-        selectedNodeId,
-        selectedInternalSubNodeId,
-        selectedTelemetryId,
-        tacticalMode,
-      });
-    }
+    saveLastVisitedDiagramSnapshot({
+      scenarioId: selectedScenarioId,
+      activeStageIndex,
+      activeEnvironment,
+      expandedNodeId,
+      selectedNodeId,
+      selectedInternalSubNodeId,
+      selectedTelemetryId,
+      tacticalMode,
+      viewMode,
+      inspectorOpen,
+      inspectorTab,
+      inspectorScopeOverride,
+      isDark,
+      playbackSpeed,
+    });
   }, [
     memoryHydrated,
     viewMode,
     inspectorOpen,
+    inspectorTab,
+    inspectorScopeOverride,
+    isDark,
+    playbackSpeed,
     selectedScenarioId,
     activeStageIndex,
     activeEnvironment,
@@ -235,26 +255,8 @@ export function AttackExplorerWorkbench() {
     tacticalMode,
   ]);
 
-  // Handler when clicking the "Attack Explorer" logo: return immediately to the last visited diagram stored in memory
+  // Handler when clicking the "Attack Explorer" logo: return immediately to the active diagram view
   const handleReturnToLastVisitedDiagram = useCallback(() => {
-    const remembered = readLastVisitedDiagramSnapshot(selectedScenarioId);
-    const validScenario =
-      ATTACK_SCENARIOS.find((s) => s.id === remembered.scenarioId) ||
-      ATTACK_SCENARIOS[0];
-
-    setSelectedScenarioId(validScenario.id);
-    const clampedStage = Math.min(
-      remembered.activeStageIndex,
-      validScenario.stages.length
-    );
-    setActiveStageIndex(clampedStage);
-    setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
-    setActiveEnvironment(remembered.activeEnvironment);
-    setExpandedNodeId(remembered.expandedNodeId);
-    setSelectedNodeId(remembered.selectedNodeId);
-    setSelectedInternalSubNodeId(remembered.selectedInternalSubNodeId);
-    setSelectedTelemetryId(remembered.selectedTelemetryId);
-    setTacticalMode(remembered.tacticalMode);
     setViewMode('TOPOLOGY');
     setInspectorOpen(false);
     setAttackLibraryOpen(false);
@@ -262,7 +264,7 @@ export function AttackExplorerWorkbench() {
     setSourcesModalOpen(false);
     setAboutModalOpen(false);
     setShortcutsModalOpen(false);
-  }, [selectedScenarioId]);
+  }, []);
 
   // Responsive chrome: only auto-toggle left sidebar in responsive mode
   useEffect(() => {
@@ -618,12 +620,12 @@ export function AttackExplorerWorkbench() {
         setViewMode('TOPOLOGY');
       } else if (command === 'VIEW_SEQUENCE') {
         e.preventDefault();
-        setInspectorOpen(false);
-        setViewMode('SEQUENCE');
+        setInspectorOpen(true);
+        setInspectorTab('SEQUENCE');
       } else if (command === 'VIEW_PROCESS_MEMORY') {
         e.preventDefault();
-        setInspectorOpen(false);
-        setViewMode('PROCESS_MEMORY');
+        setInspectorOpen(true);
+        setInspectorTab('MEMORY');
       } else if (command === 'VIEW_RAW_TABLES') {
         e.preventDefault();
         setInspectorOpen(false);
@@ -809,6 +811,8 @@ export function AttackExplorerWorkbench() {
                   onExpandedNodeChange={handleExpandedNodeChange}
                   onSelectInternalSubNode={handleSelectInternalSubNode}
                   onScopeOverrideChange={setInspectorScopeOverride}
+                  activeTab={inspectorTab}
+                  onTabChange={setInspectorTab}
                   onCloseInspectorPage={() => setInspectorOpen(false)}
                   onReturnToRememberedDiagram={
                     handleReturnToLastVisitedDiagram

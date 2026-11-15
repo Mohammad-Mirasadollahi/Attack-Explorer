@@ -15,8 +15,6 @@ import {
 } from '@/lib/sketch-zones-and-drilldown';
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import { AttackVisualizer } from './AttackVisualizer';
-import { SequenceView } from './canvas/SequenceView';
-import { ProcessMemoryView } from './canvas/ProcessMemoryView';
 import { RawTablesView } from './canvas/RawTablesView';
 
 export type CanvasViewMode =
@@ -116,7 +114,7 @@ export function DiagramCanvas({
       data-active-environment={activeEnvironment}
       data-tactical-mode={tacticalMode ? 'true' : 'false'}
     >
-      {viewMode === 'TOPOLOGY' && (
+      {viewMode !== 'RAW_TABLES' && (
         <AttackVisualizer
           scenario={scenario}
           stageView={stageView}
@@ -154,23 +152,6 @@ export function DiagramCanvas({
           customInjectedFlows={customInjectedFlows}
           onDropAttackVector={onDropAttackVector}
           forceDesktopCanvas={forceDesktopCanvas}
-        />
-      )}
-
-      {viewMode === 'SEQUENCE' && (
-        <SequenceView
-          scenario={scenario}
-          stageView={stageView}
-          activeEnvironment={activeEnvironment}
-          selectedTelemetryId={selectedTelemetryId}
-          onSelectTelemetry={onSelectTelemetry}
-        />
-      )}
-
-      {viewMode === 'PROCESS_MEMORY' && (
-        <ProcessMemoryView
-          scenario={scenario}
-          activeEnvironment={activeEnvironment}
         />
       )}
 
