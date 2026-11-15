@@ -69,8 +69,6 @@ interface AttackHeaderProps {
   onToggleSidebar: () => void;
   inspectorOpen: boolean;
   onToggleInspector: () => void;
-  telemetryOpen: boolean;
-  onToggleTelemetry: () => void;
   onOpenAttackLibrary: () => void;
   onOpenAnalyzerModal: () => void;
   onOpenSourcesModal?: () => void;
@@ -106,8 +104,6 @@ export function AttackHeader({
   onToggleSidebar,
   inspectorOpen,
   onToggleInspector,
-  telemetryOpen,
-  onToggleTelemetry,
   onOpenAttackLibrary,
   onOpenAnalyzerModal,
   onOpenSourcesModal,
@@ -822,8 +818,6 @@ export function AttackHeader({
         onToggleSidebar={onToggleSidebar}
         inspectorOpen={inspectorOpen}
         onToggleInspector={onToggleInspector}
-        telemetryOpen={telemetryOpen}
-        onToggleTelemetry={onToggleTelemetry}
         onOpenAttackLibrary={onOpenAttackLibrary}
         onOpenAnalyzerModal={onOpenAnalyzerModal}
         onOpenSourcesModal={() => onOpenSourcesModal?.()}

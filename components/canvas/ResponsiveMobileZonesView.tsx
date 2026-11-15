@@ -10,7 +10,8 @@ import {
   WhiteboardSketchNode,
 } from '@/lib/sketch-zones-and-drilldown';
 import { SketchNodeIcon } from '../SketchNodeIcons';
-import { ArrowDown, Maximize2, Radio } from 'lucide-react';
+import { formatMergedDiagramNodeBadge } from '@/lib/ui-text-standards';
+import { ArrowDown, Maximize2 } from 'lucide-react';
 
 interface ResponsiveMobileZonesViewProps {
   zones?: NetworkZoneColumn[];
@@ -76,8 +77,15 @@ export function ResponsiveMobileZonesView({
               <div className="grid grid-cols-1 gap-2">
                 {zoneNodes.map((node) => {
                   const isSelected = selectedSketchNode?.id === node.id;
-                  const shortRoleBadge =
-                    node.actionBadge.split('·')[0]?.trim() || node.actionBadge;
+                  const merged = formatMergedDiagramNodeBadge(node);
+                  const isDarkPill =
+                    node.isNetworkDevice ||
+                    node.iconType === 'MALWARE_PAYLOAD' ||
+                    node.iconType === 'KERNEL_MEMORY' ||
+                    node.iconType === 'VICTIM_LAPTOP' ||
+                    node.iconType === 'PROCESS_THREAD' ||
+                    node.iconType === 'LATERAL_SERVER' ||
+                    node.iconType === 'CREDENTIAL_VAULT';
 
                   return (
                     <div
@@ -101,26 +109,31 @@ export function ResponsiveMobileZonesView({
                           />
                         </div>
 
-                        <div className="flex flex-col items-start text-left min-w-0 flex-1 gap-0.5">
-                          <span
-                            className={`px-1.5 py-0.2 text-[9px] font-mono font-semibold border rounded-md leading-snug break-words ${
-                              node.iconType === 'MALWARE_PAYLOAD'
-                                ? 'bg-rose-50 dark:bg-rose-950/90 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700'
-                                : node.iconType === 'VICTIM_LAPTOP'
-                                ? 'bg-sky-50 dark:bg-sky-950/90 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-700'
-                                : node.iconType === 'LATERAL_SERVER'
-                                ? 'bg-violet-50 dark:bg-violet-950/90 text-violet-700 dark:text-violet-300 border-violet-300 dark:border-violet-700'
-                                : 'bg-amber-50 dark:bg-amber-950/90 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                        <div
+                          className={`px-2.5 py-1 border rounded-lg flex flex-col items-start text-left min-w-0 ${
+                            node.isNetworkDevice
+                              ? 'bg-teal-600 text-white border-teal-800'
+                              : node.iconType === 'MALWARE_PAYLOAD' ||
+                                  node.iconType === 'KERNEL_MEMORY'
+                                ? 'bg-rose-600 text-white border-rose-800'
+                                : node.iconType === 'VICTIM_LAPTOP' ||
+                                    node.iconType === 'PROCESS_THREAD'
+                                  ? 'bg-sky-600 text-white border-sky-800'
+                                  : node.iconType === 'LATERAL_SERVER' ||
+                                      node.iconType === 'CREDENTIAL_VAULT'
+                                    ? 'bg-violet-600 text-white border-violet-800'
+                                    : 'bg-amber-500 text-slate-950 border-amber-700'
+                          }`}
+                        >
+                          <div className="text-[10.5px] font-bold leading-snug break-words">
+                            {merged.seqBadge} {merged.shortTitle}
+                          </div>
+                          <div
+                            className={`text-[9px] font-mono font-semibold leading-snug break-words ${
+                              isDarkPill ? 'text-white/90' : 'text-slate-900/85'
                             }`}
                           >
-                            {shortRoleBadge}
-                          </span>
-
-                          <div className="text-xs font-bold text-zinc-900 dark:text-white leading-snug break-words w-full">
-                            {node.label}
-                          </div>
-                          <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words w-full">
-                            {node.sublabel}
+                            {merged.keyMetric}
                           </div>
                         </div>
                       </div>
@@ -166,21 +179,12 @@ export function ResponsiveMobileZonesView({
                       >
                         <div className="flex flex-wrap items-center justify-between gap-1.5 font-bold w-full">
                           <span className="inline-flex items-center gap-1.5 min-w-0">
-                            <Radio className="w-2.5 h-2.5 text-amber-400 animate-pulse shrink-0" />
-                            <span className="leading-snug break-words">
-                              #{flow.sequenceCode || flow.stepNo} [S
-                              {flow.stageIndex}] · {flow.initiatorLabel} ⇄{' '}
-                              {flow.targetLabel}
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-rose-600/15 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 font-bold text-[10px] shrink-0">
+                              {flow.sequenceCode || flow.stepNo}
                             </span>
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5 text-[9px] opacity-90 w-full">
-                          <span className="leading-snug break-words">
-                            {flow.forwardSeq}→ {flow.label}
-                          </span>
-                          <span className="shrink-0">·</span>
-                          <span className="leading-snug break-words">
-                            ⇠{flow.returnSeq} {flow.returnLabel}
+                            <span className="leading-snug break-words">
+                              {flow.initiatorLabel} ↔ {flow.targetLabel}
+                            </span>
                           </span>
                         </div>
                       </button>

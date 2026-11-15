@@ -5,8 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   ATTACK_SCENARIOS,
   AttackCategory,
-  TelemetryEvent,
-  TelemetrySourceType } from '@/lib/attack-scenarios';
+  TelemetryEvent } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
   computeStageView,
@@ -39,9 +38,6 @@ import { AttackSidebar } from './AttackSidebar';
 import { AttackLibrary } from './AttackLibrary';
 import { CanvasViewMode, DiagramCanvas } from './DiagramCanvas';
 import { DEFAULT_INSPECTOR_WIDTH, InspectorPanel } from './InspectorPanel';
-import {
-  DEFAULT_TELEMETRY_HEIGHT,
-  TelemetryFlowPanel } from './TelemetryFlowPanel';
 import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
 import { AboutAuthorModal } from './AboutAuthorModal';
@@ -161,9 +157,6 @@ export function AttackExplorerWorkbench() {
   >(null);
   const [inspectorScopeOverride, setInspectorScopeOverride] =
     useState<InspectorScopeMode | null>(null);
-  const [telemetryFilter, setTelemetryFilter] = useState<
-    TelemetrySourceType | 'ALL'
-  >('ALL');
   const [viewMode, setViewMode] = useState<CanvasViewMode>('TOPOLOGY');
 
   // Playback, Collapsible & Resizable Panels & Modal State
@@ -175,10 +168,6 @@ export function AttackExplorerWorkbench() {
   const [inspectorOpen, setInspectorOpen] = useState<boolean>(true);
   const [inspectorWidth, setInspectorWidth] = useState<number>(
     DEFAULT_INSPECTOR_WIDTH
-  );
-  const [telemetryOpen, setTelemetryOpen] = useState<boolean>(false);
-  const [telemetryHeight, setTelemetryHeight] = useState<number>(
-    DEFAULT_TELEMETRY_HEIGHT
   );
   const [attackLibraryOpen, setAttackLibraryOpen] = useState<boolean>(false);
   const [analyzerModalOpen, setAnalyzerModalOpen] = useState<boolean>(false);
@@ -254,10 +243,10 @@ export function AttackExplorerWorkbench() {
       computeStageView(
         activeScenario,
         activeStageIndex,
-        telemetryFilter,
+        'ALL',
         activeEnvironment
       ),
-    [activeScenario, activeStageIndex, telemetryFilter, activeEnvironment]
+    [activeScenario, activeStageIndex, activeEnvironment]
   );
 
   const inspectorScopeContext = useMemo(
@@ -680,8 +669,6 @@ export function AttackExplorerWorkbench() {
               return next;
             });
           }}
-          telemetryOpen={telemetryOpen}
-          onToggleTelemetry={() => setTelemetryOpen((prev) => !prev)}
           onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
           onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
           onOpenSourcesModal={() => setSourcesModalOpen(true)}
@@ -824,27 +811,6 @@ export function AttackExplorerWorkbench() {
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Bottom Collapsible & Resizable Telemetry Stream Panel */}
-            <AnimatePresence initial={false}>
-              {telemetryOpen && (
-                <TelemetryFlowPanel
-                  events={
-                    inspectorScopeContext.effectiveScope !== 'MAIN_SCENARIO'
-                      ? inspectorScopeContext.scopedTelemetryEvents
-                      : stageView.visibleTelemetry
-                  }
-                  activeEnvironment={activeEnvironment}
-                  selectedTelemetryId={selectedTelemetryId}
-                  onSelectTelemetry={handleSelectTelemetry}
-                  telemetryFilter={telemetryFilter}
-                  onTelemetryFilterChange={setTelemetryFilter}
-                  activeStageIndex={activeStageIndex}
-                  height={telemetryHeight}
-                  onResizeHeight={setTelemetryHeight}
-                />
-              )}
-            </AnimatePresence>
           </div>
         </main>
         </motion.div>

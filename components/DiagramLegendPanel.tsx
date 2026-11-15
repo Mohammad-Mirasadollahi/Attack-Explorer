@@ -111,34 +111,27 @@ export function DiagramLegendPanel({
             {/* Traffic Direction & Connection Line Styles */}
             <div className="pt-1 border-t border-zinc-200/60 dark:border-zinc-800/80 space-y-1">
               <div className="text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-semibold">
-                Bidirectional Traffic & Causality
+                Bidirectional Link & Step Number
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
+                    <span>◀━━</span>
+                    <span>[1]</span>
                     <span>━━▶</span>
-                    <span>[1] #1.1→</span>
                   </span>
                   <span className="text-zinc-500 dark:text-zinc-400">
-                    Outbound Attack Vector
+                    Active Two-Way Step Link
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                  <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold">
                     <span>◀╌╌</span>
-                    <span>⇠#1.2 ACK</span>
+                    <span>[2]</span>
+                    <span>╌╌▶</span>
                   </span>
                   <span className="text-zinc-500 dark:text-zinc-400">
-                    Return Response / ACK
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                    <span>┈┈┈</span>
-                    <span>L1 · Trunk</span>
-                  </span>
-                  <span className="text-zinc-500 dark:text-zinc-400">
-                    VLAN / Bus Backbone
+                    Numbered Communication Link
                   </span>
                 </div>
               </div>

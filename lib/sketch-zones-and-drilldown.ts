@@ -257,8 +257,9 @@ export function createBidirectionalFlowGeometry(params: {
   const midX = (rawFromX + rawToX) / 2;
   const midY = (rawFromY + rawToY) / 2;
 
-  const controlX = Math.round((midX + nx * curveOffset) * 10) / 10;
-  const controlY = Math.round((midY + ny * curveOffset) * 10) / 10;
+  const effectiveCurveOffset = Math.round(curveOffset * 0.45);
+  const controlX = Math.round((midX + nx * effectiveCurveOffset) * 10) / 10;
+  const controlY = Math.round((midY + ny * effectiveCurveOffset) * 10) / 10;
 
   const trimmedFrom = trimPointFromNodeCenter(
     rawFromX,
@@ -1021,7 +1022,7 @@ function getScenarioTopologyBlueprint(scenario: AttackScenario): ScenarioTopolog
         ] };
 
     default: {
-      const hasSixNodes = scenario.nodes.length >= 5;
+      const hasSixNodes = scenario.nodes.length >= 6;
       const gwNode = hasSixNodes ? scenario.nodes[1] : null;
       const hostNode = hasSixNodes
         ? scenario.nodes[2]
@@ -1366,18 +1367,23 @@ function getScenarioNodeMetas(
       ];
 
     default: {
-      const hasFivePlus = scenario.nodes.length >= 5;
+      const hasSixNodes = scenario.nodes.length >= 6;
+      const hasFiveNodes = scenario.nodes.length === 5;
       const n0 = scenario.nodes[0];
-      const hostNode = hasFivePlus
+      const hostNode = hasSixNodes
         ? scenario.nodes[2]
         : scenario.nodes[1] || scenario.nodes[0];
-      const procNode = hasFivePlus
+      const procNode = hasSixNodes
         ? scenario.nodes[3]
         : scenario.nodes[2] || hostNode;
-      const targetNode = hasFivePlus
+      const targetNode = hasSixNodes
         ? scenario.nodes[4]
         : scenario.nodes[3] || procNode;
-      const siemNode = scenario.nodes[5] || null;
+      const siemNode = hasSixNodes
+        ? scenario.nodes[5]
+        : hasFiveNodes
+          ? scenario.nodes[4]
+          : null;
       const procLabel =
         procNode.label === n0.label
           ? `${procNode.label} (Implant)`
@@ -1837,9 +1843,17 @@ export function buildWhiteboardSchematic(
 
   const routeChain = blueprint.routeChain;
 
-  const flows: WhiteboardSketchFlow[] = scenario.telemetry.map((rawEv, idx) => {
+  const flows: WhiteboardSketchFlow[] = scenario.stages.map((stage, idx) => {
+    const rawEv =
+      scenario.telemetry.find((t) => t.stageIndex === stage.index) ||
+      scenario.telemetry[idx] ||
+      scenario.telemetry[0];
     const ev = tagTelemetryEventWithEnvironment(rawEv, activeEnvironment);
-    const nextRaw = scenario.telemetry[idx + 1];
+    const nextStage = scenario.stages[idx + 1];
+    const nextRaw = nextStage
+      ? scenario.telemetry.find((t) => t.stageIndex === nextStage.index) ||
+        scenario.telemetry[idx + 1]
+      : undefined;
     const nextEv = nextRaw
       ? tagTelemetryEventWithEnvironment(nextRaw, activeEnvironment)
       : undefined;
@@ -1851,14 +1865,14 @@ export function buildWhiteboardSchematic(
     const toNode = sketchNodes[template.toIdx];
 
     const isCurrentStep =
-      activeStageIndex > 0 ? ev.stageIndex === activeStageIndex : idx === 0;
+      activeStageIndex > 0 ? stage.index === activeStageIndex : idx === 0;
     const isVisible =
-      activeStageIndex === 0 || ev.stageIndex <= activeStageIndex;
+      activeStageIndex === 0 || stage.index <= activeStageIndex;
 
     return createBidirectionalFlowGeometry({
       id: ev.id,
-      stepNo: ev.no,
-      stageIndex: ev.stageIndex,
+      stepNo: stage.index,
+      stageIndex: stage.index,
       fromNode,
       toNode,
       curveOffset:

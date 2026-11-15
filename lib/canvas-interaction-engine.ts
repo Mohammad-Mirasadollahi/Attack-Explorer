@@ -273,8 +273,8 @@ export function recomputeGeometryForMovedBoard(
     const midX = (rawFromX + rawToX) / 2;
     const midY = (rawFromY + rawToY) / 2;
 
-    const curveOffset = -38;
-    const returnOffset = 38;
+    const curveOffset = -18;
+    const returnOffset = 18;
 
     const controlX = Math.round((midX + nx * curveOffset) * 10) / 10;
     const controlY = Math.round((midY + ny * curveOffset) * 10) / 10;

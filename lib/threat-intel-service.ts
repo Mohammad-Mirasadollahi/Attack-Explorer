@@ -62,9 +62,15 @@ export function computeMitreTacticFrequency(
   scenario: AttackScenario,
   allScenarios: AttackScenario[] = ATTACK_SCENARIOS
 ): MitreTacticFrequencyItem[] {
+  const normalizePhase = (p: number): number => {
+    if (p >= 1 && p <= 7) return p;
+    if (p === 8 || p === 10) return 6;
+    if (p === 9 || p === 11 || p === 12) return 7;
+    return 1;
+  };
   return MITRE_PHASES.map((mp) => {
     const matchingStages = scenario.stages.filter(
-      (st) => st.mitreTacticPhase === mp.phase
+      (st) => normalizePhase(st.mitreTacticPhase) === mp.phase
     );
     const stageIndices = new Set(matchingStages.map((s) => s.index));
     const matchingTelemetry = scenario.telemetry.filter((t) =>
@@ -86,7 +92,7 @@ export function computeMitreTacticFrequency(
     let libraryTotalCount = 0;
     for (const sc of allScenarios) {
       libraryTotalCount += sc.stages.filter(
-        (st) => st.mitreTacticPhase === mp.phase
+        (st) => normalizePhase(st.mitreTacticPhase) === mp.phase
       ).length;
     }
 

@@ -141,15 +141,6 @@ export function tagTelemetryListWithEnvironment(
   return events.map((ev) => tagTelemetryEventWithEnvironment(ev, envId));
 }
 
-export interface SimulationState {
-  scenarioId: string;
-  activeStageIndex: number; // 0 = Overview (all stages), 1..N = specific stage
-  selectedTelemetryId: string | null;
-  selectedNodeId: string | null;
-  telemetryFilter: TelemetrySourceType | 'ALL';
-  activeEnvironment: ActiveEnvironmentId;
-}
-
 export interface ComputedStageView {
   scenario: AttackScenario;
   currentStage: AttackStage | null; // null when activeStageIndex === 0

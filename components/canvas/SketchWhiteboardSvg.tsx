@@ -11,6 +11,7 @@ import {
   NETWORK_ZONE_COLUMNS,
   NetworkBackboneLink,
   NetworkZoneColumn,
+  sampleBezierPointAndAngle,
   WhiteboardSketchFlow,
 } from '@/lib/sketch-zones-and-drilldown';
 
@@ -32,7 +33,6 @@ interface SketchWhiteboardSvgProps {
 
 export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
   zones = NETWORK_ZONE_COLUMNS,
-  backboneLinks = [],
   sketchFlows,
   selectedTelemetryId,
   onSelectTelemetry,
@@ -70,7 +70,7 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
           />
         </pattern>
 
-        {/* Crisp Bidirectional Arrowhead Markers (Start & End for Forward & Return) */}
+        {/* Crisp Two-Way (Bidirectional) Arrowhead Markers */}
         <marker
           id="sketch-arrow-crimson"
           viewBox="0 0 10 10"
@@ -95,28 +95,6 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
             d="M 1 1.5 L 9 5 L 1 8.5 L 2.5 5 Z"
             fill={tacticalMode ? '#38BDF8' : '#334155'}
           />
-        </marker>
-        <marker
-          id="sketch-arrow-return-active"
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="5.5"
-          markerHeight="5.5"
-          orient="auto-start-reverse"
-        >
-          <path d="M 1 1.5 L 9 5 L 1 8.5 L 2.5 5 Z" fill="#059669" />
-        </marker>
-        <marker
-          id="sketch-arrow-return-muted"
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="4.8"
-          markerHeight="4.8"
-          orient="auto-start-reverse"
-        >
-          <path d="M 1 1.5 L 9 5 L 1 8.5 L 2.5 5 Z" fill="#0D9488" />
         </marker>
       </defs>
 
@@ -313,68 +291,6 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
         );
       })}
 
-      {/* Numbered Physical / VLAN / Internal Bus Backbone Trunk Links Behind Attack Flows */}
-      {backboneLinks.map((link, bIdx) => {
-        const strokeColor =
-          link.linkType === 'SPAN_MIRROR'
-            ? '#7C3AED'
-            : link.linkType === 'WAN_TRUNK'
-            ? '#D97706'
-            : '#64748B';
-        const midX = (link.x1 + link.x2) / 2;
-        const midY = (link.y1 + link.y2) / 2;
-        const linkSeq = link.sequenceCode || `L${bIdx + 1}`;
-        const fullLinkText = `${linkSeq} · ${link.label}`;
-        const linkPillW = Math.max(
-          98,
-          Math.round(fullLinkText.length * 4.4 + 16)
-        );
-
-        return (
-          <g key={link.id} data-testid={`backbone-link-${link.id}`}>
-            <line
-              x1={link.x1}
-              y1={link.y1}
-              x2={link.x2}
-              y2={link.y2}
-              stroke={strokeColor}
-              strokeOpacity={0.28}
-              strokeWidth="2"
-              strokeDasharray="4 6"
-            />
-            {/* Full-Text Numbered Trunk Link Badge (Zero Text Truncation) */}
-            <g
-              transform={`translate(${midX}, ${midY})`}
-              opacity={0.85}
-              data-testid={`backbone-badge-${bIdx + 1}`}
-            >
-              <rect
-                x={-linkPillW / 2}
-                y={-8}
-                width={linkPillW}
-                height={16}
-                rx={4}
-                fill="#F8FAFC"
-                stroke={strokeColor}
-                strokeOpacity={0.65}
-                strokeWidth="1"
-              />
-              <text
-                x={0}
-                y={2.5}
-                textAnchor="middle"
-                fill="#334155"
-                fontSize="6.9"
-                fontFamily="monospace"
-                fontWeight="700"
-              >
-                {fullLinkText}
-              </text>
-            </g>
-          </g>
-        );
-      })}
-
       {/* PULSE LAYER (Protocol-Explorer style expanding radar rings on active step source & target endpoints) */}
       <g className="pulse-layer" data-testid="svg-pulse-layer">
         {sketchFlows
@@ -385,20 +301,20 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
               <circle
                 cx={fl.fromX}
                 cy={fl.fromY}
-                r={16}
+                r={14}
                 fill="none"
                 stroke="#E11D48"
-                strokeWidth="2.4"
+                strokeWidth="2.2"
               >
                 <animate
                   attributeName="r"
-                  values="16;62"
+                  values="14;52"
                   dur="1.5s"
                   repeatCount="indefinite"
                 />
                 <animate
                   attributeName="opacity"
-                  values="0.78;0"
+                  values="0.72;0"
                   dur="1.5s"
                   repeatCount="indefinite"
                 />
@@ -407,21 +323,21 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
               <circle
                 cx={fl.toX}
                 cy={fl.toY}
-                r={16}
+                r={14}
                 fill="none"
                 stroke="#10B981"
-                strokeWidth="2.6"
+                strokeWidth="2.2"
               >
                 <animate
                   attributeName="r"
-                  values="16;68"
+                  values="14;56"
                   dur="1.5s"
                   begin="0.55s"
                   repeatCount="indefinite"
                 />
                 <animate
                   attributeName="opacity"
-                  values="0.82;0"
+                  values="0.75;0"
                   dur="1.5s"
                   begin="0.55s"
                   repeatCount="indefinite"
@@ -431,75 +347,81 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
           ))}
       </g>
 
-      {/* Bidirectional Numbered Sketch Flow Paths: Step Circle + Forward (#N.1 →) & Return (⇠ #N.2) */}
+      {/* Single-Line Bidirectional Communication Links with Number-Only Badge */}
       {sketchFlows.map((flow, idx) => {
         const isSelected = selectedTelemetryId === flow.id;
         const isHighlighted = flow.isCurrentStep || isSelected;
-        const strokeHex = isHighlighted ? '#E11D48' : '#334155';
-        const returnHex = isHighlighted ? '#059669' : '#0D9488';
-        const startAnchor = flow.forwardArrows[0] || {
-          x: (flow.fromX + flow.controlX) / 2,
-          y: (flow.fromY + flow.controlY) / 2,
-          angleDeg: 0,
-        };
+        const strokeHex = isHighlighted
+          ? '#E11D48'
+          : tacticalMode
+          ? '#38BDF8'
+          : '#334155';
+
+        // Exact midpoint B(0.5) on the quadratic Bezier curve M from Q control to
+        const midCurveX =
+          Math.round(
+            (0.25 * flow.fromX + 0.5 * flow.controlX + 0.25 * flow.toX) * 10
+          ) / 10;
+        const midCurveY =
+          Math.round(
+            (0.25 * flow.fromY + 0.5 * flow.controlY + 0.25 * flow.toY) * 10
+          ) / 10;
+
+        // Compute start & end arrow tips so the single line has two-way (<--->) arrowheads
+        const startArrowTip = sampleBezierPointAndAngle(
+          flow.fromX,
+          flow.fromY,
+          flow.controlX,
+          flow.controlY,
+          flow.toX,
+          flow.toY,
+          0.02
+        );
+        const endArrowTip =
+          flow.forwardArrows[flow.forwardArrows.length - 1] ||
+          sampleBezierPointAndAngle(
+            flow.fromX,
+            flow.fromY,
+            flow.controlX,
+            flow.controlY,
+            flow.toX,
+            flow.toY,
+            0.98
+          );
+        const arrowTipScale = isHighlighted ? 1.24 : 1.04;
+
         const seqCode = flow.sequenceCode || String(flow.stepNo);
         const isHierarchicalSeq = seqCode.includes('.');
         const stepBadgeW = Math.max(
-          isHierarchicalSeq ? 26 : 20,
-          Math.round(seqCode.length * 5.8 + 10)
+          isHierarchicalSeq ? 28 : 22,
+          Math.round(seqCode.length * 6.2 + 12)
         );
-
-        // Dynamic widths for Forward Flow Badge and Return Flow Badge so text is NEVER cut off
-        const fwdSeqText = `#${flow.forwardSeq}→`;
-        const fwdSeqPillW = Math.max(
-          isHierarchicalSeq ? 44 : 36,
-          Math.round(fwdSeqText.length * 4.8 + 10)
-        );
-        const fwdLabelText = flow.label;
-        const fwdLabelW = Math.max(
-          86,
-          Math.round(fwdLabelText.length * 4.6 + 18)
-        );
-        const fwdTotalW = fwdSeqPillW + fwdLabelW + 8;
-
-        const retSeqText = `⇠#${flow.returnSeq}`;
-        const retSeqPillW = Math.max(
-          isHierarchicalSeq ? 42 : 34,
-          Math.round(retSeqText.length * 4.8 + 10)
-        );
-        const retLabelText = flow.returnLabel;
-        const retLabelW = Math.max(
-          78,
-          Math.round(retLabelText.length * 4.5 + 18)
-        );
-        const retTotalW = retSeqPillW + retLabelW + 8;
-
         const fwdDurSec = isHighlighted ? '2.2s' : '3.4s';
-        const retDurSec = isHighlighted ? '2.4s' : '3.8s';
 
         return (
           <g key={flow.id} data-testid={`sketch-flow-${flow.stepNo}`}>
-            {/* 1. OUTBOUND / FORWARD PATH (#N.1 →) */}
+            {/* Subtle Halo Along the Single Bidirectional Communication Path */}
             <path
               d={flow.pathD}
               fill="none"
               stroke={strokeHex}
               strokeOpacity={
-                flow.isVisible ? (isHighlighted ? 0.22 : 0.1) : 0.04
+                flow.isVisible ? (isHighlighted ? 0.2 : 0.08) : 0.03
               }
-              strokeWidth={isHighlighted ? 5 : 2.2}
+              strokeWidth={isHighlighted ? 4.8 : 2}
               strokeLinecap="round"
             />
 
             {flow.isVisible && (
               <>
+                {/* Single Two-Way Communication Line */}
                 <path
                   d={flow.pathD}
                   fill="none"
                   stroke={strokeHex}
-                  strokeOpacity={0.95}
-                  strokeWidth={isHighlighted ? 2.8 : 1.8}
-                  strokeDasharray={isHighlighted ? '8 5' : '5 5'}
+                  strokeOpacity={isHighlighted ? 0.96 : 0.82}
+                  strokeWidth={isHighlighted ? 2.6 : 1.75}
+                  strokeDasharray={isHighlighted ? '8 5' : '6 5'}
                   markerStart={
                     isHighlighted
                       ? 'url(#sketch-arrow-crimson)'
@@ -510,345 +432,124 @@ export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({
                       ? 'url(#sketch-arrow-crimson)'
                       : 'url(#sketch-arrow-ink)'
                   }
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectTelemetry(flow.telemetryEvent);
+                  }}
+                  className="canvas-interactive-control nopan cursor-pointer"
                 >
                   <animate
                     attributeName="stroke-dashoffset"
-                    values={isHighlighted ? '26;0' : '20;0'}
-                    dur={isHighlighted ? '0.9s' : '1.4s'}
+                    values={isHighlighted ? '26;0' : '22;0'}
+                    dur={isHighlighted ? '0.9s' : '1.5s'}
                     repeatCount="indefinite"
                   />
                 </path>
 
-                {/* Explicit Directional Arrowheads Along the Outbound Curve (#N.1 →) */}
-                {flow.forwardArrows.map((arr, aIdx) => {
-                  const isTip = aIdx === flow.forwardArrows.length - 1;
-                  const scale = isTip
-                    ? isHighlighted
-                      ? 1.28
-                      : 1.05
-                    : isHighlighted
-                    ? 1.08
-                    : 0.88;
-                  return (
-                    <g
-                      key={`fwd-arr-${flow.id}-${aIdx}`}
-                      data-testid={
-                        isTip ? `forward-arrow-tip-${flow.stepNo}` : undefined
-                      }
-                      transform={`translate(${arr.x}, ${arr.y}) rotate(${arr.angleDeg}) scale(${scale})`}
-                    >
-                      <path
-                        d="M -7 -5.5 L 6.5 0 L -7 5.5 L -3.8 0 Z"
-                        fill={strokeHex}
-                        stroke="#FFFFFF"
-                        strokeWidth="1.1"
-                        strokeLinejoin="round"
-                      />
-                    </g>
-                  );
-                })}
-              </>
-            )}
-
-            {/* 2. BIDIRECTIONAL RETURN / RESPONSE PATH (#N.2 ⇠) */}
-            {flow.isBidirectional && flow.isVisible && (
-              <>
-                <path
-                  d={flow.returnPathD}
-                  fill="none"
-                  stroke={returnHex}
-                  strokeOpacity={isHighlighted ? 0.18 : 0.08}
-                  strokeWidth={isHighlighted ? 3.4 : 1.6}
-                  strokeLinecap="round"
-                />
-                <path
-                  d={flow.returnPathD}
-                  fill="none"
-                  stroke={returnHex}
-                  strokeOpacity={isHighlighted ? 0.94 : 0.68}
-                  strokeWidth={isHighlighted ? 2.1 : 1.4}
-                  strokeDasharray="4 5"
-                  markerEnd={
-                    isHighlighted
-                      ? 'url(#sketch-arrow-return-active)'
-                      : 'url(#sketch-arrow-return-muted)'
-                  }
+                {/* Start Arrowhead Tip Pointing to Source Node (Two-Way Left/Start End) */}
+                <g
+                  data-testid={`backward-arrow-tip-${flow.stepNo}`}
+                  transform={`translate(${startArrowTip.x}, ${startArrowTip.y}) rotate(${
+                    startArrowTip.angleDeg + 180
+                  }) scale(${arrowTipScale})`}
                 >
-                  <animate
-                    attributeName="stroke-dashoffset"
-                    values="18;0"
-                    dur={isHighlighted ? '1.0s' : '1.6s'}
-                    repeatCount="indefinite"
+                  <path
+                    d="M -7 -5.5 L 6.5 0 L -7 5.5 L -3.8 0 Z"
+                    fill={strokeHex}
+                    stroke="#FFFFFF"
+                    strokeWidth="1.1"
+                    strokeLinejoin="round"
                   />
-                </path>
+                </g>
 
-                {/* Explicit Directional Arrowheads Along the Return Curve (#N.2 ⇠) */}
-                {flow.returnArrows.map((arr, aIdx) => {
-                  const isTip = aIdx === flow.returnArrows.length - 1;
-                  const scale = isTip
-                    ? isHighlighted
-                      ? 1.22
-                      : 1.0
-                    : isHighlighted
-                    ? 1.02
-                    : 0.85;
-                  return (
-                    <g
-                      key={`ret-arr-${flow.id}-${aIdx}`}
-                      data-testid={
-                        isTip ? `return-arrow-tip-${flow.stepNo}` : undefined
-                      }
-                      transform={`translate(${arr.x}, ${arr.y}) rotate(${arr.angleDeg}) scale(${scale})`}
-                    >
-                      <path
-                        d="M -6.5 -5 L 6 0 L -6.5 5 L -3.5 0 Z"
-                        fill={returnHex}
-                        stroke="#FFFFFF"
-                        strokeWidth="1.1"
-                        strokeLinejoin="round"
-                      />
-                    </g>
-                  );
-                })}
-              </>
-            )}
+                {/* End Arrowhead Tip Pointing to Target Node (Two-Way Right/End End) */}
+                <g
+                  data-testid={`forward-arrow-tip-${flow.stepNo}`}
+                  transform={`translate(${endArrowTip.x}, ${endArrowTip.y}) rotate(${endArrowTip.angleDeg}) scale(${arrowTipScale})`}
+                >
+                  <path
+                    d="M -7 -5.5 L 6.5 0 L -7 5.5 L -3.8 0 Z"
+                    fill={strokeHex}
+                    stroke="#FFFFFF"
+                    strokeWidth="1.1"
+                    strokeLinejoin="round"
+                  />
+                </g>
 
-            {/* 3. Continuous Traveling Outbound Packet + Comet Trail (#N.1 →) */}
-            {flow.isVisible && (
-              <>
-                {/* 3 Trailing Comet Dots when Highlighted */}
-                {isHighlighted &&
-                  [0.08, 0.16, 0.24].map((lagSec, tIdx) => (
-                    <circle
-                      key={`comet-trail-${flow.id}-${tIdx}`}
-                      cx={0}
-                      cy={0}
-                      r={4.2 - tIdx * 1.1}
-                      fill="#E11D48"
-                      opacity={0.5 - tIdx * 0.13}
-                    >
-                      <animateMotion
-                        path={flow.pathD}
-                        dur="2.2s"
-                        begin={`${lagSec}s`}
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  ))}
-
-                {/* Main Traveling Outbound Packet Group */}
+                {/* Traveling Packet Pulse on the Single Line */}
                 <g data-testid={`traveling-outbound-packet-${flow.stepNo}`}>
                   <animateMotion
                     path={flow.pathD}
                     dur={fwdDurSec}
-                    begin={isHighlighted ? '0s' : `${idx * 0.22}s`}
+                    begin={isHighlighted ? '0s' : `${idx * 0.25}s`}
                     repeatCount="indefinite"
                   />
                   <circle
                     cx={0}
                     cy={0}
-                    r={isHighlighted ? 11 : 6}
+                    r={isHighlighted ? 9.5 : 5}
                     fill={isHighlighted ? '#E11D48' : '#475569'}
-                    fillOpacity={0.24}
+                    fillOpacity={0.22}
                   />
                   <circle
                     cx={0}
                     cy={0}
-                    r={isHighlighted ? 5.2 : 3.5}
+                    r={isHighlighted ? 4.8 : 3.2}
                     fill={isHighlighted ? '#E11D48' : '#1E293B'}
                     stroke="#FFFFFF"
-                    strokeWidth="1.6"
+                    strokeWidth="1.5"
                   />
-
-                  {/* Glowing Active Packet Pulse Halo */}
                   {isHighlighted && (
                     <g data-testid={`active-flying-packet-tag-${flow.stepNo}`}>
                       <circle
                         cx={0}
                         cy={0}
-                        r={14}
+                        r={13}
                         fill="none"
                         stroke="#FDE047"
-                        strokeWidth="1.6"
+                        strokeWidth="1.5"
                         strokeDasharray="3 3"
                       />
                     </g>
                   )}
                 </g>
+
+                {/* Number-Only Badge Centered on the Single Communication Link */}
+                <g
+                  transform={`translate(${midCurveX}, ${midCurveY})`}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectTelemetry(flow.telemetryEvent);
+                  }}
+                  data-testid={`flow-step-circle-${flow.stepNo}`}
+                  className="canvas-interactive-control nopan cursor-pointer"
+                >
+                  <title>{`#${seqCode} · ${flow.initiatorLabel} ⇄ ${flow.targetLabel}`}</title>
+                  <rect
+                    x={-stepBadgeW / 2}
+                    y={-11}
+                    width={stepBadgeW}
+                    height={22}
+                    rx={11}
+                    fill={isHighlighted ? '#E11D48' : '#0F172A'}
+                    stroke={tacticalMode && !isHighlighted ? '#38BDF8' : '#FFFFFF'}
+                    strokeWidth="1.8"
+                  />
+                  <text
+                    x={0}
+                    y={3.4}
+                    textAnchor="middle"
+                    fill="#FFFFFF"
+                    fontSize={isHierarchicalSeq ? '8.5' : '9.5'}
+                    fontFamily="monospace"
+                    fontWeight="900"
+                  >
+                    {seqCode}
+                  </text>
+                </g>
               </>
-            )}
-
-            {/* 4. Continuous Traveling Return / ACK Packet Pulse (#N.2 ⇠) */}
-            {flow.isBidirectional && flow.isVisible && (
-              <g data-testid={`traveling-return-packet-${flow.stepNo}`}>
-                <animateMotion
-                  path={flow.returnPathD}
-                  dur={retDurSec}
-                  begin={isHighlighted ? '0.6s' : `${idx * 0.25 + 0.7}s`}
-                  repeatCount="indefinite"
-                />
-                <circle
-                  cx={0}
-                  cy={0}
-                  r={isHighlighted ? 8.5 : 4.5}
-                  fill="#059669"
-                  fillOpacity={0.22}
-                />
-                <circle
-                  cx={0}
-                  cy={0}
-                  r={isHighlighted ? 4.4 : 3.0}
-                  fill="#059669"
-                  stroke="#FFFFFF"
-                  strokeWidth="1.3"
-                />
-              </g>
-            )}
-
-            {/* 5. Prominent Link Start Step Number Badge (1..5 on main board, P.1..P.4 in expanded view) */}
-            {flow.isVisible && (
-              <g
-                transform={`translate(${startAnchor.x}, ${startAnchor.y - 12})`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectTelemetry(flow.telemetryEvent);
-                }}
-                data-testid={`flow-step-circle-${flow.stepNo}`}
-                className="canvas-interactive-control nopan cursor-pointer"
-              >
-                <rect
-                  x={-stepBadgeW / 2}
-                  y={-9.5}
-                  width={stepBadgeW}
-                  height={19}
-                  rx={9.5}
-                  fill={isHighlighted ? '#E11D48' : '#0F172A'}
-                  stroke="#FFFFFF"
-                  strokeWidth="1.6"
-                />
-                <text
-                  x={0}
-                  y={3}
-                  textAnchor="middle"
-                  fill="#FFFFFF"
-                  fontSize={isHierarchicalSeq ? '7.8' : '8.5'}
-                  fontFamily="monospace"
-                  fontWeight="900"
-                >
-                  {seqCode}
-                </text>
-              </g>
-            )}
-
-            {/* 6. Forward Communication Link Badge (#N.1 → Full Action Label) — Dynamic Width, Zero Cutoffs */}
-            {flow.isVisible && (
-              <g
-                transform={`translate(${flow.controlX}, ${flow.controlY})`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectTelemetry(flow.telemetryEvent);
-                }}
-                data-testid={`flow-forward-badge-${flow.stepNo}`}
-                className="canvas-interactive-control nopan cursor-pointer"
-              >
-                <rect
-                  x={-fwdTotalW / 2}
-                  y={-10}
-                  width={fwdTotalW}
-                  height={20}
-                  rx={6}
-                  fill={isHighlighted ? '#E11D48' : '#FFFFFF'}
-                  stroke={isHighlighted ? '#0F172A' : '#334155'}
-                  strokeWidth="1.35"
-                />
-                <rect
-                  x={-fwdTotalW / 2 + 3}
-                  y={-7}
-                  width={fwdSeqPillW}
-                  height={14}
-                  rx={4}
-                  fill={isHighlighted ? '#9F1239' : '#0F172A'}
-                />
-                <text
-                  x={-fwdTotalW / 2 + 3 + fwdSeqPillW / 2}
-                  y={2.8}
-                  textAnchor="middle"
-                  fill="#FFFFFF"
-                  fontSize="7.2"
-                  fontFamily="monospace"
-                  fontWeight="900"
-                >
-                  {fwdSeqText}
-                </text>
-                <text
-                  x={-fwdTotalW / 2 + 3 + fwdSeqPillW + fwdLabelW / 2 + 2}
-                  y={2.8}
-                  textAnchor="middle"
-                  fill={isHighlighted ? '#FFFFFF' : '#0F172A'}
-                  fontSize="7.3"
-                  fontFamily="monospace"
-                  fontWeight="800"
-                >
-                  {fwdLabelText}
-                </text>
-              </g>
-            )}
-
-            {/* 7. Return / Response Communication Link Badge (⇠ #N.2 Full Return Label) — Dynamic Width, Zero Cutoffs */}
-            {flow.isBidirectional && flow.isVisible && (
-              <g
-                transform={`translate(${flow.returnControlX}, ${flow.returnControlY})`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectTelemetry(flow.telemetryEvent);
-                }}
-                data-testid={`flow-return-badge-${flow.stepNo}`}
-                className="canvas-interactive-control nopan cursor-pointer"
-              >
-                <rect
-                  x={-retTotalW / 2}
-                  y={-9}
-                  width={retTotalW}
-                  height={18}
-                  rx={5.5}
-                  fill={isHighlighted ? '#059669' : '#ECFDF5'}
-                  stroke="#065F46"
-                  strokeWidth="1.2"
-                />
-                <rect
-                  x={-retTotalW / 2 + 3}
-                  y={-6.5}
-                  width={retSeqPillW}
-                  height={13}
-                  rx={3.5}
-                  fill={isHighlighted ? '#064E3B' : '#059669'}
-                />
-                <text
-                  x={-retTotalW / 2 + 3 + retSeqPillW / 2}
-                  y={2.4}
-                  textAnchor="middle"
-                  fill="#FFFFFF"
-                  fontSize="7.0"
-                  fontFamily="monospace"
-                  fontWeight="900"
-                >
-                  {retSeqText}
-                </text>
-                <text
-                  x={-retTotalW / 2 + 3 + retSeqPillW + retLabelW / 2 + 2}
-                  y={2.4}
-                  textAnchor="middle"
-                  fill={isHighlighted ? '#FFFFFF' : '#065F46'}
-                  fontSize="7.1"
-                  fontFamily="monospace"
-                  fontWeight="800"
-                >
-                  {retLabelText}
-                </text>
-              </g>
             )}
           </g>
         );

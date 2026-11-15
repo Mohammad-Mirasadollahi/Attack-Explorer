@@ -19,7 +19,6 @@ import {
   Monitor,
   Moon,
   Network,
-  PanelBottom,
   PanelLeft,
   PanelRight,
   Scale,
@@ -55,8 +54,6 @@ interface SettingsDrawerProps {
   onToggleSidebar: () => void;
   inspectorOpen: boolean;
   onToggleInspector: () => void;
-  telemetryOpen: boolean;
-  onToggleTelemetry: () => void;
   onOpenAttackLibrary: () => void;
   onOpenAnalyzerModal: () => void;
   onOpenSourcesModal: () => void;
@@ -83,8 +80,6 @@ export function SettingsDrawer({
   onToggleSidebar,
   inspectorOpen,
   onToggleInspector,
-  telemetryOpen,
-  onToggleTelemetry,
   onOpenAttackLibrary,
   onOpenAnalyzerModal,
   onOpenSourcesModal,
@@ -439,21 +434,6 @@ export function SettingsDrawer({
                     </span>
                     <span className="text-[10.5px] font-mono font-semibold text-indigo-600 dark:text-indigo-400">
                       {inspectorOpen ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    data-testid="toggle-bottom-telemetry-btn"
-                    onClick={onToggleTelemetry}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-xs transition-colors cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
-                      <PanelBottom className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>Bottom Telemetry Stream</span>
-                    </span>
-                    <span className="text-[10.5px] font-mono font-semibold text-indigo-600 dark:text-indigo-400">
-                      {telemetryOpen ? 'ON' : 'OFF'}
                     </span>
                   </button>
                 </div>

@@ -2661,9 +2661,11 @@ export function AttackVisualizer({
                     style={{ left: '0%', top: '0%', width: '0%', height: '0%' }}
                   />
 
-                {/* Floating Speech-Bubble Callout */}
+                {/* Floating Speech-Bubble Callout (Intro Survey Only) */}
                 <AnimatePresence mode="wait">
-                  {director.activeCallout && (
+                  {director.activeCallout &&
+                    (director.phase === 'INTRO_SURVEY' ||
+                      director.phase === 'INTRO_FOCUS_ORIGIN') && (
                     <motion.div
                       key={`callout-${director.phase}-${director.activeCallout.nodeId}-${activeStageIndex}`}
                       data-testid="cinematic-node-callout"

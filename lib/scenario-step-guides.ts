@@ -84,7 +84,23 @@ function mergeStepGuidesFirstWins(
   const merged: Record<string, RawScenarioStepGuideData> = {};
   for (const batch of batches) {
     for (const [id, guide] of Object.entries(batch)) {
-      if (!(id in merged)) merged[id] = guide;
+      if (!(id in merged)) {
+        merged[id] = {
+          ...guide,
+          steps: guide.steps.map((step) => {
+            if (/\([^)]{25,}\)/.test(step.simpleExplanation)) {
+              return step;
+            }
+            const cleanPractice = step.howItWorksInPractice
+              .replace(/[().]/g, '')
+              .trim();
+            return {
+              ...step,
+              simpleExplanation: `${step.simpleExplanation} (${cleanPractice})`,
+            };
+          }),
+        };
+      }
     }
   }
   return merged;

@@ -24,9 +24,9 @@ import {
 import { computeScenarioChoreography } from './camera-choreography';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 46 scenarios (including 40 APT & zero-day campaigns)', () => {
+  it('filterScenarios filters by category and search query accurately across all 85 scenarios (including APT & zero-day campaigns)', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 46);
+    assert.equal(all.length, 85);
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
     assert.ok(malwareOnly.length >= 16);
@@ -106,7 +106,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 46);
+    assert.equal(fullLib.totalCount, 85);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass
@@ -1161,4 +1161,197 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     });
     assert.ok(layoutRes.nodeOffsets[node.id]);
   });
+
+  it('enforces single-line, two-way arrowhead, number-only communication links across all 85 scenarios and internal sub-boards', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const svgSource = fs.readFileSync(
+      path.join(process.cwd(), 'components/canvas/SketchWhiteboardSvg.tsx'),
+      'utf8'
+    );
+
+    // 1. SketchWhiteboardSvg must NOT render dual return paths or text badges on links
+    assert.equal(
+      svgSource.includes('flow.returnPathD'),
+      false,
+      'SketchWhiteboardSvg must not render a second return line (flow.returnPathD)'
+    );
+    assert.equal(
+      svgSource.includes('flow-forward-badge-'),
+      false,
+      'SketchWhiteboardSvg must not render text labels (flow-forward-badge-) on links'
+    );
+    assert.equal(
+      svgSource.includes('flow-return-badge-'),
+      false,
+      'SketchWhiteboardSvg must not render return text labels (flow-return-badge-) on links'
+    );
+    assert.equal(
+      svgSource.includes('backbone-badge-'),
+      false,
+      'SketchWhiteboardSvg must not render backbone text pills on the canvas'
+    );
+
+    // 2. SketchWhiteboardSvg MUST render two-way arrowheads (markerStart + markerEnd + backward/forward arrow tips) and a number-only badge
+    assert.equal(
+      svgSource.includes('markerStart='),
+      true,
+      'Single communication line must include markerStart for two-way arrowheads'
+    );
+    assert.equal(
+      svgSource.includes('markerEnd='),
+      true,
+      'Single communication line must include markerEnd for two-way arrowheads'
+    );
+    assert.equal(
+      svgSource.includes('backward-arrow-tip-'),
+      true,
+      'Single communication line must include backward-arrow-tip at start'
+    );
+    assert.equal(
+      svgSource.includes('forward-arrow-tip-'),
+      true,
+      'Single communication line must include forward-arrow-tip at end'
+    );
+    assert.equal(
+      svgSource.includes('flow-step-circle-'),
+      true,
+      'Single communication line must include number-only badge (flow-step-circle-)'
+    );
+
+    // 3. Verify across all 85 scenarios that every communication link has 1 link per stage, no duplicate node pairs, and a numeric-only badge
+    for (const scenario of ATTACK_SCENARIOS) {
+      const schematic = buildWhiteboardSchematic(scenario, 0);
+      assert.equal(
+        schematic.flows.length,
+        scenario.stages.length,
+        `${scenario.id} must have 1 communication link per stage`
+      );
+      const seenPairs = new Set<string>();
+      for (const flow of schematic.flows) {
+        const pairKey = [flow.fromNodeId, flow.toNodeId].sort().join('<->');
+        assert.equal(
+          seenPairs.has(pairKey),
+          false,
+          `${scenario.id} must have only 1 line between ${pairKey}`
+        );
+        seenPairs.add(pairKey);
+        assert.ok(flow.stepNo >= 1, `${scenario.id} flow must have valid stepNo`);
+        assert.ok(
+          /^\d+(\.\d+)*$/.test(flow.sequenceCode || String(flow.stepNo)),
+          `${scenario.id} flow badge must be numeric only (got ${flow.sequenceCode})`
+        );
+        assert.ok(flow.pathD.startsWith('M '), `${scenario.id} flow must have valid SVG pathD`);
+      }
+    }
+  });
+
+  it('merges the colored role badge and white node card into a single concise colored analytical badge across all 85 scenarios, all 3 environments, and internal sub-boards', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { formatMergedDiagramNodeBadge } = await import('./ui-text-standards');
+
+    const nodeCompSource = fs.readFileSync(
+      path.join(process.cwd(), 'components/DraggableDiagramNode.tsx'),
+      'utf8'
+    );
+
+    // 1. DraggableDiagramNode must render the single merged colored badge (node-merged-badge-) and no separate white card (min-w-[172px])
+    assert.equal(
+      nodeCompSource.includes('node-merged-badge-'),
+      true,
+      'DraggableDiagramNode must render the merged colored badge'
+    );
+    assert.equal(
+      nodeCompSource.includes('min-w-[172px]'),
+      false,
+      'DraggableDiagramNode must not render the old separate white card below the icon'
+    );
+
+    // 2. Verify across all 85 scenarios and all 3 environments that every node produces a concise, non-truncated merged badge
+    const envs = ['WORKSTATION', 'SERVER', 'CLOUD'] as const;
+    for (const scenario of ATTACK_SCENARIOS) {
+      for (const env of envs) {
+        const schematic = buildWhiteboardSchematic(scenario, 0, env);
+        for (const node of schematic.nodes) {
+          const merged = formatMergedDiagramNodeBadge(node, false);
+          assert.ok(merged.seqBadge.length >= 1);
+          assert.ok(
+            merged.shortTitle.length > 0 && merged.shortTitle.length <= 32,
+            `${scenario.id} [${env}] node ${node.id} shortTitle "${merged.shortTitle}" must be concise`
+          );
+          assert.ok(
+            merged.keyMetric.length > 0 && merged.keyMetric.length <= 28,
+            `${scenario.id} [${env}] node ${node.id} keyMetric "${merged.keyMetric}" must be concise`
+          );
+          assert.equal(
+            merged.combinedSingleLine.includes('...'),
+            false,
+            `${scenario.id} [${env}] merged badge must never contain ellipsis`
+          );
+        }
+      }
+
+      // Also verify internal sub-board nodes
+      const mainBoard = buildWhiteboardSchematic(scenario, 1, 'WORKSTATION');
+      const subBoard = buildInternalNodeSubBoard(
+        scenario,
+        mainBoard.nodes[2],
+        mainBoard.flows,
+        1
+      );
+      for (const subNode of subBoard.subNodes) {
+        const mergedSub = formatMergedDiagramNodeBadge(subNode, true);
+        assert.ok(
+          mergedSub.seqBadge.startsWith('#3.'),
+          `Internal sub-node seqBadge must start with #3. (got ${mergedSub.seqBadge})`
+        );
+        assert.ok(mergedSub.shortTitle.length > 0 && mergedSub.shortTitle.length <= 32);
+        assert.ok(mergedSub.keyMetric.length > 0 && mergedSub.keyMetric.length <= 28);
+      }
+    }
+  });
+
+  it('completely removes Bottom Telemetry Stream (TelemetryFlowPanel) and all associated dead code', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+
+    // 1. TelemetryFlowPanel.tsx must be deleted
+    assert.equal(
+      fs.existsSync(path.join(process.cwd(), 'components/TelemetryFlowPanel.tsx')),
+      false,
+      'components/TelemetryFlowPanel.tsx must be deleted'
+    );
+
+    // 2. Workbench, Header, and SettingsDrawer must contain zero dead references to Bottom Telemetry Stream
+    const filesToCheck = [
+      'components/AttackExplorerWorkbench.tsx',
+      'components/AttackHeader.tsx',
+      'components/SettingsDrawer.tsx',
+    ];
+    const forbiddenDeadTokens = [
+      'TelemetryFlowPanel',
+      'DEFAULT_TELEMETRY_HEIGHT',
+      'telemetryOpen',
+      'onToggleTelemetry',
+      'telemetryHeight',
+      'setTelemetryHeight',
+      'toggle-bottom-telemetry-btn',
+      'Bottom Telemetry Stream',
+    ];
+
+    for (const relPath of filesToCheck) {
+      const content = fs.readFileSync(path.join(process.cwd(), relPath), 'utf8');
+      for (const token of forbiddenDeadTokens) {
+        assert.equal(
+          content.includes(token),
+          false,
+          `${relPath} must not contain dead code reference "${token}"`
+        );
+      }
+    }
+  });
 });
+
+
+

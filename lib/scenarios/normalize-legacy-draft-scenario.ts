@@ -359,14 +359,14 @@ function buildStages(
       execution: 2,
       persistence: 3,
       'privilege escalation': 4,
-      'defense evasion': 5,
-      'credential access': 6,
-      discovery: 7,
-      'lateral movement': 8,
-      collection: 9,
-      'command and control': 10,
-      exfiltration: 11,
-      impact: 12,
+      'defense evasion': 4,
+      'credential access': 5,
+      discovery: 5,
+      'lateral movement': 6,
+      'command and control': 6,
+      collection: 7,
+      exfiltration: 7,
+      impact: 7,
     };
     const mitreTacticPhase =
       phaseMap[(phaseMatch?.[0] || '').toLowerCase()] || 1;

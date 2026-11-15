@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { SketchNodeIcon } from './SketchNodeIcons';
+import { formatMergedDiagramNodeBadge } from '@/lib/ui-text-standards';
 
 export interface NodeCinematicRenderState {
   opacity: number;
@@ -247,24 +248,65 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         />
       )}
 
-      <span
-        className={`mb-0.5 px-2 py-0.5 text-[7.5px] font-mono font-bold border rounded-full shadow-2xs transition-transform group-hover:scale-105 whitespace-nowrap ${
-          node.isNetworkDevice
-            ? 'bg-teal-600 text-white border-teal-800'
-            : node.iconType === 'MALWARE_PAYLOAD' ||
-              node.iconType === 'KERNEL_MEMORY'
-            ? 'bg-rose-600 text-white border-rose-800'
-            : node.iconType === 'VICTIM_LAPTOP' ||
-              node.iconType === 'PROCESS_THREAD'
-            ? 'bg-sky-600 text-white border-sky-800'
-            : node.iconType === 'LATERAL_SERVER' ||
-              node.iconType === 'CREDENTIAL_VAULT'
-            ? 'bg-violet-600 text-white border-violet-800'
-            : 'bg-amber-500 text-slate-950 border-amber-700'
-        }`}
-      >
-        {node.actionBadge}
-      </span>
+      {(() => {
+        const merged = formatMergedDiagramNodeBadge(node, isSubBoard);
+        const isDarkPill =
+          tacticalMode ||
+          node.isNetworkDevice ||
+          node.iconType === 'MALWARE_PAYLOAD' ||
+          node.iconType === 'KERNEL_MEMORY' ||
+          node.iconType === 'VICTIM_LAPTOP' ||
+          node.iconType === 'PROCESS_THREAD' ||
+          node.iconType === 'LATERAL_SERVER' ||
+          node.iconType === 'CREDENTIAL_VAULT';
+
+        return (
+          <div
+            data-testid={`node-merged-badge-${node.id}`}
+            className={`mb-1 px-2.5 py-1 border rounded-lg shadow-xs transition-all group-hover:scale-105 flex flex-col items-center text-center whitespace-nowrap ${
+              tacticalMode
+                ? 'bg-slate-950/95 text-emerald-100 border-emerald-500/70'
+                : node.isNetworkDevice
+                  ? 'bg-teal-600 text-white border-teal-800'
+                  : node.iconType === 'MALWARE_PAYLOAD' ||
+                      node.iconType === 'KERNEL_MEMORY'
+                    ? 'bg-rose-600 text-white border-rose-800'
+                    : node.iconType === 'VICTIM_LAPTOP' ||
+                        node.iconType === 'PROCESS_THREAD'
+                      ? 'bg-sky-600 text-white border-sky-800'
+                      : node.iconType === 'LATERAL_SERVER' ||
+                          node.iconType === 'CREDENTIAL_VAULT'
+                        ? 'bg-violet-600 text-white border-violet-800'
+                        : 'bg-amber-500 text-slate-950 border-amber-700'
+            } ${
+              isSearchFiltering && isSearchMatch
+                ? 'ring-2 ring-amber-300 shadow-[0_0_18px_rgba(245,158,11,0.45)]'
+                : isMultiSelected
+                  ? 'ring-2 ring-indigo-400 shadow-[0_0_14px_rgba(99,102,241,0.4)]'
+                  : isSelected ||
+                      cState.role === 'CURRENT_TARGET' ||
+                      cState.role === 'CURRENT_SOURCE'
+                    ? 'ring-2 ring-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.35)]'
+                    : ''
+            }`}
+          >
+            <div className="text-[8.5px] font-bold leading-tight tracking-tight">
+              {merged.seqBadge} {merged.shortTitle}
+            </div>
+            <div
+              className={`text-[7.5px] font-mono font-semibold leading-tight ${
+                tacticalMode
+                  ? 'text-emerald-400'
+                  : isDarkPill
+                    ? 'text-white/90'
+                    : 'text-slate-900/85'
+              }`}
+            >
+              {merged.keyMetric}
+            </div>
+          </div>
+        );
+      })()}
 
       <SketchNodeIcon
         iconType={node.iconType}
@@ -276,43 +318,6 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         }
         isCompromised={node.isCompromised}
       />
-
-      <div
-        className={`mt-0.5 px-3 py-1.5 border rounded-xl shadow-xs transition-all min-w-[172px] w-max max-w-[260px] ${
-          tacticalMode
-            ? 'bg-slate-950/95 text-white border-emerald-500/60 group-hover:border-emerald-400'
-            : 'bg-white/95 dark:bg-zinc-900/95 border-slate-800/80 dark:border-zinc-700 group-hover:border-indigo-500'
-        } ${
-          isSearchFiltering && isSearchMatch
-            ? 'ring-2 ring-amber-400 border-amber-500 bg-amber-50/95 dark:bg-amber-950/85 shadow-[0_0_20px_rgba(245,158,11,0.4)]'
-            : isMultiSelected
-            ? 'ring-2 ring-indigo-500 border-indigo-600 bg-indigo-50/95 dark:bg-indigo-950/90 shadow-[0_0_16px_rgba(99,102,241,0.35)]'
-            : isSelected ||
-              cState.role === 'CURRENT_TARGET' ||
-              cState.role === 'CURRENT_SOURCE'
-            ? 'ring-2 ring-rose-500 border-rose-600'
-            : ''
-        }`}
-      >
-        <div
-          className={`text-[9.5px] font-bold leading-snug whitespace-nowrap ${
-            tacticalMode
-              ? 'text-emerald-100'
-              : 'text-slate-900 dark:text-white'
-          }`}
-        >
-          {node.label}
-        </div>
-        <div
-          className={`text-[8px] font-mono leading-snug whitespace-nowrap ${
-            tacticalMode
-              ? 'text-emerald-400/85'
-              : 'text-slate-500 dark:text-zinc-400'
-          }`}
-        >
-          {node.sublabel}
-        </div>
-      </div>
     </motion.button>
   );
 });
