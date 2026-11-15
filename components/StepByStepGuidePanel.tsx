@@ -16,6 +16,7 @@ import {
   buildScopedStepGuideModel,
   InspectorScopeContext,
 } from '@/lib/inspector-scope';
+import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
 import {
   ArrowRight,
   BookOpen,
@@ -30,6 +31,7 @@ import {
   RotateCcw,
   ShieldAlert,
   Sparkles,
+  Terminal,
 } from 'lucide-react';
 
 interface StepByStepGuidePanelProps {
@@ -718,6 +720,13 @@ export function StepByStepGuidePanel({
         {steps.map((step) => {
           const isActive = step.status === 'ACTIVE';
           const isCompleted = step.status === 'COMPLETED';
+          const stageObj =
+            scenario.stages.find((s) => s.index === step.stepNumber) ||
+            scenario.stages[step.stepNumber - 1];
+          const stepDiagram =
+            scopeContext && stageObj
+              ? buildStepStructuralBreakdown(scenario, stageObj, scopeContext)
+              : null;
 
           return (
             <motion.div
@@ -835,6 +844,96 @@ export function StepByStepGuidePanel({
                     {step.howItWorksInPractice}
                   </p>
                 </div>
+
+                {/* Layer 4: Step-Specific Structural Diagram & Cascading Process Lineage */}
+                {stepDiagram && (
+                  <div
+                    data-testid={`step-guide-structural-diagram-${step.stepNumber}`}
+                    className="p-3 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200/80 dark:border-indigo-500/30 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                        <Terminal className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          4. Step Structural Conduit & Cascading Process Lineage (S
+                          {step.stepNumber})
+                        </span>
+                      </span>
+                      <span className="text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
+                        {stepDiagram.structuralStateCard.kindLabel}
+                      </span>
+                    </div>
+
+                    {/* Step State Differential Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[10.5px] font-mono">
+                      <div className="p-2 rounded bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800">
+                        <div className="text-[9px] font-bold uppercase text-zinc-500">
+                          INPUT / ENTRY SPEC
+                        </div>
+                        <div className="text-zinc-800 dark:text-zinc-200 leading-snug break-words mt-0.5">
+                          {stepDiagram.structuralStateCard.beforeState}
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-700/40">
+                        <div className="text-[9px] font-bold uppercase text-amber-700 dark:text-amber-300">
+                          EXECUTED OPERATION
+                        </div>
+                        <div className="text-zinc-900 dark:text-zinc-100 font-semibold leading-snug break-words mt-0.5">
+                          {stepDiagram.structuralStateCard.operationExecuted}
+                        </div>
+                      </div>
+                      <div className="p-2 rounded bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-700/40">
+                        <div className="text-[9px] font-bold uppercase text-rose-700 dark:text-rose-300">
+                          RESULTING STATE
+                        </div>
+                        <div className="text-zinc-900 dark:text-zinc-100 leading-snug break-words mt-0.5">
+                          {stepDiagram.structuralStateCard.resultingState}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cascading Parent -> Child Process Waterfall for this Step */}
+                    {stepDiagram.stepProcessCascade.length > 0 && (
+                      <div className="space-y-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                        <div className="text-[9.5px] font-mono font-bold uppercase text-zinc-500 dark:text-zinc-400">
+                          Active Parent ──▶ Child Process Waterfall up to Step #
+                          {step.stepNumber}:
+                        </div>
+                        {stepDiagram.stepProcessCascade.map((pNode) => {
+                          const indentPx = Math.min(pNode.depth, 4) * 18;
+                          return (
+                            <div
+                              key={`${step.stepNumber}-${pNode.process.pid}`}
+                              style={{ marginLeft: `${indentPx}px` }}
+                              className="p-2 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono"
+                            >
+                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                {pNode.depth > 0 && (
+                                  <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                                    └─▶
+                                  </span>
+                                )}
+                                <span className="px-1.5 py-0.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[9.5px] font-bold">
+                                  D{pNode.depth} · S{pNode.stageNumber}
+                                </span>
+                                <span className="font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                                  {pNode.process.name}
+                                </span>
+                                <span className="text-zinc-500 dark:text-zinc-400 leading-snug break-words">
+                                  (PPID {pNode.parentPid} ──▶ PID{' '}
+                                  {pNode.process.pid})
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 leading-snug break-words">
+                                {pNode.process.commandLine}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Diagram Connection Box */}
                 <div className="p-2.5 rounded-lg bg-zinc-100/90 dark:bg-zinc-950/90 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5">

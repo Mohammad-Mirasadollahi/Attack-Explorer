@@ -22,6 +22,7 @@ import { APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS } from './scenarios/apt-batc
 import { APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS } from './scenarios/apt-batch9-ransomware-extortion';
 import { normalizeLegacyDraftScenario } from './scenarios/normalize-legacy-draft-scenario';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
+import { ensureCascadingProcessHierarchy } from './documentation-structural-diagrams';
 
 const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   PROCESS_HOLLOWING_SCENARIO,
@@ -57,5 +58,8 @@ function dedupeScenariosById(scenarios: AttackScenario[]): AttackScenario[] {
 
 export const ATTACK_SCENARIOS: AttackScenario[] = dedupeScenariosById(
   RAW_ATTACK_SCENARIOS
-).map(applyReadableStepGuidesToScenario);
+)
+  .map(ensureCascadingProcessHierarchy)
+  .map(applyReadableStepGuidesToScenario);
+
 

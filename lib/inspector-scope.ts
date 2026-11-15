@@ -972,6 +972,17 @@ function isNonMemoryInfrastructureNode(
   node: WhiteboardSketchNode | null | undefined
 ): boolean {
   if (!node) return false;
+  if (
+    node.id === 'malware_sandbox_node' ||
+    node.archetype === 'MALWARE_PROCESSES' ||
+    node.iconType === 'MALWARE_PAYLOAD' ||
+    node.iconType === 'KERNEL_MEMORY' ||
+    node.iconType === 'PROCESS_THREAD' ||
+    node.originalNode?.role === 'process' ||
+    node.originalNode?.role === 'memory'
+  ) {
+    return false;
+  }
   if (node.isNetworkDevice) return true;
   if (
     node.iconType === 'SIEM_SENSOR' ||

@@ -176,67 +176,245 @@ function layoutNodes(rawNodes: LegacyDraftNode[]): DiagramNode[] {
   });
 }
 
-function processNameFromCommand(command: string): string {
-  const token = command.split(/\s+/)[0] || 'process';
-  return token.split(/[\\/]/).pop() || token;
+const KNOWN_BINARY_REGEX =
+  /\b([A-Za-z0-9_.-]+\.(?:exe|dll|sys|sh|py|bat|ps1|vbs|msi|msp|jsp|aspx|php|jar|elf|ko|bin|so)|powershell|pwsh|cmd|bash|sh|zsh|python3?|node|npm|npx|git|sudo|curl|wget|certutil|regsvr32|rundll32|mshta|wmic|vssadmin|bcdedit|wbadmin|ntdsutil|nltest|netsh|sc|schtasks|psexec|msbuild|csc|java|javaw|tomcat\d*|w3wp|iisexpress|sqlservr|sqlcmd|mysqldump|psql|httpd|nginx|sshd|esxcli|nohup|socat|iptables|tar|chmod|chown|cp|mv|rm|echo|pgrep|pkill|kill|twine|gsutil|gcloud|aws|kubectl|runc|docker|chisel|hashcat|mimikatz|rubeus|sharpshares)\b/i;
+
+function extractCleanProcessName(
+  rawText: string,
+  preferredLabel?: string
+): string {
+  if (preferredLabel) {
+    const cleanedPref = preferredLabel
+      .replace(/^["'`]+|["'`,;.)]+$/g, '')
+      .trim();
+    if (
+      cleanedPref &&
+      !/^(POST|GET|PUT|DELETE|HEAD|OPTIONS|PATCH|Body:?|Payload:?|Header:?|Cookie:?|Host:?|Crafted|Vulnerable|Inject|Injected|Drop|Execute|Upload|Read|Write|Modify|Hook|Prepend|Disable|Launch|Wipe|Direct|Extract|Overwrite|Iterate|Forks|Copies|Appends|Output:?|Attacker|Downstream|Transient|Target|Defense)$/i.test(
+        cleanedPref
+      )
+    ) {
+      return cleanedPref;
+    }
+  }
+
+  // Strip leading "Label: " prefix if present (e.g. "SUNSPOT Service: C:\Windows\...")
+  const colonSplit = rawText.match(/^[A-Za-z0-9 _/-]{2,32}:\s+(.+)$/);
+  const candidate = (colonSplit ? colonSplit[1] : rawText).trim();
+
+  // Look for explicit path or binary match
+  const pathMatch = candidate.match(
+    /(?:[A-Za-z]:\\[^\s"'`]+|\/(?:usr|bin|sbin|etc|opt|var|tmp|home|proc|dev|lib)[^\s"'`]+)/
+  );
+  if (pathMatch) {
+    const base = pathMatch[0].split(/[\\/]/).pop() || pathMatch[0];
+    if (base.length >= 2 && base.length <= 48) {
+      return base.replace(/[",;.)]+$/, '');
+    }
+  }
+
+  const binMatch = candidate.match(KNOWN_BINARY_REGEX);
+  if (binMatch) {
+    return binMatch[1];
+  }
+
+  const syscallMatch = candidate.match(
+    /\b(Nt[A-Z][A-Za-z0-9]+|Zw[A-Z][A-Za-z0-9]+|DeviceIoControl|CreateServiceW|AdjustTokenPrivileges|ChangeServiceConfigW|CreateToolhelp32Snapshot|setsockopt|ioctl|eth_signTypedData_v4)\b/
+  );
+  if (syscallMatch) {
+    return `${syscallMatch[1]}()`;
+  }
+
+  if (/^(POST|GET|PUT|DELETE)\s+(\S+)/i.test(candidate)) {
+    const m = candidate.match(/^(POST|GET|PUT|DELETE)\s+(\S+)/i);
+    return `http-handler (${m?.[1].toUpperCase()} ${m?.[2].slice(0, 24)})`;
+  }
+
+  const firstToken = candidate.split(/\s+/)[0] || 'runtime-worker';
+  const cleaned = firstToken.replace(/^["'`<]+|["'`>,;.)]+$/g, '');
+  if (
+    !cleaned ||
+    /^(Body|Payload|Crafted|Vulnerable|Inject|Injected|Drop|Execute|Upload|Read|Write|Modify|Hook|Prepend|Disable|Launch|Wipe|Direct|Extract|Overwrite|Iterate|Forks|Copies|Appends|Output|If|For|1\.|2\.|3\.)$/i.test(
+      cleaned
+    )
+  ) {
+    return 'stage-worker';
+  }
+  return cleaned;
 }
 
 function buildProcessTree(
-  stages: LegacyDraftStage[]
+  stages: LegacyDraftStage[],
+  nodes: DiagramNode[]
 ): ProcessTreeNode[] {
   const trees: ProcessTreeNode[] = [];
-  let pid = 4000;
-  const seen = new Set<string>();
+  let nextPid = 4100;
+  let currentParentPid = 880;
 
-  const pushNode = (
-    stageId: number,
-    command: string,
-    preferredName: string | undefined,
-    apiCalls: string[]
-  ) => {
-    const trimmed = command.trim();
-    if (!trimmed || seen.has(trimmed)) return;
-    seen.add(trimmed);
-    trees.push({
-      pid: pid++,
-      ppid: 4,
-      name: preferredName || processNameFromCommand(trimmed),
-      commandLine: trimmed,
-      user: 'CORP\\attacker',
-      integrity: 'High',
-      status: 'malicious',
-      activeFromStage: stageId,
-      apiCalls,
-    });
-  };
+  // Seed a root host daemon / service parent so every scenario starts with a clear Depth-0 parent
+  const primaryTargetNode =
+    nodes.find(
+      (n) =>
+        n.role === 'victim_host' ||
+        n.role === 'server' ||
+        n.role === 'domain_controller'
+    ) || nodes[1] || nodes[0];
+
+  const firstStageLog = stages[0]?.logs?.[0];
+  const explicitRootParent =
+    firstStageLog?.parsedFields?.ParentProcess ||
+    firstStageLog?.parsedFields?.ParentScript ||
+    firstStageLog?.parsedFields?.TargetedBuildProcess ||
+    firstStageLog?.parsedFields?.TargetProcess;
+
+  const rootName = explicitRootParent
+    ? extractCleanProcessName(explicitRootParent, explicitRootParent)
+    : primaryTargetNode
+      ? `${primaryTargetNode.label.split('(')[0].trim()} Daemon`
+      : 'systemd / services.exe';
+
+  const rootPid = currentParentPid;
+  trees.push({
+    pid: rootPid,
+    ppid: 4,
+    name: rootName,
+    commandLine: explicitRootParent
+      ? `${explicitRootParent} --service-host`
+      : `${rootName} --host "${primaryTargetNode?.label || 'target-node'}"`,
+    user: 'SYSTEM / root',
+    integrity: 'SYSTEM',
+    status: 'normal',
+    activeFromStage: 1,
+    apiCalls: ['InitializeServiceHost', 'ListenEndpoint'],
+  });
 
   for (const stage of stages) {
-    for (const log of stage.logs || []) {
+    const stageCommands = (stage.technicalCommands || []).map((c) => c.trim()).filter(Boolean);
+    const stageLogs = stage.logs || [];
+
+    let stagePrimaryCreated = false;
+    let stagePrimaryPid = currentParentPid;
+
+    for (const log of stageLogs) {
       const fields = log.parsedFields || {};
-      const command =
-        log.CommandLine ||
+      const preferredLabel =
         log.ProcessName ||
-        fields.Image ||
+        fields.ExecutingProcess ||
+        fields.HostBinary ||
         fields.Implant ||
-        fields.MaliciousDriver ||
+        fields.Stage2Implant ||
         fields.UserModeLoader ||
-        fields.ExternalScriptUrl;
-      if (command) {
-        pushNode(
-          stage.id,
-          command,
-          log.ProcessName ||
-            fields.Implant ||
-            fields.MaliciousDriver ||
-            fields.UserModeLoader,
-          Object.keys(fields)
-        );
+        fields.MaliciousDriver ||
+        fields.SystemBinaryProxy ||
+        fields.CompromisedAction ||
+        fields.CompromisedPackage ||
+        fields.DynamicLoader;
+
+      const rawCommand =
+        log.CommandLine ||
+        preferredLabel ||
+        fields.Image ||
+        fields.LolbinDecoder ||
+        fields.BatchDropper ||
+        fields.PayloadPath ||
+        fields.ExternalScriptUrl ||
+        stageCommands[0] ||
+        stage.title;
+
+      const cleanName = extractCleanProcessName(rawCommand, preferredLabel);
+      const formattedCmd =
+        log.CommandLine ||
+        stageCommands[0] ||
+        Object.entries(fields)
+          .map(([k, v]) => `${k}="${v}"`)
+          .join(' ') ||
+        rawCommand;
+
+      const thisPid = nextPid;
+      nextPid += 120;
+
+      const status: ProcessTreeNode['status'] =
+        stage.id === 1
+          ? 'suspicious'
+          : /inject|hollow|memory|teardrop|beacon|hook|preload|pth/i.test(
+                formattedCmd + ' ' + cleanName
+              )
+            ? 'injected'
+            : 'malicious';
+
+      trees.push({
+        pid: thisPid,
+        ppid: currentParentPid,
+        name:
+          cleanName === 'stage-worker'
+            ? `stage${stage.id}-${( preferredLabel || stage.title ).split(/\s+/)[0].toLowerCase()}`
+            : cleanName,
+        commandLine: formattedCmd,
+        user: stage.id === 1 ? 'svc_runtime' : 'SYSTEM / root',
+        integrity: stage.id === 1 ? 'High' : 'SYSTEM',
+        status,
+        activeFromStage: stage.id,
+        apiCalls:
+          stageCommands.length > 0
+            ? stageCommands.slice(0, 4)
+            : Object.keys(fields),
+      });
+
+      stagePrimaryPid = thisPid;
+      stagePrimaryCreated = true;
+    }
+
+    if (!stagePrimaryCreated && stageCommands.length > 0) {
+      const firstCmd = stageCommands[0];
+      const cleanName = extractCleanProcessName(firstCmd);
+      const thisPid = nextPid;
+      nextPid += 120;
+
+      trees.push({
+        pid: thisPid,
+        ppid: currentParentPid,
+        name:
+          cleanName === 'stage-worker'
+            ? `stage${stage.id}-executor`
+            : cleanName,
+        commandLine: firstCmd,
+        user: 'SYSTEM / root',
+        integrity: 'High',
+        status: stage.id === 1 ? 'suspicious' : 'malicious',
+        activeFromStage: stage.id,
+        apiCalls: stageCommands.slice(0, 4),
+      });
+
+      stagePrimaryPid = thisPid;
+    }
+
+    // Also check if a secondary distinct binary is spawned within the same stage's technicalCommands
+    for (let i = 1; i < stageCommands.length; i++) {
+      const cmd = stageCommands[i];
+      const binMatch = cmd.match(KNOWN_BINARY_REGEX);
+      if (binMatch) {
+        const childBin = extractCleanProcessName(cmd, binMatch[1]);
+        const prevProc = trees[trees.length - 1];
+        if (prevProc && prevProc.name.toLowerCase() !== childBin.toLowerCase()) {
+          const subPid = nextPid;
+          nextPid += 64;
+          trees.push({
+            pid: subPid,
+            ppid: stagePrimaryPid,
+            name: childBin,
+            commandLine: cmd,
+            user: 'SYSTEM / root',
+            integrity: 'SYSTEM',
+            status: 'malicious',
+            activeFromStage: stage.id,
+            apiCalls: [cmd],
+          });
+          stagePrimaryPid = subPid;
+        }
       }
     }
 
-    for (const command of stage.technicalCommands || []) {
-      pushNode(stage.id, command, undefined, []);
-    }
+    // Advance parent pointer so the next stage cascades from this stage's process
+    currentParentPid = stagePrimaryPid;
   }
 
   return trees;
@@ -409,7 +587,7 @@ export function normalizeLegacyDraftScenario(
   const nodes = layoutNodes(rawNodes);
   const stages = buildStages(draft, draft.stages || []);
   const telemetry = buildTelemetry(draft, draft.stages || [], nodes);
-  const processTree = buildProcessTree(draft.stages || []);
+  const processTree = buildProcessTree(draft.stages || [], nodes);
   const techniqueId = extractTechniqueId(
     draft.mitreId,
     draft.stages?.[0]?.mitreTactic

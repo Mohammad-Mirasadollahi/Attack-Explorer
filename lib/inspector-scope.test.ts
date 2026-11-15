@@ -18,6 +18,11 @@ import {
   saveLastVisitedDiagramSnapshot,
 } from './diagram-memory-store';
 import { buildWhiteboardSchematic } from './sketch-zones-and-drilldown';
+import {
+  buildCascadingProcessWaterfall,
+  buildDocumentationArchitectureBlueprint,
+  buildStepStructuralBreakdown,
+} from './documentation-structural-diagrams';
 
 describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE, INTERNAL_SUBNODE)', () => {
   it('resolves MAIN_SCENARIO scope on the main topology and preserves single-click node selection without expanding', () => {
@@ -526,5 +531,72 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(expandedSeq.exchanges[0].forwardSeq, '4.1.1');
     assert.equal(expandedSeq.exchanges[0].returnSeq, '4.1.2');
   });
+
+  it('builds structure-specific Documentation Architecture Blueprints, multi-depth Parent->Child cascading process waterfalls, and step-level diagrams across all 85 scenarios', () => {
+    const archetypesSeen = new Set<string>();
+
+    for (const scenario of ATTACK_SCENARIOS) {
+      const scope = resolveInspectorScopeContext({
+        scenario,
+        activeStageIndex: 0,
+        activeEnvironment: 'WORKSTATION',
+        selectedNodeId: null,
+        expandedNodeId: null,
+        selectedInternalSubNodeId: null,
+      });
+
+      const blueprint = buildDocumentationArchitectureBlueprint(scope, null);
+      archetypesSeen.add(blueprint.archetype);
+
+      assert.equal(
+        blueprint.layers.length,
+        4,
+        `Scenario ${scenario.id} should have 4 structural blueprint layers`
+      );
+      assert.ok(
+        blueprint.cascadingProcesses.length >= 3,
+        `Scenario ${scenario.id} should have at least 3 cascading process nodes (got ${blueprint.cascadingProcesses.length})`
+      );
+
+      const maxDepth = Math.max(
+        ...blueprint.cascadingProcesses.map((n) => n.depth)
+      );
+      assert.ok(
+        maxDepth >= 2,
+        `Scenario ${scenario.id} process waterfall must cascade to at least depth 2 (Parent -> Child -> Grandchild), got maxDepth=${maxDepth}`
+      );
+
+      for (const procNode of blueprint.cascadingProcesses) {
+        assert.ok(
+          !/^(POST|GET|Body:?|Payload:?|Crafted|Vulnerable|Drop|Hook)$/i.test(
+            procNode.process.name
+          ),
+          `Scenario ${scenario.id} has invalid prose-token process name: ${procNode.process.name}`
+        );
+      }
+
+      const waterfall = buildCascadingProcessWaterfall(scenario, scope, 1);
+      assert.equal(waterfall.length, blueprint.cascadingProcesses.length);
+
+      for (const stage of scenario.stages) {
+        const stepBreakdown = buildStepStructuralBreakdown(
+          scenario,
+          stage,
+          scope
+        );
+        assert.ok(stepBreakdown.conduit.initiatorLabel.length > 0);
+        assert.ok(stepBreakdown.conduit.targetLabel.length > 0);
+        assert.ok(stepBreakdown.conduit.forwardActionLabel.length > 0);
+        assert.ok(stepBreakdown.stepProcessCascade.length >= 1);
+      }
+    }
+
+    assert.equal(
+      archetypesSeen.size,
+      6,
+      `All 6 structural diagram archetypes should be represented across the 85 scenarios, got: ${Array.from(archetypesSeen).join(', ')}`
+    );
+  });
 });
+
 

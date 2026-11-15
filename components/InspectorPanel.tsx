@@ -30,6 +30,7 @@ import { SketchNodeIcon } from './SketchNodeIcons';
 import { AnimeBrandLogo } from './AnimeBrandLogo';
 import { SequenceView } from './canvas/SequenceView';
 import { ProcessMemoryView } from './canvas/ProcessMemoryView';
+import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -687,44 +688,108 @@ export function InspectorPanel({
         </div>
       </div>
 
-      {/* Main Full-Screen Scrollable 2-Column Body */}
+      {/* Main Full-Screen Scrollable Unified Single-Column Documentation Body */}
       <div className="flex-1 min-h-0 overflow-y-auto workbench-scrollbar">
-        <div className="max-w-[1680px] mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* =====================================================================
-              LEFT COLUMN (Top-Left Miniature Context Map + Technical Section Specs)
-              ===================================================================== */}
-          <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 lg:sticky lg:top-0">
-            {/* 1. TOP-LEFT MINIATURE TOPOLOGICAL CONTEXT MAP */}
-            {miniMapModel && scopeContext && (
-              <InspectorContextMiniMap
-                miniMap={miniMapModel}
-                scopeContext={scopeContext}
-                selectedTelemetry={selectedTelemetry}
-                onSelectNode={(nodeId) => {
-                  setForceMainScenarioView(false);
-                  onClearTelemetrySelection();
-                  onSelectNode?.(nodeId);
-                }}
-                onSelectInternalSubNode={(subNodeId) => {
-                  setForceMainScenarioView(false);
-                  onClearTelemetrySelection();
-                  onSelectInternalSubNode?.(subNodeId);
-                }}
-                onSelectTelemetry={(ev) => {
-                  setForceMainScenarioView(false);
-                  onSelectTelemetry(ev);
-                }}
-                onReturnToDiagram={() => onCloseInspectorPage?.()}
-              />
-            )}
-
-            {/* 2. FOCUSED SECTION TECHNICAL IDENTITY & FORENSIC SPECS CARD */}
-            {activeInspectNode ? (
-              <section
-                data-testid="inspector-section-identity-card"
-                className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-4 shadow-sm flex flex-col gap-3"
+        <div
+          data-testid="inspector-unified-single-column-layout"
+          className="max-w-[1480px] mx-auto p-4 sm:p-6 flex flex-col gap-5"
+        >
+          {/* 1. Unified Stage Filter & Section Scope Strip (Merged across top of page) */}
+          <section
+            data-testid="inspector-main-scenario-stage-card"
+            className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 px-4 py-3 shadow-sm flex flex-wrap items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mr-1">
+                STAGE FILTER ({scenario.stages.length} STAGES):
+              </span>
+              <button
+                type="button"
+                data-testid="inspector-stage-pill-overview"
+                onClick={() => onSelectStage(0)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                  activeStageIndex === 0
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                }`}
               >
-                <div className="flex items-start gap-3">
+                All Stages (Overview)
+              </button>
+              {scenario.stages.map((st) => (
+                <button
+                  key={`stage-pill-${st.index}`}
+                  type="button"
+                  data-testid={`inspector-stage-pill-${st.index}`}
+                  onClick={() => onSelectStage(st.index)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                    activeStageIndex === st.index
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  S{st.index} · {st.mitreTechniqueId}
+                </button>
+              ))}
+            </div>
+
+            {activeInspectNode && (
+              <div className="flex items-center gap-2">
+                {!scopeContext?.isInsideSubBoard &&
+                  scopeContext?.selectedMainNode &&
+                  onExpandedNodeChange && (
+                    <button
+                      type="button"
+                      data-testid="inspector-open-node-subboard-btn"
+                      onClick={() => {
+                        onExpandedNodeChange(scopeContext.selectedMainNode!.id);
+                        onCloseInspectorPage?.();
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>Expand Internal Pipeline on Diagram</span>
+                    </button>
+                  )}
+
+                <button
+                  type="button"
+                  data-testid="inspector-switch-to-main-page-btn"
+                  onClick={() => {
+                    onSelectNode?.(null);
+                    onSelectInternalSubNode?.(null);
+                    onClearTelemetrySelection();
+                  }}
+                  className="px-3 py-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-mono font-semibold transition-colors cursor-pointer"
+                >
+                  Main Scenario Page
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* 2. Selected Packet / Telemetry Deep-Dive Banner (when a flow packet is clicked) */}
+          {selectedTelemetry && (
+            <div className="rounded-2xl overflow-hidden border border-rose-300 dark:border-rose-800/80 shadow-sm">
+              <SelectedTelemetryDetail
+                selectedTelemetry={selectedTelemetry}
+                currentStage={currentStage}
+                onClearTelemetrySelection={onClearTelemetrySelection}
+                activeEnvironment={activeEnvironment}
+                scopeBadgeText={scopeContext?.scopeBadgeText}
+                effectiveScope={effectiveScope}
+                width={1280}
+              />
+            </div>
+          )}
+
+          {/* 3. Merged Focused Section Technical Identity & Forensic Specs Banner (when inspecting a specific node) */}
+          {activeInspectNode && (
+            <section
+              data-testid="inspector-section-identity-card"
+              className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-4 sm:p-5 shadow-sm flex flex-col gap-3.5"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-3.5 min-w-0">
                   <div className="w-16 h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800/90 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1.5 shrink-0">
                     <SketchNodeIcon
                       iconType={activeInspectNode.iconType}
@@ -732,7 +797,7 @@ export function InspectorPanel({
                       isCompromised={activeInspectNode.isCompromised}
                     />
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-[10px] font-bold">
                         #{activeInspectNode.sequenceCode || activeInspectNode.chainOrder}
@@ -752,7 +817,7 @@ export function InspectorPanel({
                           : 'ACTIVE TELEMETRY'}
                       </span>
                     </div>
-                    <h2 className="mt-1 text-sm font-extrabold text-zinc-950 dark:text-white leading-snug break-words">
+                    <h2 className="mt-1 text-base font-extrabold text-zinc-950 dark:text-white leading-snug break-words">
                       {activeInspectNode.label}
                     </h2>
                     <div className="text-xs font-mono text-zinc-500 dark:text-zinc-400 break-words">
@@ -761,768 +826,743 @@ export function InspectorPanel({
                   </div>
                 </div>
 
-                {/* Technical Specs Grid */}
-                <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200/70 dark:border-zinc-800/80 text-xs font-mono">
-                  <div>
-                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
-                      ZONE LOCATION
-                    </span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
-                      {activeInspectZone
-                        ? `${activeInspectZone.code} · ${activeInspectZone.title}`
-                        : activeInspectNode.zoneLabel || activeInspectNode.zoneId}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
-                      ENDPOINT / PORT / PID
-                    </span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
-                      {activeInspectNode.originalNode?.details?.pidOrPort ||
-                        activeInspectNode.sublabel}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
-                      OS / SUBSYSTEM TYPE
-                    </span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
-                      {activeInspectNode.originalNode?.details?.osOrType ||
-                        envProfile.badgeLabel}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
-                      PRIVILEGE CONTEXT
-                    </span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
-                      {activeInspectNode.originalNode?.details?.privilege ||
-                        'Standard / System Context'}
-                    </span>
-                  </div>
-                </div>
-
                 {/* Forensic Artifacts List */}
                 {activeInspectNode.originalNode?.details?.artifacts &&
                   activeInspectNode.originalNode.details.artifacts.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                        Forensic Artifacts & Indicators
+                    <div className="flex flex-wrap gap-1.5 max-w-xl">
+                      {activeInspectNode.originalNode.details.artifacts.map(
+                        (art, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/70 font-mono text-[10.5px] break-all"
+                          >
+                            {art}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  )}
+              </div>
+
+              {/* Technical Specs 4-Column Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200/70 dark:border-zinc-800/80 text-xs font-mono">
+                <div>
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
+                    ZONE LOCATION
+                  </span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
+                    {activeInspectZone
+                      ? `${activeInspectZone.code} · ${activeInspectZone.title}`
+                      : activeInspectNode.zoneLabel || activeInspectNode.zoneId}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
+                    ENDPOINT / PORT / PID
+                  </span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
+                    {activeInspectNode.originalNode?.details?.pidOrPort ||
+                      activeInspectNode.sublabel}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
+                    OS / SUBSYSTEM TYPE
+                  </span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
+                    {activeInspectNode.originalNode?.details?.osOrType ||
+                      envProfile.badgeLabel}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 block uppercase">
+                    PRIVILEGE CONTEXT
+                  </span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100 break-words">
+                    {activeInspectNode.originalNode?.details?.privilege ||
+                      'Standard / System Context'}
+                  </span>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* =====================================================================
+              TAB 1: OVERVIEW & DEEP-DIVE (Merged Executive Story + Structural Diagrams + Stages)
+              ===================================================================== */}
+          {resolvedActiveTab === 'OVERVIEW' && (
+            <div className="flex flex-col gap-5">
+              {/* Context-Aware Documented Virtual Memory Forensics Callout */}
+              {scopedMemory.hasDocumentedMemory && (
+                <section
+                  data-testid="inspector-overview-memory-callout"
+                  className="rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3"
+                >
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                      <Cpu className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        DOCUMENTED VIRTUAL MEMORY FORENSICS IN THIS SECTION (
+                        {scopedMemory.memoryBlocks.length} VAD REGIONS)
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                      {scopedMemory.scopeExplanation}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {scopedMemory.memoryBlocks.map((mb, idx) => (
+                        <span
+                          key={`${mb.address}-${idx}`}
+                          className="px-2 py-0.5 rounded text-[10.5px] font-mono bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-rose-200/80 dark:border-rose-800/70"
+                        >
+                          {mb.address} · {mb.section} ({mb.permissions})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="inspector-overview-open-memory-btn"
+                    onClick={() => handleSelectTab('MEMORY')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
+                  >
+                    <Cpu className="w-3.5 h-3.5" />
+                    <span>Open Memory Forensics</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </section>
+              )}
+
+              {/* Merged Page-Native Structural Architecture Blueprint & Cascading Process Waterfall */}
+              {miniMapModel && scopeContext && (
+                <InspectorContextMiniMap
+                  miniMap={miniMapModel}
+                  scopeContext={effectiveScopeContext}
+                  selectedTelemetry={selectedTelemetry}
+                  filterStageIndex={activeStageIndex > 0 ? activeStageIndex : null}
+                  onSelectNode={(nodeId) => {
+                    setForceMainScenarioView(false);
+                    onClearTelemetrySelection();
+                    onSelectNode?.(nodeId);
+                  }}
+                  onSelectInternalSubNode={(subNodeId) => {
+                    setForceMainScenarioView(false);
+                    onClearTelemetrySelection();
+                    onSelectInternalSubNode?.(subNodeId);
+                  }}
+                  onSelectTelemetry={(ev) => {
+                    setForceMainScenarioView(false);
+                    onSelectTelemetry(ev);
+                  }}
+                  onReturnToDiagram={() => onCloseInspectorPage?.()}
+                />
+              )}
+
+              {/* CASE A: Clicked Main Topology Node Dedicated Page (`selectedMainNode`) */}
+              {isInspectingSpecificMainNode && scopeContext?.selectedMainNode ? (
+                <div
+                  data-testid="inspector-selected-main-node-view"
+                  className="flex flex-col gap-5"
+                >
+                  {/* 1. Executive Story-to-Spec Analogy & Section Explanation */}
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        <Sparkles className="w-4 h-4" />
+                        <span>
+                          Complete Section Explanation · Node #
+                          {scopeContext.selectedMainNode.chainOrder}
+                        </span>
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-xs font-bold">
+                        {scopeContext.selectedMainNode.actionBadge}
+                      </span>
+                    </div>
+
+                    <h2 className="text-lg font-extrabold text-zinc-950 dark:text-white leading-snug">
+                      {scopeContext.selectedMainNode.label} —{' '}
+                      {scopeContext.selectedMainNode.sublabel}
+                    </h2>
+
+                    {scopeContext.selectedMainNode.hostContext && (
+                      <div className="px-3 py-2 rounded-xl bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/70 text-xs font-mono text-sky-900 dark:text-sky-200">
+                        {scopeContext.selectedMainNode.hostContext}
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {activeInspectNode.originalNode.details.artifacts.map(
-                          (art, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/80 dark:border-amber-800/70 font-mono text-[10.5px] break-all"
-                            >
-                              {art}
+                    )}
+
+                    <p
+                      data-testid="inspector-scoped-story-analogy"
+                      className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed"
+                    >
+                      {scopeContext.selectedMainNode.activitySummary ||
+                        scopeContext.selectedMainNode.internalSummary}
+                    </p>
+
+                    {scopeContext.selectedMainNodeStoryAnalogy && (
+                      <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                        <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
+                          Plain-English Story-to-Spec Analogy
+                        </div>
+                        {scopeContext.selectedMainNodeStoryAnalogy}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* 2. Connected Inbound & Outbound Telemetry Arms */}
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                        <Network className="w-4 h-4 text-rose-500" />
+                        <span>
+                          Connected Network & Process Links (
+                          {scopeContext.selectedMainNodeConnectedFlows.length})
+                        </span>
+                      </h3>
+                      <span className="text-[11px] font-mono text-zinc-500">
+                        Click any link to inspect raw packet telemetry
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {scopeContext.selectedMainNodeConnectedFlows.map((fl) => {
+                        const isOutbound =
+                          fl.fromNodeId === scopeContext.selectedMainNode?.id;
+                        const isSelected =
+                          selectedTelemetry?.id === fl.telemetryEvent.id;
+                        return (
+                          <div
+                            key={fl.id}
+                            data-testid={`inspector-connected-flow-card-${fl.stepNo}`}
+                            onClick={() => onSelectTelemetry(fl.telemetryEvent)}
+                            className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                              isSelected
+                                ? 'bg-rose-50/90 dark:bg-rose-950/40 border-rose-500 ring-1 ring-rose-500/30'
+                                : 'bg-zinc-50/70 dark:bg-zinc-950/50 hover:bg-zinc-100/80 dark:hover:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800'
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`px-2 py-0.5 rounded font-mono text-[10px] font-extrabold text-white ${
+                                    isOutbound ? 'bg-rose-600' : 'bg-amber-600'
+                                  }`}
+                                >
+                                  STEP #{fl.stepNo} ·{' '}
+                                  {isOutbound ? 'OUTBOUND' : 'INBOUND'}
+                                </span>
+                                <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                                  {fl.label}
+                                </span>
+                              </div>
+                              <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 font-mono text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
+                                {fl.protocolBadge &&
+                                fl.protocolBadge !==
+                                  fl.telemetryEvent.protocolOrEventId
+                                  ? `${fl.telemetryEvent.protocolOrEventId} · ${fl.protocolBadge}`
+                                  : fl.telemetryEvent.protocolOrEventId}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                              {fl.telemetryEvent.info}
+                            </p>
+
+                            {fl.telemetryEvent.detectionRule && (
+                              <div className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                                <span>
+                                  Detection Rule ({fl.telemetryEvent.detectionRule.type}
+                                  ): {fl.telemetryEvent.detectionRule.title}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* 3. Internal Pipeline Sub-Nodes & Operations Inside This Node */}
+                  {scopeContext.selectedMainNodeSubBoard && (
+                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                            <Cpu className="w-4 h-4" />
+                            <span>
+                              Internal Architecture & Sub-Components (
+                              {
+                                scopeContext.selectedMainNodeSubBoard.subNodes
+                                  .length
+                              }{' '}
+                              Sub-Nodes)
                             </span>
+                          </h3>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            {
+                              scopeContext.selectedMainNodeSubBoard
+                                .environmentBreadcrumb
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {scopeContext.selectedMainNodeSubBoard.subNodes.map(
+                          (subNode) => (
+                            <div
+                              key={subNode.id}
+                              className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 flex flex-col gap-1.5"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="px-1.5 py-0.5 rounded bg-indigo-600/10 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold">
+                                  #{subNode.chainOrder} · {subNode.actionBadge}
+                                </span>
+                                <span className="text-[10px] font-mono text-zinc-500">
+                                  {subNode.sublabel}
+                                </span>
+                              </div>
+                              <div className="text-xs font-bold text-zinc-900 dark:text-white">
+                                {subNode.label}
+                              </div>
+                              <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                                {subNode.internalSummary}
+                              </p>
+                            </div>
                           )
                         )}
                       </div>
+                    </section>
+                  )}
+                </div>
+              ) : effectiveScope !== 'MAIN_SCENARIO' &&
+                scopeContext?.internalSubBoard &&
+                scopeContext?.expandedParentNode ? (
+                /* CASE B: Expanded Sub-Board (`EXPANDED_NODE`) or Internal Sub-Node (`INTERNAL_SUBNODE`) */
+                <div
+                  data-testid={
+                    effectiveScope === 'INTERNAL_SUBNODE'
+                      ? 'internal-subnode-scoped-overview'
+                      : 'expanded-node-scoped-overview'
+                  }
+                  className="flex flex-col gap-5"
+                >
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        {scopeContext.scopeBadgeLabel}
+                      </span>
+                      <span className="text-xs font-mono text-zinc-500">
+                        Parent Host/Process: {scopeContext.expandedParentNode.label}
+                      </span>
                     </div>
+                    <h2 className="text-lg font-extrabold text-zinc-950 dark:text-white">
+                      {scopeContext.scopeTitle}
+                    </h2>
+                    <p
+                      data-testid="inspector-scoped-story-analogy"
+                      className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed"
+                    >
+                      {scopeContext.scopedStoryAnalogy}
+                    </p>
+                  </section>
+
+                  {/* Internal Sub-Nodes Switcher Grid */}
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                      Internal Pipeline Sub-Nodes (
+                      {scopeContext.internalSubBoard.subNodes.length})
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {scopeContext.internalSubBoard.subNodes.map((sn) => {
+                        const isFocused =
+                          scopeContext.focusedInternalSubNode?.id === sn.id;
+                        return (
+                          <button
+                            key={sn.id}
+                            type="button"
+                            data-testid={`inspector-subnode-card-${sn.id}`}
+                            onClick={() => onSelectInternalSubNode?.(sn.id)}
+                            className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
+                              isFocused
+                                ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-500 ring-1 ring-indigo-500/30'
+                                : 'bg-zinc-50/80 dark:bg-zinc-950/60 border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-[10px] font-bold">
+                                #{sn.chainOrder} · {sn.actionBadge}
+                              </span>
+                              <span className="text-[10px] font-mono text-zinc-500">
+                                {sn.sublabel}
+                              </span>
+                            </div>
+                            <div className="mt-1.5 text-xs font-bold text-zinc-900 dark:text-white">
+                              {sn.label}
+                            </div>
+                            <p className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                              {sn.internalSummary}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Scoped Internal Step-by-Step Operations */}
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                      Internal Telemetry Steps (
+                      {scopeContext.internalSteps.length})
+                    </h3>
+                    <div className="space-y-2.5">
+                      {scopeContext.internalSteps.map((st) => (
+                        <div
+                          key={st.flow.id}
+                          onClick={() => onSelectTelemetry(st.telemetryEvent)}
+                          className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-colors cursor-pointer space-y-1.5"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                              #{st.sequenceCode} · {st.title}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 font-mono text-[10px]">
+                              {st.fromSubNode?.label || st.flow.fromNodeId} →{' '}
+                              {st.toSubNode?.label || st.flow.toNodeId}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                            {st.explanation}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              ) : (
+                /* CASE C: Full Main Scenario Page Explanation (`MAIN_SCENARIO`) */
+                <div
+                  data-testid="inspector-main-scenario-overview"
+                  className="flex flex-col gap-5"
+                >
+                  {/* 1. Main Scenario Executive Story-to-Spec Analogy */}
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        <Sparkles className="w-4 h-4" />
+                        <span>
+                          Main Page · Complete Scenario Architecture & Story
+                        </span>
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-mono text-xs font-bold">
+                        {scenario.code}
+                      </span>
+                    </div>
+
+                    <h2 className="text-lg font-extrabold text-zinc-950 dark:text-white leading-snug">
+                      {scenario.name}
+                    </h2>
+
+                    <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                      <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
+                        Story-to-Spec Analogy & Executive Summary
+                      </div>
+                      {scopeContext?.scopedStoryAnalogy || scenario.overview}
+                    </div>
+
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      {scenario.overview}
+                    </p>
+                  </section>
+
+                  {/* 2. Interactive Topology Sections Directory */}
+                  {scopeContext && (
+                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-indigo-500" />
+                          <span>
+                            Diagram Topology Sections (
+                            {scopeContext.schematic.nodes.length} Nodes)
+                          </span>
+                        </h3>
+                        <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
+                          Click any section to view its dedicated page
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {scopeContext.schematic.nodes.map((node) => (
+                          <button
+                            key={node.id}
+                            type="button"
+                            data-testid={`inspector-directory-node-${node.id}`}
+                            onClick={() => {
+                              setForceMainScenarioView(false);
+                              onSelectNode?.(node.id);
+                            }}
+                            className="text-left p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-all cursor-pointer flex items-start gap-3"
+                          >
+                            <div className="w-12 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
+                              <SketchNodeIcon
+                                iconType={node.iconType}
+                                isActive={node.isActive}
+                                isCompromised={node.isCompromised}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-bold">
+                                  #{node.chainOrder} · {node.actionBadge}
+                                </span>
+                                <span className="text-[10px] font-mono text-zinc-400">
+                                  {node.zoneLabel || node.zoneId}
+                                </span>
+                              </div>
+                              <div className="mt-1 text-xs font-bold text-zinc-900 dark:text-white leading-snug">
+                                {node.label}
+                              </div>
+                              <p className="mt-0.5 text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-snug">
+                                {node.activitySummary || node.internalSummary}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
                   )}
 
-                {/* Action Buttons on Focused Node Card */}
-                <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800 flex flex-wrap items-center gap-2">
-                  {!scopeContext?.isInsideSubBoard &&
-                    scopeContext?.selectedMainNode &&
-                    onExpandedNodeChange && (
-                      <button
-                        type="button"
-                        data-testid="inspector-open-node-subboard-btn"
-                        onClick={() => {
-                          onExpandedNodeChange(scopeContext.selectedMainNode!.id);
-                          onCloseInspectorPage?.();
-                        }}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                        <span>Expand Internal Pipeline on Diagram</span>
-                      </button>
-                    )}
-
-                  <button
-                    type="button"
-                    data-testid="inspector-switch-to-main-page-btn"
-                    onClick={() => {
-                      onSelectNode?.(null);
-                      onSelectInternalSubNode?.(null);
-                      onClearTelemetrySelection();
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-xs font-mono font-semibold transition-colors cursor-pointer"
-                  >
-                    Main Scenario Page
-                  </button>
-                </div>
-              </section>
-            ) : (
-              /* Main Scenario Stage Selector & Architecture Card when on Main Scenario Page */
-              <section
-                data-testid="inspector-main-scenario-stage-card"
-                className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-4 shadow-sm flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    SCENARIO STAGE FILTER
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
-                    {scenario.stages.length} Stages
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    data-testid="inspector-stage-pill-overview"
-                    onClick={() => onSelectStage(0)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                      activeStageIndex === 0
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                    }`}
-                  >
-                    All Stages (Overview)
-                  </button>
-                  {scenario.stages.map((st) => (
-                    <button
-                      key={`stage-pill-${st.index}`}
-                      type="button"
-                      data-testid={`inspector-stage-pill-${st.index}`}
-                      onClick={() => onSelectStage(st.index)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                        activeStageIndex === st.index
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                      }`}
-                    >
-                      S{st.index} · {st.mitreTechniqueId}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-
-          {/* =====================================================================
-              RIGHT / MAIN COLUMN (Comprehensive Section or Main Page Explanations)
-              ===================================================================== */}
-          <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-5 min-w-0">
-            {/* Selected Packet / Telemetry Deep-Dive Banner (when a flow packet is clicked) */}
-            {selectedTelemetry && (
-              <div className="rounded-2xl overflow-hidden border border-rose-300 dark:border-rose-800/80 shadow-sm">
-                <SelectedTelemetryDetail
-                  selectedTelemetry={selectedTelemetry}
-                  currentStage={currentStage}
-                  onClearTelemetrySelection={onClearTelemetrySelection}
-                  activeEnvironment={activeEnvironment}
-                  scopeBadgeText={scopeContext?.scopeBadgeText}
-                  effectiveScope={effectiveScope}
-                  width={960}
-                />
-              </div>
-            )}
-
-            {/* TAB 1: OVERVIEW & DEEP-DIVE */}
-            {resolvedActiveTab === 'OVERVIEW' && (
-              <div className="flex flex-col gap-5">
-                {/* Context-Aware Documented Virtual Memory Forensics Callout (ONLY rendered when documented memory exists for this active section) */}
-                {scopedMemory.hasDocumentedMemory && (
-                  <section
-                    data-testid="inspector-overview-memory-callout"
-                    className="rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3"
-                  >
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                        <Cpu className="w-3.5 h-3.5 shrink-0" />
+                  {/* 3. Complete Chronological Stages Breakdown with Stage-Specific Structural Diagrams */}
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-rose-500" />
                         <span>
-                          DOCUMENTED VIRTUAL MEMORY FORENSICS IN THIS SECTION (
-                          {scopedMemory.memoryBlocks.length} VAD REGIONS)
+                          Chronological Attack Stages & Structural Breakdown (
+                          {scenario.stages.length} Stages)
                         </span>
-                      </div>
-                      <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
-                        {scopedMemory.scopeExplanation}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {scopedMemory.memoryBlocks.map((mb, idx) => (
-                          <span
-                            key={`${mb.address}-${idx}`}
-                            className="px-2 py-0.5 rounded text-[10.5px] font-mono bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-rose-200/80 dark:border-rose-800/70"
-                          >
-                            {mb.address} · {mb.section} ({mb.permissions})
-                          </span>
-                        ))}
-                      </div>
+                      </h3>
+                      {onStartWalkthrough && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onStartWalkthrough();
+                            onCloseInspectorPage?.();
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          <Play className="w-3 h-3" />
+                          <span>Play Guided Walkthrough on Diagram</span>
+                        </button>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      data-testid="inspector-overview-open-memory-btn"
-                      onClick={() => handleSelectTab('MEMORY')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
-                    >
-                      <Cpu className="w-3.5 h-3.5" />
-                      <span>Open Memory Forensics</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </section>
-                )}
 
-                {/* CASE A: Clicked Main Topology Node Dedicated Page (`selectedMainNode`) */}
-                {isInspectingSpecificMainNode && scopeContext?.selectedMainNode ? (
-                  <div
-                    data-testid="inspector-selected-main-node-view"
-                    className="flex flex-col gap-5"
-                  >
-                    {/* 1. Executive Story-to-Spec Analogy & Section Explanation */}
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                          <Sparkles className="w-4 h-4" />
-                          <span>
-                            Complete Section Explanation · Node #
-                            {scopeContext.selectedMainNode.chainOrder}
-                          </span>
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-xs font-bold">
-                          {scopeContext.selectedMainNode.actionBadge}
-                        </span>
-                      </div>
-
-                      <h2 className="text-lg font-extrabold text-zinc-950 dark:text-white leading-snug">
-                        {scopeContext.selectedMainNode.label} —{' '}
-                        {scopeContext.selectedMainNode.sublabel}
-                      </h2>
-
-                      {scopeContext.selectedMainNode.hostContext && (
-                        <div className="px-3 py-2 rounded-xl bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/70 text-xs font-mono text-sky-900 dark:text-sky-200">
-                          {scopeContext.selectedMainNode.hostContext}
-                        </div>
-                      )}
-
-                      <p
-                        data-testid="inspector-scoped-story-analogy"
-                        className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed"
-                      >
-                        {scopeContext.selectedMainNode.activitySummary ||
-                          scopeContext.selectedMainNode.internalSummary}
-                      </p>
-
-                      {scopeContext.selectedMainNodeStoryAnalogy && (
-                        <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                          <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
-                            Plain-English Story-to-Spec Analogy
-                          </div>
-                          {scopeContext.selectedMainNodeStoryAnalogy}
-                        </div>
-                      )}
-                    </section>
-
-                    {/* 2. Connected Inbound & Outbound Telemetry Arms */}
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                          <Network className="w-4 h-4 text-rose-500" />
-                          <span>
-                            Connected Network & Process Links (
-                            {scopeContext.selectedMainNodeConnectedFlows.length})
-                          </span>
-                        </h3>
-                        <span className="text-[11px] font-mono text-zinc-500">
-                          Click any link to inspect raw packet telemetry
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3">
-                        {scopeContext.selectedMainNodeConnectedFlows.map(
-                          (fl) => {
-                            const isOutbound =
-                              fl.fromNodeId ===
-                              scopeContext.selectedMainNode?.id;
-                            const isSelected =
-                              selectedTelemetry?.id === fl.telemetryEvent.id;
-                            return (
-                              <div
-                                key={fl.id}
-                                data-testid={`inspector-connected-flow-card-${fl.stepNo}`}
-                                onClick={() =>
-                                  onSelectTelemetry(fl.telemetryEvent)
-                                }
-                                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
-                                  isSelected
-                                    ? 'bg-rose-50/90 dark:bg-rose-950/40 border-rose-500 ring-1 ring-rose-500/30'
-                                    : 'bg-zinc-50/70 dark:bg-zinc-950/50 hover:bg-zinc-100/80 dark:hover:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800'
-                                }`}
-                              >
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span
-                                      className={`px-2 py-0.5 rounded font-mono text-[10px] font-extrabold text-white ${
-                                        isOutbound
-                                          ? 'bg-rose-600'
-                                          : 'bg-amber-600'
-                                      }`}
-                                    >
-                                      STEP #{fl.stepNo} ·{' '}
-                                      {isOutbound ? 'OUTBOUND' : 'INBOUND'}
-                                    </span>
-                                      <span className="text-xs font-bold text-zinc-900 dark:text-white">
-                                        {fl.label}
-                                      </span>
-                                    </div>
-                                    <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 font-mono text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
-                                      {fl.protocolBadge &&
-                                      fl.protocolBadge !==
-                                        fl.telemetryEvent.protocolOrEventId
-                                        ? `${fl.telemetryEvent.protocolOrEventId} · ${fl.protocolBadge}`
-                                        : fl.telemetryEvent.protocolOrEventId}
-                                    </span>
-                                  </div>
-
-                                  <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                                    {fl.telemetryEvent.info}
-                                  </p>
-
-                                  {fl.telemetryEvent.detectionRule && (
-                                    <div className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                                      <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                                      <span>
-                                        Detection Rule ({fl.telemetryEvent.detectionRule.type}):{' '}
-                                        {fl.telemetryEvent.detectionRule.title}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-                      </section>
-
-                    {/* 3. Internal Pipeline Sub-Nodes & Operations Inside This Node */}
-                    {scopeContext.selectedMainNodeSubBoard && (
-                      <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-                              <Cpu className="w-4 h-4" />
-                              <span>
-                                Internal Architecture & Sub-Components (
-                                {
-                                  scopeContext.selectedMainNodeSubBoard.subNodes
-                                    .length
-                                }{' '}
-                                Sub-Nodes)
-                              </span>
-                            </h3>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                              {
-                                scopeContext.selectedMainNodeSubBoard
-                                  .environmentBreadcrumb
-                              }
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {scopeContext.selectedMainNodeSubBoard.subNodes.map(
-                            (subNode) => (
-                              <div
-                                key={subNode.id}
-                                className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 flex flex-col gap-1.5"
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="px-1.5 py-0.5 rounded bg-indigo-600/10 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold">
-                                    #{subNode.chainOrder} · {subNode.actionBadge}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-zinc-500">
-                                    {subNode.sublabel}
-                                  </span>
-                                </div>
-                                <div className="text-xs font-bold text-zinc-900 dark:text-white">
-                                  {subNode.label}
-                                </div>
-                                <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                                  {subNode.internalSummary}
-                                </p>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </section>
-                    )}
-                  </div>
-                ) : effectiveScope !== 'MAIN_SCENARIO' &&
-                  scopeContext?.internalSubBoard &&
-                  scopeContext?.expandedParentNode ? (
-                  /* CASE B: Expanded Sub-Board (`EXPANDED_NODE`) or Internal Sub-Node (`INTERNAL_SUBNODE`) */
-                  <div
-                    data-testid={
-                      effectiveScope === 'INTERNAL_SUBNODE'
-                        ? 'internal-subnode-scoped-overview'
-                        : 'expanded-node-scoped-overview'
-                    }
-                    className="flex flex-col gap-5"
-                  >
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                          {scopeContext.scopeBadgeLabel}
-                        </span>
-                        <span className="text-xs font-mono text-zinc-500">
-                          Parent Host/Process: {scopeContext.expandedParentNode.label}
-                        </span>
-                      </div>
-                      <h2 className="text-lg font-extrabold text-zinc-950 dark:text-white">
-                        {scopeContext.scopeTitle}
-                      </h2>
-                      <p
-                        data-testid="inspector-scoped-story-analogy"
-                        className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed"
-                      >
-                        {scopeContext.scopedStoryAnalogy}
-                      </p>
-                    </section>
-
-                    {/* Internal Sub-Nodes Switcher Grid */}
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-                        Internal Pipeline Sub-Nodes (
-                        {scopeContext.internalSubBoard.subNodes.length})
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {scopeContext.internalSubBoard.subNodes.map((sn) => {
-                          const isFocused =
-                            scopeContext.focusedInternalSubNode?.id === sn.id;
-                          return (
-                            <button
-                              key={sn.id}
-                              type="button"
-                              data-testid={`inspector-subnode-card-${sn.id}`}
-                              onClick={() => onSelectInternalSubNode?.(sn.id)}
-                              className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                isFocused
-                                  ? 'bg-indigo-50/90 dark:bg-indigo-950/50 border-indigo-500 ring-1 ring-indigo-500/30'
-                                  : 'bg-zinc-50/80 dark:bg-zinc-950/60 border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-[10px] font-bold">
-                                  #{sn.chainOrder} · {sn.actionBadge}
-                                </span>
-                                <span className="text-[10px] font-mono text-zinc-500">
-                                  {sn.sublabel}
-                                </span>
-                              </div>
-                              <div className="mt-1.5 text-xs font-bold text-zinc-900 dark:text-white">
-                                {sn.label}
-                              </div>
-                              <p className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                                {sn.internalSummary}
-                              </p>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </section>
-
-                    {/* Scoped Internal Step-by-Step Operations */}
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-                        Internal Telemetry Steps (
-                        {scopeContext.internalSteps.length})
-                      </h3>
-                      <div className="space-y-2.5">
-                        {scopeContext.internalSteps.map((st) => (
+                    <div className="space-y-4">
+                      {scenario.stages.map((st) => {
+                        const isCurrent = activeStageIndex === st.index;
+                        const stageDiagram = buildStepStructuralBreakdown(
+                          scenario,
+                          st,
+                          effectiveScopeContext
+                        );
+                        return (
                           <div
-                            key={st.flow.id}
-                            onClick={() => onSelectTelemetry(st.telemetryEvent)}
-                            className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-colors cursor-pointer space-y-1.5"
+                            key={`stage-card-${st.index}`}
+                            data-testid={`inspector-stage-card-${st.index}`}
+                            className={`p-4 sm:p-5 rounded-xl border transition-all space-y-3 ${
+                              isCurrent
+                                ? 'bg-indigo-50/70 dark:bg-indigo-950/35 border-indigo-500'
+                                : 'bg-zinc-50/70 dark:bg-zinc-950/50 border-zinc-200/80 dark:border-zinc-800'
+                            }`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                                #{st.sequenceCode} · {st.title}
-                              </span>
-                              <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 font-mono text-[10px]">
-                                {st.fromSubNode?.label || st.flow.fromNodeId} →{' '}
-                                {st.toSubNode?.label || st.flow.toNodeId}
-                              </span>
-                            </div>
-                            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                              {st.explanation}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  </div>
-                ) : (
-                  /* CASE C: Full Main Scenario Page Explanation (`MAIN_SCENARIO`) */
-                  <div
-                    data-testid="inspector-main-scenario-overview"
-                    className="flex flex-col gap-5"
-                  >
-                    {/* 1. Main Scenario Executive Story-to-Spec Analogy */}
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                          <Sparkles className="w-4 h-4" />
-                          <span>
-                            Main Page · Complete Scenario Architecture & Story
-                          </span>
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-mono text-xs font-bold">
-                          {scenario.code}
-                        </span>
-                      </div>
-
-                      <h2 className="text-lg font-extrabold text-zinc-950 dark:text-white leading-snug">
-                        {scenario.name}
-                      </h2>
-
-                      <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                        <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
-                          Story-to-Spec Analogy & Executive Summary
-                        </div>
-                        {scopeContext?.scopedStoryAnalogy || scenario.overview}
-                      </div>
-
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                        {scenario.overview}
-                      </p>
-                    </section>
-
-                    {/* 2. Interactive Topology Sections Directory (Click any section to open its dedicated explanation) */}
-                    {scopeContext && (
-                      <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-indigo-500" />
-                            <span>
-                              Diagram Topology Sections (
-                              {scopeContext.schematic.nodes.length} Nodes)
-                            </span>
-                          </h3>
-                          <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
-                            Click any section to view its dedicated page
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {scopeContext.schematic.nodes.map((node) => (
-                            <button
-                              key={node.id}
-                              type="button"
-                              data-testid={`inspector-directory-node-${node.id}`}
-                              onClick={() => {
-                                setForceMainScenarioView(false);
-                                onSelectNode?.(node.id);
-                              }}
-                              className="text-left p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-all cursor-pointer flex items-start gap-3"
-                            >
-                              <div className="w-12 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
-                                <SketchNodeIcon
-                                  iconType={node.iconType}
-                                  isActive={node.isActive}
-                                  isCompromised={node.isCompromised}
-                                />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-1.5">
-                                  <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-bold">
-                                    #{node.chainOrder} · {node.actionBadge}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-zinc-400">
-                                    {node.zoneLabel || node.zoneId}
-                                  </span>
-                                </div>
-                                <div className="mt-1 text-xs font-bold text-zinc-900 dark:text-white leading-snug">
-                                  {node.label}
-                                </div>
-                                <p className="mt-0.5 text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-snug">
-                                  {node.activitySummary || node.internalSummary}
-                                </p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </section>
-                    )}
-
-                    {/* 3. Complete Chronological Stages Breakdown */}
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                          <Activity className="w-4 h-4 text-rose-500" />
-                          <span>
-                            Chronological Attack Stages ({scenario.stages.length}{' '}
-                            Stages)
-                          </span>
-                        </h3>
-                        {onStartWalkthrough && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onStartWalkthrough();
-                              onCloseInspectorPage?.();
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors cursor-pointer"
-                          >
-                            <Play className="w-3 h-3" />
-                            <span>Play Guided Walkthrough on Diagram</span>
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        {scenario.stages.map((st) => {
-                          const isCurrent = activeStageIndex === st.index;
-                          return (
-                            <div
-                              key={`stage-card-${st.index}`}
-                              data-testid={`inspector-stage-card-${st.index}`}
-                              className={`p-4 rounded-xl border transition-all space-y-2 ${
-                                isCurrent
-                                  ? 'bg-indigo-50/70 dark:bg-indigo-950/35 border-indigo-500'
-                                  : 'bg-zinc-50/70 dark:bg-zinc-950/50 border-zinc-200/80 dark:border-zinc-800'
-                              }`}
-                            >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-2 py-0.5 rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold">
-                                    STAGE S{st.index}
-                                  </span>
-                                  <span className="text-sm font-extrabold text-zinc-950 dark:text-white">
-                                    {st.title}
-                                  </span>
-                                </div>
-                                <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 font-mono text-[10.5px] font-bold">
-                                  {st.mitreTechniqueId} · {st.mitreTechniqueName}
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold">
+                                  STAGE S{st.index}
+                                </span>
+                                <span className="text-sm font-extrabold text-zinc-950 dark:text-white leading-snug break-words">
+                                  {st.title}
                                 </span>
                               </div>
-
-                              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                                {st.description}
-                              </p>
-
-                              {st.keySpecs && st.keySpecs.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                  {st.keySpecs.map((spec, sIdx) => (
-                                    <span
-                                      key={sIdx}
-                                      className="px-2 py-0.5 rounded bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/60 text-[10.5px] font-mono text-emerald-900 dark:text-emerald-200"
-                                    >
-                                      <strong>{spec.term}:</strong> {spec.value}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                              <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 font-mono text-[10.5px] font-bold">
+                                {st.mitreTechniqueId} · {st.mitreTechniqueName}
+                              </span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* TAB 2: STEP-BY-STEP GUIDE */}
-            {resolvedActiveTab === 'STEP_GUIDE' && (
-              <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
-                <StepByStepGuidePanel
+                            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                              {st.description}
+                            </p>
+
+                            {/* Stage-Specific Structural Conduit & Process Spawn Diagram */}
+                            <div
+                              data-testid={`stage-structural-conduit-${st.index}`}
+                              className="rounded-xl border border-indigo-200/80 dark:border-indigo-500/30 bg-white dark:bg-zinc-900 p-3 space-y-2.5"
+                            >
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-center text-[11px] font-mono">
+                                {/* Initiator */}
+                                <div className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/60">
+                                  <div className="text-[9.5px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">
+                                    INITIATOR · #{stageDiagram.conduit.initiatorNumber}
+                                  </div>
+                                  <div className="font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                                    {stageDiagram.conduit.initiatorLabel}
+                                  </div>
+                                  <div className="text-[10px] text-zinc-500 leading-snug break-words">
+                                    {stageDiagram.conduit.initiatorSublabel}
+                                  </div>
+                                </div>
+
+                                {/* Forward & Return Action Conduit */}
+                                <div className="p-2.5 rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 flex flex-col gap-1">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[9.5px] font-extrabold">
+                                      {stageDiagram.conduit.forwardArrowCode}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 leading-snug break-words">
+                                      {stageDiagram.conduit.forwardProtocolOrApi}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                                    {stageDiagram.conduit.forwardActionLabel}
+                                  </div>
+                                  <div className="text-[10px] text-emerald-700 dark:text-emerald-400 leading-snug break-words pt-0.5 border-t border-rose-200/60 dark:border-rose-800/40">
+                                    {stageDiagram.conduit.returnArrowCode}:{' '}
+                                    {stageDiagram.conduit.returnVerificationLabel}
+                                  </div>
+                                </div>
+
+                                {/* Target & SIEM Catch */}
+                                <div className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20">
+                                  <div className="text-[9.5px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300">
+                                    TARGET · #{stageDiagram.conduit.targetNumber} ──▶ SENSOR
+                                  </div>
+                                  <div className="font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                                    {stageDiagram.conduit.targetLabel}
+                                  </div>
+                                  <div className="text-[10px] text-emerald-800 dark:text-emerald-300 leading-snug break-words mt-0.5">
+                                    Catch: {stageDiagram.conduit.sensorRuleOrEvent}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {st.keySpecs && st.keySpecs.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {st.keySpecs.map((spec, sIdx) => (
+                                  <span
+                                    key={sIdx}
+                                    className="px-2 py-0.5 rounded bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/60 text-[10.5px] font-mono text-emerald-900 dark:text-emerald-200 leading-snug break-words"
+                                  >
+                                    <strong>{spec.term}:</strong> {spec.value}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: STEP-BY-STEP GUIDE */}
+          {resolvedActiveTab === 'STEP_GUIDE' && (
+            <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
+              <StepByStepGuidePanel
+                scenario={scenario}
+                activeStageIndex={activeStageIndex}
+                cinematicPhase={cinematicPhase}
+                isPlaying={isPlaying}
+                activeEnvironment={activeEnvironment}
+                scopeContext={effectiveScopeContext}
+                onSelectStage={onSelectStage}
+                onSelectTelemetry={onSelectTelemetry}
+                onSelectInternalSubNode={onSelectInternalSubNode}
+                onStartWalkthrough={onStartWalkthrough}
+                onTogglePlay={onTogglePlay}
+                onResetWalkthrough={onResetWalkthrough}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: CHRONOLOGICAL SEQUENCE (STORY-TO-SPEC REQUEST/RESPONSE) */}
+          {resolvedActiveTab === 'SEQUENCE' &&
+            scopedSequence.hasDocumentedSequence && (
+              <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
+                <SequenceView
                   scenario={scenario}
-                  activeStageIndex={activeStageIndex}
-                  cinematicPhase={cinematicPhase}
-                  isPlaying={isPlaying}
-                  activeEnvironment={activeEnvironment}
                   scopeContext={effectiveScopeContext}
-                  onSelectStage={onSelectStage}
-                  onSelectTelemetry={onSelectTelemetry}
-                  onSelectInternalSubNode={onSelectInternalSubNode}
-                  onStartWalkthrough={onStartWalkthrough}
-                  onTogglePlay={onTogglePlay}
-                  onResetWalkthrough={onResetWalkthrough}
-                />
-              </div>
-            )}
-
-            {/* TAB 3: CHRONOLOGICAL SEQUENCE (STORY-TO-SPEC REQUEST/RESPONSE) */}
-            {resolvedActiveTab === 'SEQUENCE' &&
-              scopedSequence.hasDocumentedSequence && (
-                <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
-                  <SequenceView
-                    scenario={scenario}
-                    scopeContext={effectiveScopeContext}
-                    selectedTelemetryId={selectedTelemetry?.id || null}
-                    onSelectTelemetry={onSelectTelemetry}
-                    onSelectStage={onSelectStage}
-                    activeEnvironment={activeEnvironment}
-                  />
-                </div>
-              )}
-
-            {/* TAB 4: DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE) */}
-            {resolvedActiveTab === 'MEMORY' &&
-              scopedMemory.hasDocumentedMemory && (
-                <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
-                  <ProcessMemoryView
-                    scenario={scenario}
-                    activeEnvironment={activeEnvironment}
-                    scopeContext={effectiveScopeContext}
-                    selectedTelemetry={selectedTelemetry}
-                  />
-                </div>
-              )}
-
-            {/* TAB 5: SIEM / EDR LOGS */}
-            {resolvedActiveTab === 'SIEM_LOGS' && (
-              <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
-                <LogInspector
-                  scenario={scenario}
-                  activeStageIndex={activeStageIndex}
                   selectedTelemetryId={selectedTelemetry?.id || null}
                   onSelectTelemetry={onSelectTelemetry}
                   onSelectStage={onSelectStage}
                   activeEnvironment={activeEnvironment}
-                  scopeContext={effectiveScopeContext}
                 />
               </div>
             )}
 
-            {/* TAB 6: THREAT INTEL & SOURCES */}
-            {resolvedActiveTab === 'SOURCES' && (
-              <div className="flex flex-col gap-5">
-                <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
-                  <ThreatIntelCard scenario={scenario} />
-                </div>
-
-                <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                      <Scale className="w-4 h-4" />
-                      <span>
-                        Verified Analytical Sources (
-                        {sourcesProfile.primarySources.length})
-                      </span>
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={onOpenSourcesModal}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer"
-                    >
-                      <span>Open Legal & Citations Modal</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    {LEGAL_COMPLIANCE_STATEMENT.syntheticDataGuarantee}
-                  </p>
-                </section>
+          {/* TAB 4: DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE) */}
+          {resolvedActiveTab === 'MEMORY' &&
+            scopedMemory.hasDocumentedMemory && (
+              <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
+                <ProcessMemoryView
+                  scenario={scenario}
+                  activeEnvironment={activeEnvironment}
+                  scopeContext={effectiveScopeContext}
+                  selectedTelemetry={selectedTelemetry}
+                />
               </div>
             )}
-          </div>
+
+          {/* TAB 5: SIEM / EDR LOGS */}
+          {resolvedActiveTab === 'SIEM_LOGS' && (
+            <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
+              <LogInspector
+                scenario={scenario}
+                activeStageIndex={activeStageIndex}
+                selectedTelemetryId={selectedTelemetry?.id || null}
+                onSelectTelemetry={onSelectTelemetry}
+                onSelectStage={onSelectStage}
+                activeEnvironment={activeEnvironment}
+                scopeContext={effectiveScopeContext}
+              />
+            </div>
+          )}
+
+          {/* TAB 6: THREAT INTEL & SOURCES */}
+          {resolvedActiveTab === 'SOURCES' && (
+            <div className="flex flex-col gap-5">
+              <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
+                <ThreatIntelCard scenario={scenario} />
+              </div>
+
+              <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                    <Scale className="w-4 h-4" />
+                    <span>
+                      Verified Analytical Sources (
+                      {sourcesProfile.primarySources.length})
+                    </span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={onOpenSourcesModal}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer"
+                  >
+                    <span>Open Legal & Citations Modal</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  {LEGAL_COMPLIANCE_STATEMENT.syntheticDataGuarantee}
+                </p>
+              </section>
+            </div>
+          )}
         </div>
       </div>
     </aside>
