@@ -15,7 +15,6 @@ import {
 import {
   buildInternalNodeSubBoard,
   buildWhiteboardSchematic,
-  getStageLocationContext,
   NetworkZoneColumn,
   WhiteboardSketchFlow,
   WhiteboardSketchNode,
@@ -50,14 +49,12 @@ import { SketchWhiteboardSvg } from './canvas/SketchWhiteboardSvg';
 import { ResponsiveMobileZonesView } from './canvas/ResponsiveMobileZonesView';
 import { TacticalGridOverlay } from './canvas/TacticalGridOverlay';
 import { NodeHoverTooltip } from './NodeHoverTooltip';
-import { DiagramLegendPanel } from './DiagramLegendPanel';
 import { PlaybackControlBar } from './PlaybackControlBar';
 import {
   CanvasController,
   CanvasControllerHandle,
 } from './CanvasController';
 import { DraggableDiagramNode } from './DraggableDiagramNode';
-import { OperationalGuideIcon } from './OperationalGuideIcon';
 import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { formatConciseInternalFlowPill } from '@/lib/ui-text-standards';
@@ -70,22 +67,15 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   CheckCircle2,
-  CheckSquare,
-  Cloud,
   Eye,
   EyeOff,
   Hand,
-  Keyboard,
-  Laptop,
   Maximize2,
   Minimize2,
   MousePointer,
   Move,
   RotateCcw,
-  Search,
-  Server,
   Sparkles,
-  X,
 } from 'lucide-react';
 
 export interface AttackVisualizerProps {
@@ -95,7 +85,6 @@ export interface AttackVisualizerProps {
   onSelectTelemetry: (event: TelemetryEvent) => void;
   selectedNodeId: string | null;
   onSelectNode: (nodeId: string | null) => void;
-  onSelectStage?: (stageIndex: number) => void;
   cinematicPhase?: CinematicPhase | null;
   isPlaying?: boolean;
   onTogglePlay?: () => void;
@@ -108,11 +97,8 @@ export interface AttackVisualizerProps {
   onStartWalkthrough?: () => void;
   onResetWalkthrough?: () => void;
   activeEnvironment?: ActiveEnvironmentId;
-  onSelectEnvironment?: (env: ActiveEnvironmentId) => void;
   tacticalMode?: boolean;
   onToggleTacticalMode?: () => void;
-  showLegend?: boolean;
-  onToggleLegend?: () => void;
   shortcutsModalOpen?: boolean;
   onOpenShortcutsModal?: () => void;
   onCloseShortcutsModal?: () => void;
@@ -120,8 +106,6 @@ export interface AttackVisualizerProps {
   onNodeSearchQueryChange?: (query: string) => void;
   focusedSearchNodeId?: string | null;
   focusSearchSeq?: number;
-  autoLayoutTriggerSeq?: number;
-  onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
   customInjectedNodes?: WhiteboardSketchNode[];
   customInjectedFlows?: WhiteboardSketchFlow[];
@@ -170,8 +154,6 @@ export function AttackVisualizer({
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   tacticalMode = false,
   onToggleTacticalMode,
-  showLegend = true,
-  onToggleLegend,
   shortcutsModalOpen = false,
   onOpenShortcutsModal,
   onCloseShortcutsModal,
@@ -179,8 +161,6 @@ export function AttackVisualizer({
   onNodeSearchQueryChange,
   focusedSearchNodeId = null,
   focusSearchSeq = 0,
-  autoLayoutTriggerSeq = 0,
-  onAutoLayoutActiveChange,
   onActiveNodesChange,
   customInjectedNodes = [],
   customInjectedFlows = [],
@@ -207,7 +187,6 @@ export function AttackVisualizer({
   const [draggingZoneTitle, setDraggingZoneTitle] = useState<string | null>(
     null
   );
-  const [marqueeBox, setMarqueeBox] = useState<MarqueeBoxCoords | null>(null);
   const [multiSelectedNodeIds, setMultiSelectedNodeIds] = useState<string[]>(
     []
   );
@@ -390,7 +369,6 @@ export function AttackVisualizer({
         spacePressedRef.current = true;
       } else if (e.key === 'Escape') {
         setMultiSelectedNodeIds([]);
-        setMarqueeBox(null);
         hideMarqueeEl();
       }
     };
@@ -468,18 +446,6 @@ export function AttackVisualizer({
         scenarioBackboneLinks
       ),
     [rawSketchNodes, sketchNodes, rawSketchFlows, scenarioBackboneLinks]
-  );
-
-  const stageLocationContext = useMemo(
-    () =>
-      getStageLocationContext(
-        scenario,
-        sketchNodes,
-        sketchFlows,
-        activeStageIndex,
-        activeEnvironment
-      ),
-    [scenario, sketchNodes, sketchFlows, activeStageIndex, activeEnvironment]
   );
 
   // Selected for inspector/details (single-click). Does not expand the board.
@@ -603,14 +569,10 @@ export function AttackVisualizer({
   const activeAutoLayoutMode = autoLayoutModeByScope[boardScopeKey] || null;
   const isAutoLayoutActive = activeAutoLayoutMode !== null;
 
-  // Sync active nodes and auto-layout status upward to the Top Workbench Toolbar
+  // Sync active nodes upward to the Top Workbench Toolbar Search Bar
   useEffect(() => {
     onActiveNodesChange?.(activeNodes);
   }, [activeNodes, onActiveNodesChange]);
-
-  useEffect(() => {
-    onAutoLayoutActiveChange?.(isAutoLayoutActive);
-  }, [isAutoLayoutActive, onAutoLayoutActiveChange]);
 
   const searchResult = useMemo(
     () => searchAttackGraphNodes(activeNodes, nodeSearchQuery),
@@ -637,7 +599,6 @@ export function AttackVisualizer({
     setPanOffset({ x: 0, y: 0 });
     canvasControllerRef.current?.resetTransform();
     setMultiSelectedNodeIds([]);
-    setMarqueeBox(null);
     hideMarqueeEl();
     setNodeOffsetsByScenario((prev) => {
       const next = { ...prev };
@@ -715,21 +676,6 @@ export function AttackVisualizer({
     rawSketchNodes,
     scenarioZones,
   ]);
-
-  // Trigger Force-Directed Auto-Layout when clicked from Top Workbench Toolbar
-  const lastProcessedAutoLayoutSeqRef = useRef<number>(autoLayoutTriggerSeq);
-  useEffect(() => {
-    if (
-      autoLayoutTriggerSeq > 0 &&
-      autoLayoutTriggerSeq !== lastProcessedAutoLayoutSeqRef.current
-    ) {
-      lastProcessedAutoLayoutSeqRef.current = autoLayoutTriggerSeq;
-      const rafId = window.requestAnimationFrame(() => {
-        handleAutoLayoutNodes();
-      });
-      return () => window.cancelAnimationFrame(rafId);
-    }
-  }, [autoLayoutTriggerSeq, handleAutoLayoutNodes]);
 
   // Center & Focus node when selected from Top Workbench Toolbar Search Bar
   const lastProcessedFocusSeqRef = useRef<number>(focusSearchSeq);
@@ -837,7 +783,7 @@ export function AttackVisualizer({
       const targetEl = e.target instanceof Element ? e.target : null;
       if (
         targetEl?.closest(
-          '[role="tooltip"], [data-scrollable-canvas-overlay="true"], .canvas-scrollable-overlay, [data-testid^="node-hover-tooltip-"], [data-testid^="workbench-tooltip-"], [data-testid="responsive-mobile-zones-view"], [data-testid="entity-drilldown-drawer"], [data-testid="diagram-legend-panel"]'
+          '[role="tooltip"], [data-scrollable-canvas-overlay="true"], .canvas-scrollable-overlay, [data-testid^="node-hover-tooltip-"], [data-testid^="workbench-tooltip-"], [data-testid="responsive-mobile-zones-view"], [data-testid="diagram-legend-panel"]'
         )
       ) {
         return;
@@ -1089,7 +1035,6 @@ export function AttackVisualizer({
             setIsPanningCanvas(false);
             setIsBoxSelectHoldActive(false);
             hideMarqueeEl();
-            setMarqueeBox(null);
           });
         } else {
           hideMarqueeEl();
@@ -1562,7 +1507,6 @@ export function AttackVisualizer({
       }
       if (commandId === 'ESCAPE') {
         setMultiSelectedNodeIds([]);
-        setMarqueeBox(null);
         hideMarqueeEl();
         onCloseShortcutsModal?.();
         return;
@@ -1607,10 +1551,6 @@ export function AttackVisualizer({
         onToggleTacticalMode?.();
         return;
       }
-      if (commandId === 'TOGGLE_LEGEND') {
-        onToggleLegend?.();
-        return;
-      }
       if (commandId === 'PLAY_PAUSE_SEQUENCE') {
         if (onTogglePlay) {
           onTogglePlay();
@@ -1647,7 +1587,6 @@ export function AttackVisualizer({
       onStartWalkthrough,
       onStepBackward,
       onStepForward,
-      onToggleLegend,
       onTogglePlay,
       onToggleTacticalMode,
       shortcutsModalOpen,
@@ -1715,306 +1654,9 @@ export function AttackVisualizer({
     ]
   );
 
-  const envBadgeColorClass =
-    activeEnvironment === 'SERVER'
-      ? 'bg-violet-50 dark:bg-violet-950/75 text-violet-800 dark:text-violet-200 border-violet-300 dark:border-violet-800'
-      : activeEnvironment === 'CLOUD'
-      ? 'bg-emerald-50 dark:bg-emerald-950/75 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800'
-      : 'bg-sky-50 dark:bg-sky-950/75 text-sky-800 dark:text-sky-200 border-sky-300 dark:border-sky-800';
-
-  const envIconNode =
-    activeEnvironment === 'SERVER' ? (
-      <Server className="w-3 h-3 shrink-0" />
-    ) : activeEnvironment === 'CLOUD' ? (
-      <Cloud className="w-3 h-3 shrink-0" />
-    ) : (
-      <Laptop className="w-3 h-3 shrink-0" />
-    );
-
-  // Interactive Mode & Multi-Select Controls Strip (rendered in top bar of canvas, zero truncation)
-  const interactionToolbarNode = (
-    <div
-      data-testid="canvas-interaction-toolbar"
-      onClick={(e) => e.stopPropagation()}
-      className="flex flex-wrap items-center gap-1.5 shrink-0"
-    >
-      {/* Active Node Search Filter Status Pill */}
-      {searchResult.isFiltering && (
-        <WorkbenchIconTooltip
-          label={`Search Filter: "${searchResult.query}"`}
-          badge={`${searchResult.matchedNodeIds.length}/${searchResult.totalNodes}`}
-          detail="Matching attack nodes are highlighted on the graph; click X to clear filter"
-          side="bottom"
-        >
-          <span
-            data-testid="canvas-search-filter-pill"
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-400 dark:border-amber-700 font-mono text-[10px] font-bold whitespace-nowrap"
-          >
-            <Search className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span>
-              {searchResult.matchedNodeIds.length}/{searchResult.totalNodes}{' '}
-              Matched
-            </span>
-            {onNodeSearchQueryChange && (
-              <button
-                type="button"
-                aria-label="Clear canvas node search filter"
-                onClick={() => onNodeSearchQueryChange('')}
-                className="ml-0.5 rounded-full p-0.5 hover:bg-amber-200/80 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-200 cursor-pointer"
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            )}
-          </span>
-        </WorkbenchIconTooltip>
-      )}
-
-      {/* Multi-Selected Nodes Count Pill (Concise Label + Rich Tooltip) */}
-      {multiSelectedNodeIds.length > 0 && (
-        <WorkbenchIconTooltip
-          label={`${multiSelectedNodeIds.length} Nodes Selected`}
-          badge="GROUP DRAG"
-          detail="Drag any selected node to reposition the group together"
-          side="bottom"
-        >
-          <span
-            data-testid="multi-selection-count-badge"
-            data-selected-count={multiSelectedNodeIds.length}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-600 text-white font-mono text-[10px] font-bold shadow-2xs whitespace-nowrap cursor-default"
-          >
-            <Move className="w-3 h-3 shrink-0" />
-            <span>{multiSelectedNodeIds.length} Selected</span>
-          </span>
-        </WorkbenchIconTooltip>
-      )}
-
-      {/* Desktop Whiteboard Pointer, Layout & Shortcut Controls (Hidden on mobile card view unless Desktop canvas is forced) */}
-      <div
-        className={`${
-          forceDesktopCanvas ? 'flex' : 'hidden md:flex'
-        } flex-wrap items-center gap-1.5`}
-      >
-        {/* Segmented Tool Switcher: Box Select (B) vs Pan Page (P) */}
-        <div
-          role="group"
-          aria-label="Canvas Pointer Interaction Mode"
-          className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700"
-        >
-          <WorkbenchIconTooltip
-            label="Box Select Tool"
-            badge="B"
-            detail="Rubber-band marquee selection (or Right-Click + Hold)"
-            side="bottom"
-          >
-            <button
-              type="button"
-              data-testid="canvas-mode-select-btn"
-              aria-pressed={interactionMode === 'SELECT'}
-              onClick={() => setInteractionMode('SELECT')}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                interactionMode === 'SELECT'
-                  ? 'bg-indigo-600 text-white shadow-2xs'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
-              }`}
-            >
-              <MousePointer className="w-3 h-3 shrink-0" />
-              <span className="hidden sm:inline">Box Select</span>
-              <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
-                B
-              </kbd>
-            </button>
-          </WorkbenchIconTooltip>
-
-          <WorkbenchIconTooltip
-            label="Pan / Pen Page Tool"
-            badge="P"
-            detail="Smooth 60/120fps canvas pan (or Left-Click + Hold)"
-            side="bottom"
-          >
-            <button
-              type="button"
-              data-testid="canvas-mode-pan-btn"
-              aria-pressed={interactionMode === 'PAN'}
-              onClick={() => setInteractionMode('PAN')}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                interactionMode === 'PAN'
-                  ? 'bg-indigo-600 text-white shadow-2xs'
-                  : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
-              }`}
-            >
-              <Hand className="w-3 h-3 shrink-0" />
-              <span className="hidden sm:inline">Pan Page</span>
-              <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
-                P
-              </kbd>
-            </button>
-          </WorkbenchIconTooltip>
-        </div>
-
-        {/* Force-Directed Auto-Layout Button */}
-        <WorkbenchIconTooltip
-          label="Force-Directed Auto-Layout"
-          badge={
-            activeAutoLayoutMode
-              ? `FORCE · ${activeAutoLayoutMode}`
-              : 'HOTKEY A'
-          }
-          detail="Automatically organize attack graph nodes using Coulomb repulsion and Hooke spring forces for optimal readability"
-          side="bottom"
-        >
-          <button
-            type="button"
-            data-testid="canvas-auto-layout-btn"
-            data-auto-layout-mode={activeAutoLayoutMode || 'NONE'}
-            aria-pressed={isAutoLayoutActive}
-            onClick={handleAutoLayoutNodes}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-              isAutoLayoutActive
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                : 'bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80'
-            }`}
-          >
-            <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
-            <span className="hidden sm:inline">Auto-Layout</span>
-            <kbd className="hidden sm:inline-block px-1 py-0.1 rounded bg-black/15 dark:bg-white/15 text-[8.5px] font-mono">
-              A
-            </kbd>
-          </button>
-        </WorkbenchIconTooltip>
-
-        {/* Select All / Deselect All Objects Button */}
-        <WorkbenchIconTooltip
-          label={
-            multiSelectedNodeIds.length === activeNodes.length
-              ? 'Deselect All Nodes'
-              : 'Select All Nodes'
-          }
-          badge="CTRL+A"
-          detail="Select all hosts & appliances to move together"
-          side="bottom"
-        >
-          <button
-            type="button"
-            data-testid="canvas-select-all-btn"
-            onClick={handleSelectAllNodes}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-              multiSelectedNodeIds.length === activeNodes.length &&
-              activeNodes.length > 0
-                ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-400 dark:border-indigo-700'
-                : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
-            }`}
-          >
-            <CheckSquare className="w-3 h-3 shrink-0" />
-            <span className="hidden 2xl:inline">
-              {multiSelectedNodeIds.length === activeNodes.length
-                ? 'Deselect All'
-                : 'Select All'}
-            </span>
-          </button>
-        </WorkbenchIconTooltip>
-
-        {/* Diagram Node Tooltips Show / Hide Toggle Button */}
-        <WorkbenchIconTooltip
-          label={
-            diagramTooltipsEnabled
-              ? 'Diagram Tooltips: Shown'
-              : 'Diagram Tooltips: Hidden'
-          }
-          badge={diagramTooltipsEnabled ? 'SHOW' : 'HIDE'}
-          detail="Toggle hover inspection tooltips on diagram nodes (or use Hide/Show inside any diagram tooltip)"
-          side="bottom"
-          isDiagramTooltip={true}
-        >
-          <button
-            type="button"
-            data-testid="canvas-toggle-diagram-tooltips-btn"
-            aria-pressed={diagramTooltipsEnabled}
-            onClick={() => setDiagramTooltipsEnabled((prev) => !prev)}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-              diagramTooltipsEnabled
-                ? 'bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
-                : 'bg-zinc-50 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100'
-            }`}
-          >
-            {diagramTooltipsEnabled ? (
-              <Eye className="w-3 h-3 text-emerald-500 shrink-0" />
-            ) : (
-              <EyeOff className="w-3 h-3 shrink-0" />
-            )}
-            <span className="hidden xl:inline">
-              {diagramTooltipsEnabled ? 'Tooltips: Show' : 'Tooltips: Hide'}
-            </span>
-          </button>
-        </WorkbenchIconTooltip>
-
-        {/* Keyboard Shortcuts Overlay Trigger Button */}
-        {onOpenShortcutsModal && (
-          <WorkbenchIconTooltip
-            label="Keyboard Shortcuts"
-            badge="?"
-            detail="Hotkeys for Tools (B/P) & Canvas Navigation"
-            side="bottom"
-            align="right"
-          >
-            <button
-              type="button"
-              data-testid="canvas-shortcuts-btn"
-              aria-label="Open Keyboard Shortcuts Overlay"
-              onClick={onOpenShortcutsModal}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 text-[10px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <Keyboard className="w-3 h-3 text-indigo-500 shrink-0" />
-              <span className="hidden 2xl:inline">Hotkeys</span>
-            </button>
-          </WorkbenchIconTooltip>
-        )}
-
-        {/* Reset Layout / Positions / Pan & Zoom Button */}
-        {hasCustomLayoutOrView && (
-          <WorkbenchIconTooltip
-            label="Reset Canvas Layout"
-            badge="0 / R"
-            detail="Restore default node/zone positions, 100% zoom, and (0,0) pan"
-            side="bottom"
-            align="right"
-          >
-            <button
-              type="button"
-              data-testid="canvas-reset-layout-btn"
-              onClick={handleResetCanvasLayout}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[10px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <RotateCcw className="w-2.5 h-2.5 shrink-0" />
-              <span>Reset</span>
-            </button>
-          </WorkbenchIconTooltip>
-        )}
-      </div>
-
-      {/* Hide Top Canvas Bar Button */}
-      <WorkbenchIconTooltip
-        label="Hide Top Toolbar"
-        badge="HIDE"
-        detail="Collapse top canvas bar to maximize diagram space"
-        side="bottom"
-        align="right"
-      >
-        <button
-          type="button"
-          data-testid="hide-canvas-top-bar-btn"
-          aria-label="Hide Top Canvas Toolbar"
-          onClick={() => setTopBarHidden(true)}
-          className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white border border-zinc-200/80 dark:border-zinc-700 transition-colors cursor-pointer"
-        >
-          <EyeOff className="w-3 h-3" />
-        </button>
-      </WorkbenchIconTooltip>
-    </div>
-    );
-
   return (
     <div
-      className="relative flex-1 w-full h-full flex flex-col min-h-0 overflow-hidden select-none p-2.5 gap-2"
+      className="relative flex-1 w-full h-full flex flex-col min-h-0 overflow-hidden select-none p-2 gap-1.5"
       data-testid="attack-visualizer"
       data-inspector-scope={
         internalSubBoard
@@ -2033,11 +1675,10 @@ export function AttackVisualizer({
       onContextMenu={(e) => e.preventDefault()}
       dir="ltr"
     >
-      {/* Persistent Environment & Expandable Zone Sub-View Context Bar (Collapsible via topBarHidden) */}
+      {/* Expandable Zone Sub-View Context Bar (Only rendered when expanded inside an internal sub-board) */}
       <AnimatePresence mode="wait" initial={false}>
-        {!topBarHidden &&
-          (internalSubBoard && expandedSketchNode ? (
-            <motion.div
+        {!topBarHidden && internalSubBoard && expandedSketchNode && (
+          <motion.div
             key={`subboard-header-${expandedSketchNode.id}`}
             initial={{ opacity: 0, y: -12, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -2045,10 +1686,10 @@ export function AttackVisualizer({
             transition={{ type: 'spring', stiffness: 340, damping: 26 }}
             onClick={(e) => e.stopPropagation()}
             data-testid="expanded-node-subboard-header"
-              className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1"
+            className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-col gap-1"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <motion.button
                   type="button"
                   whileHover={{ x: -2, scale: 1.02 }}
@@ -2058,69 +1699,82 @@ export function AttackVisualizer({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 text-[11px] font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back to Parent View</span>
+                  <span>Back to Parent View</span>
                 </motion.button>
 
-                  <WorkbenchIconTooltip
-                    label={internalSubBoard.title}
-                    badge={`NODE #${expandedSketchNode.chainOrder}`}
-                    detail={internalSubBoard.environmentBreadcrumb}
-                    side="bottom"
-                    align="left"
-                  >
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10.5px] font-semibold cursor-default whitespace-nowrap">
-                      <Maximize2 className="w-3 h-3 shrink-0" />
-                      <span>
-                        Node #{expandedSketchNode.chainOrder} ·{' '}
-                        {expandedSketchNode.label}
-                </span>
-                </span>
-                  </WorkbenchIconTooltip>
+                <WorkbenchIconTooltip
+                  label={internalSubBoard.title}
+                  badge={`NODE #${expandedSketchNode.chainOrder}`}
+                  detail={internalSubBoard.environmentBreadcrumb}
+                  side="bottom"
+                  align="left"
+                >
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono text-[10.5px] font-semibold cursor-default whitespace-nowrap">
+                    <Maximize2 className="w-3 h-3 shrink-0" />
+                    <span>
+                      Node #{expandedSketchNode.chainOrder} ·{' '}
+                      {expandedSketchNode.label}
+                    </span>
+                  </span>
+                </WorkbenchIconTooltip>
 
                 {companionSketchNode && (
-                    <WorkbenchIconTooltip
-                      label={
-                        internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
-                          ? `Switch to Host: ${companionSketchNode.label}`
-                          : `Switch to Process: ${companionSketchNode.label}`
-                      }
-                      badge={companionSketchNode.sublabel}
-                      detail={companionSketchNode.internalSummary}
-                      side="bottom"
-                    >
-                  <button
-                    type="button"
-                    data-testid="switch-companion-host-process-btn"
-                    onClick={() => handleNodeExpand(companionSketchNode)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
-                          internalSubBoard.currentScopeType ===
-                          'MALWARE_ON_HOST'
-                        ? 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800'
-                        : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
-                    }`}
+                  <WorkbenchIconTooltip
+                    label={
+                      internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
+                        ? `Switch to Host: ${companionSketchNode.label}`
+                        : `Switch to Process: ${companionSketchNode.label}`
+                    }
+                    badge={companionSketchNode.sublabel}
+                    detail={companionSketchNode.internalSummary}
+                    side="bottom"
                   >
-                    <ArrowRightLeft className="w-3 h-3 shrink-0" />
-                    <span>
-                          {internalSubBoard.currentScopeType ===
-                          'MALWARE_ON_HOST'
-                            ? `Host: ${companionSketchNode.label}`
-                            : `Process: ${companionSketchNode.label}`}
-                    </span>
-                  </button>
-                    </WorkbenchIconTooltip>
-                  )}
-                </div>
+                    <button
+                      type="button"
+                      data-testid="switch-companion-host-process-btn"
+                      onClick={() => handleNodeExpand(companionSketchNode)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-colors cursor-pointer whitespace-nowrap ${
+                        internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
+                          ? 'bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800'
+                          : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+                      }`}
+                    >
+                      <ArrowRightLeft className="w-3 h-3 shrink-0" />
+                      <span>
+                        {internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
+                          ? `Host: ${companionSketchNode.label}`
+                          : `Process: ${companionSketchNode.label}`}
+                      </span>
+                    </button>
+                  </WorkbenchIconTooltip>
+                )}
+              </div>
 
-                {interactionToolbarNode}
+              <WorkbenchIconTooltip
+                label="Hide Sub-Board Header"
+                badge="HIDE"
+                detail="Collapse sub-board breadcrumb header to maximize diagram space"
+                side="bottom"
+                align="right"
+              >
+                <button
+                  type="button"
+                  data-testid="hide-canvas-top-bar-btn"
+                  aria-label="Hide Top Canvas Toolbar"
+                  onClick={() => setTopBarHidden(true)}
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white border border-zinc-200/80 dark:border-zinc-700 transition-colors cursor-pointer"
+                >
+                  <EyeOff className="w-3 h-3" />
+                </button>
+              </WorkbenchIconTooltip>
             </div>
 
             <div
               data-testid="expanded-node-environment-breadcrumb"
-                className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border leading-snug break-words ${
+              className={`w-full px-2.5 py-1 rounded-lg text-[11px] font-medium border leading-snug break-words ${
                 internalSubBoard.currentScopeType === 'MALWARE_ON_HOST'
                   ? 'bg-rose-50/80 dark:bg-rose-950/50 text-rose-900 dark:text-rose-200 border-rose-200/80 dark:border-rose-800/70'
-                    : internalSubBoard.currentScopeType ===
-                      'HOST_OS_ENVIRONMENT'
+                  : internalSubBoard.currentScopeType === 'HOST_OS_ENVIRONMENT'
                   ? 'bg-sky-50/80 dark:bg-sky-950/50 text-sky-900 dark:text-sky-200 border-sky-200/80 dark:border-sky-800/70'
                   : 'bg-zinc-50 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-700'
               }`}
@@ -2128,63 +1782,7 @@ export function AttackVisualizer({
               {internalSubBoard.environmentBreadcrumb}
             </div>
           </motion.div>
-        ) : (
-          <motion.div
-            key={`main-context-bar-${scenario.id}-${activeStageIndex}-${activeEnvironment}`}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18 }}
-            onClick={(e) => e.stopPropagation()}
-            data-testid="current-environment-context-bar"
-            className="relative z-30 shrink-0 px-3 py-1.5 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs flex flex-wrap items-center justify-between gap-2"
-          >
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
-              <div className="hidden sm:block">
-                <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
-              </div>
-
-                <WorkbenchIconTooltip
-                  label={envProfile.badgeLabel}
-                  badge={envProfile.environmentTag}
-                  detail={`${envProfile.primaryHostname} · ${envProfile.osSummary} (${envProfile.subnetBadge})`}
-                  side="bottom"
-                  align="left"
-                >
-              <span
-                data-testid="canvas-active-environment-pill"
-                data-environment-id={activeEnvironment}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border font-mono text-[10px] font-bold whitespace-nowrap cursor-default ${envBadgeColorClass}`}
-              >
-                {envIconNode}
-                <span>{envProfile.badgeLabel}</span>
-                    <span className="hidden xl:inline opacity-75">
-                      · {envProfile.environmentTag}
-              </span>
-                  </span>
-                </WorkbenchIconTooltip>
-
-                <WorkbenchIconTooltip
-                  label={
-                    activeStageIndex > 0
-                      ? `Stage #${activeStageIndex} Focus`
-                      : `Full Topology (${scenario.stages.length} Steps)`
-                  }
-                  badge={scenario.code}
-                  detail={stageLocationContext.whereWeAreSummary}
-                  side="bottom"
-                >
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-mono text-[10px] font-bold whitespace-nowrap cursor-default">
-                {activeStageIndex > 0
-                  ? `STAGE #${activeStageIndex} FOCUS`
-                  : `TOPOLOGY (${scenario.stages.length} STEPS)`}
-              </span>
-                </WorkbenchIconTooltip>
-            </div>
-
-              {interactionToolbarNode}
-          </motion.div>
-          ))}
+        )}
       </AnimatePresence>
 
       {/* Maximum-Height Center Diagram Canvas with CanvasController (react-zoom-pan-pinch), Scrollbars, Mouse Pan, Shift+Click Multi-Selection & Zone/Node Dragging */}
@@ -2239,31 +1837,29 @@ export function AttackVisualizer({
               </div>
             </div>
           )}
-          {/* Floating Top-Right "Show Toolbar" Pill when Top Bar is Hidden */}
-          {topBarHidden && (
+          {/* Floating Top-Right "Show Header" Pill when Inside SubBoard and Header is Hidden */}
+          {topBarHidden && internalSubBoard && (
             <div
               onClick={(e) => e.stopPropagation()}
               className="absolute top-3 right-3 z-30 flex items-center gap-1.5"
             >
-              {internalSubBoard && (
-                <WorkbenchIconTooltip
-                  label="Back to Parent Topology"
-                  detail="Exit this node's internal pipeline and return to the parent network diagram"
-                  placement="bottom"
-                >
-                  <button
-                    type="button"
-                    onClick={handleBackToMainTopology}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 dark:bg-zinc-100/95 text-white dark:text-zinc-900 text-[11px] font-semibold shadow-md backdrop-blur-md cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back</span>
-                  </button>
-                </WorkbenchIconTooltip>
-              )}
               <WorkbenchIconTooltip
-                label="Show Canvas Top Bar"
-                detail="Restore the environment context bar and canvas interaction tools"
+                label="Back to Parent Topology"
+                detail="Exit this node's internal pipeline and return to the parent network diagram"
+                placement="bottom"
+              >
+                <button
+                  type="button"
+                  onClick={handleBackToMainTopology}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 dark:bg-zinc-100/95 text-white dark:text-zinc-900 text-[11px] font-semibold shadow-md backdrop-blur-md cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+              </WorkbenchIconTooltip>
+              <WorkbenchIconTooltip
+                label="Show Sub-Board Header"
+                detail="Restore the expanded node sub-board breadcrumb bar"
                 placement="bottom"
               >
                 <button
@@ -2274,7 +1870,7 @@ export function AttackVisualizer({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 text-zinc-700 dark:text-zinc-200 hover:text-indigo-600 dark:hover:text-indigo-400 border border-zinc-200/90 dark:border-zinc-700 text-[11px] font-mono font-semibold shadow-md backdrop-blur-md transition-colors cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Show Toolbar</span>
+                  <span>Show Header</span>
                 </button>
               </WorkbenchIconTooltip>
             </div>
@@ -2814,21 +2410,14 @@ export function AttackVisualizer({
             </div>
           )}
 
-          {/* Bottom-Left: Persistent Visual Semantics Legend Panel + Camera Status (Pinned in Viewport) */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`${
-              forceDesktopCanvas ? 'flex' : 'hidden sm:flex'
-            } flex-col items-start gap-2 absolute bottom-4 left-4 z-30`}
-          >
-            {showLegend && (
-              <DiagramLegendPanel
-                tacticalMode={tacticalMode}
-                defaultExpanded={false}
-              />
-              )}
-
-            {(activeStageIndex > 0 || director.phase !== 'OVERVIEW') && (
+          {/* Bottom-Left: Active Camera Status HUD (Pinned in Viewport) */}
+          {(activeStageIndex > 0 || director.phase !== 'OVERVIEW') && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`${
+                forceDesktopCanvas ? 'flex' : 'hidden sm:flex'
+              } flex-col items-start gap-2 absolute bottom-4 left-4 z-30`}
+            >
               <div
                 data-testid="camera-status-hud"
                 className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900/90 dark:bg-zinc-900/95 text-white border border-zinc-700/80 text-[10.5px] font-mono shadow-md backdrop-blur-xs"
@@ -2844,13 +2433,13 @@ export function AttackVisualizer({
                   {director.camera.frameTitle}
                 </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Bottom-Right: Play/Pause Sequence Control Bar (Pinned in Viewport) */}
+          {/* Bottom-Right: Merged Compact Floating Control Bar (Pinned in Viewport) */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="flex flex-col items-end gap-2 absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-30"
+            className="pointer-events-none flex flex-col items-end gap-1.5 absolute bottom-2 left-12 right-2 sm:bottom-2.5 sm:right-2.5 z-30"
           >
             <PlaybackControlBar
               isPlaying={isPlaying}
@@ -2900,6 +2489,29 @@ export function AttackVisualizer({
                 });
               }}
               onResetZoom={handleResetCanvasLayout}
+              interactionMode={interactionMode}
+              onInteractionModeChange={setInteractionMode}
+              isAutoLayoutActive={isAutoLayoutActive}
+              activeAutoLayoutMode={activeAutoLayoutMode}
+              onAutoLayoutNodes={handleAutoLayoutNodes}
+              multiSelectedCount={multiSelectedNodeIds.length}
+              totalNodesCount={activeNodes.length}
+              onSelectAllNodes={handleSelectAllNodes}
+              diagramTooltipsEnabled={diagramTooltipsEnabled}
+              onToggleDiagramTooltips={() =>
+                setDiagramTooltipsEnabled((prev) => !prev)
+              }
+              onOpenShortcutsModal={onOpenShortcutsModal}
+              hasCustomLayoutOrView={hasCustomLayoutOrView}
+              isSearchFiltering={searchResult.isFiltering}
+              searchQuery={searchResult.query}
+              matchedNodesCount={searchResult.matchedNodeIds.length}
+              onClearSearchFilter={
+                onNodeSearchQueryChange
+                  ? () => onNodeSearchQueryChange('')
+                  : undefined
+              }
+              forceDesktopCanvas={forceDesktopCanvas}
             />
           </div>
         </div>
@@ -3041,7 +2653,6 @@ export function AttackVisualizer({
         effectiveScale={effectiveScale}
         autoCameraEnabled={autoCameraEnabled}
         tacticalMode={tacticalMode}
-        showLegend={showLegend}
         isPlaying={isPlaying}
         onExecuteCommand={executeShortcutCommand}
       />

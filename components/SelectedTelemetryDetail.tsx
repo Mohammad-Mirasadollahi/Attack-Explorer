@@ -50,16 +50,14 @@ export function SelectedTelemetryDetail({
 
   return (
     <motion.aside
-      data-testid="inspector-panel"
-      data-panel-width={width}
+      data-testid="selected-telemetry-detail-card"
       data-inspector-scope={effectiveScope}
-      initial={{ width: 0, opacity: 0, x: 20 }}
-      animate={{ width, opacity: 1, x: 0 }}
-      exit={{ width: 0, opacity: 0, x: 20 }}
-      transition={{ duration: 0.12, ease: 'easeOut' }}
-      style={{ width }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.14, ease: 'easeOut' }}
       dir="ltr"
-      className="fixed lg:relative inset-y-12 lg:inset-y-auto right-0 z-30 max-w-[90vw] shrink-0 bg-white dark:bg-zinc-950 border-l border-zinc-200/80 dark:border-zinc-800/80 flex flex-col h-[calc(100dvh-3rem)] lg:h-full shadow-xl lg:shadow-none overflow-hidden"
+      className="w-full bg-white dark:bg-zinc-950 flex flex-col overflow-hidden"
     >
       {resizeHandle}
       {/* Clean Header with Back Action */}

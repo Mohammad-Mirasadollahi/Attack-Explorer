@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'motion/react';
 import { ATTACK_SCENARIOS, AttackScenario } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
-  ComputedStageView,
   DEFAULT_ACTIVE_ENVIRONMENT,
   filterScenarios,
   getActiveEnvironmentProfile,
@@ -15,7 +14,6 @@ import { searchAttackGraphNodes } from '@/lib/canvas-interaction-engine';
 import { CanvasViewMode } from './DiagramCanvas';
 import { AnimeBrandLogo } from './AnimeBrandLogo';
 import { SettingsDrawer } from './SettingsDrawer';
-import { OperationalGuideIcon } from './OperationalGuideIcon';
 import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 import { WorkbenchLayoutMode } from '@/lib/layout-preference';
 import {
@@ -35,7 +33,6 @@ import {
   Server,
   Settings,
   ShieldAlert,
-  Sparkles,
   Table2,
   UserRound,
   X,
@@ -43,24 +40,13 @@ import {
 
 interface AttackHeaderProps {
   scenario: AttackScenario;
-  stageView: ComputedStageView;
   activeEnvironment?: ActiveEnvironmentId;
   onSelectEnvironment?: (env: ActiveEnvironmentId) => void;
   tacticalMode?: boolean;
   onToggleTacticalMode?: () => void;
-  showLegend?: boolean;
-  onToggleLegend?: () => void;
   viewMode: CanvasViewMode;
   onViewModeChange: (mode: CanvasViewMode) => void;
-  onSelectStage: (stageIndex: number) => void;
   onSelectScenario?: (scenarioId: string) => void;
-  isPlaying: boolean;
-  onTogglePlay: () => void;
-  onStepForward: () => void;
-  onStepBackward: () => void;
-  onReset: () => void;
-  canStepBackward: boolean;
-  canStepForward: boolean;
   playbackSpeed: number;
   onSpeedChange: (speed: number) => void;
   isDark: boolean;
@@ -81,8 +67,6 @@ interface AttackHeaderProps {
   onNodeSearchQueryChange?: (query: string) => void;
   graphNodes?: WhiteboardSketchNode[];
   onFocusGraphNode?: (nodeId: string) => void;
-  onTriggerAutoLayout?: () => void;
-  isAutoLayoutActive?: boolean;
 }
 
 export function AttackHeader({
@@ -91,8 +75,6 @@ export function AttackHeader({
   onSelectEnvironment,
   tacticalMode = false,
   onToggleTacticalMode,
-  showLegend = true,
-  onToggleLegend,
   viewMode,
   onViewModeChange,
   onSelectScenario,
@@ -116,8 +98,6 @@ export function AttackHeader({
   onNodeSearchQueryChange,
   graphNodes = [],
   onFocusGraphNode,
-  onTriggerAutoLayout,
-  isAutoLayoutActive = false,
 }: AttackHeaderProps) {
   const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
@@ -218,12 +198,12 @@ export function AttackHeader({
         data-testid="persistent-navigation-bar"
         className="relative shrink-0 min-h-12 h-auto py-1 sm:py-0 sm:h-12 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 px-2 sm:px-3.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 z-40 overflow-visible"
       >
-        {/* Left Zone: Animated Logo + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
+        {/* Left Zone: Animated Logo (Returns to Last Visited Diagram in Memory) + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
           <WorkbenchIconTooltip
             label="Attack Explorer"
-            badge="INTRO"
-            detail="Click to replay anime entrance sequence"
+            badge="MEMORY"
+            detail="Return to the last visited diagram stored in memory"
             align="left"
           >
             <AnimeBrandLogo size="sm" showWordmark onClick={onReplayIntro} />
@@ -555,72 +535,10 @@ export function AttackHeader({
             </AnimatePresence>
           </div>
 
-          {/* Top Workbench Toolbar Force-Directed Auto-Layout Trigger Button */}
-          {onTriggerAutoLayout && (
-            <div className="flex items-center shrink-0">
-              <WorkbenchIconTooltip
-                label="Force-Directed Auto-Layout"
-                badge={isAutoLayoutActive ? 'APPLIED · A' : 'HOTKEY A'}
-                detail="Automatically organize attack graph nodes via Coulomb repulsion & Hooke spring forces"
-              >
-                <button
-                  type="button"
-                  data-testid="top-toolbar-auto-layout-btn"
-                  aria-label="Auto-Layout Attack Graph"
-                  aria-pressed={isAutoLayoutActive}
-                  onClick={() => {
-                    if (viewMode !== 'TOPOLOGY') {
-                      onViewModeChange('TOPOLOGY');
-                    }
-                    onTriggerAutoLayout();
-                  }}
-                  className={`h-8 px-2 sm:px-2.5 flex items-center gap-1.5 rounded-lg border text-[11px] font-mono font-semibold transition-all cursor-pointer shrink-0 ${
-                    isAutoLayoutActive
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                      : 'bg-zinc-50/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-700 dark:hover:text-indigo-300 hover:border-indigo-300'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span className="hidden xl:inline whitespace-nowrap">
-                    Auto-Layout
-                  </span>
-                </button>
-              </WorkbenchIconTooltip>
-            </div>
-          )}
-
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block shrink-0" />
 
-          {/* Quick Navigation Icon-Only Links: Operational Guide + MITRE Library + Log Analyzer + Sources */}
+          {/* Quick Navigation Icon-Only Links: MITRE Library + Log Analyzer + Sources */}
           <div className="hidden sm:flex items-center gap-1 shrink-0">
-            <WorkbenchIconTooltip
-              label="Operational Guide"
-              badge={showLegend ? 'ACTIVE' : 'GUIDE'}
-              detail="Toggle Visual Semantics & Interactive Diagram Legend"
-            >
-              <button
-                type="button"
-                data-testid="nav-operational-guide-btn"
-                aria-label="Operational Guide"
-                aria-pressed={showLegend}
-                onClick={() => {
-                  if (viewMode !== 'TOPOLOGY') {
-                    onViewModeChange('TOPOLOGY');
-                  }
-                  onToggleLegend?.();
-                }}
-                className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer ${
-                  showLegend
-                    ? tacticalMode
-                      ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/80 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                      : 'bg-indigo-50/95 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-200 border-indigo-300/90 dark:border-indigo-700/90 shadow-2xs'
-                    : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                }`}
-              >
-                <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
-              </button>
-            </WorkbenchIconTooltip>
-
             <WorkbenchIconTooltip
               label="MITRE Library"
               badge="ATT&CK"
@@ -806,8 +724,6 @@ export function AttackHeader({
         onSelectEnvironment={(env) => onSelectEnvironment?.(env)}
         tacticalMode={tacticalMode}
         onToggleTacticalMode={() => onToggleTacticalMode?.()}
-        showLegend={showLegend}
-        onToggleLegend={() => onToggleLegend?.()}
         isDark={isDark}
         onToggleDark={onToggleDark}
         layoutMode={layoutMode}

@@ -37,11 +37,14 @@ import { AttackHeader } from './AttackHeader';
 import { AttackSidebar } from './AttackSidebar';
 import { AttackLibrary } from './AttackLibrary';
 import { CanvasViewMode, DiagramCanvas } from './DiagramCanvas';
-import { DEFAULT_INSPECTOR_WIDTH, InspectorPanel } from './InspectorPanel';
+import {
+  DEFAULT_INSPECTOR_WIDTH,
+  FloatingHoverInspectorTrigger,
+  InspectorPanel,
+} from './InspectorPanel';
 import { LogAnalyzerModal } from './LogAnalyzerModal';
 import { SourcesAndLegalModal } from './SourcesAndLegalModal';
 import { AboutAuthorModal } from './AboutAuthorModal';
-import { AttackStepProgressBar } from './AttackStepProgressBar';
 import { AnimeIntroLoader } from './AnimeIntroLoader';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
 import { shouldSkipIntroFromSearch } from '@/lib/intro-loader-sequence';
@@ -53,6 +56,10 @@ import {
   readStoredLayoutMode,
   WorkbenchLayoutMode,
 } from '@/lib/layout-preference';
+import {
+  readLastVisitedDiagramSnapshot,
+  saveLastVisitedDiagramSnapshot,
+} from '@/lib/diagram-memory-store';
 
 export function AttackExplorerWorkbench() {
   // Strictly English-only interface
@@ -91,8 +98,6 @@ export function AttackExplorerWorkbench() {
     if (layoutMode !== 'DESKTOP') return;
     const refreshDesktopViewport = () =>
       applyWorkbenchLayoutMode('DESKTOP', { refreshPhysicalWidth: true });
-    // Only refresh on orientation changes — not every resize/pinch (that would
-    // reset scale using the already-overridden layout width).
     window.addEventListener('orientationchange', refreshDesktopViewport);
     return () => {
       window.removeEventListener('orientationchange', refreshDesktopViewport);
@@ -105,9 +110,8 @@ export function AttackExplorerWorkbench() {
     applyWorkbenchLayoutMode(mode);
   };
 
-  // Tactical Mode Grid Overlay & Diagram Legend State
+  // Tactical Mode Grid Overlay State
   const [tacticalMode, setTacticalMode] = useState<boolean>(false);
-  const [showLegend, setShowLegend] = useState<boolean>(true);
 
   // Current Active Environment State ('WORKSTATION' | 'SERVER' | 'CLOUD')
   const [activeEnvironment, setActiveEnvironment] =
@@ -122,7 +126,7 @@ export function AttackExplorerWorkbench() {
     ATTACK_SCENARIOS[0].id
   );
 
-  // Top Workbench Toolbar Graph Node & MITRE Search + Auto-Layout State
+  // Top Workbench Toolbar Graph Node & MITRE Search State
   const [nodeSearchQuery, setNodeSearchQuery] = useState<string>('');
   const [activeGraphNodes, setActiveGraphNodes] = useState<
     WhiteboardSketchNode[]
@@ -131,8 +135,6 @@ export function AttackExplorerWorkbench() {
     null
   );
   const [focusSearchSeq, setFocusSearchSeq] = useState<number>(0);
-  const [autoLayoutTriggerSeq, setAutoLayoutTriggerSeq] = useState<number>(0);
-  const [isAutoLayoutActive, setIsAutoLayoutActive] = useState<boolean>(false);
 
   // Custom Drag-and-Drop / Injected Attack Vector Nodes & Flows per Scenario
   const [injectedVectorsByScenario, setInjectedVectorsByScenario] = useState<
@@ -159,13 +161,14 @@ export function AttackExplorerWorkbench() {
     useState<InspectorScopeMode | null>(null);
   const [viewMode, setViewMode] = useState<CanvasViewMode>('TOPOLOGY');
 
-  // Playback, Collapsible & Resizable Panels & Modal State
+  // Playback, Collapsible Sidebar & Dedicated Full-Screen Inspector Page State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(
     DEFAULT_PLAYBACK_SPEED
   );
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
-  const [inspectorOpen, setInspectorOpen] = useState<boolean>(true);
+  // Inspector is now a dedicated full-screen page (closed by default on the diagram page, opened via Hover Inspector trigger or Header button)
+  const [inspectorOpen, setInspectorOpen] = useState<boolean>(false);
   const [inspectorWidth, setInspectorWidth] = useState<number>(
     DEFAULT_INSPECTOR_WIDTH
   );
@@ -175,12 +178,97 @@ export function AttackExplorerWorkbench() {
   const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
-  // Responsive chrome: only auto-toggle side panels in true responsive mode
+  // Restore last visited diagram state from memory on mount
+  const [memoryHydrated, setMemoryHydrated] = useState<boolean>(false);
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => {
+      const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
+      const validScenario = ATTACK_SCENARIOS.find(
+        (s) => s.id === remembered.scenarioId
+      );
+      if (validScenario) {
+        setSelectedScenarioId(validScenario.id);
+        const clampedStage = Math.min(
+          remembered.activeStageIndex,
+          validScenario.stages.length
+        );
+        setActiveStageIndex(clampedStage);
+        setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+      }
+      setActiveEnvironment(remembered.activeEnvironment);
+      setExpandedNodeId(remembered.expandedNodeId);
+      setSelectedNodeId(remembered.selectedNodeId);
+      setSelectedInternalSubNodeId(remembered.selectedInternalSubNodeId);
+      setSelectedTelemetryId(remembered.selectedTelemetryId);
+      setTacticalMode(remembered.tacticalMode);
+      setMemoryHydrated(true);
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
+
+  // Automatically save the active diagram state in memory whenever the user visits/interacts with the diagram
+  useEffect(() => {
+    if (!memoryHydrated) return;
+    if (viewMode === 'TOPOLOGY' && !inspectorOpen) {
+      saveLastVisitedDiagramSnapshot({
+        scenarioId: selectedScenarioId,
+        activeStageIndex,
+        activeEnvironment,
+        expandedNodeId,
+        selectedNodeId,
+        selectedInternalSubNodeId,
+        selectedTelemetryId,
+        tacticalMode,
+      });
+    }
+  }, [
+    memoryHydrated,
+    viewMode,
+    inspectorOpen,
+    selectedScenarioId,
+    activeStageIndex,
+    activeEnvironment,
+    expandedNodeId,
+    selectedNodeId,
+    selectedInternalSubNodeId,
+    selectedTelemetryId,
+    tacticalMode,
+  ]);
+
+  // Handler when clicking the "Attack Explorer" logo: return immediately to the last visited diagram stored in memory
+  const handleReturnToLastVisitedDiagram = useCallback(() => {
+    const remembered = readLastVisitedDiagramSnapshot(selectedScenarioId);
+    const validScenario =
+      ATTACK_SCENARIOS.find((s) => s.id === remembered.scenarioId) ||
+      ATTACK_SCENARIOS[0];
+
+    setSelectedScenarioId(validScenario.id);
+    const clampedStage = Math.min(
+      remembered.activeStageIndex,
+      validScenario.stages.length
+    );
+    setActiveStageIndex(clampedStage);
+    setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+    setActiveEnvironment(remembered.activeEnvironment);
+    setExpandedNodeId(remembered.expandedNodeId);
+    setSelectedNodeId(remembered.selectedNodeId);
+    setSelectedInternalSubNodeId(remembered.selectedInternalSubNodeId);
+    setSelectedTelemetryId(remembered.selectedTelemetryId);
+    setTacticalMode(remembered.tacticalMode);
+    setViewMode('TOPOLOGY');
+    setInspectorOpen(false);
+    setAttackLibraryOpen(false);
+    setAnalyzerModalOpen(false);
+    setSourcesModalOpen(false);
+    setAboutModalOpen(false);
+    setShortcutsModalOpen(false);
+  }, [selectedScenarioId]);
+
+  // Responsive chrome: only auto-toggle left sidebar in responsive mode
   useEffect(() => {
     if (layoutMode === 'DESKTOP') {
       const desktopRafId = window.requestAnimationFrame(() => {
         setSidebarOpen(false);
-        setInspectorOpen(false);
       });
       return () => window.cancelAnimationFrame(desktopRafId);
     }
@@ -189,7 +277,6 @@ export function AttackExplorerWorkbench() {
     const rafId = window.requestAnimationFrame(() => {
       if (window.innerWidth < 1024) {
         setSidebarOpen(false);
-        setInspectorOpen(false);
       }
     });
     const handleResize = () => {
@@ -197,7 +284,6 @@ export function AttackExplorerWorkbench() {
       if (isNowDesktop !== wasDesktop) {
         wasDesktop = isNowDesktop;
         setSidebarOpen(isNowDesktop);
-        setInspectorOpen(isNowDesktop);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -311,10 +397,6 @@ export function AttackExplorerWorkbench() {
     setFocusedSearchNodeId(nodeId);
     setFocusSearchSeq((prev) => prev + 1);
     setSelectedNodeId(nodeId);
-  }, []);
-
-  const handleTriggerAutoLayout = useCallback(() => {
-    setAutoLayoutTriggerSeq((prev) => prev + 1);
   }, []);
 
   const handleInjectAttackVector = useCallback(
@@ -482,9 +564,6 @@ export function AttackExplorerWorkbench() {
   const handleSelectTelemetry = (event: TelemetryEvent) => {
     setIsPlaying(false);
     setSelectedTelemetryId((prev) => (prev === event.id ? null : event.id));
-    if (!inspectorOpen) {
-      setInspectorOpen(true);
-    }
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
@@ -505,7 +584,7 @@ export function AttackExplorerWorkbench() {
     return filteredScenarios;
   }, [category, searchQuery, filteredScenarios]);
 
-  // Global Workbench Hotkeys (?, T, L, 1-4, [, ], Space, Esc)
+  // Global Workbench Hotkeys (?, T, 1-4, [, ], Space, Esc)
   useEffect(() => {
     const onGlobalKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -533,20 +612,21 @@ export function AttackExplorerWorkbench() {
       } else if (command === 'TOGGLE_TACTICAL') {
         e.preventDefault();
         setTacticalMode((prev) => !prev);
-      } else if (command === 'TOGGLE_LEGEND') {
-        e.preventDefault();
-        setShowLegend((prev) => !prev);
       } else if (command === 'VIEW_TOPOLOGY') {
         e.preventDefault();
+        setInspectorOpen(false);
         setViewMode('TOPOLOGY');
       } else if (command === 'VIEW_SEQUENCE') {
         e.preventDefault();
+        setInspectorOpen(false);
         setViewMode('SEQUENCE');
       } else if (command === 'VIEW_PROCESS_MEMORY') {
         e.preventDefault();
+        setInspectorOpen(false);
         setViewMode('PROCESS_MEMORY');
       } else if (command === 'VIEW_RAW_TABLES') {
         e.preventDefault();
+        setInspectorOpen(false);
         setViewMode('RAW_TABLES');
       } else if (command === 'STEP_BACKWARD') {
         e.preventDefault();
@@ -624,195 +704,184 @@ export function AttackExplorerWorkbench() {
             showIntro ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
-        {/* Persistent Navigation Bar with Animated Logo, Navigation Links & Slide-Out Settings Drawer */}
-        <AttackHeader
-          scenario={activeScenario}
-          stageView={stageView}
-          activeEnvironment={activeEnvironment}
-          onSelectEnvironment={setActiveEnvironment}
-          tacticalMode={tacticalMode}
-          onToggleTacticalMode={() => setTacticalMode((prev) => !prev)}
-          showLegend={showLegend}
-          onToggleLegend={() => setShowLegend((prev) => !prev)}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onSelectStage={handleSelectStage}
-          onSelectScenario={(id) => handleSelectScenario(id, 0)}
-          isPlaying={isPlaying}
-          onTogglePlay={handleTogglePlay}
-          onStepForward={handleStepForward}
-          onStepBackward={handleStepBackward}
-          onReset={handleReset}
-          canStepBackward={activeStageIndex > 0}
-          canStepForward={activeStageIndex < activeScenario.stages.length}
-          playbackSpeed={playbackSpeed}
-          onSpeedChange={setPlaybackSpeed}
-          isDark={isDark}
-          onToggleDark={() => setIsDark((prev) => !prev)}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => {
-            setSidebarOpen((prev) => {
-              const next = !prev;
-              if (next && typeof window !== 'undefined' && window.innerWidth < 1024) {
-                setInspectorOpen(false);
-              }
-              return next;
-            });
-          }}
-          inspectorOpen={inspectorOpen}
-          onToggleInspector={() => {
-            setInspectorOpen((prev) => {
-              const next = !prev;
-              if (next && typeof window !== 'undefined' && window.innerWidth < 1024) {
-                setSidebarOpen(false);
-              }
-              return next;
-            });
-          }}
-          onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
-          onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
-          onOpenSourcesModal={() => setSourcesModalOpen(true)}
-          onOpenAboutModal={() => setAboutModalOpen(true)}
-          onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
-          layoutMode={layoutMode}
-          onLayoutModeChange={handleLayoutModeChange}
-          onReplayIntro={() => setShowIntro(true)}
-          nodeSearchQuery={nodeSearchQuery}
-          onNodeSearchQueryChange={setNodeSearchQuery}
-          graphNodes={activeGraphNodes}
-          onFocusGraphNode={handleFocusGraphNode}
-          onTriggerAutoLayout={handleTriggerAutoLayout}
-          isAutoLayoutActive={isAutoLayoutActive}
-        />
+          {/* Persistent Navigation Bar with Animated Logo (Memory Return), Navigation Links & Slide-Out Settings Drawer */}
+          <AttackHeader
+            scenario={activeScenario}
+            activeEnvironment={activeEnvironment}
+            onSelectEnvironment={setActiveEnvironment}
+            tacticalMode={tacticalMode}
+            onToggleTacticalMode={() => setTacticalMode((prev) => !prev)}
+            viewMode={viewMode}
+            onViewModeChange={(mode) => {
+              setInspectorOpen(false);
+              setViewMode(mode);
+            }}
+            onSelectScenario={(id) => handleSelectScenario(id, 0)}
+            playbackSpeed={playbackSpeed}
+            onSpeedChange={setPlaybackSpeed}
+            isDark={isDark}
+            onToggleDark={() => setIsDark((prev) => !prev)}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => {
+              setSidebarOpen((prev) => !prev);
+            }}
+            inspectorOpen={inspectorOpen}
+            onToggleInspector={() => {
+              setInspectorOpen((prev) => !prev);
+            }}
+            onOpenAttackLibrary={() => setAttackLibraryOpen(true)}
+            onOpenAnalyzerModal={() => setAnalyzerModalOpen(true)}
+            onOpenSourcesModal={() => setSourcesModalOpen(true)}
+            onOpenAboutModal={() => setAboutModalOpen(true)}
+            onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
+            layoutMode={layoutMode}
+            onLayoutModeChange={handleLayoutModeChange}
+            onReplayIntro={handleReturnToLastVisitedDiagram}
+            nodeSearchQuery={nodeSearchQuery}
+            onNodeSearchQueryChange={setNodeSearchQuery}
+            graphNodes={activeGraphNodes}
+            onFocusGraphNode={(nodeId) => {
+              setInspectorOpen(false);
+              handleFocusGraphNode(nodeId);
+            }}
+          />
 
-        {/* Visual Step-Indicator Progress Bar Synchronized with Animation State */}
-        <AttackStepProgressBar
-          scenario={activeScenario}
-          activeStageIndex={activeStageIndex}
-          isPlaying={isPlaying}
-          onSelectStage={handleSelectStage}
-        />
+          <main
+            onContextMenu={(e) => e.preventDefault()}
+            className="relative flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden"
+          >
+            {/* Mobile/Tablet Backdrop when left sidebar drawer is open */}
+            <AnimatePresence>
+              {sidebarOpen && !inspectorOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => {
+                    setSidebarOpen(false);
+                  }}
+                  className="lg:hidden absolute inset-0 z-40 bg-black/35 backdrop-blur-[1px]"
+                />
+              )}
+            </AnimatePresence>
 
-        <main
-          onContextMenu={(e) => e.preventDefault()}
-          className="relative flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden"
-        >
-          {/* Mobile/Tablet Backdrop when a side drawer is open */}
-          <AnimatePresence>
-            {(sidebarOpen || inspectorOpen) && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => {
-                  setSidebarOpen(false);
-                  setInspectorOpen(false);
-                }}
-                className="lg:hidden absolute inset-0 z-40 bg-black/35 backdrop-blur-[1px]"
-              />
-            )}
-          </AnimatePresence>
+            {/* Left Collapsible Scenarios & Attack Vectors Sidebar (Hidden when viewing full-screen Inspector page) */}
+            <AnimatePresence initial={false}>
+              {sidebarOpen && !inspectorOpen && (
+                <AttackSidebar
+                  category={category}
+                  onSelectCategory={setCategory}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  displayedScenarios={displayedScenarios}
+                  activeScenarioId={activeScenario.id}
+                  onSelectScenario={(id) => handleSelectScenario(id, 0)}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  groupBy={groupBy}
+                  onGroupByChange={setGroupBy}
+                  onInjectAttackVector={(vectorId) =>
+                    handleInjectAttackVector(vectorId)
+                  }
+                />
+              )}
+            </AnimatePresence>
 
-          {/* Left Collapsible Scenarios & Attack Vectors Sidebar */}
-          <AnimatePresence initial={false}>
-            {sidebarOpen && (
-              <AttackSidebar
-                category={category}
-                onSelectCategory={setCategory}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                displayedScenarios={displayedScenarios}
-                activeScenarioId={activeScenario.id}
-                onSelectScenario={(id) => handleSelectScenario(id, 0)}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                groupBy={groupBy}
-                onGroupByChange={setGroupBy}
-                onInjectAttackVector={(vectorId) =>
-                  handleInjectAttackVector(vectorId)
-                }
-              />
-            )}
-          </AnimatePresence>
-
-          <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto sm:overflow-hidden">
-            <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto sm:overflow-hidden">
-              <DiagramCanvas
-                scenario={activeScenario}
-                stageView={stageView}
-                activeEnvironment={activeEnvironment}
-                onSelectEnvironment={setActiveEnvironment}
-                tacticalMode={tacticalMode}
-                onToggleTacticalMode={() => setTacticalMode((prev) => !prev)}
-                viewMode={viewMode}
-                selectedTelemetryId={selectedTelemetryId}
-                onSelectTelemetry={handleSelectTelemetry}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={setSelectedNodeId}
-                expandedNodeId={expandedNodeId}
-                onExpandedNodeChange={handleExpandedNodeChange}
-                selectedInternalSubNodeId={selectedInternalSubNodeId}
-                onSelectInternalSubNode={handleSelectInternalSubNode}
-                onSelectStage={handleSelectStage}
-                cinematicPhase={cinematicPhase}
-                isPlaying={isPlaying}
-                onStartWalkthrough={handleStartGuidedWalkthrough}
-                onResetWalkthrough={handleReset}
-                onTogglePlay={handleTogglePlay}
-                onStepForward={handleStepForward}
-                onStepBackward={handleStepBackward}
-                canStepBackward={activeStageIndex > 0}
-                canStepForward={activeStageIndex < activeScenario.stages.length}
-                playbackSpeed={playbackSpeed}
-                onSpeedChange={setPlaybackSpeed}
-                showLegend={showLegend}
-                onToggleLegend={() => setShowLegend((prev) => !prev)}
-                shortcutsModalOpen={shortcutsModalOpen}
-                onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
-                onCloseShortcutsModal={() => setShortcutsModalOpen(false)}
-                nodeSearchQuery={nodeSearchQuery}
-                onNodeSearchQueryChange={setNodeSearchQuery}
-                focusedSearchNodeId={focusedSearchNodeId}
-                focusSearchSeq={focusSearchSeq}
-                autoLayoutTriggerSeq={autoLayoutTriggerSeq}
-                onAutoLayoutActiveChange={setIsAutoLayoutActive}
-                onActiveNodesChange={setActiveGraphNodes}
-                customInjectedNodes={currentInjectedVectors.nodes}
-                customInjectedFlows={currentInjectedVectors.flows}
-                onDropAttackVector={handleInjectAttackVector}
-                forceDesktopCanvas={layoutMode === 'DESKTOP'}
-              />
-
-              {/* Right Collapsible & Resizable Story, Steps, SIEM & Sources Inspector Panel */}
-              <AnimatePresence initial={false}>
-                {inspectorOpen && (
-                  <InspectorPanel
+            <div className="relative flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto sm:overflow-hidden">
+              {inspectorOpen ? (
+                /* Dedicated Full-Screen Forensic Inspector Page */
+                <InspectorPanel
+                  scenario={activeScenario}
+                  currentStage={stageView.currentStage}
+                  cinematicPhase={cinematicPhase}
+                  isPlaying={isPlaying}
+                  activeEnvironment={activeEnvironment}
+                  selectedTelemetry={selectedTelemetry}
+                  onSelectTelemetry={handleSelectTelemetry}
+                  onSelectStage={handleSelectStage}
+                  onStartWalkthrough={handleStartGuidedWalkthrough}
+                  onTogglePlay={handleTogglePlay}
+                  onResetWalkthrough={handleReset}
+                  onClearTelemetrySelection={() => setSelectedTelemetryId(null)}
+                  onOpenSourcesModal={() => setSourcesModalOpen(true)}
+                  scopeContext={inspectorScopeContext}
+                  onSelectNode={setSelectedNodeId}
+                  onExpandedNodeChange={handleExpandedNodeChange}
+                  onSelectInternalSubNode={handleSelectInternalSubNode}
+                  onScopeOverrideChange={setInspectorScopeOverride}
+                  onCloseInspectorPage={() => setInspectorOpen(false)}
+                  onReturnToRememberedDiagram={
+                    handleReturnToLastVisitedDiagram
+                  }
+                  width={inspectorWidth}
+                  onResizeWidth={setInspectorWidth}
+                />
+              ) : (
+                /* Main Active Workbench View + Floating Hover Inspector Option */
+                <div className="relative flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto sm:overflow-hidden">
+                  {/* Floating Hover Inspector Trigger on the Active Page */}
+                  <FloatingHoverInspectorTrigger
                     scenario={activeScenario}
                     currentStage={stageView.currentStage}
+                    scopeContext={inspectorScopeContext}
+                    selectedTelemetry={selectedTelemetry}
+                    onOpenInspectorPage={() => setInspectorOpen(true)}
+                    onOpenMainScenarioInspectorPage={() => {
+                      setInspectorScopeOverride('MAIN_SCENARIO');
+                      setInspectorOpen(true);
+                    }}
+                    onClearSectionSelection={() => {
+                      setSelectedNodeId(null);
+                      setSelectedInternalSubNodeId(null);
+                      setSelectedTelemetryId(null);
+                    }}
+                  />
+
+                  <DiagramCanvas
+                    scenario={activeScenario}
+                    stageView={stageView}
+                    activeEnvironment={activeEnvironment}
+                    tacticalMode={tacticalMode}
+                    onToggleTacticalMode={() => setTacticalMode((prev) => !prev)}
+                    viewMode={viewMode}
+                    selectedTelemetryId={selectedTelemetryId}
+                    onSelectTelemetry={handleSelectTelemetry}
+                    selectedNodeId={selectedNodeId}
+                    onSelectNode={setSelectedNodeId}
+                    expandedNodeId={expandedNodeId}
+                    onExpandedNodeChange={handleExpandedNodeChange}
+                    selectedInternalSubNodeId={selectedInternalSubNodeId}
+                    onSelectInternalSubNode={handleSelectInternalSubNode}
                     cinematicPhase={cinematicPhase}
                     isPlaying={isPlaying}
-                    activeEnvironment={activeEnvironment}
-                    selectedTelemetry={selectedTelemetry}
-                    onSelectTelemetry={handleSelectTelemetry}
-                    onSelectStage={handleSelectStage}
                     onStartWalkthrough={handleStartGuidedWalkthrough}
-                    onTogglePlay={handleTogglePlay}
                     onResetWalkthrough={handleReset}
-                    onClearTelemetrySelection={() => setSelectedTelemetryId(null)}
-                    onOpenSourcesModal={() => setSourcesModalOpen(true)}
-                    scopeContext={inspectorScopeContext}
-                    onSelectNode={setSelectedNodeId}
-                    onExpandedNodeChange={handleExpandedNodeChange}
-                    onSelectInternalSubNode={handleSelectInternalSubNode}
-                    onScopeOverrideChange={setInspectorScopeOverride}
-                    width={inspectorWidth}
-                    onResizeWidth={setInspectorWidth}
+                    onTogglePlay={handleTogglePlay}
+                    onStepForward={handleStepForward}
+                    onStepBackward={handleStepBackward}
+                    canStepBackward={activeStageIndex > 0}
+                    canStepForward={
+                      activeStageIndex < activeScenario.stages.length
+                    }
+                    playbackSpeed={playbackSpeed}
+                    onSpeedChange={setPlaybackSpeed}
+                    shortcutsModalOpen={shortcutsModalOpen}
+                    onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
+                    onCloseShortcutsModal={() => setShortcutsModalOpen(false)}
+                    nodeSearchQuery={nodeSearchQuery}
+                    onNodeSearchQueryChange={setNodeSearchQuery}
+                    focusedSearchNodeId={focusedSearchNodeId}
+                    focusSearchSeq={focusSearchSeq}
+                    onActiveNodesChange={setActiveGraphNodes}
+                    customInjectedNodes={currentInjectedVectors.nodes}
+                    customInjectedFlows={currentInjectedVectors.flows}
+                    onDropAttackVector={handleInjectAttackVector}
+                    forceDesktopCanvas={layoutMode === 'DESKTOP'}
                   />
-                )}
-              </AnimatePresence>
+                </div>
+              )}
             </div>
-          </div>
-        </main>
+          </main>
         </motion.div>
 
         {/* MITRE ATT&CK Technique & Scenario Library Modal */}
@@ -848,11 +917,9 @@ export function AttackExplorerWorkbench() {
             isOpen={shortcutsModalOpen}
             onClose={() => setShortcutsModalOpen(false)}
             tacticalMode={tacticalMode}
-            showLegend={showLegend}
             isPlaying={isPlaying}
             onExecuteCommand={(cmd) => {
               if (cmd === 'TOGGLE_TACTICAL') setTacticalMode((v) => !v);
-              else if (cmd === 'TOGGLE_LEGEND') setShowLegend((v) => !v);
               else if (cmd === 'PLAY_PAUSE_SEQUENCE') handleTogglePlay();
               else if (cmd === 'STEP_BACKWARD') handleStepBackward();
               else if (cmd === 'STEP_FORWARD') handleStepForward();

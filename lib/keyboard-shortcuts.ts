@@ -24,7 +24,6 @@ export type ShortcutCommandId =
   | 'PAN_RIGHT'
   | 'TOGGLE_AUTOCAM'
   | 'TOGGLE_TACTICAL'
-  | 'TOGGLE_LEGEND'
   | 'PLAY_PAUSE_SEQUENCE'
   | 'STEP_BACKWARD'
   | 'STEP_FORWARD'
@@ -238,16 +237,6 @@ export const KEYBOARD_SHORTCUT_ITEMS: KeyboardShortcutItem[] = [
     badge: 'TACTICAL',
     canTriggerFromOverlay: true,
   },
-  {
-    id: 'TOGGLE_LEGEND',
-    category: 'CANVAS_NAVIGATION',
-    title: 'Toggle Operational Visual Legend',
-    description:
-      'Show or hide the bottom-left visual semantics & color-coded flow legend panel',
-    keys: ['L'],
-    badge: 'LEGEND',
-    canTriggerFromOverlay: true,
-  },
   // 3. SIMULATION & WORKBENCH VIEWS
   {
     id: 'PLAY_PAUSE_SEQUENCE',
@@ -415,11 +404,10 @@ export function resolveKeyboardShortcutCommand(
   if (key === 'ArrowLeft') return 'PAN_LEFT';
   if (key === 'ArrowRight') return 'PAN_RIGHT';
 
-  // Camera, Tactical, Legend & Force-Directed Auto-Layout Toggles
+  // Camera, Tactical & Force-Directed Auto-Layout Toggles
   if (lower === 'a') return 'AUTO_LAYOUT_NODES';
   if (lower === 'c') return 'TOGGLE_AUTOCAM';
   if (lower === 't') return 'TOGGLE_TACTICAL';
-  if (lower === 'l') return 'TOGGLE_LEGEND';
 
   // Simulation Stage Stepping & Playback
   if (key === '[') return 'STEP_BACKWARD';

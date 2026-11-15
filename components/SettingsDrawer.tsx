@@ -30,7 +30,6 @@ import {
   Table2,
   X,
 } from 'lucide-react';
-import { OperationalGuideIcon } from './OperationalGuideIcon';
 import { WorkbenchLayoutMode } from '@/lib/layout-preference';
 
 interface SettingsDrawerProps {
@@ -42,8 +41,6 @@ interface SettingsDrawerProps {
   onSelectEnvironment: (env: ActiveEnvironmentId) => void;
   tacticalMode: boolean;
   onToggleTacticalMode: () => void;
-  showLegend: boolean;
-  onToggleLegend: () => void;
   isDark: boolean;
   onToggleDark: () => void;
   layoutMode: WorkbenchLayoutMode;
@@ -68,8 +65,6 @@ export function SettingsDrawer({
   onSelectEnvironment,
   tacticalMode,
   onToggleTacticalMode,
-  showLegend,
-  onToggleLegend,
   isDark,
   onToggleDark,
   layoutMode,
@@ -350,28 +345,6 @@ export function SettingsDrawer({
                       }`}
                     >
                       {tacticalMode ? 'ON' : 'OFF'}
-                    </span>
-                  </button>
-
-                  {/* Diagram Legend Panel Toggle */}
-                  <button
-                    type="button"
-                    data-testid="settings-legend-toggle-btn"
-                    onClick={onToggleLegend}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-xs transition-colors cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-zinc-200">
-                      <OperationalGuideIcon tacticalMode={tacticalMode} size="sm" />
-                      <span>Diagram Visual Legend · Operational Guide</span>
-                    </span>
-                    <span
-                      className={`text-[11px] font-mono font-semibold ${
-                        showLegend
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-zinc-400'
-                      }`}
-                    >
-                      {showLegend ? 'VISIBLE' : 'HIDDEN'}
                     </span>
                   </button>
 

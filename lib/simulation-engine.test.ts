@@ -9,10 +9,6 @@ import {
   stepForward } from './simulation-engine';
 import { queryAttackLibrary } from './attack-library-service';
 import {
-  buildVisualizerPacketRoutes,
-  getCanonicalFlowZone,
-  sampleQuadraticBezier } from './attack-visualizer-geometry';
-import {
   buildCorrelatedStepLogs,
   extractEventIdsFromLog,
   tokenizeLogLineForHighlight } from './log-inspector-utils';
@@ -21,7 +17,6 @@ import {
   buildInternalNodeSubBoard,
   buildWhiteboardSchematic,
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
-import { computeScenarioChoreography } from './camera-choreography';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
   it('filterScenarios filters by category and search query accurately across all 85 scenarios (including APT & zero-day campaigns)', () => {
@@ -122,33 +117,6 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     const eid25 = queryAttackLibrary({ search: 'Sysmon EID 25' });
     assert.equal(eid25.filteredCount, 1);
     assert.equal(eid25.items[0].scenarioId, 'process-hollowing');
-  });
-
-  it('AttackVisualizer geometry maps nodes to Attacker/Gateway/Target zones and builds animated Bezier packet routes', () => {
-    const scenario = ATTACK_SCENARIOS[1]; // Log4Shell DFIR
-    const zones = scenario.nodes.map((n) => getCanonicalFlowZone(n.role).zone);
-    assert.ok(zones.includes('ATTACKER'), 'Should map attacker node');
-    assert.ok(zones.includes('GATEWAY'), 'Should map gateway/sensor node');
-    assert.ok(zones.includes('TARGET'), 'Should map target node');
-
-    const sampled = sampleQuadraticBezier(100, 100, 300, 50, 500, 100, 8);
-    assert.equal(sampled.xKeyframes.length, 9);
-    assert.equal(sampled.yKeyframes.length, 9);
-    assert.equal(sampled.xKeyframes[0], 100);
-    assert.equal(sampled.xKeyframes[8], 500);
-
-    const stageView = computeStageView(scenario, 1, 'ALL');
-    const routes = buildVisualizerPacketRoutes(
-      scenario.nodes,
-      stageView.visibleTelemetry,
-      stageView.currentStage?.index ?? null,
-      null
-    );
-    assert.ok(routes.length > 0);
-    const activeRoutes = routes.filter((r) => r.isCurrentStep);
-    assert.ok(activeRoutes.length >= 1);
-    assert.ok(activeRoutes[0].pathD.startsWith('M '));
-    assert.equal(activeRoutes[0].xKeyframes.length, 9);
   });
 
   it('LogInspector utils extract and correlate Event IDs 1 and 4688 and highlight EventID tokens', () => {
@@ -276,64 +244,6 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.ok(malwareDrillDown.malwareProcesses.length >= 2);
     assert.ok(malwareDrillDown.laptopHostActivities.length >= 4);
     assert.ok(malwareDrillDown.lateralMovementHops.length >= 3);
-  });
-
-  it('computeScenarioChoreography drives multi-phase camera zoom/pan, progressive node reveal, callouts, and comet packets', () => {
-    const scenario = ATTACK_SCENARIOS[0];
-    const s0 = buildWhiteboardSchematic(scenario, 0);
-
-    // 1. Idle Overview -> full camera (scale = 1)
-    const idle = computeScenarioChoreography(
-      scenario,
-      s0.nodes,
-      s0.flows,
-      0,
-      'IDLE_OVERVIEW',
-      true
-    );
-    assert.equal(idle.camera.scale, 1);
-    assert.equal(idle.camera.futureNodeIds.length, 0);
-
-    // 2. Start Node Focus -> zooms onto Node #1 and dims future nodes
-    const startFocus = computeScenarioChoreography(
-      scenario,
-      s0.nodes,
-      s0.flows,
-      0,
-      'START_NODE_FOCUS',
-      true
-    );
-    assert.ok(startFocus.camera.scale >= 1.4);
-    assert.deepEqual(startFocus.camera.visibleNodeIds, [s0.nodes[0].id]);
-    assert.equal(startFocus.camera.futureNodeIds.length, s0.nodes.length - 1);
-    assert.ok(startFocus.callout !== null);
-
-    // 3. Stage 1 Active -> frames Stage 1 nodes, generates callout & comet packet capsule
-    const s1 = buildWhiteboardSchematic(scenario, 1);
-    const stage1 = computeScenarioChoreography(
-      scenario,
-      s1.nodes,
-      s1.flows,
-      1,
-      'STAGE_ACTIVE',
-      true
-    );
-    assert.ok(stage1.camera.scale >= 1.2);
-    assert.ok(stage1.callout !== null);
-    assert.ok(stage1.activePacket !== null);
-    assert.ok(stage1.activePacket?.forwardHeader.startsWith('#1.1→'));
-
-    // 4. Outro Complete -> zooms back out to 100% overview
-    const outro = computeScenarioChoreography(
-      scenario,
-      s1.nodes,
-      s1.flows,
-      scenario.stages.length,
-      'OUTRO_COMPLETE',
-      true
-    );
-    assert.equal(outro.camera.scale, 1);
-    assert.equal(outro.camera.frameId, 'outro-full');
   });
 
   it('computeCinematicDirectorState orchestrates Prince-of-Persia intro survey, origin focus, dynamic step zoom/pan, and outro zoom-out', async () => {
@@ -969,7 +879,6 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     // 3. Verify Toggles & Help Overlay
     assert.equal(resolveKeyboardShortcutCommand({ key: 'c' }), 'TOGGLE_AUTOCAM');
     assert.equal(resolveKeyboardShortcutCommand({ key: 't' }), 'TOGGLE_TACTICAL');
-    assert.equal(resolveKeyboardShortcutCommand({ key: 'l' }), 'TOGGLE_LEGEND');
     assert.equal(
       resolveKeyboardShortcutCommand({ key: '?' }),
       'TOGGLE_SHORTCUTS_HELP'
@@ -1006,7 +915,6 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       computePanFromMinimapPoint,
     } = await import('./canvas-interaction-engine');
     const {
-      formatConciseStagePillLabel,
       formatConciseInternalFlowPill,
       ZERO_TRUNCATION_STANDARD,
     } = await import('./ui-text-standards');
@@ -1057,20 +965,8 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(topLeftPan.x, 500);
     assert.equal(topLeftPan.y, 250);
 
-    // 3. Concise stage pills & internal flow pills never contain '...'
+    // 3. Concise internal flow pills never contain '...'
     assert.equal(ZERO_TRUNCATION_STANDARD.forbidEllipsisOnCardsAndPills, true);
-    for (const scenario of ATTACK_SCENARIOS) {
-      for (const stage of scenario.stages) {
-        const pill = formatConciseStagePillLabel(stage);
-        assert.ok(pill.shortLabel.length > 0 && pill.shortLabel.length <= 36);
-        assert.equal(
-          pill.shortLabel.includes('...'),
-          false,
-          `Stage pill "${pill.shortLabel}" must never contain '...'`
-        );
-        assert.ok(pill.tooltipTitle.includes(stage.title));
-      }
-    }
 
     const flowPill = formatConciseInternalFlowPill({
       sequenceCode: '1.1',
@@ -1086,11 +982,11 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
     // 4. Permanent Zero-Truncation guard on active UI components
     const zeroTruncateFiles = [
-      'components/AttackStepProgressBar.tsx',
       'components/AttackSidebar.tsx',
       'components/AttackVisualizer.tsx',
       'components/DraggableDiagramNode.tsx',
       'components/InspectorPanel.tsx',
+      'components/PlaybackControlBar.tsx',
       'components/StepByStepGuidePanel.tsx',
       'components/MitreStats.tsx',
       'components/ThreatIntelCard.tsx',
@@ -1350,6 +1246,79 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
         );
       }
     }
+  });
+
+  it('removes AttackStepProgressBar, DiagramLegendPanel, dead files, header Auto-Layout, and top environment/topology bar while merging canvas interaction tools into the default-hidden compact floating PlaybackControlBar', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+
+    // 1. Deleted dead files must not exist
+    const deletedFiles = [
+      'components/AttackStepProgressBar.tsx',
+      'components/DiagramLegendPanel.tsx',
+      'components/EntityDrillDownDrawer.tsx',
+      'components/IsometricNodeIcons.tsx',
+      'hooks/use-mobile.ts',
+      'lib/attack-visualizer-geometry.ts',
+      'lib/camera-choreography.ts',
+    ];
+    for (const rel of deletedFiles) {
+      assert.equal(
+        fs.existsSync(path.join(process.cwd(), rel)),
+        false,
+        `${rel} must be deleted`
+      );
+    }
+
+    // 2. AttackExplorerWorkbench, AttackHeader, SettingsDrawer, and AttackVisualizer must not contain AttackStepProgressBar, DiagramLegendPanel, or top-toolbar-auto-layout-btn
+    const workbenchSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackExplorerWorkbench.tsx'),
+      'utf8'
+    );
+    assert.equal(workbenchSrc.includes('AttackStepProgressBar'), false);
+    assert.equal(workbenchSrc.includes('showLegend'), false);
+    assert.equal(workbenchSrc.includes('handleTriggerAutoLayout'), false);
+
+    const headerSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackHeader.tsx'),
+      'utf8'
+    );
+    assert.equal(headerSrc.includes('top-toolbar-auto-layout-btn'), false);
+    assert.equal(headerSrc.includes('nav-operational-guide-btn'), false);
+    assert.equal(headerSrc.includes('showLegend'), false);
+
+    const settingsSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/SettingsDrawer.tsx'),
+      'utf8'
+    );
+    assert.equal(settingsSrc.includes('settings-legend-toggle-btn'), false);
+    assert.equal(settingsSrc.includes('showLegend'), false);
+
+    const visualizerSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/AttackVisualizer.tsx'),
+      'utf8'
+    );
+    assert.equal(visualizerSrc.includes('current-environment-context-bar'), false);
+    assert.equal(visualizerSrc.includes('canvas-active-environment-pill'), false);
+    assert.equal(visualizerSrc.includes('TOPOLOGY ('), false);
+    assert.equal(visualizerSrc.includes('DiagramLegendPanel'), false);
+    assert.equal(visualizerSrc.includes('showLegend'), false);
+
+    // 3. PlaybackControlBar must default to hidden (defaultHidden = true) and host the merged compact canvas interaction tools
+    const controlBarSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/PlaybackControlBar.tsx'),
+      'utf8'
+    );
+    assert.equal(controlBarSrc.includes('defaultHidden = true'), true);
+    assert.equal(controlBarSrc.includes('useState(defaultHidden)'), true);
+    assert.equal(controlBarSrc.includes('canvas-interaction-toolbar'), true);
+    assert.equal(controlBarSrc.includes('canvas-mode-select-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-mode-pan-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-auto-layout-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-select-all-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-toggle-diagram-tooltips-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-shortcuts-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-reset-layout-btn'), true);
   });
 });
 

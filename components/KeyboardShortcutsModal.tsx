@@ -29,7 +29,6 @@ export interface KeyboardShortcutsModalProps {
   effectiveScale?: number;
   autoCameraEnabled?: boolean;
   tacticalMode?: boolean;
-  showLegend?: boolean;
   isPlaying?: boolean;
   onExecuteCommand?: (commandId: ShortcutCommandId) => void;
 }
@@ -41,7 +40,6 @@ export function KeyboardShortcutsModal({
   effectiveScale = 1,
   autoCameraEnabled = true,
   tacticalMode = false,
-  showLegend = true,
   isPlaying = false,
   onExecuteCommand,
 }: KeyboardShortcutsModalProps) {
@@ -86,7 +84,6 @@ export function KeyboardShortcutsModal({
     if (item.id === 'TOOL_PAN_PAGE') return activeToolMode === 'PAN';
     if (item.id === 'TOGGLE_AUTOCAM') return autoCameraEnabled;
     if (item.id === 'TOGGLE_TACTICAL') return tacticalMode;
-    if (item.id === 'TOGGLE_LEGEND') return showLegend;
     if (item.id === 'PLAY_PAUSE_SEQUENCE') return isPlaying;
     return false;
   };

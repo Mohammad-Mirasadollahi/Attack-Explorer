@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
 import {
+  buildInspectorMiniMapModel,
   buildScopedCorrelatedLogs,
   buildScopedStepGuideModel,
   formatExpandedNodeScopeLabel,
@@ -9,6 +10,11 @@ import {
   resolveInspectorScopeContext,
   resolveScopedTelemetrySelection,
 } from './inspector-scope';
+import {
+  clearDiagramMemoryForTesting,
+  readLastVisitedDiagramSnapshot,
+  saveLastVisitedDiagramSnapshot,
+} from './diagram-memory-store';
 import { buildWhiteboardSchematic } from './sketch-zones-and-drilldown';
 
 describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE, INTERNAL_SUBNODE)', () => {
@@ -226,5 +232,111 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.ok(resolvedMainEv);
     assert.equal(resolvedMainEv?.id, mainFlowId);
     assert.equal(resolvedMainEv?.activeEnvironmentId, 'CLOUD');
+  });
+
+  it('builds the Top-Left Miniature Topological Context Map model (focused node & zone in full detail, connected arms & neighbors, and minimal background topology)', () => {
+    const scenario = ATTACK_SCENARIOS[0]; // process-hollowing
+    const schematic = buildWhiteboardSchematic(scenario, 2, 'WORKSTATION');
+    const hostNode = schematic.nodes.find(
+      (n) => n.id === 'victim_laptop_node'
+    )!;
+
+    // 1. Clicked Main Node mode (SELECTED_MAIN_NODE)
+    const clickedNodeScope = resolveInspectorScopeContext({
+      scenario,
+      activeStageIndex: 2,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: hostNode.id,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+
+    const miniMapMainNode = buildInspectorMiniMapModel(
+      clickedNodeScope,
+      null,
+      2,
+      scenario.stages.length
+    );
+
+    assert.equal(miniMapMainNode.mode, 'SELECTED_MAIN_NODE');
+    assert.equal(miniMapMainNode.primaryNode?.id, hostNode.id);
+    assert.equal(miniMapMainNode.focusedNodes.length, 1);
+    assert.equal(miniMapMainNode.focusedNodes[0].id, hostNode.id);
+    assert.ok(miniMapMainNode.activeZone);
+    assert.equal(miniMapMainNode.activeZone?.id, hostNode.zoneId);
+    assert.ok(
+      miniMapMainNode.connectionArms.length >= 1,
+      'Focused node must have connected inbound/outbound arms'
+    );
+    assert.ok(
+      miniMapMainNode.connectedNeighborNodes.length >= 1,
+      'Focused node must identify connected neighbor nodes'
+    );
+    assert.ok(
+      miniMapMainNode.minimalBackgroundZones.length >= 1,
+      'Non-active zones must be classified as minimal background zones'
+    );
+
+    // 2. Internal Sub-Node mode (INTERNAL_SUBNODE)
+    const expandedScope = resolveInspectorScopeContext({
+      scenario,
+      activeStageIndex: 2,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: hostNode.id,
+      expandedNodeId: hostNode.id,
+      selectedInternalSubNodeId: null,
+    });
+    const subNode = expandedScope.internalSubBoard!.subNodes[1];
+    const subNodeScope = resolveInspectorScopeContext({
+      scenario,
+      activeStageIndex: 2,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: hostNode.id,
+      expandedNodeId: hostNode.id,
+      selectedInternalSubNodeId: subNode.id,
+    });
+
+    const miniMapSubNode = buildInspectorMiniMapModel(
+      subNodeScope,
+      null,
+      2,
+      scenario.stages.length
+    );
+    assert.equal(miniMapSubNode.mode, 'INTERNAL_SUBNODE');
+    assert.equal(miniMapSubNode.primaryNode?.id, subNode.id);
+    assert.ok(miniMapSubNode.connectionArms.length >= 1);
+    assert.ok(miniMapSubNode.minimalBackgroundNodes.length >= 1);
+  });
+
+  it('persists and restores the last visited diagram snapshot in memory for the Attack Explorer logo return action', () => {
+    clearDiagramMemoryForTesting();
+
+    const fallback = readLastVisitedDiagramSnapshot('process-hollowing');
+    assert.equal(fallback.scenarioId, 'process-hollowing');
+    assert.equal(fallback.activeStageIndex, 0);
+    assert.equal(fallback.expandedNodeId, null);
+
+    saveLastVisitedDiagramSnapshot({
+      scenarioId: 'dns-tunneling-exfil',
+      activeStageIndex: 3,
+      activeEnvironment: 'SERVER',
+      expandedNodeId: 'victim_laptop_node',
+      selectedNodeId: 'victim_laptop_node',
+      selectedInternalSubNodeId: 'sub_node_2',
+      selectedTelemetryId: 'dns-ev-2',
+      tacticalMode: true,
+    });
+
+    const restored = readLastVisitedDiagramSnapshot('process-hollowing');
+    assert.equal(restored.scenarioId, 'dns-tunneling-exfil');
+    assert.equal(restored.activeStageIndex, 3);
+    assert.equal(restored.activeEnvironment, 'SERVER');
+    assert.equal(restored.expandedNodeId, 'victim_laptop_node');
+    assert.equal(restored.selectedNodeId, 'victim_laptop_node');
+    assert.equal(restored.selectedInternalSubNodeId, 'sub_node_2');
+    assert.equal(restored.selectedTelemetryId, 'dns-ev-2');
+    assert.equal(restored.tacticalMode, true);
+
+    clearDiagramMemoryForTesting();
   });
 });

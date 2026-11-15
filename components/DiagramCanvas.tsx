@@ -29,7 +29,6 @@ interface DiagramCanvasProps {
   scenario: AttackScenario;
   stageView: ComputedStageView;
   activeEnvironment?: ActiveEnvironmentId;
-  onSelectEnvironment?: (env: ActiveEnvironmentId) => void;
   tacticalMode?: boolean;
   onToggleTacticalMode?: () => void;
   viewMode: CanvasViewMode;
@@ -41,7 +40,6 @@ interface DiagramCanvasProps {
   onExpandedNodeChange?: (nodeId: string | null) => void;
   selectedInternalSubNodeId?: string | null;
   onSelectInternalSubNode?: (subNodeId: string | null) => void;
-  onSelectStage: (stageIndex: number) => void;
   cinematicPhase?: CinematicPhase | null;
   isPlaying?: boolean;
   onStartWalkthrough?: () => void;
@@ -53,8 +51,6 @@ interface DiagramCanvasProps {
   canStepForward?: boolean;
   playbackSpeed?: number;
   onSpeedChange?: (speed: number) => void;
-  showLegend?: boolean;
-  onToggleLegend?: () => void;
   shortcutsModalOpen?: boolean;
   onOpenShortcutsModal?: () => void;
   onCloseShortcutsModal?: () => void;
@@ -62,8 +58,6 @@ interface DiagramCanvasProps {
   onNodeSearchQueryChange?: (query: string) => void;
   focusedSearchNodeId?: string | null;
   focusSearchSeq?: number;
-  autoLayoutTriggerSeq?: number;
-  onAutoLayoutActiveChange?: (isActive: boolean) => void;
   onActiveNodesChange?: (nodes: WhiteboardSketchNode[]) => void;
   customInjectedNodes?: WhiteboardSketchNode[];
   customInjectedFlows?: WhiteboardSketchFlow[];
@@ -78,7 +72,6 @@ export function DiagramCanvas({
   scenario,
   stageView,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
-  onSelectEnvironment,
   tacticalMode = false,
   onToggleTacticalMode,
   viewMode,
@@ -90,7 +83,6 @@ export function DiagramCanvas({
   onExpandedNodeChange,
   selectedInternalSubNodeId,
   onSelectInternalSubNode,
-  onSelectStage,
   cinematicPhase = null,
   isPlaying = false,
   onStartWalkthrough,
@@ -102,8 +94,6 @@ export function DiagramCanvas({
   canStepForward = true,
   playbackSpeed = 0.5,
   onSpeedChange,
-  showLegend = true,
-  onToggleLegend,
   shortcutsModalOpen = false,
   onOpenShortcutsModal,
   onCloseShortcutsModal,
@@ -111,8 +101,6 @@ export function DiagramCanvas({
   onNodeSearchQueryChange,
   focusedSearchNodeId = null,
   focusSearchSeq = 0,
-  autoLayoutTriggerSeq = 0,
-  onAutoLayoutActiveChange,
   onActiveNodesChange,
   customInjectedNodes = [],
   customInjectedFlows = [],
@@ -133,7 +121,6 @@ export function DiagramCanvas({
           scenario={scenario}
           stageView={stageView}
           activeEnvironment={activeEnvironment}
-          onSelectEnvironment={onSelectEnvironment}
           tacticalMode={tacticalMode}
           onToggleTacticalMode={onToggleTacticalMode}
           selectedTelemetryId={selectedTelemetryId}
@@ -144,7 +131,6 @@ export function DiagramCanvas({
           onExpandedNodeChange={onExpandedNodeChange}
           selectedInternalSubNodeId={selectedInternalSubNodeId}
           onSelectInternalSubNode={onSelectInternalSubNode}
-          onSelectStage={onSelectStage}
           cinematicPhase={cinematicPhase}
           isPlaying={isPlaying}
           onStartWalkthrough={onStartWalkthrough}
@@ -156,8 +142,6 @@ export function DiagramCanvas({
           canStepForward={canStepForward}
           playbackSpeed={playbackSpeed}
           onSpeedChange={onSpeedChange}
-          showLegend={showLegend}
-          onToggleLegend={onToggleLegend}
           shortcutsModalOpen={shortcutsModalOpen}
           onOpenShortcutsModal={onOpenShortcutsModal}
           onCloseShortcutsModal={onCloseShortcutsModal}
@@ -165,8 +149,6 @@ export function DiagramCanvas({
           onNodeSearchQueryChange={onNodeSearchQueryChange}
           focusedSearchNodeId={focusedSearchNodeId}
           focusSearchSeq={focusSearchSeq}
-          autoLayoutTriggerSeq={autoLayoutTriggerSeq}
-          onAutoLayoutActiveChange={onAutoLayoutActiveChange}
           onActiveNodesChange={onActiveNodesChange}
           customInjectedNodes={customInjectedNodes}
           customInjectedFlows={customInjectedFlows}
