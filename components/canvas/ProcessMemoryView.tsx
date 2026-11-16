@@ -12,7 +12,14 @@ import {
   resolveInspectorScopeContext,
   resolveScopedMemoryForensics,
 } from '@/lib/inspector-scope';
-import { Cpu, Layers, ShieldAlert, Terminal } from 'lucide-react';
+import {
+  Cpu,
+  GitBranch,
+  Layers,
+  ShieldAlert,
+  Terminal,
+} from 'lucide-react';
+import { MemoryForensicsFlowchart } from './MemoryForensicsFlowchart';
 
 interface ProcessMemoryViewProps {
   scenario: AttackScenario;
@@ -91,40 +98,175 @@ export function ProcessMemoryView({
           </span>
         </div>
 
-        {/* Context-Aware Memory Forensics Briefing */}
+        {/* 1. Context-Aware Memory Forensics Briefing with Parenthetical (why ...) Callouts */}
         <section
           data-testid="memory-scope-briefing"
-          className="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 flex flex-wrap items-start justify-between gap-3"
+          className="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 space-y-3"
         >
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-              <Cpu className="w-3.5 h-3.5 shrink-0" />
-              <span>
-                DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE GROUNDED)
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                <Cpu className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  1. DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE GROUNDED)
+                </span>
+              </div>
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                {scopedMemory.scopeExplanation}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-white dark:bg-zinc-900 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300">
+                {scopedMemory.memoryBlocks.length} Documented Memory Regions
               </span>
             </div>
-            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
-              {scopedMemory.scopeExplanation}
-            </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-white dark:bg-zinc-900 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300">
-              {scopedMemory.memoryBlocks.length} Documented Memory Regions
+
+          {scopedMemory.structuredScopeClauses.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-rose-200/70 dark:border-rose-900/50">
+              {scopedMemory.structuredScopeClauses.map((clause, cIdx) => (
+                <div
+                  key={`${clause.clauseCode}-${cIdx}`}
+                  className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/85 border border-rose-200/70 dark:border-rose-800/60 space-y-1.5"
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                      #{clause.clauseCode}
+                    </span>
+                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                      {clause.coreStatement}
+                    </p>
+                  </div>
+                  {clause.parentheticalReasons.length > 0 && (
+                    <div className="pl-6 space-y-1">
+                      {clause.parentheticalReasons.map((reason, rIdx) => (
+                        <div
+                          key={rIdx}
+                          data-testid={`memory-briefing-why-${rIdx}`}
+                          className="px-2.5 py-1 rounded-md bg-amber-50/90 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
+                        >
+                          <strong className="text-amber-700 dark:text-amber-400">
+                            WHY / MEMORY FORENSICS:
+                          </strong>{' '}
+                          ({reason})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* 1B. Visual Memory Analysis Flowchart (Dump -> String Analysis -> Forensic Extraction) */}
+        <MemoryForensicsFlowchart flowchart={scopedMemory.flowchart} />
+
+        {/* 2. Step-by-Step Memory Analysis & VAD Mutation Waterfall */}
+        <section
+          data-testid="memory-step-by-step-waterfall"
+          className="p-4 sm:p-5 rounded-2xl bg-zinc-50/60 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800 space-y-3.5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-zinc-200/80 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <GitBranch className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <div>
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+                  2. Step-by-Step Memory Analysis & VAD Mutation Waterfall (
+                  {scopedMemory.memoryStepTimeline.length} Memory Steps)
+                </h3>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Chronological RAM transition steps annotated with parenthetical (why ...) forensic explanations
+                </p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[10.5px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+              #M.1 └─▶ #M.{scopedMemory.memoryStepTimeline.length}
             </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {scopedMemory.memoryStepTimeline.map((step, sIdx) => {
+              const indentPx = Math.min(sIdx * 14, 42);
+              return (
+                <div
+                  key={step.stepCode}
+                  data-testid={`memory-waterfall-step-${step.stepNumber}`}
+                  style={{ marginLeft: `${indentPx}px` }}
+                  className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 shadow-2xs space-y-2"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {sIdx > 0 && (
+                        <span className="text-indigo-500 font-extrabold">
+                          └─▶
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded bg-indigo-600 text-white text-[10px] font-extrabold">
+                        STEP #{step.stepCode} · STAGE S{step.stageIndex}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 text-[10.5px] font-bold">
+                        {step.processName} (PID {step.processPid} · PPID{' '}
+                        {step.processPpid})
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/70 text-rose-700 dark:text-rose-300 text-[10.5px] font-bold">
+                        {step.operationOrApi}
+                      </span>
+                    </div>
+
+                    <span className="px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/70 text-purple-700 dark:text-purple-300 text-[10.5px] font-bold">
+                      {step.targetAddress} · {step.targetSection} [
+                      {step.permissions} · {step.regionSize} · {step.regionStatus}
+                      ]
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                    {step.stepActionSummary}
+                  </p>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 pt-0.5">
+                    <div
+                      data-testid={`memory-step-why-${step.stepNumber}`}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
+                    >
+                      <strong className="text-amber-700 dark:text-amber-400">
+                        WHY THIS MEMORY STEP:
+                      </strong>{' '}
+                      {step.whyExplanation}
+                    </div>
+
+                    <div className="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 text-[11px] font-mono text-indigo-950 dark:text-indigo-200 leading-snug break-words">
+                      <strong className="text-indigo-700 dark:text-indigo-400">
+                        API / SYSCALL WHY:
+                      </strong>{' '}
+                      {step.operationWhyNote}
+                    </div>
+                  </div>
+
+                  <div className="px-2.5 py-1 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200/70 dark:border-emerald-800/50 text-[10.5px] font-mono text-emerald-900 dark:text-emerald-200 leading-snug break-words">
+                    <strong className="text-emerald-700 dark:text-emerald-400">
+                      FORENSIC CATCH:
+                    </strong>{' '}
+                    {step.detectionEvidence}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left Column: Process Execution Tree (Compact 4/12 on xl) */}
+          {/* 3. Left Column: Process Execution Tree & API Calls with Parenthetical (why ...) Annotations */}
           <div className="lg:col-span-5 xl:col-span-4 min-w-0 bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 pb-3 border-b border-zinc-200/70 dark:border-zinc-800">
               <div className="flex items-center gap-2 min-w-0">
                 <Terminal className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <h3
-                  title="Process Execution Tree & API Calls"
+                  title="3. Process Execution Tree & API Calls"
                   className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug"
                 >
-                  Process Execution Tree & API Calls
+                  3. Process Execution Tree & API Calls
                 </h3>
               </div>
               <span className="text-xs font-mono text-zinc-400 tabular-nums shrink-0">
@@ -137,10 +279,13 @@ export function ProcessMemoryView({
                 <div
                   key={`${proc.pid}-${index}`}
                   style={{ marginLeft: `${index * 12}px` }}
-                  className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2 min-w-0"
+                  className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5 min-w-0"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-xs font-mono">
-                    <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-extrabold shrink-0">
+                        #{proc.processStepCode}
+                      </span>
                       <span
                         title={proc.name}
                         className="font-semibold text-zinc-900 dark:text-white min-w-0 leading-snug break-words"
@@ -166,58 +311,98 @@ export function ProcessMemoryView({
                     </span>
                   </div>
 
-                  <div
-                    title={proc.commandLine}
-                    className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1.5 rounded-lg break-all"
-                  >
-                    {proc.commandLine}
+                  {proc.statusWhyNote && (
+                    <div
+                      data-testid={`process-status-why-${proc.pid}`}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-relaxed break-words"
+                    >
+                      <strong className="text-amber-700 dark:text-amber-400">
+                        PROCESS ROLE WHY:
+                      </strong>{' '}
+                      {proc.statusWhyNote}
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <div
+                      title={proc.commandLine}
+                      className="text-[11px] font-mono text-emerald-300 bg-zinc-950 px-2.5 py-1.5 rounded-lg border border-zinc-800 break-all"
+                    >
+                      $ {proc.commandLine}
+                    </div>
+                    {proc.commandLineWhyNote && (
+                      <div
+                        data-testid={`process-cmdline-why-${proc.pid}`}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-[10.5px] font-mono text-zinc-600 dark:text-zinc-300 leading-relaxed break-words"
+                      >
+                        <strong className="text-indigo-600 dark:text-indigo-400">
+                          CMDLINE WHY:
+                        </strong>{' '}
+                        {proc.commandLineWhyNote}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5 min-w-0 text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
-                    {proc.apiCalls.map((api, idx) => (
-                      <React.Fragment key={idx}>
-                        <span title={api} className="leading-snug break-all">
-                          {api}
-                        </span>
-                        {idx < proc.apiCalls.length - 1 && (
-                          <span className="text-zinc-300 dark:text-zinc-700">
-                            ·
-                          </span>
-                        )}
-                      </React.Fragment>
-                    ))}
+                  <div className="space-y-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800/80">
+                    <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                      API Calls & Parenthetical (why ...) Memory Annotations:
+                    </div>
+                    <div className="space-y-1.5 text-[11px] font-mono">
+                      {proc.structuredApiSteps.map((apiStep) => (
+                        <div
+                          key={apiStep.stepCode}
+                          title={apiStep.fullText}
+                          className="p-2 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/25 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1 leading-relaxed break-words"
+                        >
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9px] font-extrabold">
+                              #{apiStep.stepCode}
+                            </span>
+                            <span className="font-bold text-indigo-900 dark:text-indigo-200">
+                              {apiStep.apiSignature}
+                            </span>
+                          </div>
+                          <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 pl-1">
+                            {apiStep.whyNote}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right Column: Documented Virtual Memory Map & Hex Inspector (Wide 8/12 on xl for Forensic Explanations) */}
+          {/* 4. Right Column: Documented Virtual Memory Map & Hex Inspector with Structured (why ...) Clauses */}
           <div className="lg:col-span-7 xl:col-span-8 min-w-0 bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 pb-3 border-b border-zinc-200/70 dark:border-zinc-800">
               <div className="flex items-center gap-2 min-w-0">
                 <Layers className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                 <h3
-                  title="Virtual Memory Layout & Hex Forensics"
+                  title="4. Virtual Memory Layout (VAD) & Hex Forensics"
                   className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 min-w-0 leading-snug"
                 >
-                  Virtual Memory Layout & Hex Forensics
+                  4. Virtual Memory Layout (VAD) & Hex Forensics
                 </h3>
               </div>
               <span className="text-xs font-mono text-zinc-400 shrink-0">
-                VAD / PE-sieve
+                VAD / PE-sieve · Step-by-Step Annotated
               </span>
             </div>
 
-            <div className="space-y-3" dir="ltr">
+            <div className="space-y-3.5" dir="ltr">
               {scopedMemory.memoryBlocks.map((block, i) => (
                 <div
                   key={`${block.address}-${i}`}
                   data-testid={`memory-block-card-${i}`}
-                  className="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5 min-w-0"
+                  className="p-4 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 space-y-3 min-w-0"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-xs font-mono">
                     <div className="flex flex-wrap items-center gap-2 min-w-0">
+                      <span className="px-2 py-0.5 rounded bg-indigo-600 text-white text-[10px] font-extrabold shrink-0">
+                        STEP #{block.stepCode} · STAGE S{block.stageIndex}
+                      </span>
                       <span
                         title={`${block.address} · ${block.section}`}
                         className="font-bold text-indigo-600 dark:text-indigo-400 tabular-nums min-w-0 leading-snug"
@@ -249,19 +434,98 @@ export function ProcessMemoryView({
                     </span>
                   </div>
 
-                  <p
-                    dir="ltr"
-                    title={block.description}
-                    className="text-xs text-zinc-700 dark:text-zinc-300 font-sans leading-relaxed break-words"
-                  >
-                    {block.description}
-                  </p>
+                  {/* Correlated API / Syscall Triggering This Memory Region */}
+                  {block.correlatedApiCall && (
+                    <div className="px-2.5 py-1.5 rounded-lg bg-rose-50/60 dark:bg-rose-950/25 border border-rose-200/70 dark:border-rose-800/60 text-[11px] font-mono text-rose-900 dark:text-rose-200 leading-snug break-words">
+                      <strong className="text-rose-700 dark:text-rose-400">
+                        TRIGGERING API / SYSCALL:
+                      </strong>{' '}
+                      {block.correlatedApiCall}
+                    </div>
+                  )}
 
-                  <div
-                    title={block.hexPreview}
-                    className="px-3 py-2 bg-zinc-950 text-emerald-300 font-mono text-[11px] break-all rounded-lg border border-zinc-800"
-                  >
-                    {block.hexPreview}
+                  {/* Parenthetical Why Notes for Address/Section and Permissions/Status */}
+                  {(block.addressWhyNote || block.permissionsWhyNote) && (
+                    <div
+                      data-testid={`memory-block-why-notes-${i}`}
+                      className="p-2.5 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-1.5 text-[11px] font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed break-words"
+                    >
+                      {block.addressWhyNote && (
+                        <div>
+                          <strong className="text-indigo-700 dark:text-indigo-400">
+                            ADDRESS & SECTION WHY:
+                          </strong>{' '}
+                          {block.addressWhyNote}
+                        </div>
+                      )}
+                      {block.permissionsWhyNote && (
+                        <div>
+                          <strong className="text-rose-700 dark:text-rose-400">
+                            PERMISSIONS & VAD WHY:
+                          </strong>{' '}
+                          {block.permissionsWhyNote}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Structured Memory Clauses with Highlighted Parenthetical (why ...) Callouts */}
+                  <div className="space-y-2">
+                    {block.structuredClauses.map((clause, cIdx) => (
+                      <div
+                        key={`${clause.clauseCode}-${cIdx}`}
+                        className="p-2.5 rounded-lg bg-zinc-50/90 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                            #{clause.clauseCode}
+                          </span>
+                          <p
+                            dir="ltr"
+                            title={block.description}
+                            className="text-xs text-zinc-800 dark:text-zinc-200 font-sans leading-relaxed break-words flex-1"
+                          >
+                            {clause.coreStatement}
+                          </p>
+                        </div>
+                        {clause.parentheticalReasons.length > 0 && (
+                          <div className="pl-6 space-y-1">
+                            {clause.parentheticalReasons.map((reason, rIdx) => (
+                              <div
+                                key={rIdx}
+                                className="px-2.5 py-1 rounded-md bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
+                              >
+                                <strong className="text-amber-700 dark:text-amber-400">
+                                  WHY / RAM MUTATION:
+                                </strong>{' '}
+                                ({reason})
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Hex Preview & Byte-Level Parenthetical (why ...) Annotation */}
+                  <div className="space-y-1.5">
+                    <div
+                      title={block.hexPreview}
+                      className="px-3 py-2 bg-zinc-950 text-emerald-300 font-mono text-[11px] break-all rounded-lg border border-zinc-800"
+                    >
+                      {block.hexPreview}
+                    </div>
+                    {block.hexWhyNote && (
+                      <div
+                        data-testid={`memory-block-hex-why-${i}`}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200/70 dark:border-emerald-800/60 text-[11px] font-mono text-emerald-950 dark:text-emerald-200 leading-relaxed break-words"
+                      >
+                        <strong className="text-emerald-700 dark:text-emerald-400">
+                          HEX SIGNATURE WHY:
+                        </strong>{' '}
+                        {block.hexWhyNote}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -130,7 +130,8 @@ export const PROCESS_HOLLOWING_SCENARIO: AttackScenario = {
           permissions: 'RW-',
           size: '4 KB',
           status: 'injected',
-          description: 'Injected MZ/PE header written by WriteProcessMemory replacing original svchost header.',
+          description:
+            'Injected MZ/PE header (4D 5A 90 00) written via WriteProcessMemory at 0x00400000 after NtUnmapViewOfSection stripped the original svchost.exe image (why 0x00400000 & RW-: reusing the exact PEB ImageBaseAddress avoids breaking internal pointer relocations, and keeping the 4 KB header page RW- instead of RWX lets the loader parse section tables without flagging an executable header).',
           hexPreview: '4D 5A 90 00 03 00 00 00 04 00 00 00 FF FF 00 00  MZ..............' },
         {
           address: '0x00401000',
@@ -138,7 +139,8 @@ export const PROCESS_HOLLOWING_SCENARIO: AttackScenario = {
           permissions: 'RWX',
           size: '264 KB',
           status: 'shellcode',
-          description: 'Unbacked PAGE_EXECUTE_READWRITE memory region containing unpacked Cobalt Strike Beacon code.',
+          description:
+            'Unbacked PAGE_EXECUTE_READWRITE (0x40) memory region at Base+0x1000 containing the unpacked Cobalt Strike Beacon code (why RWX & unbacked: VirtualAllocEx allocated private RAM with simultaneous Read+Write+Execute permissions so Invoice_Q4.exe could copy 264 KB of shellcode and immediately jump to RCX = 0x004014A0 via ResumeThread, leaving a private executable VAD page that does not match C:\\Windows\\System32\\svchost.exe on disk).',
           hexPreview: 'FC 48 83 E4 F0 E8 C0 00 00 00 41 51 41 50 52 51  .H........AQAPRQ' },
         {
           address: '0x7FF8B4200000',
@@ -146,7 +148,8 @@ export const PROCESS_HOLLOWING_SCENARIO: AttackScenario = {
           permissions: 'R-X',
           size: '1,920 KB',
           status: 'clean',
-          description: 'Standard Windows native system library mapped into process address space.',
+          description:
+            'Standard Windows native system library mapped into the process address space with Read-Execute (R-X) permissions (why present & clean: every Windows process requires ntdll.dll in high user-mode memory to transition API calls like NtUnmapViewOfSection and RtlUserThreadStart into the kernel via syscall stubs).',
           hexPreview: '4C 8B D1 B8 2A 00 00 00 F6 04 25 08 03 FE 7F 01  L...*.....%.....' },
       ] },
   ],

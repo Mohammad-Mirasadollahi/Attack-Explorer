@@ -15,7 +15,6 @@ import {
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import {
   buildInspectorMiniMapModel,
-  buildScopedSequenceModel,
   InspectorScopeContext,
   InspectorScopeMode,
   resolveInspectorScopeContext,
@@ -27,9 +26,9 @@ import { SelectedTelemetryDetail } from './SelectedTelemetryDetail';
 import { StepByStepGuidePanel } from './StepByStepGuidePanel';
 import { InspectorContextMiniMap } from './InspectorContextMiniMap';
 import { SketchNodeIcon } from './SketchNodeIcons';
-import { SequenceView } from './canvas/SequenceView';
 import { ProcessMemoryView } from './canvas/ProcessMemoryView';
 import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
+import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -42,7 +41,6 @@ import {
   BookOpen,
   Cpu,
   ExternalLink,
-  GitCommitHorizontal,
   Layers,
   ListChecks,
   Maximize2,
@@ -375,16 +373,11 @@ export function InspectorPanel({
     [effectiveScopeContext, selectedTelemetry]
   );
 
-  const scopedSequence = useMemo(
-    () => buildScopedSequenceModel(effectiveScopeContext, selectedTelemetry),
-    [effectiveScopeContext, selectedTelemetry]
-  );
-
   const resolvedActiveTab: InspectorTab =
     rawActiveTab === 'MEMORY' && !scopedMemory.hasDocumentedMemory
       ? 'OVERVIEW'
-      : rawActiveTab === 'SEQUENCE' && !scopedSequence.hasDocumentedSequence
-      ? 'OVERVIEW'
+      : rawActiveTab === 'SEQUENCE'
+      ? 'STEP_GUIDE'
       : rawActiveTab;
 
   const isInspectingSpecificMainNode = Boolean(
@@ -447,20 +440,14 @@ export function InspectorPanel({
       },
       {
         id: 'STEP_GUIDE',
-        label: `Steps (${scenario.stages.length})`,
+        label:
+          effectiveScope !== 'MAIN_SCENARIO' && scopeContext?.internalSteps
+            ? `Steps & Sequence (${scopeContext.internalSteps.length})`
+            : `Steps & Sequence (${scenario.stages.length})`,
         testId: 'inspector-tab-steps',
         icon: <ListChecks className="w-3.5 h-3.5 shrink-0" />,
       },
     ];
-
-    if (scopedSequence.hasDocumentedSequence) {
-      tabs.push({
-        id: 'SEQUENCE',
-        label: `Sequence (${scopedSequence.exchanges.length})`,
-        testId: 'inspector-tab-sequence',
-        icon: <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />,
-      });
-    }
 
     if (scopedMemory.hasDocumentedMemory) {
       tabs.push({
@@ -491,11 +478,11 @@ export function InspectorPanel({
 
     return tabs;
   }, [
+    effectiveScope,
+    scopeContext?.internalSteps,
     scenario.stages.length,
     scenario.telemetry.length,
     scopeContext?.scopedTelemetryEvents.length,
-    scopedSequence.hasDocumentedSequence,
-    scopedSequence.exchanges.length,
     scopedMemory.hasDocumentedMemory,
     scopedMemory.memoryBlocks.length,
   ]);
@@ -794,40 +781,58 @@ export function InspectorPanel({
               {scopedMemory.hasDocumentedMemory && (
                 <section
                   data-testid="inspector-overview-memory-callout"
-                  className="rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3"
+                  className="rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 p-4 shadow-2xs space-y-3"
                 >
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                      <Cpu className="w-3.5 h-3.5 shrink-0" />
-                      <span>
-                        DOCUMENTED VIRTUAL MEMORY FORENSICS IN THIS SECTION (
-                        {scopedMemory.memoryBlocks.length} VAD REGIONS)
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
-                      {scopedMemory.scopeExplanation}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {scopedMemory.memoryBlocks.map((mb, idx) => (
-                        <span
-                          key={`${mb.address}-${idx}`}
-                          className="px-2 py-0.5 rounded text-[10.5px] font-mono bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-rose-200/80 dark:border-rose-800/70"
-                        >
-                          {mb.address} · {mb.section} ({mb.permissions})
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                        <Cpu className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          DOCUMENTED VIRTUAL MEMORY FORENSICS IN THIS SECTION (
+                          {scopedMemory.memoryBlocks.length} VAD REGIONS ·{' '}
+                          {scopedMemory.memoryStepTimeline.length} MEMORY STEPS)
                         </span>
-                      ))}
+                      </div>
+                      <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                        {scopedMemory.scopeExplanation}
+                      </p>
                     </div>
+                    <button
+                      type="button"
+                      data-testid="inspector-overview-open-memory-btn"
+                      onClick={() => handleSelectTab('MEMORY')}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
+                    >
+                      <Cpu className="w-3.5 h-3.5" />
+                      <span>Open Memory Forensics</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    data-testid="inspector-overview-open-memory-btn"
-                    onClick={() => handleSelectTab('MEMORY')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer shrink-0"
-                  >
-                    <Cpu className="w-3.5 h-3.5" />
-                    <span>Open Memory Forensics</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                    {scopedMemory.memoryBlocks.map((mb, idx) => (
+                      <div
+                        key={`${mb.address}-${idx}`}
+                        className="p-2.5 rounded-xl bg-white/95 dark:bg-zinc-900/90 border border-rose-200/80 dark:border-rose-800/70 space-y-1 text-[11px] font-mono"
+                      >
+                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                          <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[9.5px] font-extrabold">
+                            STEP #{mb.stepCode} · S{mb.stageIndex}
+                          </span>
+                          <span className="font-bold text-indigo-700 dark:text-indigo-300">
+                            {mb.address} · {mb.section} ({mb.permissions} ·{' '}
+                            {mb.size})
+                          </span>
+                        </div>
+                        <div className="text-[10.5px] text-amber-900 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 px-2 py-1 rounded border border-amber-200/70 dark:border-amber-800/50 leading-snug break-words">
+                          <strong className="text-amber-700 dark:text-amber-400">
+                            WHY:
+                          </strong>{' '}
+                          {mb.permissionsWhyNote}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -1165,9 +1170,41 @@ export function InspectorPanel({
                       {scopeContext?.scopedStoryAnalogy || scenario.overview}
                     </div>
 
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                      {scenario.overview}
-                    </p>
+                    <div className="space-y-2">
+                      {parseStructuredExplanationClauses(
+                        scenario.overview,
+                        '0'
+                      ).map((clause, cIdx) => (
+                        <div
+                          key={`${clause.clauseCode}-${cIdx}`}
+                          className="p-2.5 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                              #{clause.clauseCode}
+                            </span>
+                            <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                              {clause.coreStatement}
+                            </p>
+                          </div>
+                          {clause.parentheticalReasons.length > 0 && (
+                            <div className="pl-6 space-y-1">
+                              {clause.parentheticalReasons.map((note, nIdx) => (
+                                <div
+                                  key={nIdx}
+                                  className="px-2.5 py-1 rounded-md bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
+                                >
+                                  <strong className="text-amber-700 dark:text-amber-400">
+                                    WHY / SPEC:
+                                  </strong>{' '}
+                                  ({note})
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </section>
 
                   {/* 2. Interactive Topology Sections Directory */}
@@ -1283,9 +1320,43 @@ export function InspectorPanel({
                               </span>
                             </div>
 
-                            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
-                              {st.description}
-                            </p>
+                            <div className="space-y-1.5">
+                              {parseStructuredExplanationClauses(
+                                st.description,
+                                String(st.index)
+                              ).map((clause, cIdx) => (
+                                <div
+                                  key={`${clause.clauseCode}-${cIdx}`}
+                                  className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                                      #{clause.clauseCode}
+                                    </span>
+                                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                                      {clause.coreStatement}
+                                    </p>
+                                  </div>
+                                  {clause.parentheticalReasons.length > 0 && (
+                                    <div className="pl-6 space-y-1">
+                                      {clause.parentheticalReasons.map(
+                                        (note, nIdx) => (
+                                          <div
+                                            key={nIdx}
+                                            className="px-2.5 py-1 rounded-md bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
+                                          >
+                                            <strong className="text-amber-700 dark:text-amber-400">
+                                              WHY / SPEC:
+                                            </strong>{' '}
+                                            ({note})
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
 
                             {/* Stage-Specific Structural Conduit & Process Spawn Diagram */}
                             <div
@@ -1362,7 +1433,7 @@ export function InspectorPanel({
             </div>
           )}
 
-          {/* TAB 2: STEP-BY-STEP GUIDE */}
+          {/* TAB 2: UNIFIED STEPS & SEQUENCE GUIDE */}
           {resolvedActiveTab === 'STEP_GUIDE' && (
             <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
               <StepByStepGuidePanel
@@ -1372,6 +1443,7 @@ export function InspectorPanel({
                 isPlaying={isPlaying}
                 activeEnvironment={activeEnvironment}
                 scopeContext={effectiveScopeContext}
+                selectedTelemetryId={selectedTelemetry?.id || null}
                 onSelectStage={onSelectStage}
                 onSelectTelemetry={onSelectTelemetry}
                 onSelectInternalSubNode={onSelectInternalSubNode}
@@ -1381,21 +1453,6 @@ export function InspectorPanel({
               />
             </div>
           )}
-
-          {/* TAB 3: CHRONOLOGICAL SEQUENCE (STORY-TO-SPEC REQUEST/RESPONSE) */}
-          {resolvedActiveTab === 'SEQUENCE' &&
-            scopedSequence.hasDocumentedSequence && (
-              <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
-                <SequenceView
-                  scenario={scenario}
-                  scopeContext={effectiveScopeContext}
-                  selectedTelemetryId={selectedTelemetry?.id || null}
-                  onSelectTelemetry={onSelectTelemetry}
-                  onSelectStage={onSelectStage}
-                  activeEnvironment={activeEnvironment}
-                />
-              </div>
-            )}
 
           {/* TAB 4: DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE) */}
           {resolvedActiveTab === 'MEMORY' &&

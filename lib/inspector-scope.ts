@@ -20,6 +20,8 @@ import {
 import {
   buildDiagramStepGuideModel,
   DiagramStepGuideModel,
+  parseStructuredExplanationClauses,
+  StructuredExplanationClause,
 } from './scenario-step-guides';
 import {
   buildCorrelatedRawLog,
@@ -951,18 +953,296 @@ export type ScenarioMemoryBlock = NonNullable<
   ScenarioProcessEntry['memoryBlocks']
 >[number];
 
+export interface ScopedMemoryStepItem {
+  stepNumber: number;
+  stepCode: string;
+  stageIndex: number;
+  stageTitle: string;
+  processPid: number;
+  processPpid: number;
+  processName: string;
+  processStatus: ScenarioProcessEntry['status'];
+  processIntegrity: string;
+  operationOrApi: string;
+  operationWhyNote: string;
+  targetAddress: string;
+  targetSection: string;
+  permissions: string;
+  regionSize: string;
+  regionStatus: string;
+  stepActionSummary: string;
+  whyExplanation: string;
+  detectionEvidence: string;
+}
+
+export type MemoryFlowchartPhaseId =
+  | 'MEMORY_DUMP'
+  | 'STRING_ANALYSIS'
+  | 'FORENSIC_EXTRACTION';
+
+export interface MemoryFlowchartPhaseNode {
+  phaseId: MemoryFlowchartPhaseId;
+  phaseOrder: 1 | 2 | 3;
+  phaseCode: string;
+  phaseTitle: string;
+  badgeLabel: string;
+  iconKind: MemoryFlowchartPhaseId;
+  primaryArtifact: string;
+  secondarySpec: string;
+  whyAnnotation: string;
+}
+
+export interface MemoryFlowchartStepRow {
+  stepNumber: number;
+  stepCode: string;
+  stageIndex: number;
+  stageTitle: string;
+  processName: string;
+  processPid: number;
+  targetAddress: string;
+  targetSection: string;
+  permissions: string;
+  regionSize: string;
+  regionStatus: string;
+  stepHeadline: string;
+  stepWhySummary: string;
+  phases: [
+    MemoryFlowchartPhaseNode,
+    MemoryFlowchartPhaseNode,
+    MemoryFlowchartPhaseNode,
+  ];
+}
+
+export interface MemoryForensicsFlowchartModel {
+  totalSteps: number;
+  summaryPhases: Array<{
+    phaseId: MemoryFlowchartPhaseId;
+    phaseOrder: 1 | 2 | 3;
+    title: string;
+    subtitle: string;
+    iconKind: MemoryFlowchartPhaseId;
+    whyPhaseMatters: string;
+    artifactCountLabel: string;
+  }>;
+  stepRows: MemoryFlowchartStepRow[];
+}
+
 export interface ScopedMemoryForensicsModel {
   hasDocumentedMemory: boolean;
   scopeExplanation: string;
+  structuredScopeClauses: StructuredExplanationClause[];
   memoryProcesses: ScenarioProcessEntry[];
+  memoryStepTimeline: ScopedMemoryStepItem[];
+  flowchart: MemoryForensicsFlowchartModel;
   memoryBlocks: Array<
     ScenarioMemoryBlock & {
+      stepNumber: number;
+      stepCode: string;
+      stageIndex: number;
+      stageTitle: string;
+      correlatedApiCall: string;
       processId: string;
       processName: string;
       processPid: number;
+      addressWhyNote: string;
+      permissionsWhyNote: string;
+      hexWhyNote: string;
+      structuredClauses: StructuredExplanationClause[];
     }
   >;
-  relatedProcessTree: ScenarioProcessEntry[];
+  relatedProcessTree: Array<
+    ScenarioProcessEntry & {
+      processStepNumber: number;
+      processStepCode: string;
+      statusWhyNote: string;
+      commandLineWhyNote: string;
+      apiCallsWithWhy: string[];
+      structuredApiSteps: Array<{
+        stepCode: string;
+        apiSignature: string;
+        whyNote: string;
+        fullText: string;
+      }>;
+    }
+  >;
+}
+
+function buildMemoryBlockAddressWhyNote(
+  mb: ScenarioMemoryBlock,
+  proc: ScenarioProcessEntry
+): string {
+  const addr = mb.address || '';
+  const sec = mb.section || '';
+  if (/0x00400000/i.test(addr) || /PE Header/i.test(sec)) {
+    return `(why ${addr} · ${sec}: default Windows PE ImageBaseAddress recorded in PEB+0x10 — reusing this exact base address after unmapping the original binary allows the injected executable to run without recalculating internal relocation offsets)`;
+  }
+  if (/0x00401000/i.test(addr) || (/\.text/i.test(sec) && !/ntdll|amsi|liblzma/i.test(sec))) {
+    return `(why ${addr} · ${sec}: standard RVA +0x1000 executable code section offset immediately following the 4 KB PE header, where unpacked CPU instructions are mapped in RAM)`;
+  }
+  if (/amsi\.dll/i.test(sec)) {
+    return `(why ${addr} · ${sec}: user-mode Antimalware Scan Interface code mapped inside ${proc.name} PID ${proc.pid}’s own virtual address space, allowing the process to overwrite AmsiScanBuffer in RAM without kernel privileges)`;
+  }
+  if (/ntdll\.dll/i.test(sec)) {
+    return `(why ${addr} · ${sec}: high 64-bit user-mode address where Windows maps ntdll.dll into every process to bridge user-mode API calls into kernel syscalls)`;
+  }
+  if (/^0xFFFF/i.test(addr) || /NonPagedPool|Kernel/i.test(sec)) {
+    return `(why ${addr} · ${sec}: ring-0 Windows kernel NonPagedPool address space that stays permanently resident in physical RAM and never pages out to disk)`;
+  }
+  if (/Heap|Private|Reflective/i.test(sec)) {
+    return `(why ${addr} · ${sec}: dynamically allocated private heap region [MEM_PRIVATE] in ${proc.name} PID ${proc.pid} that has no backing .dll or .exe file on the hard drive)`;
+  }
+  return `(why ${addr} · ${sec}: virtual memory region inside ${proc.name} [PID ${proc.pid}] targeted to hold ${mb.status} code or state data directly in volatile RAM)`;
+}
+
+function buildMemoryBlockPermissionsWhyNote(
+  mb: ScenarioMemoryBlock,
+  proc: ScenarioProcessEntry
+): string {
+  const perms = mb.permissions;
+  const status = mb.status;
+  if (perms === 'RWX') {
+    return `(why RWX [${mb.size}] · ${status}: normal compiled binaries enforce W^X [Write XOR Execute] so memory is never writable and executable at the same time, whereas the loader in ${proc.name} requested PAGE_EXECUTE_READWRITE [0x40] so it could write ${status} bytes into RAM and immediately execute them in place)`;
+  }
+  if (perms === 'RW-') {
+    return `(why RW- [${mb.size}] · ${status}: PAGE_READWRITE [0x04] allows ${proc.name} to overwrite or stage headers, configuration structures, or credential state in RAM without triggering executable-page alerts)`;
+  }
+  if (perms === 'R-X' && (status === 'patched' || status === 'injected' || status === 'shellcode')) {
+    return `(why R-X [${mb.size}] · ${status}: memory protection restored to PAGE_EXECUTE_READ [0x20] after writing/patching bytes in RAM [creating a private Copy-on-Write VAD page] so CPU instructions can run while evading simple RWX scanners)`;
+  }
+  return `(why ${perms} [${mb.size}] · ${status}: standard image-backed Read-Execute code protection mapped from the signed system binary on disk)`;
+}
+
+function buildMemoryBlockHexWhyNote(
+  mb: ScenarioMemoryBlock,
+  proc: ScenarioProcessEntry
+): string {
+  const hex = mb.hexPreview || '';
+  if (/4D 5A/i.test(hex)) {
+    return `(why these hex bytes: "4D 5A" is the ASCII "MZ" DOS/PE executable header — finding "MZ" inside private or hollowed memory in ${proc.name} [PID ${proc.pid}] proves a full Windows PE binary was injected directly into RAM without using the OS file loader)`;
+  }
+  if (/FC 48 83 E4 F0/i.test(hex)) {
+    return `(why these hex bytes: "FC 48 83 E4 F0 E8 C0 00 00 00" is the x64 position-independent shellcode prologue [cld; and rsp, -16; call +0xC0] that aligns the 64-bit stack frame and locates exported APIs in RAM)`;
+  }
+  if (/B8 57 00 07 80 C3/i.test(hex)) {
+    return `(why these hex bytes: "B8 57 00 07 80 C3" disassembles to "mov eax, 0x80070057; ret" — forcing AmsiScanBuffer to immediately return E_INVALIDARG so Windows Defender never scans the in-memory payload)`;
+  }
+  if (/4C 8B D1 B8/i.test(hex)) {
+    return `(why these hex bytes: "4C 8B D1 B8..." disassembles to "mov r10, rcx; mov eax, <SSN>" — the standard x64 Windows ntdll.dll syscall stub that transitions execution from user mode into the kernel)`;
+  }
+  if (/7F 45 4C 46/i.test(hex)) {
+    return `(why these hex bytes: "7F 45 4C 46" is the "\\x7fELF" 64-bit Linux/ESXi executable header mapped directly into memory)`;
+  }
+  if (/CF FA ED FE/i.test(hex)) {
+    return `(why these hex bytes: "CF FA ED FE" is the 64-bit Mach-O executable magic header loaded directly into memory without an on-disk application bundle)`;
+  }
+  return `(why these hex bytes: raw in-memory byte signature captured from ${mb.address} [${mb.section}] confirming ${mb.status} state inside ${proc.name} PID ${proc.pid})`;
+}
+
+function enrichMemoryBlockDescriptionWithWhy(
+  mb: ScenarioMemoryBlock,
+  proc: ScenarioProcessEntry
+): string {
+  const desc = mb.description || '';
+  if (/\(why\b/i.test(desc)) {
+    return desc;
+  }
+  if (mb.permissions === 'RWX') {
+    return `${desc} (why this region became RWX & ${mb.status}: ${proc.name} [PID ${proc.pid}] allocated or modified ${mb.size} at ${mb.address} with simultaneous Read-Write-Execute permissions so unpacked code could be written and executed directly in RAM without dropping a binary to disk, leaving an unbacked private VAD entry that PE-sieve and EDR memory scanners flag).`;
+  }
+  if (mb.status === 'patched') {
+    return `${desc} (why this region became patched in RAM: modifying code or state bytes inside ${mb.section} at ${mb.address} alters runtime behavior inside ${proc.name} [PID ${proc.pid}] while leaving the original file on disk untouched, triggering a Copy-on-Write private page split in the process VAD tree).`;
+  }
+  if (mb.status === 'injected' || mb.status === 'shellcode' || mb.status === 'unmapped') {
+    return `${desc} (why this region became ${mb.status} at ${mb.address}: staging ${mb.section} [${mb.size}, ${mb.permissions}] directly inside ${proc.name} [PID ${proc.pid}] lets the payload execute under a trusted process identity in RAM while bypassing on-disk file signature checks).`;
+  }
+  return `${desc} (why this region is tracked in memory forensics: ${mb.section} at ${mb.address} [${mb.permissions}, ${mb.size}] provides the runtime system or syscall context inside ${proc.name} [PID ${proc.pid}]).`;
+}
+
+export function buildProcessStatusWhyNote(proc: ScenarioProcessEntry): string {
+  if (proc.status === 'hollowed') {
+    return `(why hollowed · ${proc.integrity}: ${proc.name} [PID ${proc.pid}] was spawned from a genuine signed binary in a suspended state and its original code pages were unmapped and replaced in RAM so the implant inherits a trusted process identity)`;
+  }
+  if (proc.status === 'injected') {
+    return `(why injected · ${proc.integrity}: legitimate host process ${proc.name} [PID ${proc.pid}] had foreign code or patched bytes written into its virtual memory space so the attacker can run code under ${proc.integrity} integrity without launching an untrusted .exe)`;
+  }
+  if (proc.status === 'malicious') {
+    return `(why malicious · ${proc.integrity}: stage-1 loader or exploit process [PID ${proc.pid}, PPID ${proc.ppid}] that initiates the memory allocation, unhooking, or cross-process injection chain)`;
+  }
+  return `(why normal · ${proc.integrity}: baseline host or service process [PID ${proc.pid}] providing the parent execution context)`;
+}
+
+export function buildProcessCommandLineWhyNote(
+  proc: ScenarioProcessEntry
+): string {
+  const cmd = proc.commandLine || '';
+  if (/svchost\.exe$/i.test(cmd.trim())) {
+    return `(why this command line is suspicious: legitimate svchost.exe instances are always spawned by services.exe with a "-k <ServiceGroup>" flag — a bare svchost.exe path with PPID ${proc.ppid} proves a user-mode loader launched it as a hollow container)`;
+  }
+  if (/-w\s+hidden|-nop|-enc|-exec\s+bypass/i.test(cmd)) {
+    return `(why these flags are used: "-NoP -W Hidden -Exec Bypass" suppresses the PowerShell console window, skips profile scripts, and bypasses execution policy so the in-memory stager runs silently)`;
+  }
+  if (/Downloads|Temp|Public|AppData/i.test(cmd)) {
+    return `(why this path matters: executing a binary from a user-writable directory [${cmd}] instead of System32 or Program Files indicates an initial stage-1 dropper or sideloaded launcher)`;
+  }
+  return `(why this command line matters: process invocation parameters recorded in Sysmon Event ID 1 / auditd for ${proc.name} [PID ${proc.pid}, PPID ${proc.ppid}] establishing the execution lineage)`;
+}
+
+export function formatApiCallWithWhy(
+  apiCall: string,
+  proc: ScenarioProcessEntry
+): string {
+  if (/\(why:/i.test(apiCall)) return apiCall;
+  if (/CreateProcess.*SUSPENDED/i.test(apiCall)) {
+    return `${apiCall} (why: spawns the legitimate target binary frozen at thread creation [0x4] before its first instruction runs so its memory can be hollowed out safely)`;
+  }
+  if (/NtUnmapViewOfSection/i.test(apiCall)) {
+    return `${apiCall} (why: unmaps the original signed Microsoft code from the PEB ImageBaseAddress [0x00400000] to leave an empty virtual memory slot for the implant)`;
+  }
+  if (/VirtualAllocEx/i.test(apiCall)) {
+    return `${apiCall} (why: reserves cross-process private RAM with RWX [0x40] permissions inside the target process so unpacked payload sections can be written and executed)`;
+  }
+  if (/WriteProcessMemory/i.test(apiCall)) {
+    return `${apiCall} (why: copies the injected MZ/PE headers and .text shellcode bytes across process boundaries directly into the target’s newly allocated virtual memory)`;
+  }
+  if (/SetThreadContext/i.test(apiCall)) {
+    return `${apiCall} (why: overwrites the suspended thread’s CPU entry register [RCX / RIP] so execution jumps straight to the injected payload entry point)`;
+  }
+  if (/ResumeThread/i.test(apiCall)) {
+    return `${apiCall} (why: decrements the thread suspend counter from 1 to 0, waking up the hollowed process so it executes the injected code)`;
+  }
+  if (/VirtualProtect/i.test(apiCall)) {
+    return `${apiCall} (why: flips memory page permissions in place [e.g. R-X → RWX → R-X] so read-only code pages like amsi.dll or ntdll.dll can be overwritten in RAM)`;
+  }
+  if (/GetProcAddress|LoadLibrary/i.test(apiCall)) {
+    return `${apiCall} (why: dynamically resolves the exact in-memory virtual address of the target DLL export at runtime so the loader knows which byte offset to patch or call)`;
+  }
+  if (/Marshal\.Copy|RtlMoveMemory|memcpy/i.test(apiCall)) {
+    return `${apiCall} (why: writes raw patch or shellcode bytes directly into the target virtual memory address inside the current process)`;
+  }
+  if (/Assembly.*Load|ReflectiveLoader/i.test(apiCall)) {
+    return `${apiCall} (why: maps and executes a compiled DLL/assembly directly from a byte array in RAM without ever creating a file on disk)`;
+  }
+  if (/WinHttp|WSA|connect|socket|curl/i.test(apiCall)) {
+    return `${apiCall} (why: opens the outbound network/C2 channel from inside ${proc.name} [PID ${proc.pid}] so perimeter and host firewalls see traffic coming from a trusted process)`;
+  }
+  return `${apiCall} (why: invoked by ${proc.name} [PID ${proc.pid}] to advance in-memory execution or state manipulation without dropping extra tools to disk)`;
+}
+
+function splitApiCallAndWhy(formattedApi: string): {
+  apiSignature: string;
+  whyNote: string;
+} {
+  const idx = formattedApi.indexOf('(why:');
+  if (idx === -1) {
+    return {
+      apiSignature: formattedApi.trim(),
+      whyNote: '(why: invoked to execute in-memory state transition)',
+    };
+  }
+  return {
+    apiSignature: formattedApi.slice(0, idx).trim(),
+    whyNote: formattedApi.slice(idx).trim(),
+  };
 }
 
 const MEMORY_DOC_REGEX =
@@ -1013,6 +1293,12 @@ function isNonMemoryInfrastructureNode(
  * whether the current section/node/stage's documented explanation actually involves memory.
  * Never fabricates or invents memory blocks when none exist in the scenario documentation.
  */
+const EMPTY_MEMORY_FLOWCHART: MemoryForensicsFlowchartModel = {
+  totalSteps: 0,
+  summaryPhases: [],
+  stepRows: [],
+};
+
 export function resolveScopedMemoryForensics(
   scopeContext: InspectorScopeContext,
   selectedTelemetry: TelemetryEvent | null = null
@@ -1027,7 +1313,10 @@ export function resolveScopedMemoryForensics(
     return {
       hasDocumentedMemory: false,
       scopeExplanation: '',
+      structuredScopeClauses: [],
       memoryProcesses: [],
+      memoryStepTimeline: [],
+      flowchart: EMPTY_MEMORY_FLOWCHART,
       memoryBlocks: [],
       relatedProcessTree: [],
     };
@@ -1164,27 +1453,271 @@ export function resolveScopedMemoryForensics(
     return {
       hasDocumentedMemory: false,
       scopeExplanation: '',
+      structuredScopeClauses: [],
       memoryProcesses: [],
+      memoryStepTimeline: [],
+      flowchart: EMPTY_MEMORY_FLOWCHART,
       memoryBlocks: [],
       relatedProcessTree: [],
     };
   }
 
-  const memoryBlocks = allMemoryProcesses.flatMap((proc) =>
-    (proc.memoryBlocks || []).map((mb) => ({
-      ...mb,
-      processId: String(proc.pid),
-      processName: proc.name,
-      processPid: proc.pid,
-    }))
+  const stages = scenario.stages || [];
+  let runningBlockIndex = 0;
+
+  const memoryBlocks = allMemoryProcesses.flatMap((proc) => {
+    const procApis = proc.apiCalls || [];
+    return (proc.memoryBlocks || []).map((mb, bIdx) => {
+      runningBlockIndex += 1;
+      const stepNumber = runningBlockIndex;
+      const stepCode = `M.${stepNumber}`;
+      const matchedStageIdx = Math.min(
+        stages.length,
+        Math.max(1, (proc.activeFromStage || 1) + bIdx)
+      );
+      const stageObj =
+        stages.find((s) => s.index === matchedStageIdx) ||
+        stages[Math.min(stages.length - 1, stepNumber - 1)] ||
+        stages[0];
+
+      const rawApi =
+        procApis[Math.min(procApis.length - 1, bIdx)] ||
+        procApis[0] ||
+        stageObj?.mitreTechniqueId ||
+        'VirtualAllocEx / WriteProcessMemory';
+      const correlatedApiCall = formatApiCallWithWhy(rawApi, proc);
+
+      const enrichedDesc = enrichMemoryBlockDescriptionWithWhy(mb, proc);
+      const addressWhyNote = buildMemoryBlockAddressWhyNote(mb, proc);
+      const permissionsWhyNote = buildMemoryBlockPermissionsWhyNote(mb, proc);
+      const hexWhyNote = buildMemoryBlockHexWhyNote(mb, proc);
+
+      const parsedClauses = parseStructuredExplanationClauses(
+        enrichedDesc,
+        stepCode
+      ).map((clause) => {
+        const normalizedReasons = clause.parentheticalReasons.map((r) =>
+          /^why\b/i.test(r.trim()) ? r.trim() : `why: ${r.trim()}`
+        );
+        if (normalizedReasons.length > 0) {
+          return {
+            ...clause,
+            parentheticalReasons: normalizedReasons,
+          };
+        }
+        const fallbackWhy = permissionsWhyNote.replace(/^\(|\)$/g, '');
+        return {
+          ...clause,
+          parentheticalReasons: [fallbackWhy],
+        };
+      });
+
+      return {
+        ...mb,
+        stepNumber,
+        stepCode,
+        stageIndex: stageObj?.index || matchedStageIdx,
+        stageTitle: stageObj?.title || `Stage ${matchedStageIdx}`,
+        correlatedApiCall,
+        description: enrichedDesc,
+        processId: String(proc.pid),
+        processName: proc.name,
+        processPid: proc.pid,
+        addressWhyNote,
+        permissionsWhyNote,
+        hexWhyNote,
+        structuredClauses: parsedClauses,
+      };
+    });
+  });
+
+  const memoryStepTimeline: ScopedMemoryStepItem[] = memoryBlocks.map((mb) => {
+    const proc =
+      allMemoryProcesses.find((p) => p.pid === mb.processPid) ||
+      allMemoryProcesses[0];
+    const { apiSignature, whyNote } = splitApiCallAndWhy(mb.correlatedApiCall);
+    const stageTelemetry = (scenario.telemetry || []).find(
+      (t) => t.stageIndex === mb.stageIndex
+    );
+    const primaryClause = mb.structuredClauses[0];
+    const allWhyReasons = mb.structuredClauses.flatMap(
+      (c) => c.parentheticalReasons
+    );
+    const primaryWhy =
+      allWhyReasons.find((r) => /^why\b/i.test(r)) ||
+      mb.permissionsWhyNote.replace(/^\(|\)$/g, '');
+
+    const detectionEvidence = stageTelemetry
+      ? `${stageTelemetry.sourceType} · ${stageTelemetry.protocolOrEventId}: ${stageTelemetry.shortAction || stageTelemetry.info} (why detected: memory scanner / kernel sensor correlates ${mb.address} [${mb.permissions}] in ${mb.processName} PID ${mb.processPid} with ${stageTelemetry.protocolOrEventId})`
+      : `PE-sieve / Sysmon VAD Scan on ${mb.processName} PID ${mb.processPid} (why detected: private ${mb.permissions} page at ${mb.address} [${mb.section}] diverges from the clean on-disk image)`;
+
+    return {
+      stepNumber: mb.stepNumber,
+      stepCode: mb.stepCode,
+      stageIndex: mb.stageIndex,
+      stageTitle: mb.stageTitle,
+      processPid: mb.processPid,
+      processPpid: proc?.ppid || 0,
+      processName: mb.processName,
+      processStatus: proc?.status || 'injected',
+      processIntegrity: proc?.integrity || 'High',
+      operationOrApi: apiSignature,
+      operationWhyNote: whyNote,
+      targetAddress: mb.address,
+      targetSection: mb.section,
+      permissions: mb.permissions,
+      regionSize: mb.size,
+      regionStatus: mb.status,
+      stepActionSummary:
+        primaryClause?.coreStatement || mb.description.split('(why')[0].trim(),
+      whyExplanation: primaryWhy.startsWith('(')
+        ? primaryWhy
+        : `(${primaryWhy})`,
+      detectionEvidence,
+    };
+  });
+
+  const flowchartStepRows: MemoryFlowchartStepRow[] = memoryBlocks.map(
+    (mb, idx) => {
+      const stepItem = memoryStepTimeline[idx];
+      const dumpPhaseNode: MemoryFlowchartPhaseNode = {
+        phaseId: 'MEMORY_DUMP',
+        phaseOrder: 1,
+        phaseCode: `${mb.stepCode}.1`,
+        phaseTitle: 'Memory Dump & VAD Capture',
+        badgeLabel: `${mb.permissions} · ${mb.size}`,
+        iconKind: 'MEMORY_DUMP',
+        primaryArtifact: `${mb.address} · ${mb.section}`,
+        secondarySpec: `${mb.processName} (PID ${mb.processPid}) · Status: ${mb.status.toUpperCase()}`,
+        whyAnnotation: `${mb.addressWhyNote} ${mb.permissionsWhyNote}`,
+      };
+
+      const stringPhaseNode: MemoryFlowchartPhaseNode = {
+        phaseId: 'STRING_ANALYSIS',
+        phaseOrder: 2,
+        phaseCode: `${mb.stepCode}.2`,
+        phaseTitle: 'String, Byte & API Analysis',
+        badgeLabel: stepItem.operationOrApi,
+        iconKind: 'STRING_ANALYSIS',
+        primaryArtifact: mb.hexPreview,
+        secondarySpec: `API / Syscall: ${stepItem.operationOrApi}`,
+        whyAnnotation: `${mb.hexWhyNote} ${stepItem.operationWhyNote}`,
+      };
+
+      const extractionPhaseNode: MemoryFlowchartPhaseNode = {
+        phaseId: 'FORENSIC_EXTRACTION',
+        phaseOrder: 3,
+        phaseCode: `${mb.stepCode}.3`,
+        phaseTitle: 'Forensic Extraction & Verdict',
+        badgeLabel: `Stage S${mb.stageIndex} Catch`,
+        iconKind: 'FORENSIC_EXTRACTION',
+        primaryArtifact: stepItem.stepActionSummary,
+        secondarySpec: stepItem.detectionEvidence.split('(why')[0].trim(),
+        whyAnnotation: stepItem.whyExplanation,
+      };
+
+      return {
+        stepNumber: mb.stepNumber,
+        stepCode: mb.stepCode,
+        stageIndex: mb.stageIndex,
+        stageTitle: mb.stageTitle,
+        processName: mb.processName,
+        processPid: mb.processPid,
+        targetAddress: mb.address,
+        targetSection: mb.section,
+        permissions: mb.permissions,
+        regionSize: mb.size,
+        regionStatus: mb.status,
+        stepHeadline: stepItem.stepActionSummary,
+        stepWhySummary: stepItem.whyExplanation,
+        phases: [dumpPhaseNode, stringPhaseNode, extractionPhaseNode],
+      };
+    }
   );
+
+  const flowchart: MemoryForensicsFlowchartModel = {
+    totalSteps: flowchartStepRows.length,
+    summaryPhases: [
+      {
+        phaseId: 'MEMORY_DUMP',
+        phaseOrder: 1,
+        title: 'Phase 1 · Memory Dump & VAD Snapshot',
+        subtitle: 'Volatile RAM Region & Page Protection Acquisition',
+        iconKind: 'MEMORY_DUMP',
+        whyPhaseMatters:
+          '(why Phase 1 — Memory Dump: captures volatile RAM pages and Virtual Address Descriptor [VAD] permissions [RWX / Copy-on-Write] before process termination or system reboot erases fileless evidence)',
+        artifactCountLabel: `${flowchartStepRows.length} Dumped VAD Region${flowchartStepRows.length === 1 ? '' : 's'}`,
+      },
+      {
+        phaseId: 'STRING_ANALYSIS',
+        phaseOrder: 2,
+        title: 'Phase 2 · String, Byte & API Analysis',
+        subtitle: 'Hex Header Signatures, Syscalls & Unpacked Strings',
+        iconKind: 'STRING_ANALYSIS',
+        whyPhaseMatters:
+          '(why Phase 2 — String & Byte Analysis: inspects raw hex signatures [MZ 4D 5A headers, ELF magic bytes, shellcode prologues] and resolved API/syscall strings inside dumped memory)',
+        artifactCountLabel: `${flowchartStepRows.length} Hex & API Signature${flowchartStepRows.length === 1 ? '' : 's'}`,
+      },
+      {
+        phaseId: 'FORENSIC_EXTRACTION',
+        phaseOrder: 3,
+        title: 'Phase 3 · Forensic Extraction & EDR Catch',
+        subtitle: 'PE-Sieve / Volatility Carving & SIEM Correlation',
+        iconKind: 'FORENSIC_EXTRACTION',
+        whyPhaseMatters:
+          '(why Phase 3 — Forensic Extraction: carves injected or hollowed modules out of RAM via PE-sieve/Volatility and correlates each memory mutation with kernel/SIEM detection telemetry)',
+        artifactCountLabel: `${flowchartStepRows.length} Extracted Forensic Proof${flowchartStepRows.length === 1 ? '' : 's'}`,
+      },
+    ],
+    stepRows: flowchartStepRows,
+  };
+
+  const enrichedScopeExplanation =
+    scopeExplanation && !/\(why\b/i.test(scopeExplanation)
+      ? `${scopeExplanation} (why memory forensics is decisive here: fileless and hollowing loaders unpack or patch executable code directly inside volatile RAM so on-disk files still appear clean and signed, leaving Virtual Address Descriptor [VAD] permission anomalies, unbacked RWX pages, and Copy-on-Write page splits as the primary forensic proof).`
+      : scopeExplanation;
+
+  const structuredScopeClauses = parseStructuredExplanationClauses(
+    enrichedScopeExplanation,
+    'M0'
+  );
+
+  const relatedProcessTree = (scenario.processTree || []).map((proc, pIdx) => {
+    const processStepNumber = pIdx + 1;
+    const processStepCode = `P.${processStepNumber}`;
+    const apiCallsWithWhy = (proc.apiCalls || []).map((api) =>
+      formatApiCallWithWhy(api, proc)
+    );
+    const structuredApiSteps = apiCallsWithWhy.map((fullText, aIdx) => {
+      const { apiSignature, whyNote } = splitApiCallAndWhy(fullText);
+      return {
+        stepCode: `${processStepCode}.${aIdx + 1}`,
+        apiSignature,
+        whyNote,
+        fullText,
+      };
+    });
+
+    return {
+      ...proc,
+      processStepNumber,
+      processStepCode,
+      statusWhyNote: buildProcessStatusWhyNote(proc),
+      commandLineWhyNote: buildProcessCommandLineWhyNote(proc),
+      apiCallsWithWhy,
+      structuredApiSteps,
+    };
+  });
 
   return {
     hasDocumentedMemory: memoryBlocks.length > 0,
-    scopeExplanation,
+    scopeExplanation: enrichedScopeExplanation,
+    structuredScopeClauses,
     memoryProcesses: allMemoryProcesses,
+    memoryStepTimeline,
+    flowchart,
     memoryBlocks,
-    relatedProcessTree: scenario.processTree || [],
+    relatedProcessTree,
   };
 }
 

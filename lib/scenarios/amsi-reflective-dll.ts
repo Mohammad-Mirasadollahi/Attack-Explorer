@@ -93,7 +93,8 @@ export const AMSI_REFLECTIVE_DLL_SCENARIO: AttackScenario = {
           permissions: 'R-X',
           size: '64 KB',
           status: 'patched',
-          description: 'First 6 bytes of AmsiScanBuffer overwritten with mov eax, 0x80070057; ret (Copy-on-Write triggered).',
+          description:
+            'First 6 bytes of AmsiScanBuffer overwritten with mov eax, 0x80070057; ret (why patched in RAM: amsi.dll is loaded inside powershell.exe’s own user-mode memory, so temporarily flipping protection via VirtualProtect and writing B8 57 00 07 80 C3 forces AmsiScanBuffer to immediately return E_INVALIDARG — blinding Windows Defender before the second stage loads, while triggering a forensic Copy-on-Write private page split in the VAD tree).',
           hexPreview: 'B8 57 00 07 80 C3 90 90 48 89 74 24 18 57 48 83  .W......H.t$.WH.' },
         {
           address: '0x024A80000',
@@ -101,7 +102,8 @@ export const AMSI_REFLECTIVE_DLL_SCENARIO: AttackScenario = {
           permissions: 'RWX',
           size: '512 KB',
           status: 'shellcode',
-          description: 'Full PE DLL manually mapped in memory by ReflectiveLoader without registering in PEB Ldr module list.',
+          description:
+            'Full PE/CLR assembly manually mapped in private heap memory (0x024A80000) via Assembly.Load(byte[]) / ReflectiveLoader without registering in the PEB Ldr module list (why unbacked RWX heap: loading the 512 KB byte array directly in RAM avoids creating an on-disk .dll file that NTFS minifilter drivers would scan, leaving an unbacked MZ header in private heap memory).',
           hexPreview: '4D 5A 90 00 03 00 00 00 04 00 00 00 FF FF 00 00  MZ..............' },
       ] },
   ],

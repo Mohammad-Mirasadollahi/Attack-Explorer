@@ -426,7 +426,13 @@ export function buildCascadingProcessWaterfall(
         ? memBlocks
             .map(
               (m) =>
-                `${m.section} @ ${m.address} [${m.permissions}] (${m.status.toUpperCase()})`
+                `${m.section} @ ${m.address} [${m.permissions}] (${m.status.toUpperCase()} — why: ${
+                  m.permissions === 'RWX'
+                    ? 'unbacked writable+executable RAM page for in-memory code execution'
+                    : m.status === 'patched'
+                      ? 'Copy-on-Write RAM page modified in place while disk image stays clean'
+                      : 'mutated virtual memory region inside target process'
+                })`
             )
             .join(' · ')
         : null;
@@ -695,23 +701,32 @@ export function buildDocumentationArchitectureBlueprint(
   if (memoryProcs.length > 0) {
     const targetProc = memoryProcs[0];
     const blocks = targetProc.memoryBlocks || [];
+    const apiChain =
+      (targetProc.apiCalls || []).slice(0, 3).join(' -> ') ||
+      middleStage?.mitreTechniqueId ||
+      'VirtualAllocEx -> WriteProcessMemory';
     stateTransformation = {
       title: `Virtual Address Space (VAD) State Mutation — ${targetProc.name} (PID ${targetProc.pid})`,
       beforeLabel: 'INITIAL PROCESS / IMAGE STATE',
       beforeSpecs: [
-        `Host Process: ${targetProc.name} (PID ${targetProc.pid}, PPID ${targetProc.ppid})`,
-        `Command Line: ${targetProc.commandLine}`,
-        `Initial Protection: Image-backed RX sections (${blocks[0]?.address || '0x00400000'})`,
+        `Host Process: ${targetProc.name} (PID ${targetProc.pid}, PPID ${targetProc.ppid} — why targeted: legitimate signed binary chosen so injected code inherits a trusted process identity)`,
+        `Command Line: ${targetProc.commandLine} (why used: initial process container before in-memory mutation)`,
+        `Initial Protection: Image-backed RX sections at ${blocks[0]?.address || '0x00400000'} (why clean baseline: standard read-execute pages mapped from the signed binary on disk before tampering)`,
       ],
-      mutationOperator:
-        (targetProc.apiCalls || []).slice(0, 3).join(' -> ') ||
-        middleStage?.mitreTechniqueId ||
-        'VirtualAllocEx -> WriteProcessMemory',
+      mutationOperator: `${apiChain} (why this API chain: unmaps or unlocks the target process’s virtual memory pages in RAM to write and execute the implant without dropping an untrusted binary to disk)`,
       afterLabel: 'MUTATED / INJECTED MEMORY STATE',
-      afterSpecs: blocks.map(
-        (b) =>
-          `${b.address} [${b.permissions}] ${b.section} (${b.size}) — ${b.status.toUpperCase()}: ${b.description}`
-      ),
+      afterSpecs: blocks.map((b) => {
+        const desc = /\(why\b/i.test(b.description)
+          ? b.description
+          : `${b.description} (why ${b.permissions} & ${b.status}: ${
+              b.permissions === 'RWX'
+                ? 'simultaneous Read+Write+Execute private memory page allocated so shellcode can be written and executed directly in RAM'
+                : b.status === 'patched'
+                ? 'in-memory code/state bytes overwritten in RAM, triggering a Copy-on-Write private page split while the on-disk file stays clean'
+                : 'mutated in-memory section supporting payload execution inside the host process'
+            })`;
+        return `${b.address} [${b.permissions}] ${b.section} (${b.size}) — ${b.status.toUpperCase()}: ${desc}`;
+      }),
       detectionSignal:
         criticalTelemetry?.detectionRule?.title ||
         criticalTelemetry?.shortAction ||

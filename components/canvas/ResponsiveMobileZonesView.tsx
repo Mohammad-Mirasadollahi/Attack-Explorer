@@ -11,7 +11,7 @@ import {
 } from '@/lib/sketch-zones-and-drilldown';
 import { SketchNodeIcon } from '../SketchNodeIcons';
 import { formatMergedDiagramNodeBadge } from '@/lib/ui-text-standards';
-import { ArrowDown, Maximize2 } from 'lucide-react';
+import { ArrowDown, Maximize2, ZoomIn } from 'lucide-react';
 
 interface ResponsiveMobileZonesViewProps {
   zones?: NetworkZoneColumn[];
@@ -141,15 +141,18 @@ export function ResponsiveMobileZonesView({
                       {onExpandNode && (
                         <button
                           type="button"
-                          aria-label={`Inspect internal pipeline of ${node.label}`}
+                          data-testid={`mobile-node-expand-indicator-${node.id}`}
+                          aria-label={`Expand internal pipeline of ${node.label}`}
+                          title={`Expand inside #${node.chainOrder} ${node.label}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             onExpandNode(node);
                           }}
                           className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/90 dark:border-indigo-800 text-[9.5px] font-mono font-semibold transition-colors cursor-pointer"
                         >
+                          <ZoomIn className="w-3 h-3 shrink-0" />
                           <Maximize2 className="w-3 h-3 shrink-0" />
-                          <span>Pipeline</span>
+                          <span>Expand</span>
                         </button>
                       )}
                     </div>

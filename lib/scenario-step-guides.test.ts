@@ -132,16 +132,29 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
     assert.equal(outroModel.briefing.isOutroComplete, true);
     assert.ok(outroModel.steps.every((s) => s.status === 'COMPLETED'));
 
-    // 5. Verify all 85 scenarios have contiguous 1..N step guide badges with zero legacy .1/.2 suffixes
+    // 5. Verify all 85 scenarios have contiguous 1..N step guide badges, visual topology nodes, sequence waterfall, and structured clauses
     for (const sc of ATTACK_SCENARIOS) {
       const m = buildDiagramStepGuideModel(sc, 1, 'STAGE_ACTIVE');
       assert.equal(m.steps.length, sc.stages.length);
+      assert.equal(m.briefing.topologyNodes.length, 6);
+      assert.equal(m.briefing.sequenceWaterfall.length, sc.stages.length);
+      assert.ok(m.briefing.structuredSummaryClauses.length >= 1);
       m.steps.forEach((st, idx) => {
         const expectedNo = idx + 1;
         assert.equal(st.stepNumber, expectedNo);
+        assert.equal(st.forwardSeq, String(expectedNo));
+        assert.equal(st.returnSeq, String(expectedNo));
         assert.ok(st.forwardFlowBadge.startsWith(`#${expectedNo}→`));
         assert.ok(st.returnFlowBadge.startsWith(`⇠#${expectedNo}`));
         assert.equal(/#\d+\.\d+→/.test(st.diagramAlignment), false);
+        assert.ok(st.fromNodeIcon.length > 0);
+        assert.ok(st.toNodeIcon.length > 0);
+        assert.ok(st.siemNodeIcon.length > 0);
+        assert.ok(st.structuredClauses.length >= 1);
+        assert.ok(
+          st.structuredClauses.some((c) => c.parentheticalReasons.length >= 1),
+          `${sc.id} step ${st.stepNumber} structuredClauses must extract parentheticalReasons`
+        );
       });
     }
   });

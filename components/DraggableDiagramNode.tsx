@@ -2,7 +2,7 @@
 
 import React, { memo, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Check } from 'lucide-react';
+import { Check, Maximize2, ZoomIn } from 'lucide-react';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { SketchNodeIcon } from './SketchNodeIcons';
 import { formatMergedDiagramNodeBadge } from '@/lib/ui-text-standards';
@@ -299,8 +299,16 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
                     : ''
             }`}
           >
-            <div className="text-[8.5px] font-bold leading-tight tracking-tight">
-              {merged.seqBadge} {merged.shortTitle}
+            <div className="text-[8.5px] font-bold leading-tight tracking-tight flex items-center justify-center gap-1">
+              <span>
+                {merged.seqBadge} {merged.shortTitle}
+              </span>
+              {!isSubBoard && (
+                <Maximize2
+                  aria-hidden="true"
+                  className="w-2.5 h-2.5 shrink-0 opacity-90"
+                />
+              )}
             </div>
             <div
               className={`text-[7.5px] font-mono font-semibold leading-tight ${
@@ -317,16 +325,42 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
         );
       })()}
 
-      <SketchNodeIcon
-        iconType={node.iconType}
-        isActive={
-          node.isActive ||
-          (isSearchFiltering && isSearchMatch) ||
-          cState.role === 'CURRENT_SOURCE' ||
-          cState.role === 'CURRENT_TARGET'
-        }
-        isCompromised={node.isCompromised}
-      />
+      <div className="relative flex items-center justify-center">
+        <SketchNodeIcon
+          iconType={node.iconType}
+          isActive={
+            node.isActive ||
+            (isSearchFiltering && isSearchMatch) ||
+            cState.role === 'CURRENT_SOURCE' ||
+            cState.role === 'CURRENT_TARGET'
+          }
+          isCompromised={node.isCompromised}
+        />
+
+        {/* Visual Expand Indicator Badge (Magnifying Glass + Expansion Arrows) on Main Topology Nodes */}
+        {!isSubBoard && (
+          <span
+            role="button"
+            tabIndex={-1}
+            data-testid={`node-expand-indicator-${node.id}`}
+            aria-label={`Expand inside #${node.chainOrder} ${node.label}`}
+            title={`Expand inside #${node.chainOrder} ${node.label} (Click icon, Double-click node, or Right-click)`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNodeDoubleClick?.(node, e);
+            }}
+            className={`canvas-interactive-control nopan absolute -bottom-1.5 -right-2 z-30 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border shadow-sm transition-all cursor-pointer group-hover:scale-110 ${
+              tacticalMode
+                ? 'bg-slate-950/95 text-emerald-300 border-emerald-500/80 hover:bg-emerald-950'
+                : 'bg-indigo-600/95 hover:bg-indigo-500 text-white border-white/90 dark:border-zinc-900'
+            }`}
+          >
+            <ZoomIn className="w-2.5 h-2.5 stroke-[2.5] shrink-0" />
+            <Maximize2 className="w-2.5 h-2.5 stroke-[2.5] shrink-0" />
+          </span>
+        )}
+      </div>
     </motion.button>
   );
 });

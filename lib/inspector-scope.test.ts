@@ -385,6 +385,20 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     const overviewMem = resolveScopedMemoryForensics(overviewScope, null);
     assert.equal(overviewMem.hasDocumentedMemory, true);
     assert.equal(overviewMem.memoryBlocks.length, 3);
+    assert.match(overviewMem.scopeExplanation, /\(why\b/i);
+    for (const mb of overviewMem.memoryBlocks) {
+      assert.match(mb.addressWhyNote, /\(why\b/i);
+      assert.match(mb.permissionsWhyNote, /\(why\b/i);
+      assert.match(mb.hexWhyNote, /\(why\b/i);
+      assert.match(mb.description, /\(why\b/i);
+    }
+    for (const proc of overviewMem.relatedProcessTree) {
+      assert.match(proc.statusWhyNote, /\(why\b/i);
+      assert.match(proc.commandLineWhyNote, /\(why\b/i);
+      for (const api of proc.apiCallsWithWhy) {
+        assert.match(api, /\(why:/i);
+      }
+    }
 
     // Stage 2 (NtUnmapViewOfSection memory unmapping) -> hasDocumentedMemory === true
     const stage2Scope = resolveInspectorScopeContext({
@@ -837,10 +851,118 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
       true,
       'AttackVisualizer must render a right-click context menu with Expand Inside Node button on diagram nodes'
     );
+
+    // 7. Visual expand indicator icons (ZoomIn magnifying glass + Maximize2 expansion arrows) on main network topology nodes
+    const nodeCompSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/DraggableDiagramNode.tsx'),
+      'utf8'
+    );
+    assert.equal(
+      nodeCompSrc.includes('node-expand-indicator-') &&
+        nodeCompSrc.includes('<ZoomIn') &&
+        nodeCompSrc.includes('<Maximize2'),
+      true,
+      'DraggableDiagramNode must render visual expand indicator icons (ZoomIn + Maximize2) on main network topology nodes'
+    );
+
+    // 8. Consistent parenthetical (why ...) annotations and Visual Memory Analysis Flowchart across every memory step in resolveScopedMemoryForensics and ProcessMemoryView
+    const memoryViewSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/canvas/ProcessMemoryView.tsx'),
+      'utf8'
+    );
+    const memoryFlowchartSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/canvas/MemoryForensicsFlowchart.tsx'),
+      'utf8'
+    );
+    assert.equal(
+      memoryViewSrc.includes('data-testid="memory-step-by-step-waterfall"') &&
+        memoryViewSrc.includes('memory-step-why-') &&
+        memoryViewSrc.includes('WHY / RAM MUTATION:') &&
+        memoryViewSrc.includes('<MemoryForensicsFlowchart'),
+      true,
+      'ProcessMemoryView must render MemoryForensicsFlowchart, Step-by-Step Memory Mutation Waterfall, and parenthetical why callout boxes'
+    );
+    assert.equal(
+      memoryFlowchartSrc.includes('data-testid="memory-flowchart-macro-pipeline"') &&
+        memoryFlowchartSrc.includes('data-testid="memory-flowchart-steps-grid"') &&
+        memoryFlowchartSrc.includes('<HardDriveDownload') &&
+        memoryFlowchartSrc.includes('<ScanSearch') &&
+        memoryFlowchartSrc.includes('<Microscope') &&
+        !memoryFlowchartSrc.includes('truncate'),
+      true,
+      'MemoryForensicsFlowchart must render macro and step-by-step flowcharts with HardDriveDownload, ScanSearch, and Microscope icons and zero CSS truncate classes'
+    );
+
+    for (const sc of ATTACK_SCENARIOS) {
+      const hasMem = (sc.processTree || []).some(
+        (p) => (p.memoryBlocks || []).length > 0
+      );
+      if (!hasMem) continue;
+      const scope = resolveInspectorScopeContext({
+        scenario: sc,
+        activeStageIndex: 0,
+        activeEnvironment: 'WORKSTATION',
+        selectedNodeId: null,
+        expandedNodeId: null,
+        selectedInternalSubNodeId: null,
+      });
+      const memModel = resolveScopedMemoryForensics(scope, null);
+      assert.equal(memModel.hasDocumentedMemory, true);
+      assert.equal(
+        memModel.memoryStepTimeline.length,
+        memModel.memoryBlocks.length,
+        `${sc.id} memoryStepTimeline must cover every documented memory region`
+      );
+      assert.equal(
+        memModel.flowchart.summaryPhases.length,
+        3,
+        `${sc.id} flowchart must have 3 summary phases (MEMORY_DUMP, STRING_ANALYSIS, FORENSIC_EXTRACTION)`
+      );
+      assert.deepEqual(
+        memModel.flowchart.summaryPhases.map((p) => p.phaseId),
+        ['MEMORY_DUMP', 'STRING_ANALYSIS', 'FORENSIC_EXTRACTION']
+      );
+      assert.equal(
+        memModel.flowchart.stepRows.length,
+        memModel.memoryBlocks.length,
+        `${sc.id} flowchart.stepRows must mirror every documented memory step`
+      );
+      for (const row of memModel.flowchart.stepRows) {
+        assert.equal(row.phases.length, 3);
+        assert.equal(row.phases[0].phaseId, 'MEMORY_DUMP');
+        assert.equal(row.phases[1].phaseId, 'STRING_ANALYSIS');
+        assert.equal(row.phases[2].phaseId, 'FORENSIC_EXTRACTION');
+        for (const phaseNode of row.phases) {
+          assert.ok(
+            /\(why/i.test(phaseNode.whyAnnotation),
+            `${sc.id} flowchart phase ${phaseNode.phaseCode} must include a parenthetical (why ...) annotation`
+          );
+        }
+      }
+      for (const step of memModel.memoryStepTimeline) {
+        assert.ok(
+          step.stepCode.startsWith('M.'),
+          `${sc.id} memory step must be numbered M.1..M.N`
+        );
+        assert.ok(
+          /\(why/i.test(step.whyExplanation),
+          `${sc.id} memory step ${step.stepCode} must have a parenthetical (why ...) explanation`
+        );
+        assert.ok(
+          /\(why:/i.test(step.operationWhyNote),
+          `${sc.id} memory step ${step.stepCode} must have an API parenthetical (why: ...) explanation`
+        );
+      }
+      for (const block of memModel.memoryBlocks) {
+        assert.ok(
+          block.structuredClauses.length >= 1 &&
+            block.structuredClauses.some(
+              (c) => c.parentheticalReasons.length >= 1
+            ),
+          `${sc.id} memory block ${block.address} must have structured clauses with parenthetical why reasons`
+        );
+      }
+    }
   });
 });
-
-
-
-
 

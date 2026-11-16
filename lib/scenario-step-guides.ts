@@ -42,14 +42,81 @@ export interface RawScenarioStepGuideData {
   steps: RawScenarioStepGuideItem[];
 }
 
+export interface StructuredExplanationClause {
+  clauseCode: string;
+  coreStatement: string;
+  parentheticalReasons: string[];
+  fullText: string;
+}
+
+export interface BriefingTopologyNodeItem {
+  id: string;
+  chainOrder: number;
+  circledNumber: string;
+  label: string;
+  sublabel: string;
+  actionBadge: string;
+  zoneLabel: string;
+  iconType: import('./sketch-zones-and-drilldown').SketchIconType;
+  isCompromised: boolean;
+}
+
+export interface BriefingSequenceWaterfallItem {
+  stepNumber: number;
+  stageIndex: number;
+  forwardSeq: string;
+  returnSeq: string;
+  actionLabel: string;
+  returnLabel: string;
+  protocolOrEventId: string;
+  mitreId: string;
+  fromNodeOrder: number;
+  fromNodeCircled: string;
+  fromNodeLabel: string;
+  fromNodeSublabel: string;
+  fromNodeIcon: import('./sketch-zones-and-drilldown').SketchIconType;
+  toNodeOrder: number;
+  toNodeCircled: string;
+  toNodeLabel: string;
+  toNodeSublabel: string;
+  toNodeIcon: import('./sketch-zones-and-drilldown').SketchIconType;
+}
+
 export interface DiagramAlignedStepGuideItem extends RawScenarioStepGuideItem {
   stageTitle: string;
   stageSubtitle: string;
   fromNodeBadge: string;
+  fromNodeLabel: string;
+  fromNodeSublabel: string;
+  fromNodeOrder: number;
+  fromNodeCircled: string;
+  fromNodeZone: string;
+  fromNodeIcon: import('./sketch-zones-and-drilldown').SketchIconType;
   toNodeBadge: string;
+  toNodeLabel: string;
+  toNodeSublabel: string;
+  toNodeOrder: number;
+  toNodeCircled: string;
+  toNodeZone: string;
+  toNodeIcon: import('./sketch-zones-and-drilldown').SketchIconType;
+  siemNodeLabel: string;
+  siemNodeOrder: number;
+  siemNodeCircled: string;
+  siemNodeIcon: import('./sketch-zones-and-drilldown').SketchIconType;
+  forwardSeq: string;
+  returnSeq: string;
   forwardFlowBadge: string;
   returnFlowBadge: string;
+  forwardActionLabel: string;
+  forwardPayloadSummary: string;
+  returnActionLabel: string;
+  returnDescription: string;
+  continuationHint: string;
   protocolOrEventId: string;
+  timestamp: string;
+  keySpecs: Array<{ term: string; value: string }>;
+  structuredClauses: StructuredExplanationClause[];
+  structuredPracticeClauses: StructuredExplanationClause[];
   telemetryEvent: TelemetryEvent | null;
   status: 'ACTIVE' | 'COMPLETED' | 'UPCOMING';
 }
@@ -63,6 +130,9 @@ export interface DiagramAlignedBriefingModel extends RawScenarioBriefingGuide {
   finalNodeBadge: string;
   totalStages: number;
   zoneTitles: string[];
+  topologyNodes: BriefingTopologyNodeItem[];
+  sequenceWaterfall: BriefingSequenceWaterfallItem[];
+  structuredSummaryClauses: StructuredExplanationClause[];
   isActiveBriefing: boolean;
   isOutroComplete: boolean;
 }
@@ -75,6 +145,104 @@ export interface DiagramStepGuideModel {
   cinematicPhase: CinematicPhase;
   briefing: DiagramAlignedBriefingModel;
   steps: DiagramAlignedStepGuideItem[];
+}
+
+/**
+ * Splits a multi-sentence or numbered technical paragraph into clean, numbered
+ * clauses (outside of parentheses) and extracts substantive parenthetical "(why ...)"
+ * reasons so nothing is rendered as a cramped run-on block.
+ */
+export function parseStructuredExplanationClauses(
+  text: string,
+  prefixCode: string
+): StructuredExplanationClause[] {
+  const cleaned = (text || '').trim();
+  if (!cleaned) return [];
+
+  // Split on sentence boundaries ". " or "; " that occur at parenthesis depth 0
+  const rawSentences: string[] = [];
+  let current = '';
+  let depth = 0;
+
+  for (let i = 0; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (ch === '(') depth++;
+    else if (ch === ')' && depth > 0) depth--;
+
+    current += ch;
+
+    if (
+      depth === 0 &&
+      (ch === '.' || ch === ';') &&
+      i + 1 < cleaned.length &&
+      /\s/.test(cleaned[i + 1])
+    ) {
+      // Avoid splitting on common abbreviations like "v2.", "e.g.", "i.e.", "Dr.", "Mr.", "vs."
+      const tail = current.slice(-6).toLowerCase();
+      if (!/(?:e\.g\.|i\.e\.|vs\.|v\d+\.|\b\d+\.)$/.test(tail)) {
+        rawSentences.push(current.trim());
+        current = '';
+        while (i + 1 < cleaned.length && /\s/.test(cleaned[i + 1])) {
+          i++;
+        }
+      }
+    }
+  }
+  if (current.trim()) {
+    rawSentences.push(current.trim());
+  }
+
+  return rawSentences.map((sentence, idx) => {
+    const parentheticalReasons: string[] = [];
+    let coreBuilder = '';
+    let pDepth = 0;
+    let groupContent = '';
+
+    for (let i = 0; i < sentence.length; i++) {
+      const c = sentence[i];
+      if (c === '(') {
+        if (pDepth === 0) {
+          groupContent = '';
+        } else {
+          groupContent += c;
+        }
+        pDepth++;
+      } else if (c === ')' && pDepth > 0) {
+        pDepth--;
+        if (pDepth === 0) {
+          const trimmedGroup = groupContent.trim();
+          if (trimmedGroup.length >= 18) {
+            parentheticalReasons.push(trimmedGroup);
+          } else {
+            coreBuilder += `(${groupContent})`;
+          }
+          groupContent = '';
+        } else {
+          groupContent += c;
+        }
+      } else if (pDepth > 0) {
+        groupContent += c;
+      } else {
+        coreBuilder += c;
+      }
+    }
+
+    if (pDepth > 0 && groupContent) {
+      coreBuilder += `(${groupContent}`;
+    }
+
+    const coreStatement = coreBuilder
+      .replace(/\s+/g, ' ')
+      .replace(/\s+([.,;:])/g, '$1')
+      .trim();
+
+    return {
+      clauseCode: `${prefixCode}.${idx + 1}`,
+      coreStatement: coreStatement || sentence,
+      parentheticalReasons,
+      fullText: sentence,
+    };
+  });
 }
 
 /** Later batches must not overwrite richer guides already registered for the same id. */
@@ -161,25 +329,6 @@ export function applyReadableStepGuidesToScenario(
     schematic.nodes[schematic.nodes.length - 1] ||
     null;
 
-  const nodeSummaryList = schematic.nodes
-    .map((n) => {
-      const c = CIRCLED_NODE_NUMBERS[n.chainOrder - 1] || `#${n.chainOrder}`;
-      return `Node ${c} (#${n.chainOrder} ${n.label})`;
-    })
-    .join(' · ');
-
-  const flowRouteSummary = schematic.flows
-    .map((fl) => {
-      const fn = schematic.nodes.find((n) => n.id === fl.fromNodeId);
-      const tn = schematic.nodes.find((n) => n.id === fl.toNodeId);
-      const fc = fn ? CIRCLED_NODE_NUMBERS[fn.chainOrder - 1] || `#${fn.chainOrder}` : '①';
-      const tc = tn ? CIRCLED_NODE_NUMBERS[tn.chainOrder - 1] || `#${tn.chainOrder}` : '②';
-      return `Step #${fl.stepNo} (#${fl.forwardSeq}→ / ⇠#${fl.returnSeq}: Node ${fc} → Node ${tc})`;
-    })
-    .join(' → ');
-
-  const syncedTopologySummary = `On the diagram (${nodeSummaryList}): Follow ${flowRouteSummary}.`;
-
   const enhancedStages = scenario.stages.map((stage) => {
     const stepGuide = guide.steps.find((s) => s.stepNumber === stage.index);
     if (!stepGuide) return stage;
@@ -216,7 +365,7 @@ export function applyReadableStepGuidesToScenario(
 
   return {
     ...scenario,
-    overview: `${guide.briefing.storyAnalogy} ${guide.briefing.plainSummary} ${syncedTopologySummary}`,
+    overview: `${guide.briefing.storyAnalogy} ${guide.briefing.plainSummary}`,
     stages: enhancedStages,
     telemetry: enhancedTelemetry,
   };
@@ -239,6 +388,7 @@ export function buildDiagramStepGuideModel(
     Math.max(1, activeStageIndex),
     activeEnvironment
   );
+  const zoneById = new Map(schematic.zones.map((z) => [z.id, z]));
 
   const originNode = schematic.nodes[0] || null;
   const lastFlow = schematic.flows[schematic.flows.length - 1] || null;
@@ -258,22 +408,61 @@ export function buildDiagramStepGuideModel(
     cinematicPhase === 'INTRO_FOCUS_ORIGIN';
   const isOutroComplete = cinematicPhase === 'OUTRO_COMPLETE';
 
-  const nodeSummaryList = schematic.nodes
-    .map((n) => {
-      const c = CIRCLED_NODE_NUMBERS[n.chainOrder - 1] || `#${n.chainOrder}`;
-      return `Node ${c} (#${n.chainOrder} ${n.label})`;
-    })
-    .join(' · ');
+  const topologyNodes: BriefingTopologyNodeItem[] = schematic.nodes.map((n) => {
+    const z = zoneById.get(n.zoneId);
+    return {
+      id: n.id,
+      chainOrder: n.chainOrder,
+      circledNumber:
+        CIRCLED_NODE_NUMBERS[n.chainOrder - 1] || `#${n.chainOrder}`,
+      label: n.label,
+      sublabel: n.sublabel,
+      actionBadge: n.actionBadge,
+      zoneLabel: z ? `${z.code} · ${z.title}` : n.zoneLabel || 'Network Zone',
+      iconType: n.iconType,
+      isCompromised: Boolean(n.isCompromised),
+    };
+  });
 
-  const flowRouteSummary = schematic.flows
-    .map((fl) => {
-      const fn = schematic.nodes.find((n) => n.id === fl.fromNodeId);
-      const tn = schematic.nodes.find((n) => n.id === fl.toNodeId);
-      const fc = fn ? CIRCLED_NODE_NUMBERS[fn.chainOrder - 1] || `#${fn.chainOrder}` : '①';
-      const tc = tn ? CIRCLED_NODE_NUMBERS[tn.chainOrder - 1] || `#${tn.chainOrder}` : '②';
-      return `Step #${fl.stepNo} (#${fl.forwardSeq}→ / ⇠#${fl.returnSeq}: Node ${fc} → Node ${tc})`;
-    })
-    .join(' → ');
+  const sequenceWaterfall: BriefingSequenceWaterfallItem[] =
+    schematic.flows.map((fl) => {
+      const fn =
+        schematic.nodes.find((n) => n.id === fl.fromNodeId) ||
+        schematic.nodes[0];
+      const tn =
+        schematic.nodes.find((n) => n.id === fl.toNodeId) ||
+        schematic.nodes[1] ||
+        schematic.nodes[0];
+      const fc = fn
+        ? CIRCLED_NODE_NUMBERS[fn.chainOrder - 1] || `#${fn.chainOrder}`
+        : '①';
+      const tc = tn
+        ? CIRCLED_NODE_NUMBERS[tn.chainOrder - 1] || `#${tn.chainOrder}`
+        : '②';
+      return {
+        stepNumber: fl.stepNo,
+        stageIndex: fl.stageIndex,
+        forwardSeq: fl.forwardSeq || String(fl.stepNo),
+        returnSeq: fl.returnSeq || String(fl.stepNo),
+        actionLabel: fl.label,
+        returnLabel: fl.returnLabel || 'ACK',
+        protocolOrEventId: fl.telemetryEvent.protocolOrEventId,
+        mitreId: fl.telemetryEvent.mitreId,
+        fromNodeOrder: fn?.chainOrder || 1,
+        fromNodeCircled: fc,
+        fromNodeLabel: fn?.label || 'Origin',
+        fromNodeSublabel: fn?.sublabel || '',
+        fromNodeIcon: fn?.iconType || 'VICTIM_LAPTOP',
+        toNodeOrder: tn?.chainOrder || 2,
+        toNodeCircled: tc,
+        toNodeLabel: tn?.label || 'Target',
+        toNodeSublabel: tn?.sublabel || '',
+        toNodeIcon: tn?.iconType || 'MALWARE_PAYLOAD',
+      };
+    });
+
+  const plainSummaryText =
+    rawGuide?.briefing.plainSummary || scenario.overview;
 
   const briefing: DiagramAlignedBriefingModel = {
     scenarioCode: scenario.code,
@@ -284,9 +473,10 @@ export function buildDiagramStepGuideModel(
     storyAnalogy:
       rawGuide?.briefing.storyAnalogy ||
       scenario.shortSubtitle,
-    plainSummary: rawGuide?.briefing.plainSummary || scenario.overview,
+    plainSummary: plainSummaryText,
     diagramTopologySummary:
-      `On the diagram (${nodeSummaryList}): Follow ${flowRouteSummary}.`,
+      rawGuide?.briefing.diagramTopologySummary ||
+      `Topology spans ${topologyNodes.length} nodes across ${sequenceWaterfall.length} chronological steps (#1→ to #${sequenceWaterfall.length}→).`,
     documentedAdvisory:
       rawGuide?.briefing.documentedAdvisory ||
       `${scenario.code} · ${scenario.shortSubtitle}`,
@@ -299,75 +489,146 @@ export function buildDiagramStepGuideModel(
     finalNodeBadge: finalNode?.actionBadge || 'TARGET ⑤ · Objective',
     totalStages: scenario.stages.length,
     zoneTitles: schematic.zones.map((z) => z.title),
+    topologyNodes,
+    sequenceWaterfall,
+    structuredSummaryClauses: parseStructuredExplanationClauses(
+      plainSummaryText,
+      '0'
+    ),
     isActiveBriefing,
     isOutroComplete,
   };
 
-  const steps: DiagramAlignedStepGuideItem[] = scenario.stages.map((stage) => {
-    const rawStep = rawGuide?.steps.find((s) => s.stepNumber === stage.index);
-    const flow =
-      schematic.flows.find((f) => f.stageIndex === stage.index) ||
-      schematic.flows[stage.index - 1] ||
-      null;
-    const fromNode =
-      (flow && schematic.nodes.find((n) => n.id === flow.fromNodeId)) ||
-      schematic.nodes[0] ||
-      null;
-    const toNode =
-      (flow && schematic.nodes.find((n) => n.id === flow.toNodeId)) ||
-      schematic.nodes[1] ||
-      null;
-    const telemetryEvent =
-      scenario.telemetry.find((t) => t.stageIndex === stage.index) ||
-      scenario.telemetry[stage.index - 1] ||
-      null;
+  const steps: DiagramAlignedStepGuideItem[] = scenario.stages.map(
+    (stage, sIdx) => {
+      const rawStep = rawGuide?.steps.find((s) => s.stepNumber === stage.index);
+      const flow =
+        schematic.flows.find((f) => f.stageIndex === stage.index) ||
+        schematic.flows[stage.index - 1] ||
+        null;
+      const fromNode =
+        (flow && schematic.nodes.find((n) => n.id === flow.fromNodeId)) ||
+        schematic.nodes[0] ||
+        null;
+      const toNode =
+        (flow && schematic.nodes.find((n) => n.id === flow.toNodeId)) ||
+        schematic.nodes[1] ||
+        null;
+      const fromZone = fromNode ? zoneById.get(fromNode.zoneId) : null;
+      const toZone = toNode ? zoneById.get(toNode.zoneId) : null;
+      const telemetryEvent =
+        scenario.telemetry.find((t) => t.stageIndex === stage.index) ||
+        scenario.telemetry[stage.index - 1] ||
+        null;
 
-    const isBriefingPhase =
-      cinematicPhase === 'INTRO_SURVEY' ||
-      cinematicPhase === 'INTRO_FOCUS_ORIGIN';
+      const isBriefingPhase =
+        cinematicPhase === 'INTRO_SURVEY' ||
+        cinematicPhase === 'INTRO_FOCUS_ORIGIN';
 
-    const status: DiagramAlignedStepGuideItem['status'] = isBriefingPhase
-      ? 'UPCOMING'
-      : isOutroComplete
-      ? 'COMPLETED'
-      : activeStageIndex === stage.index
-      ? 'ACTIVE'
-      : activeStageIndex > stage.index
-      ? 'COMPLETED'
-      : 'UPCOMING';
+      const status: DiagramAlignedStepGuideItem['status'] = isBriefingPhase
+        ? 'UPCOMING'
+        : isOutroComplete
+        ? 'COMPLETED'
+        : activeStageIndex === stage.index
+        ? 'ACTIVE'
+        : activeStageIndex > stage.index
+        ? 'COMPLETED'
+        : 'UPCOMING';
 
-    const forwardCode = flow ? `#${flow.forwardSeq}→` : `#${stage.index}→`;
-    const returnCode = flow ? `⇠#${flow.returnSeq}` : `⇠#${stage.index}`;
-    const syncedAlignment = `On the diagram, follow Step #${stage.index} / Link #${stage.index} (${forwardCode} ${flow?.label || stage.title} / ${returnCode} ${flow?.returnLabel || 'ACK'}) from ${formatNodeRef(fromNode, 1, 'Source')} to ${formatNodeRef(toNode, 2, 'Target')}, monitored by ${formatNodeRef(siemNode, 6, 'SIEM')}.`;
+      const forwardSeq = flow ? flow.forwardSeq : String(stage.index);
+      const returnSeq = flow ? flow.returnSeq : String(stage.index);
+      const forwardCode = `#${forwardSeq}→`;
+      const returnCode = `⇠#${returnSeq}`;
+      const syncedAlignment = `On the diagram, follow Step #${stage.index} / Link #${stage.index} (${forwardCode} ${flow?.label || stage.title} / ${returnCode} ${flow?.returnLabel || 'ACK'}) from ${formatNodeRef(fromNode, 1, 'Source')} to ${formatNodeRef(toNode, 2, 'Target')}, monitored by ${formatNodeRef(siemNode, 6, 'SIEM')}.`;
 
-    return {
-      stepNumber: stage.index,
-      mitreId: stage.mitreTechniqueId || rawStep?.mitreId || scenario.code,
-      plainTitle: rawStep?.plainTitle || stage.title,
-      storyAnalogy: rawStep?.storyAnalogy || stage.subtitle,
-      simpleExplanation: rawStep?.simpleExplanation || stage.description,
-      howItWorksInPractice: rawStep?.howItWorksInPractice || stage.subtitle,
-      diagramAlignment: syncedAlignment,
-      detectionAndEvidence:
-        rawStep?.detectionAndEvidence ||
-        telemetryEvent?.info ||
-        stage.subtitle,
-      stageTitle: stage.title,
-      stageSubtitle: stage.subtitle,
-      fromNodeBadge: fromNode?.actionBadge || `Node ① · ${fromNode?.label || 'Source'}`,
-      toNodeBadge: toNode?.actionBadge || `Node ③ · ${toNode?.label || 'Target'}`,
-      forwardFlowBadge: flow
-        ? `#${flow.forwardSeq}→ ${flow.label}`
-        : `#${stage.index}→ ${telemetryEvent?.shortAction || stage.title}`,
-      returnFlowBadge: flow
-        ? `⇠#${flow.returnSeq} ${flow.returnLabel}`
-        : `⇠#${stage.index} ${telemetryEvent?.sizeOrCode || 'ACK'}`,
-      protocolOrEventId:
-        telemetryEvent?.protocolOrEventId || stage.mitreTechniqueId,
-      telemetryEvent,
-      status,
-    };
-  });
+      const simpleExplanationText =
+        rawStep?.simpleExplanation || stage.description;
+      const practiceText = rawStep?.howItWorksInPractice || stage.subtitle;
+      const nextStage = scenario.stages[sIdx + 1];
+      const continuationHint =
+        flow?.traceMeta?.continuationHint ||
+        (nextStage
+          ? `Next in kill-chain: unlocks Step #${nextStage.index} (${nextStage.title} · ${nextStage.mitreTechniqueId}).`
+          : `Completes the ${scenario.stages.length}-step kill-chain for ${scenario.name}.`);
+
+      const fromOrder = fromNode?.chainOrder || 1;
+      const toOrder = toNode?.chainOrder || 2;
+      const siemOrder = siemNode?.chainOrder || 6;
+
+      return {
+        stepNumber: stage.index,
+        mitreId: stage.mitreTechniqueId || rawStep?.mitreId || scenario.code,
+        plainTitle: rawStep?.plainTitle || stage.title,
+        storyAnalogy: rawStep?.storyAnalogy || stage.subtitle,
+        simpleExplanation: simpleExplanationText,
+        howItWorksInPractice: practiceText,
+        diagramAlignment: syncedAlignment,
+        detectionAndEvidence:
+          rawStep?.detectionAndEvidence ||
+          telemetryEvent?.info ||
+          stage.subtitle,
+        stageTitle: stage.title,
+        stageSubtitle: stage.subtitle,
+        fromNodeBadge:
+          fromNode?.actionBadge || `Node ① · ${fromNode?.label || 'Source'}`,
+        fromNodeLabel: fromNode?.label || 'Source Node',
+        fromNodeSublabel: fromNode?.sublabel || '',
+        fromNodeOrder: fromOrder,
+        fromNodeCircled:
+          CIRCLED_NODE_NUMBERS[fromOrder - 1] || `#${fromOrder}`,
+        fromNodeZone: fromZone
+          ? `${fromZone.code} · ${fromZone.title}`
+          : fromNode?.zoneLabel || 'Source Zone',
+        fromNodeIcon: fromNode?.iconType || 'VICTIM_LAPTOP',
+        toNodeBadge:
+          toNode?.actionBadge || `Node ③ · ${toNode?.label || 'Target'}`,
+        toNodeLabel: toNode?.label || 'Target Node',
+        toNodeSublabel: toNode?.sublabel || '',
+        toNodeOrder: toOrder,
+        toNodeCircled: CIRCLED_NODE_NUMBERS[toOrder - 1] || `#${toOrder}`,
+        toNodeZone: toZone
+          ? `${toZone.code} · ${toZone.title}`
+          : toNode?.zoneLabel || 'Target Zone',
+        toNodeIcon: toNode?.iconType || 'MALWARE_PAYLOAD',
+        siemNodeLabel: siemNode?.label || 'SOC SIEM & EDR Sensor',
+        siemNodeOrder: siemOrder,
+        siemNodeCircled:
+          CIRCLED_NODE_NUMBERS[siemOrder - 1] || `#${siemOrder}`,
+        siemNodeIcon: siemNode?.iconType || 'SIEM_SENSOR',
+        forwardSeq,
+        returnSeq,
+        forwardFlowBadge: flow
+          ? `#${flow.forwardSeq}→ ${flow.label}`
+          : `#${stage.index}→ ${telemetryEvent?.shortAction || stage.title}`,
+        returnFlowBadge: flow
+          ? `⇠#${flow.returnSeq} ${flow.returnLabel}`
+          : `⇠#${stage.index} ${telemetryEvent?.sizeOrCode || 'ACK'}`,
+        forwardActionLabel:
+          flow?.label || telemetryEvent?.shortAction || stage.title,
+        forwardPayloadSummary: telemetryEvent?.info || stage.subtitle,
+        returnActionLabel:
+          flow?.returnLabel || telemetryEvent?.sizeOrCode || 'ACK / Status',
+        returnDescription:
+          flow?.traceMeta?.returnDescription ||
+          `${toNode?.label || 'Target'} returns ${flow?.returnLabel || telemetryEvent?.sizeOrCode || 'status'} back to ${fromNode?.label || 'Initiator'}.`,
+        continuationHint,
+        protocolOrEventId:
+          telemetryEvent?.protocolOrEventId || stage.mitreTechniqueId,
+        timestamp: telemetryEvent?.timestamp || `00:00.${stage.index}00`,
+        keySpecs: stage.keySpecs || [],
+        structuredClauses: parseStructuredExplanationClauses(
+          simpleExplanationText,
+          String(stage.index)
+        ),
+        structuredPracticeClauses: parseStructuredExplanationClauses(
+          practiceText,
+          `${stage.index}.M`
+        ),
+        telemetryEvent,
+        status,
+      };
+    }
+  );
 
   return {
     scenarioId: scenario.id,

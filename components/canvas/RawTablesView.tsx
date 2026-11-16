@@ -14,6 +14,7 @@ import {
   DrillDownArchetype,
 } from '@/lib/sketch-zones-and-drilldown';
 import { Bug, Laptop, Network, ShieldAlert } from 'lucide-react';
+import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
 
 type RawTableTabId = Exclude<DrillDownArchetype, 'PACKET_AND_GATEWAY'>;
 
@@ -219,31 +220,68 @@ export function RawTablesView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/70 text-xs">
-                  {drillDown.malwareProcesses.map((proc) => (
-                    <tr
-                      key={proc.step}
-                      className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40 align-top"
-                    >
-                      <td className="py-3 px-3 font-mono font-semibold text-zinc-900 dark:text-white tabular-nums whitespace-nowrap">
-                        #{proc.step}
-                      </td>
-                      <td className="py-3 px-3 font-mono font-semibold text-rose-600 dark:text-rose-400 break-words leading-snug">
-                        {proc.apiOrProcess}
-                      </td>
-                      <td className="py-3 px-3 font-mono text-indigo-600 dark:text-indigo-400 break-words leading-snug">
-                        {proc.target}
-                      </td>
-                      <td className="py-3 px-3 font-mono text-zinc-600 dark:text-zinc-300 tabular-nums break-words leading-snug">
-                        {proc.memoryAddress}
-                      </td>
-                      <td
-                        dir="ltr"
-                        className="py-3 px-4 text-zinc-700 dark:text-zinc-200 leading-relaxed break-words"
+                  {drillDown.malwareProcesses.map((proc) => {
+                    const clauses = parseStructuredExplanationClauses(
+                      proc.detail,
+                      String(proc.step)
+                    );
+                    return (
+                      <tr
+                        key={proc.step}
+                        className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/40 align-top"
                       >
-                        {proc.detail}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="py-3 px-3 font-mono font-semibold text-zinc-900 dark:text-white tabular-nums whitespace-nowrap">
+                          #{proc.step}
+                        </td>
+                        <td className="py-3 px-3 font-mono font-semibold text-rose-600 dark:text-rose-400 break-words leading-snug">
+                          {proc.apiOrProcess}
+                        </td>
+                        <td className="py-3 px-3 font-mono text-indigo-600 dark:text-indigo-400 break-words leading-snug">
+                          {proc.target}
+                        </td>
+                        <td className="py-3 px-3 font-mono text-zinc-600 dark:text-zinc-300 tabular-nums break-words leading-snug">
+                          {proc.memoryAddress}
+                        </td>
+                        <td
+                          dir="ltr"
+                          className="py-3 px-4 text-zinc-700 dark:text-zinc-200 leading-relaxed break-words space-y-2"
+                        >
+                          {clauses.map((clause, cIdx) => (
+                            <div
+                              key={`${clause.clauseCode}-${cIdx}`}
+                              className="p-2 rounded-lg bg-zinc-50/90 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
+                            >
+                              <div className="flex items-start gap-2">
+                                <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                                  #{clause.clauseCode}
+                                </span>
+                                <span className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                                  {clause.coreStatement}
+                                </span>
+                              </div>
+                              {clause.parentheticalReasons.length > 0 && (
+                                <div className="pl-6 space-y-1">
+                                  {clause.parentheticalReasons.map(
+                                    (reason, rIdx) => (
+                                      <div
+                                        key={rIdx}
+                                        className="px-2 py-1 rounded bg-amber-50/90 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
+                                      >
+                                        <strong className="text-amber-700 dark:text-amber-400">
+                                          WHY / MEMORY SPEC:
+                                        </strong>{' '}
+                                        ({reason})
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -154,11 +154,11 @@ export function SequenceView({
             </div>
           </div>
 
-          {/* Legend: How to read #N.1 Forward vs #N.2 Return */}
+          {/* Legend: How to read #N→ Forward vs ⇠#N Return */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
             <div className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-rose-200/80 dark:border-rose-900/50 space-y-1">
               <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-rose-600 dark:text-rose-400">
-                <span>#N.1</span>
+                <span>#N→</span>
                 <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                 <span>FORWARD ACTION (REQUEST)</span>
               </div>
@@ -171,7 +171,7 @@ export function SequenceView({
             <div className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1">
               <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                 <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
-                <span>#N.2</span>
+                <span>⇠#N</span>
                 <span>RETURN CHANNEL (RESPONSE)</span>
               </div>
               <p className="text-[11.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
