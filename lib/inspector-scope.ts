@@ -14,6 +14,7 @@ import {
   buildWhiteboardSchematic,
   InternalSubBoardSchematic,
   NetworkZoneColumn,
+  SketchIconType,
   WhiteboardSketchFlow,
   WhiteboardSketchNode,
 } from './sketch-zones-and-drilldown';
@@ -219,9 +220,12 @@ function buildInternalStepGuideItems(
       `Inside ${parentNode.label}, internal component "${fromLabel}" passes control or data (${fl.label}) directly to "${toLabel}". ` +
       `In plain terms: like an internal courier handing a work order from one department desk (${fromLabel}) to the next (${toLabel}) and receiving immediate confirmation (${fl.returnLabel || 'ACK'}).`;
 
+    const returnOutcome =
+      fl.traceMeta?.returnDescription ||
+      `${toLabel} returns ${fl.returnLabel || 'execution status'} back to ${fromLabel}`;
     const explanation =
-      `${fromLabel} (${fromSubNode?.sublabel || 'Source'}) invokes ${fl.label} toward ${toLabel} (${toSubNode?.sublabel || 'Target'}) over ${fl.telemetryEvent.protocolOrEventId}. ` +
-      `${taggedEv.info}`;
+      `${fromLabel} (${fromSubNode?.sublabel || 'Source'}) invokes ${fl.label} toward ${toLabel} (${toSubNode?.sublabel || 'Target'}) over ${fl.telemetryEvent.protocolOrEventId} (${taggedEv.info}). ` +
+      `In the return confirmation, ${toLabel} replies with ${fl.returnLabel || 'ACK'} (${returnOutcome.replace(/\.$/, '')}, allowing the next internal stage inside ${parentNode.label} to proceed).`;
 
     const isRelated = Boolean(
       selectedSubNode &&
@@ -1721,6 +1725,12 @@ export function resolveScopedMemoryForensics(
   };
 }
 
+export function isSeparatedStepsAndSequenceScenario(
+  scenarioId: string
+): boolean {
+  return Boolean(scenarioId);
+}
+
 export interface ScopedSequenceParticipant {
   id: string;
   badge: string;
@@ -1728,6 +1738,8 @@ export interface ScopedSequenceParticipant {
   sublabel: string;
   zoneLabel: string;
   roleSummary: string;
+  iconType?: SketchIconType;
+  isCompromised?: boolean;
 }
 
 export interface ScopedSequenceExchangeItem {
@@ -1748,11 +1760,13 @@ export interface ScopedSequenceExchangeItem {
   initiatorLabel: string;
   initiatorSublabel: string;
   initiatorZoneLabel: string;
+  initiatorIconType?: SketchIconType;
   receiverNodeId: string;
   receiverBadge: string;
   receiverLabel: string;
   receiverSublabel: string;
   receiverZoneLabel: string;
+  receiverIconType?: SketchIconType;
   forwardFlowBadge: string;
   forwardPayloadSummary: string;
   returnFlowBadge: string;
@@ -1778,6 +1792,150 @@ export interface ScopedSequenceModel {
   exchanges: ScopedSequenceExchangeItem[];
 }
 
+interface DedicatedSequenceExchangeContent {
+  plainTitle: string;
+  forwardPayloadSummary: string;
+  returnLabel: string;
+  returnDescription: string;
+  continuationHint: string;
+  storyAnalogy: string;
+  technicalBridge: string;
+  underTheHood: string;
+  detectionAndEvidence: string;
+  keySpecs: string[];
+}
+
+const PROCESS_HOLLOWING_SEQUENCE_EXCHANGE_SPECS: Record<
+  number,
+  DedicatedSequenceExchangeContent
+> = {
+  1: {
+    plainTitle:
+      'Spawning a Genuine svchost.exe Container in a Paused State & Receiving Its Control Handles',
+    forwardPayloadSummary:
+      'CreateProcessW("C:\\Windows\\System32\\svchost.exe", CREATE_SUSPENDED = 0x00000004, asking Windows to create the trusted process in RAM while freezing its main thread before any code runs).',
+    returnLabel: 'RET PID 4892 / hProcess 0x01C4',
+    returnDescription:
+      'The Windows kernel creates the paused svchost.exe process (PID 4892) and returns PROCESS_INFORMATION containing hProcess = 0x01C4 and hThread = 0x01C8 (the master control handles that let Invoice_Q4.exe read, empty, and rewrite svchost.exe’s memory in the next exchanges).',
+    continuationHint:
+      'Next in Sequence (#1 ──▶ #2): Invoice_Q4.exe (PID 3104) passes the returned process handle (hProcess = 0x01C4) directly into Sequence #2 to locate and unmap svchost.exe’s original code.',
+    storyAnalogy:
+      'Think of this first exchange as a two-way dispatch order at a bank depot: the disguised courier (Invoice_Q4.exe) sends a request (#1→) asking the depot controller (the Windows kernel) to roll out an official armored bank van (svchost.exe) with its parking brake locked, and the controller replies (⇠#1) by handing back the van’s registration number (PID 4892) and master door keys (hProcess = 0x01C4 and hThread = 0x01C8) before the driver can even turn the ignition.',
+    technicalBridge:
+      'In the forward request (#1→), the stage-1 dropper Invoice_Q4.exe (PID 3104, the initial loader launched on Victim Laptop WKS-04, 10.10.4.15) calls CreateProcessW targeting C:\\Windows\\System32\\svchost.exe (chosen because svchost.exe carries a valid Microsoft digital signature, allowing it to blend in with dozens of legitimate background services) with the creation flag CREATE_SUSPENDED = 0x00000004 (which tells the kernel to build the process container in RAM while halting its primary thread at the starting line before a single instruction executes). In the return response (⇠#1), the Windows kernel initializes the suspended process and replies to PID 3104 with a populated PROCESS_INFORMATION structure containing PID 4892, process handle hProcess = 0x01C4, and thread handle hThread = 0x01C8 (giving the loader full administrative control over the frozen child process’s virtual memory and CPU registers).',
+    underTheHood:
+      'During the #1→ / ⇠#1 kernel transition, ntdll!NtCreateUserProcess allocates the executive process object (EPROCESS for PID 4892), maps ntdll.dll and the signed svchost.exe image at base address 0x00400000, and parks the main thread (TID 4896) at ntdll!RtlUserThreadStart with SuspendCount = 1 (keeping the process completely inert in RAM while the parent dropper holds PROCESS_ALL_ACCESS = 0x1FFFFF rights via handle 0x01C4).',
+    detectionAndEvidence:
+      'Documented in Sysmon EventID 1 (ProcessCreate) captured during the #1→ / ⇠#1 transition: non-service parent C:\\Users\\Public\\Downloads\\Invoice_Q4.exe (PID 3104) spawning C:\\Windows\\System32\\svchost.exe (PID 4892, whereas legitimate svchost.exe instances are always spawned by services.exe with a -k service group flag).',
+    keySpecs: [
+      'Seq #1 (#1→ Request / ⇠#1 Response)',
+      'CreateProcessW (CREATE_SUSPENDED = 0x00000004)',
+      'Parent PID 3104 ──▶ Child PID 4892',
+      'Returned Handles: hProcess = 0x01C4 / hThread = 0x01C8',
+    ],
+  },
+  2: {
+    plainTitle:
+      'Querying the PEB Base Address & Unmapping the Legitimate svchost.exe Code From RAM',
+    forwardPayloadSummary:
+      'ReadProcessMemory(PEB+0x10 ──▶ ImageBaseAddress = 0x00400000) followed by ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000, ordering the kernel to strip the original Microsoft code out of svchost.exe’s memory).',
+    returnLabel: 'RET STATUS_SUCCESS (0x00400000 Free)',
+    returnDescription:
+      'The Windows Memory Manager detaches the original svchost.exe image section from address 0x00400000 and returns NTSTATUS = 0x00000000 (STATUS_SUCCESS, confirming that the 0x00400000 memory slot inside PID 4892 is now completely empty and ready to receive the attacker’s payload).',
+    continuationHint:
+      'Next in Sequence (#2 ──▶ #3): The newly vacated base address (0x00400000) inside svchost.exe (PID 4892) is passed directly to VirtualAllocEx and WriteProcessMemory in Sequence #3.',
+    storyAnalogy:
+      'While the armored van (svchost.exe, PID 4892) remains frozen in the bay, the loader sends a second request (#2→) to check the van’s cargo manifest (PEB+0x10) and hoist out every crate of genuine bank cargo (NtUnmapViewOfSection); the bay controller sends back an empty-bay confirmation (⇠#2: STATUS_SUCCESS at 0x00400000), proving the interior is now a hollow shell that still wears the bank’s trusted license plate on the outside.',
+    technicalBridge:
+      'In the forward request (#2→), Invoice_Q4.exe (PID 3104) uses handle hProcess = 0x01C4 (received in Sequence #1) to read the frozen child process’s Process Environment Block at offset PEB+0x10 (locating the exact memory address where Windows loaded svchost.exe: ImageBaseAddress = 0x00400000) and then invokes ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000) (an undocumented native syscall that tells the kernel to unmap the legitimate Microsoft code section from RAM). In the return response (⇠#2), the kernel’s Virtual Memory Manager releases the file-backed section at 0x00400000 and returns STATUS_SUCCESS = 0x00000000 (confirming that address 0x00400000 is now free so the replacement malware image can be written at its preferred base address without needing complex pointer relocations).',
+    underTheHood:
+      'When NtUnmapViewOfSection executes across the #2→ / ⇠#2 boundary, nt!MiUnmapViewOfSection removes the SEC_IMAGE Virtual Address Descriptor (VAD) node backed by C:\\Windows\\System32\\svchost.exe at 0x00400000 (leaving PID 4892 alive in the kernel process table with its Microsoft-signed process metadata intact, even though its primary code region at 0x00400000 is now unallocated).',
+    detectionAndEvidence:
+      'Documented in Win32 API / Kernel Memory ETW (MiUnmapViewOfSection) & Sysmon EventID 10 / 25: detects non-system process Invoice_Q4.exe (PID 3104) unmapping the primary executable image section (0x00400000) of a suspended Windows system binary (svchost.exe, PID 4892).',
+    keySpecs: [
+      'Seq #2 (#2→ Request / ⇠#2 Response)',
+      'ntdll!NtUnmapViewOfSection (hProcess = 0x01C4)',
+      'PEB+0x10 ImageBaseAddress = 0x00400000',
+      'Return Status: STATUS_SUCCESS (0x00000000)',
+    ],
+  },
+  3: {
+    plainTitle:
+      'Reserving 264 KB of RWX Memory at 0x00400000 & Streaming the Cobalt Strike PE Payload',
+    forwardPayloadSummary:
+      'VirtualAllocEx(0x00400000, 264 KB, PAGE_EXECUTE_READWRITE = 0x40) + WriteProcessMemory (streaming 270,336 bytes of the unpacked Cobalt Strike Beacon PE image directly into svchost.exe’s hollowed RAM).',
+    returnLabel: 'RET 0x00400000 (264 KB Written)',
+    returnDescription:
+      'The kernel commits the private RWX memory block at 0x00400000 inside PID 4892 and returns NumberOfBytesWritten = 270,336 (confirming that the MZ/PE headers and executable .text section are now resident in svchost.exe’s memory with entry point 0x004014A0).',
+    continuationHint:
+      'Next in Sequence (#3 ──▶ #4): Now that the Beacon entry point sits at 0x004014A0 inside svchost.exe (PID 4892), Sequence #4 uses thread handle hThread = 0x01C8 to point the frozen CPU thread at 0x004014A0.',
+    storyAnalogy:
+      'In the third exchange, the loader sends a cargo-transfer order (#3→) that installs custom compartments at slot 0x00400000 inside the emptied armored van (VirtualAllocEx) and loads 264 KB of covert surveillance gear inside (WriteProcessMemory); the van’s internal load sensor replies with a weight receipt (⇠#3: 270,336 bytes committed at 0x00400000), confirming every piece of equipment is bolted in place before the driver wakes up.',
+    technicalBridge:
+      'In the forward request (#3→), Invoice_Q4.exe (PID 3104) calls VirtualAllocEx on hProcess = 0x01C4 (using GrantedAccess = 0x1FFFFF, which grants full read, write, and allocation rights) to reserve 264 KB at the vacated address 0x00400000 with PAGE_EXECUTE_READWRITE = 0x40 permissions (making the memory region simultaneously writable right now and executable as CPU instructions a moment later), and then calls WriteProcessMemory to copy the Cobalt Strike Beacon PE headers ("MZ" / 4D 5A) and sections (.text, .rdata, .data) into PID 4892 (loading the entire implant in RAM so no unpacked malware file is ever written to the hard drive). In the return response (⇠#3), the kernel confirms the allocation at base 0x00400000 and returns lpNumberOfBytesWritten = 270,336 (verifying that the Beacon’s executable entry point is now mapped at 0x004014A0).',
+    underTheHood:
+      'Across the #3→ / ⇠#3 syscall pair (NtAllocateVirtualMemory followed by NtWriteVirtualMemory), Windows creates a private, unbacked memory region (MEM_PRIVATE with PAGE_EXECUTE_READWRITE = 0x40 at 0x00400000, unlike genuine DLLs/EXEs which are backed by a signed file on disk and separate Read-Execute code from Read-Write data) containing a raw executable PE image inside svchost.exe (PID 4892).',
+    detectionAndEvidence:
+      'Documented in Sysmon EventID 10 (ProcessAccess with GrantedAccess = 0x1FFFFF from Invoice_Q4.exe PID 3104 to svchost.exe PID 4892) and Kernel ETW Threat-Intelligence (EtwTiLogAllocVMRemote, alerting on cross-process allocation of executable RWX = 0x40 memory containing an unbacked MZ header).',
+    keySpecs: [
+      'Seq #3 (#3→ Request / ⇠#3 Response)',
+      'VirtualAllocEx: 0x00400000 (264 KB RWX = 0x40)',
+      'GrantedAccess: 0x1FFFFF (PROCESS_ALL_ACCESS)',
+      'WriteProcessMemory: 270,336 Bytes (MZ 4D 5A)',
+    ],
+  },
+  4: {
+    plainTitle:
+      'Repointing the Frozen Thread’s RCX Register to 0x004014A0 & Resuming Execution',
+    forwardPayloadSummary:
+      'SetThreadContext(hThread = 0x01C8, RCX = 0x004014A0, redirecting the frozen thread’s starting pointer to the injected Beacon) followed by ResumeThread(hThread = 0x01C8, unfreezing svchost.exe).',
+    returnLabel: 'RET SuspendCount 1→0 / EID 25',
+    returnDescription:
+      'The kernel updates the thread context register RCX to 0x004014A0, decrements SuspendCount from 1 to 0 (waking TID 4896 so the Cobalt Strike Beacon begins executing inside svchost.exe PID 4892), and emits Sysmon EventID 25 (ProcessTampering: "Image is replaced").',
+    continuationHint:
+      'Next in Sequence (#4 ──▶ #5): Running actively inside svchost.exe (PID 4892), the awakened Beacon thread initiates its outbound HTTPS Command-and-Control handshake in Sequence #5.',
+    storyAnalogy:
+      'In the fourth exchange, the dispatcher reaches into the cab of the refitted armored van (#4→), resets the driver’s navigation coordinate to the secret rendezvous point (overwriting register RCX with 0x004014A0), and releases the parking brake (ResumeThread); the van’s dashboard replies with an active engine-running signal (⇠#4: SuspendCount 1→0) as the vehicle starts moving under its trusted svchost.exe badge.',
+    technicalBridge:
+      'In the forward request (#4→), Invoice_Q4.exe (PID 3104) uses thread handle hThread = 0x01C8 (obtained in Sequence #1) to call SetThreadContext and overwrite the thread’s RCX register with 0x004014A0 (Base 0x00400000 + EntryPoint RVA 0x14A0, because on 64-bit Windows, a newly created suspended thread holds its upcoming program entry point in RCX, so changing RCX aims the thread straight at the injected Beacon without needing CreateRemoteThread), and then calls ResumeThread (telling the kernel to unfreeze the thread). In the return response (⇠#4), the kernel commits the modified CPU context, decrements the thread’s suspend counter from 1 to 0 (returning PreviousSuspendCount = 1 as TID 4896 begins executing the Beacon), and fires the kernel image-tampering notification captured as Sysmon EventID 25.',
+    underTheHood:
+      'When NtSetContextThread and NtResumeThread complete their #4→ / ⇠#4 transition, the kernel updates the thread’s trap frame (KTRAP_FRAME.Rcx = 0x004014A0) and releases TID 4896 from ntdll!RtlUserThreadStart into user-mode execution (allowing the original dropper Invoice_Q4.exe PID 3104 to exit while the Cobalt Strike payload continues running inside svchost.exe PID 4892).',
+    detectionAndEvidence:
+      'Documented in Sysmon EventID 25 (ProcessTampering, Type: "Image is replaced" on C:\\Windows\\System32\\svchost.exe, PID 4892, triggered when the resumed thread’s mapped image at 0x00400000 no longer matches the signed on-disk binary).',
+    keySpecs: [
+      'Seq #4 (#4→ Request / ⇠#4 Response)',
+      'SetThreadContext (hThread = 0x01C8 / TID 4896)',
+      'Register Hijack: RCX = 0x004014A0 (EntryPoint)',
+      'Sysmon EventID 25 (Image is replaced)',
+    ],
+  },
+  5: {
+    plainTitle:
+      'Outbound TLS 1.3 HTTPS Malleable C2 Check-In & Encrypted Tasking Handshake',
+    forwardPayloadSummary:
+      'WinHttpConnect + TLS 1.3 ClientHello (JA3: 72a589da586844d7f0818ce684948eea) + HTTP GET /jquery-3.3.1.min.js to 185.220.101.42:443 (carrying encrypted victim metadata inside the HTTP Cookie header).',
+    returnLabel: 'RESP HTTP 200 OK (60s / 20% Jitter)',
+    returnDescription:
+      'Attacker C2 Server (185.220.101.42:443) replies with TLS 1.3 ServerHello and HTTP 200 OK (disguised as an application/javascript response carrying AES-encrypted Cobalt Strike operator commands and a 60s / 20% jitter sleep schedule).',
+    continuationHint:
+      'Sequence Complete (⇠#5): Hollowed svchost.exe (PID 4892) maintains an asynchronous 60s (±20% jitter) polling loop with 185.220.101.42:443 while Node ⑥ (SIEM & EDR) correlates the host and network trail.',
+    storyAnalogy:
+      'In the final exchange, the disguised armored van (svchost.exe, PID 4892) drives past the perimeter gate guard and sends a coded radio check-in (#5→: HTTPS GET /jquery-3.3.1.min.js) disguised as a routine web script download to the external syndicate tower (185.220.101.42:443); the tower replies (⇠#5: HTTP 200 OK) with encrypted mission orders tucked inside a normal-looking JavaScript response.',
+    technicalBridge:
+      'In the forward request (#5→), the Cobalt Strike Beacon running inside C:\\Windows\\System32\\svchost.exe (PID 4892, using the trusted Windows binary path so host-based firewall rules allow the outbound socket) initiates an encrypted TLS 1.3 connection over TCP port 443 to 185.220.101.42:443 (blending in with standard HTTPS web traffic) and sends an HTTP GET request for /jquery-3.3.1.min.js (a Malleable C2 profile that hides RSA-encrypted victim host metadata inside the Cookie header to mimic a normal CDN script fetch). In the return response (⇠#5), the external C2 server (185.220.101.42:443) returns an HTTP 200 OK response containing AES-encrypted tasking instructions and sleep settings (60-second callback interval with 20% random jitter, spacing out future check-ins to evade simple fixed-timer network beacon detectors).',
+    underTheHood:
+      'Across the #5→ / ⇠#5 network exchange, svchost.exe (PID 4892) loads winhttp.dll in user mode to negotiate TLS 1.3 (producing client TLS fingerprint JA3 = 72a589da586844d7f0818ce684948eea) through the perimeter firewall NAT toward 185.220.101.42:443, receiving encrypted command blocks that are decrypted directly inside the private heap of PID 4892.',
+    detectionAndEvidence:
+      'Documented in Sysmon EventID 3 (NetworkConnect logging C:\\Windows\\System32\\svchost.exe PID 4892 connecting to 185.220.101.42:443 without a -k service group flag) correlated with Suricata IDS (alerting on the Cobalt Strike Malleable C2 jQuery URI and TLS JA3 fingerprint 72a589da586844d7f0818ce684948eea).',
+    keySpecs: [
+      'Seq #5 (#5→ Request / ⇠#5 Response)',
+      'Outbound TLS 1.3: PID 4892 ──▶ 185.220.101.42:443',
+      'TLS Fingerprint: JA3 72a589da586844d7f0818ce684948eea',
+      'Malleable C2: GET /jquery-3.3.1.min.js (60s / 20% Jitter)',
+    ],
+  },
+};
+
 /**
  * Builds a structured, Story-to-Spec Sequence Model (`ScopedSequenceModel`)
  * scoped to the active Inspector target (Main Scenario, Selected Node, Expanded Node,
@@ -1789,6 +1947,7 @@ export function buildScopedSequenceModel(
 ): ScopedSequenceModel {
   const { scenario, effectiveScope, activeStageIndex, activeEnvironment } =
     scopeContext;
+  const isSeparatedScenario = isSeparatedStepsAndSequenceScenario(scenario.id);
 
   // Case 1: Inside an Expanded Node or Internal Sub-Node
   if (
@@ -1829,6 +1988,8 @@ export function buildScopedSequenceModel(
           sublabel: sn.sublabel,
           zoneLabel: zone ? `${zone.code} · ${zone.title}` : sn.zoneLabel || 'Internal Zone',
           roleSummary: sn.internalSummary || sn.activitySummary || '',
+          iconType: sn.iconType,
+          isCompromised: sn.isCompromised,
         };
       });
 
@@ -1846,16 +2007,21 @@ export function buildScopedSequenceModel(
           st.fromSubNode?.sublabel || parentNode.sublabel;
         const receiverSublabel = st.toSubNode?.sublabel || parentNode.sublabel;
 
-        const technicalBridge =
-          `Initiator "${initiatorLabel}" (${initiatorSublabel}) invokes ${st.title} (${st.protocolOrEventId}, ${st.mitreId}) toward Receiver "${receiverLabel}" (${receiverSublabel}). ` +
-          `${st.telemetryEvent.info}`;
+        const envProfile = getActiveEnvironmentProfile(activeEnvironment);
+        const storyAnalogy = isSeparatedScenario
+          ? `In this internal request/response exchange (#${st.sequenceCode}), sub-component "${initiatorLabel}" sends a direct operational request (#${st.forwardSeq}→ ${st.title}) to "${receiverLabel}" and waits for the return confirmation channel (⇠#${st.returnSeq} ${st.flow.returnLabel || 'ACK'}, verifying that the operation succeeded before the next internal component in ${parentNode.label} runs).`
+          : st.storyAnalogy;
+
+        const technicalBridge = isSeparatedScenario
+          ? `In the forward request (#${st.forwardSeq}→), "${initiatorLabel}" (${initiatorSublabel}) invokes ${st.title} (${st.protocolOrEventId}, ${st.mitreId}, passing the active execution parameters across the internal pipeline of ${parentNode.label}) toward "${receiverLabel}" (${receiverSublabel}). In the return response (⇠#${st.returnSeq}), ${st.returnDescription} (confirming that "${receiverLabel}" has updated its state so the next sub-step in ${subBoard.boardCode} can proceed).`
+          : `Initiator "${initiatorLabel}" (${initiatorSublabel}) invokes ${st.title} (${st.protocolOrEventId}, ${st.mitreId}) toward Receiver "${receiverLabel}" (${receiverSublabel}). ` +
+            `${st.telemetryEvent.info}`;
 
         const underTheHood =
           `Forward Request (#${st.forwardSeq} ──▶): ${initiatorLabel} dispatches ${st.title} over ${st.protocolOrEventId}. ` +
           `${st.fromSubNode?.internalSummary || ''} ` +
           `Return Channel (◀── #${st.returnSeq}): ${st.returnDescription}`;
 
-        const envProfile = getActiveEnvironmentProfile(activeEnvironment);
         const detectionAndEvidence =
           `Captured via ${st.telemetryEvent.sourceType} (${st.protocolOrEventId} · ${st.mitreId} · ${envProfile.telemetryTag}). ` +
           `Raw Telemetry Indicator: ${st.telemetryEvent.rawLog}`;
@@ -1882,6 +2048,7 @@ export function buildScopedSequenceModel(
           initiatorZoneLabel: fromZone
             ? `${fromZone.code} · ${fromZone.title}`
             : st.fromSubNode?.zoneLabel || 'Internal Pipeline',
+          initiatorIconType: st.fromSubNode?.iconType,
           receiverNodeId: st.toSubNode?.id || st.flow.toNodeId,
           receiverBadge: st.toSubNode
             ? `#${st.toSubNode.sequenceCode || st.sequenceCode} · ${st.toSubNode.actionBadge}`
@@ -1891,6 +2058,7 @@ export function buildScopedSequenceModel(
           receiverZoneLabel: toZone
             ? `${toZone.code} · ${toZone.title}`
             : st.toSubNode?.zoneLabel || 'Internal Pipeline',
+          receiverIconType: st.toSubNode?.iconType,
           forwardFlowBadge: st.forwardFlowBadge,
           forwardPayloadSummary: st.telemetryEvent.info,
           returnFlowBadge: st.returnFlowBadge,
@@ -1901,7 +2069,7 @@ export function buildScopedSequenceModel(
             (idx < internalSteps.length - 1
               ? `Next in pipeline: proceeds to #${internalSteps[idx + 1].sequenceCode} (${internalSteps[idx + 1].title}).`
               : `Completes internal pipeline inside ${parentNode.label}.`),
-          storyAnalogy: st.storyAnalogy,
+          storyAnalogy,
           technicalBridge,
           underTheHood,
           detectionAndEvidence,
@@ -1999,6 +2167,8 @@ export function buildScopedSequenceModel(
         sublabel: n.sublabel,
         zoneLabel: z ? `${z.code} · ${z.title}` : n.zoneLabel || 'Network Zone',
         roleSummary: n.activitySummary || n.internalSummary || '',
+        iconType: n.iconType,
+        isCompromised: n.isCompromised,
       };
     });
 
@@ -2026,35 +2196,47 @@ export function buildScopedSequenceModel(
     const initiatorSublabel = srcNode?.sublabel || 'Initiator Node';
     const receiverSublabel = dstNode?.sublabel || 'Receiver Node';
 
-    const returnLabel = fl.returnLabel || 'ACK / Status Response';
+    const dedicatedSpec =
+      scenario.id === 'process-hollowing'
+        ? PROCESS_HOLLOWING_SEQUENCE_EXCHANGE_SPECS[fl.stepNo]
+        : undefined;
+
+    const returnLabel =
+      dedicatedSpec?.returnLabel || fl.returnLabel || 'ACK / Status Response';
     const returnDescription =
+      dedicatedSpec?.returnDescription ||
       fl.traceMeta?.returnDescription ||
-      `${receiverLabel} returns ${returnLabel} back to ${initiatorLabel}.`;
+      `${receiverLabel} returns ${returnLabel} back to ${initiatorLabel} (confirming completion of ${fl.label} over ${taggedEv.protocolOrEventId}).`;
     const continuationHint =
+      dedicatedSpec?.continuationHint ||
       fl.traceMeta?.continuationHint ||
       (idx < scopedFlows.length - 1
         ? `Next in kill-chain: advances to Sequence #${scopedFlows[idx + 1].stepNo} (${scopedFlows[idx + 1].label}).`
         : `Final sequence step in this scope.`);
 
-    const plainTitle = stepCard
-      ? `Seq #${sequenceCode} · ${stepCard.plainTitle}`
-      : `Seq #${sequenceCode} · ${initiatorLabel} ──▶ ${receiverLabel}`;
+    const plainTitle =
+      dedicatedSpec?.plainTitle ||
+      `Exchange #${sequenceCode}: ${initiatorLabel} ──▶ ${receiverLabel} (${fl.label})`;
 
     const storyAnalogy =
-      stepCard?.storyAnalogy ||
-      `Think of ${initiatorLabel} sending a direct operational command (${fl.label}) to ${receiverLabel} and waiting for confirmation (${returnLabel}) before the next stage can proceed.`;
+      dedicatedSpec?.storyAnalogy ||
+      `In this protocol exchange (#${sequenceCode}), ${initiatorLabel} dispatches ${fl.label} (#${forwardSeq}→) to ${receiverLabel} and receives ${returnLabel} (⇠#${returnSeq}, confirming the state transition before the next stage proceeds).`;
 
     const technicalBridge =
-      stepCard?.simpleExplanation ||
-      `Initiator "${initiatorLabel}" (${initiatorSublabel}) transmits ${fl.label} (${taggedEv.protocolOrEventId}, ${taggedEv.mitreId}) to Receiver "${receiverLabel}" (${receiverSublabel}). ${taggedEv.info}`;
+      dedicatedSpec?.technicalBridge ||
+      `In the forward request (#${forwardSeq}→), ${initiatorLabel} (${initiatorSublabel}) transmits ${fl.label} over ${taggedEv.protocolOrEventId} (${taggedEv.mitreId}, delivering ${taggedEv.info}) to ${receiverLabel} (${receiverSublabel}). In the return response (⇠#${returnSeq}), ${receiverLabel} replies with ${returnLabel} (confirming execution status and state handoff back to ${initiatorLabel}).`;
 
     const underTheHood =
-      stepCard?.howItWorksInPractice ||
-      `Forward Request (#${forwardSeq} ──▶): ${initiatorLabel} executes ${fl.label} toward ${receiverLabel}. Return Response (◀── #${returnSeq}): ${returnDescription}`;
+      dedicatedSpec?.underTheHood ||
+      `Forward Request (#${forwardSeq} ──▶): ${initiatorLabel} executes ${fl.label} toward ${receiverLabel} (${taggedEv.info}). Return Response (◀── #${returnSeq}): ${returnDescription}`;
 
     const detectionAndEvidence =
-      stepCard?.detectionAndEvidence ||
-      `Captured by ${taggedEv.sourceType} (${taggedEv.protocolOrEventId} · ${taggedEv.mitreId}). Raw Evidence: ${taggedEv.rawLog}`;
+      dedicatedSpec?.detectionAndEvidence ||
+      `Captured by ${taggedEv.sourceType} (${taggedEv.protocolOrEventId} · ${taggedEv.mitreId}, recording the bidirectional exchange between ${initiatorLabel} and ${receiverLabel}). Raw Evidence: ${taggedEv.rawLog}`;
+
+    const forwardPayloadSummary =
+      dedicatedSpec?.forwardPayloadSummary ||
+      `${taggedEv.info} (transmitted over ${taggedEv.protocolOrEventId} from ${initiatorLabel} to ${receiverLabel}).`;
 
     const isActiveExchange =
       activeStageIndex === 0 || fl.stageIndex === activeStageIndex;
@@ -2085,6 +2267,7 @@ export function buildScopedSequenceModel(
       initiatorZoneLabel: srcZone
         ? `${srcZone.code} · ${srcZone.title}`
         : srcNode?.zoneLabel || 'Network Zone',
+      initiatorIconType: srcNode?.iconType,
       receiverNodeId: dstNode?.id || fl.toNodeId,
       receiverBadge: dstNode
         ? `#${dstNode.chainOrder} · ${dstNode.actionBadge}`
@@ -2094,8 +2277,9 @@ export function buildScopedSequenceModel(
       receiverZoneLabel: dstZone
         ? `${dstZone.code} · ${dstZone.title}`
         : dstNode?.zoneLabel || 'Network Zone',
+      receiverIconType: dstNode?.iconType,
       forwardFlowBadge: `#${forwardSeq} ──▶ ${fl.label}`,
-      forwardPayloadSummary: taggedEv.info,
+      forwardPayloadSummary,
       returnFlowBadge: `◀── #${returnSeq} ${returnLabel}`,
       returnLabel,
       returnDescription,
@@ -2105,14 +2289,15 @@ export function buildScopedSequenceModel(
       underTheHood,
       detectionAndEvidence,
       keySpecs:
-        stageSpecs.length > 0
+        dedicatedSpec?.keySpecs ||
+        (stageSpecs.length > 0
           ? stageSpecs
           : [
               `Seq #${sequenceCode} (#${forwardSeq} / #${returnSeq})`,
               taggedEv.protocolOrEventId,
               taggedEv.mitreId,
               taggedEv.sourceType,
-            ],
+            ]),
       telemetryEvent: taggedEv,
       isActiveExchange,
       isSelectedPacket: Boolean(
@@ -2125,6 +2310,8 @@ export function buildScopedSequenceModel(
 
   const scopeBriefing = selectedMainNode
     ? `Showing ${exchanges.length} documented request/response sequence exchange(s) directly involving Node #${selectedMainNode.chainOrder} "${selectedMainNode.label}" (${selectedMainNode.sublabel}).`
+    : isSeparatedScenario
+    ? `Dedicated Bidirectional Request/Response Sequence Trace for ${scenario.code}: ${scenario.name}. Unlike the Step-by-Step Guide (which explains architectural concepts and host process waterfalls), this Sequence view traces the exact chronological protocol/syscall handshakes (#1→ Request and ⇠#1 Response), kernel handles, register values, and state handoffs across ${participants.length} participating nodes.`
     : `Showing all ${exchanges.length} documented end-to-end sequence exchanges across ${participants.length} participating nodes for ${scenario.code}: ${scenario.name}.`;
 
   return {
@@ -2136,4 +2323,5 @@ export function buildScopedSequenceModel(
     exchanges,
   };
 }
+
 

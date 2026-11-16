@@ -233,7 +233,8 @@ export function parseStructuredExplanationClauses(
 
     const coreStatement = coreBuilder
       .replace(/\s+/g, ' ')
-      .replace(/\s+([.,;:])/g, '$1')
+      .replace(/\s+([,;:])/g, '$1')
+      .replace(/\s+\.(?=\s|$)/g, '.')
       .trim();
 
     return {
@@ -245,6 +246,33 @@ export function parseStructuredExplanationClauses(
   });
 }
 
+/**
+ * Cleans step-guide prose by removing unnecessary em-dashes, raw backticks,
+ * markdown bold/italic markers, and literal "(why:" prefixes while preserving
+ * legitimate technical hyphens (CVE IDs, CLI flags, memory permissions).
+ */
+export function normalizeStepGuideProse(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([a-zA-Z0-9_-]+(?:\s+[a-zA-Z0-9_-]+){0,3})\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/`/g, '')
+    .replace(/WHY\s*\/\s*(?:SPEC|PROTOCOL\s*EFFECT)\s*:?\s*/gi, '')
+    .replace(/\(\s*why\s+[^:)]*:\s*/gi, '(because ')
+    .replace(/\(\s*why:\s*/gi, '(because ')
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/\s+-\s+(?=[a-zA-Z])/g, ', ')
+    .replace(/,\s*,/g, ',')
+    .replace(/,\s*\)/g, ')')
+    .replace(/\(\s*,\s*/g, '(')
+    .replace(/,\s*\./g, '.')
+    .replace(/:\s*,/g, ':')
+    .replace(/;\s*,/g, ';')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 /** Later batches must not overwrite richer guides already registered for the same id. */
 function mergeStepGuidesFirstWins(
   ...batches: Array<Record<string, RawScenarioStepGuideData>>
@@ -253,18 +281,43 @@ function mergeStepGuidesFirstWins(
   for (const batch of batches) {
     for (const [id, guide] of Object.entries(batch)) {
       if (!(id in merged)) {
+        const cleanedBriefing: RawScenarioBriefingGuide = {
+          headline: normalizeStepGuideProse(guide.briefing.headline),
+          storyAnalogy: normalizeStepGuideProse(guide.briefing.storyAnalogy),
+          plainSummary: normalizeStepGuideProse(guide.briefing.plainSummary),
+          diagramTopologySummary: normalizeStepGuideProse(
+            guide.briefing.diagramTopologySummary
+          ),
+          documentedAdvisory: normalizeStepGuideProse(
+            guide.briefing.documentedAdvisory
+          ),
+        };
         merged[id] = {
           ...guide,
+          briefing: cleanedBriefing,
           steps: guide.steps.map((step) => {
-            if (/\([^)]{25,}\)/.test(step.simpleExplanation)) {
-              return step;
+            const cleanedStep: RawScenarioStepGuideItem = {
+              ...step,
+              plainTitle: normalizeStepGuideProse(step.plainTitle),
+              storyAnalogy: normalizeStepGuideProse(step.storyAnalogy),
+              simpleExplanation: normalizeStepGuideProse(step.simpleExplanation),
+              howItWorksInPractice: normalizeStepGuideProse(
+                step.howItWorksInPractice
+              ),
+              diagramAlignment: normalizeStepGuideProse(step.diagramAlignment),
+              detectionAndEvidence: normalizeStepGuideProse(
+                step.detectionAndEvidence
+              ),
+            };
+            if (/\([^)]{25,}\)/.test(cleanedStep.simpleExplanation)) {
+              return cleanedStep;
             }
-            const cleanPractice = step.howItWorksInPractice
+            const cleanPractice = cleanedStep.howItWorksInPractice
               .replace(/[().]/g, '')
               .trim();
             return {
-              ...step,
-              simpleExplanation: `${step.simpleExplanation} (${cleanPractice})`,
+              ...cleanedStep,
+              simpleExplanation: `${cleanedStep.simpleExplanation} (${cleanPractice})`,
             };
           }),
         };
@@ -308,6 +361,48 @@ function formatNodeRef(
   return `Node ${circled} (#${order} ${label})`;
 }
 
+function weaveSequenceExchangeIntoPractice(
+  basePractice: string,
+  simpleExplanation: string,
+  opts: {
+    protocolOrEventId: string;
+    fromLabel: string;
+    toLabel: string;
+    actionLabel: string;
+    returnLabel: string;
+    stageTitle: string;
+    nextStageTitle?: string;
+    nextStageIndex?: number;
+    scenarioName: string;
+  }
+): string {
+  const cleanedPractice = normalizeStepGuideProse(basePractice);
+  if (/\([^)]{18,}\)/.test(cleanedPractice)) {
+    return cleanedPractice;
+  }
+
+  const proto = normalizeStepGuideProse(opts.protocolOrEventId);
+  const retLabel = normalizeStepGuideProse(opts.returnLabel || 'ACK');
+  const actLabel = normalizeStepGuideProse(opts.actionLabel || opts.stageTitle);
+  const fromClean = normalizeStepGuideProse(opts.fromLabel);
+  const toClean = normalizeStepGuideProse(opts.toLabel);
+
+  const nextOutcomeClause = opts.nextStageTitle
+    ? `and establishing the runtime state required for Step #${opts.nextStageIndex} ${normalizeStepGuideProse(opts.nextStageTitle)}`
+    : `and completing the final execution objective of ${normalizeStepGuideProse(opts.scenarioName)}`;
+
+  const combinedLower = `${simpleExplanation} ${cleanedPractice}`.toLowerCase();
+  if (
+    retLabel &&
+    retLabel.toLowerCase() !== 'ack' &&
+    !combinedLower.includes(retLabel.toLowerCase())
+  ) {
+    return `${cleanedPractice.replace(/\.?\s*$/, '.')} In the documented ${proto} exchange from ${fromClean} to ${toClean}, ${toClean} responds with ${retLabel} (confirming that the ${actLabel} request succeeded on ${toClean} ${nextOutcomeClause}).`;
+  }
+
+  return `${cleanedPractice.replace(/\.?\s*$/, '')} (completing the documented ${proto} ${actLabel} exchange from ${fromClean} to ${toClean} with ${retLabel} ${nextOutcomeClause}).`;
+}
+
 /**
  * Enhances a scenario's overview, stage descriptions, and telemetry explanations
  * with fluent, easy-to-understand, Story-to-Spec narratives strictly grounded
@@ -329,7 +424,7 @@ export function applyReadableStepGuidesToScenario(
     schematic.nodes[schematic.nodes.length - 1] ||
     null;
 
-  const enhancedStages = scenario.stages.map((stage) => {
+  const enhancedStages = scenario.stages.map((stage, sIdx) => {
     const stepGuide = guide.steps.find((s) => s.stepNumber === stage.index);
     if (!stepGuide) return stage;
     const flow =
@@ -344,22 +439,70 @@ export function applyReadableStepGuidesToScenario(
       (flow && schematic.nodes.find((n) => n.id === flow.toNodeId)) ||
       schematic.nodes[1] ||
       null;
+    const telemetryEvent =
+      scenario.telemetry.find((t) => t.stageIndex === stage.index) ||
+      scenario.telemetry[stage.index - 1] ||
+      null;
+    const nextStage = scenario.stages[sIdx + 1];
+    const enrichedPractice = weaveSequenceExchangeIntoPractice(
+      stepGuide.howItWorksInPractice,
+      stepGuide.simpleExplanation,
+      {
+        protocolOrEventId:
+          telemetryEvent?.protocolOrEventId || stage.mitreTechniqueId,
+        fromLabel:
+          fromNode?.label || telemetryEvent?.sourceLabel || 'Source Host',
+        toLabel: toNode?.label || telemetryEvent?.targetLabel || 'Target Host',
+        actionLabel:
+          flow?.label || telemetryEvent?.shortAction || stage.title,
+        returnLabel:
+          flow?.returnLabel || telemetryEvent?.sizeOrCode || 'ACK',
+        stageTitle: stage.title,
+        nextStageTitle: nextStage?.title,
+        nextStageIndex: nextStage?.index,
+        scenarioName: scenario.name,
+      }
+    );
     const forwardCode = flow ? `#${flow.forwardSeq}→` : `#${stage.index}→`;
     const returnCode = flow ? `⇠#${flow.returnSeq}` : `⇠#${stage.index}`;
     const syncedAlignment = `On the diagram, follow Step #${stage.index} / Link #${stage.index} (${forwardCode} ${flow?.label || stage.title} / ${returnCode} ${flow?.returnLabel || 'ACK'}) from ${formatNodeRef(fromNode, 1, 'Source')} to ${formatNodeRef(toNode, 2, 'Target')}, monitored by ${formatNodeRef(siemNode, 6, 'SIEM')}.`;
 
     return {
       ...stage,
-      description: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} ${syncedAlignment}`,
+      description: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${enrichedPractice} ${syncedAlignment}`,
     };
   });
 
   const enhancedTelemetry = scenario.telemetry.map((event) => {
     const stepGuide = guide.steps.find((s) => s.stepNumber === event.stageIndex);
     if (!stepGuide) return event;
+    const stageIdx = scenario.stages.findIndex(
+      (st) => st.index === event.stageIndex
+    );
+    const stage = scenario.stages[stageIdx] || scenario.stages[0];
+    const nextStage = stageIdx >= 0 ? scenario.stages[stageIdx + 1] : undefined;
+    const flow =
+      schematic.flows.find((f) => f.stageIndex === event.stageIndex) ||
+      schematic.flows[event.stageIndex - 1] ||
+      null;
+    const enrichedPractice = weaveSequenceExchangeIntoPractice(
+      stepGuide.howItWorksInPractice,
+      stepGuide.simpleExplanation,
+      {
+        protocolOrEventId: event.protocolOrEventId,
+        fromLabel: event.sourceLabel,
+        toLabel: event.targetLabel,
+        actionLabel: flow?.label || event.shortAction,
+        returnLabel: flow?.returnLabel || event.sizeOrCode,
+        stageTitle: stage?.title || event.shortAction,
+        nextStageTitle: nextStage?.title,
+        nextStageIndex: nextStage?.index,
+        scenarioName: scenario.name,
+      }
+    );
     return {
       ...event,
-      explanation: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${stepGuide.howItWorksInPractice} (${stepGuide.detectionAndEvidence})`,
+      explanation: `${stepGuide.storyAnalogy} ${stepGuide.simpleExplanation} ${enrichedPractice} (${stepGuide.detectionAndEvidence})`,
     };
   });
 
@@ -461,25 +604,30 @@ export function buildDiagramStepGuideModel(
       };
     });
 
-  const plainSummaryText =
-    rawGuide?.briefing.plainSummary || scenario.overview;
+  const plainSummaryText = normalizeStepGuideProse(
+    rawGuide?.briefing.plainSummary || scenario.overview
+  );
 
   const briefing: DiagramAlignedBriefingModel = {
     scenarioCode: scenario.code,
     scenarioName: scenario.name,
-    headline:
+    headline: normalizeStepGuideProse(
       rawGuide?.briefing.headline ||
-      `Scenario Briefing: ${scenario.name}`,
-    storyAnalogy:
+        `Scenario Briefing: ${scenario.name}`
+    ),
+    storyAnalogy: normalizeStepGuideProse(
       rawGuide?.briefing.storyAnalogy ||
-      scenario.shortSubtitle,
+        scenario.shortSubtitle
+    ),
     plainSummary: plainSummaryText,
-    diagramTopologySummary:
+    diagramTopologySummary: normalizeStepGuideProse(
       rawGuide?.briefing.diagramTopologySummary ||
-      `Topology spans ${topologyNodes.length} nodes across ${sequenceWaterfall.length} chronological steps (#1→ to #${sequenceWaterfall.length}→).`,
-    documentedAdvisory:
+        `Topology spans ${topologyNodes.length} nodes across ${sequenceWaterfall.length} chronological steps (#1→ to #${sequenceWaterfall.length}→).`
+    ),
+    documentedAdvisory: normalizeStepGuideProse(
       rawGuide?.briefing.documentedAdvisory ||
-      `${scenario.code} · ${scenario.shortSubtitle}`,
+        `${scenario.code} · ${scenario.shortSubtitle}`
+    ),
     originNodeLabel: originNode?.label || scenario.nodes[0]?.label || 'Origin',
     originNodeBadge: originNode?.actionBadge || 'HOST ① · Origin',
     finalNodeLabel:
@@ -541,15 +689,36 @@ export function buildDiagramStepGuideModel(
       const returnCode = `⇠#${returnSeq}`;
       const syncedAlignment = `On the diagram, follow Step #${stage.index} / Link #${stage.index} (${forwardCode} ${flow?.label || stage.title} / ${returnCode} ${flow?.returnLabel || 'ACK'}) from ${formatNodeRef(fromNode, 1, 'Source')} to ${formatNodeRef(toNode, 2, 'Target')}, monitored by ${formatNodeRef(siemNode, 6, 'SIEM')}.`;
 
-      const simpleExplanationText =
-        rawStep?.simpleExplanation || stage.description;
-      const practiceText = rawStep?.howItWorksInPractice || stage.subtitle;
       const nextStage = scenario.stages[sIdx + 1];
-      const continuationHint =
+      const simpleExplanationText = normalizeStepGuideProse(
+        rawStep?.simpleExplanation || stage.description
+      );
+      const practiceText = weaveSequenceExchangeIntoPractice(
+        rawStep?.howItWorksInPractice || stage.subtitle,
+        simpleExplanationText,
+        {
+          protocolOrEventId:
+            telemetryEvent?.protocolOrEventId || stage.mitreTechniqueId,
+          fromLabel:
+            fromNode?.label || telemetryEvent?.sourceLabel || 'Source Host',
+          toLabel:
+            toNode?.label || telemetryEvent?.targetLabel || 'Target Host',
+          actionLabel:
+            flow?.label || telemetryEvent?.shortAction || stage.title,
+          returnLabel:
+            flow?.returnLabel || telemetryEvent?.sizeOrCode || 'ACK',
+          stageTitle: stage.title,
+          nextStageTitle: nextStage?.title,
+          nextStageIndex: nextStage?.index,
+          scenarioName: scenario.name,
+        }
+      );
+      const continuationHint = normalizeStepGuideProse(
         flow?.traceMeta?.continuationHint ||
-        (nextStage
-          ? `Next in kill-chain: unlocks Step #${nextStage.index} (${nextStage.title} · ${nextStage.mitreTechniqueId}).`
-          : `Completes the ${scenario.stages.length}-step kill-chain for ${scenario.name}.`);
+          (nextStage
+            ? `Next in kill-chain: unlocks Step #${nextStage.index} (${nextStage.title} · ${nextStage.mitreTechniqueId}).`
+            : `Completes the ${scenario.stages.length}-step kill-chain for ${scenario.name}.`)
+      );
 
       const fromOrder = fromNode?.chainOrder || 1;
       const toOrder = toNode?.chainOrder || 2;
@@ -558,15 +727,18 @@ export function buildDiagramStepGuideModel(
       return {
         stepNumber: stage.index,
         mitreId: stage.mitreTechniqueId || rawStep?.mitreId || scenario.code,
-        plainTitle: rawStep?.plainTitle || stage.title,
-        storyAnalogy: rawStep?.storyAnalogy || stage.subtitle,
+        plainTitle: normalizeStepGuideProse(rawStep?.plainTitle || stage.title),
+        storyAnalogy: normalizeStepGuideProse(
+          rawStep?.storyAnalogy || stage.subtitle
+        ),
         simpleExplanation: simpleExplanationText,
         howItWorksInPractice: practiceText,
         diagramAlignment: syncedAlignment,
-        detectionAndEvidence:
+        detectionAndEvidence: normalizeStepGuideProse(
           rawStep?.detectionAndEvidence ||
-          telemetryEvent?.info ||
-          stage.subtitle,
+            telemetryEvent?.info ||
+            stage.subtitle
+        ),
         stageTitle: stage.title,
         stageSubtitle: stage.subtitle,
         fromNodeBadge:

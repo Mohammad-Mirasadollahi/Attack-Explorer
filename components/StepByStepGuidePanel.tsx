@@ -19,6 +19,7 @@ import {
 import {
   buildScopedStepGuideModel,
   InspectorScopeContext,
+  isSeparatedStepsAndSequenceScenario,
 } from '@/lib/inspector-scope';
 import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
 import { SketchNodeIcon } from './SketchNodeIcons';
@@ -60,8 +61,7 @@ interface StepByStepGuidePanelProps {
 
 /**
  * Helper sub-component that renders structured numbered clauses (#N.1, #N.2...)
- * with separated visual parenthetical `(why ...)` reason callouts so dense
- * explanations are never rendered as a wall of run-on text.
+ * with natural inline parenthetical explanations directly inside the text.
  */
 function StructuredClausesList({
   clauses,
@@ -94,25 +94,9 @@ function StructuredClausesList({
               #{clause.clauseCode}
             </span>
             <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
-              {clause.coreStatement}
+              {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
             </p>
           </div>
-
-          {clause.parentheticalReasons.length > 0 && (
-            <div className="mt-2 pl-6 space-y-1">
-              {clause.parentheticalReasons.map((note, rIdx) => (
-                <div
-                  key={rIdx}
-                  className="px-2.5 py-1 rounded-md bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words flex items-start gap-1.5"
-                >
-                  <span className="font-extrabold text-amber-700 dark:text-amber-400 shrink-0">
-                    WHY / SPEC:
-                  </span>
-                  <span>({note})</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       ))}
     </div>
@@ -199,8 +183,10 @@ export function StepByStepGuidePanel({
     }
   }, [activeStageIndex, cinematicPhase, isExpandedScope, isPlaying]);
 
+  const isSeparatedScenario = isSeparatedStepsAndSequenceScenario(scenario.id);
+
   // ============================================================================
-  // EXPANDED SUB-BOARD / INTERNAL SUB-NODE UNIFIED STEPS & SEQUENCE VIEW
+  // EXPANDED SUB-BOARD / INTERNAL SUB-NODE STEPS VIEW
   // ============================================================================
   if (
     isExpandedScope &&
@@ -222,7 +208,7 @@ export function StepByStepGuidePanel({
         dir="ltr"
         className="space-y-4"
       >
-        {/* Top Scoped Internal Pipeline & Sequence Bar */}
+        {/* Top Scoped Internal Pipeline Bar */}
         <div
           data-testid="step-guide-autoplay-bar"
           className="p-3 rounded-xl bg-zinc-100/95 dark:bg-zinc-900/95 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5"
@@ -236,7 +222,9 @@ export function StepByStepGuidePanel({
             </div>
 
             <span className="text-[10px] font-mono font-semibold text-zinc-500 dark:text-zinc-400">
-              {`UNIFIED STEPS & SEQUENCE: ${internalSteps.length} INTERNAL EXCHANGES`}
+              {isSeparatedScenario
+                ? `STEP-BY-STEP GUIDE: ${internalSteps.length} INTERNAL STAGES`
+                : `UNIFIED STEPS & SEQUENCE: ${internalSteps.length} INTERNAL EXCHANGES`}
             </span>
           </div>
 
@@ -252,7 +240,9 @@ export function StepByStepGuidePanel({
                     : 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-700'
                 }`}
               >
-                #0 Briefing & Sequence Map
+                {isSeparatedScenario
+                  ? '#0 Step Briefing'
+                  : '#0 Briefing & Sequence Map'}
               </button>
               {internalSteps.map((st) => {
                 const isFocused = Boolean(
@@ -310,7 +300,11 @@ export function StepByStepGuidePanel({
           <div className="px-3.5 py-2.5 bg-slate-950 text-white flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
             <div className="inline-flex items-center gap-1.5 text-[10.5px] font-mono font-bold text-amber-400 uppercase tracking-wider min-w-0">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>STEP #0 · INTERNAL PIPELINE & SEQUENCE BRIEFING</span>
+              <span>
+                {isSeparatedScenario
+                  ? 'STEP #0 · INTERNAL PIPELINE STEP BRIEFING'
+                  : 'STEP #0 · INTERNAL PIPELINE & SEQUENCE BRIEFING'}
+              </span>
             </div>
             <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9.5px] font-mono">
               {subBoard.boardCode}
@@ -416,73 +410,75 @@ export function StepByStepGuidePanel({
               </div>
             </div>
 
-            {/* Layer 3B: Cascading Internal Sequence Waterfall (#P.1 └─▶ #P.4) */}
-            <div className="p-3 rounded-xl bg-white/95 dark:bg-zinc-950/85 border border-indigo-200/80 dark:border-indigo-900/50 space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
-                  <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    3B. Cascading Internal Sequence Waterfall (#
-                    {subBoard.sequenceLineage.internalSeqChain[0] ||
-                      `${subBoard.sequenceLineage.parentSequenceCode}.1`}{' '}
-                    └─▶ #
-                    {subBoard.sequenceLineage.internalSeqChain[
-                      subBoard.sequenceLineage.internalSeqChain.length - 1
-                    ] || `${subBoard.sequenceLineage.parentSequenceCode}.4`}
-                    )
+            {/* Layer 3B: Cascading Internal Sequence Waterfall (#P.1 └─▶ #P.4) — Shown only when Unified */}
+            {!isSeparatedScenario && (
+              <div className="p-3 rounded-xl bg-white/95 dark:bg-zinc-950/85 border border-indigo-200/80 dark:border-indigo-900/50 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                    <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      3B. Cascading Internal Sequence Waterfall (#
+                      {subBoard.sequenceLineage.internalSeqChain[0] ||
+                        `${subBoard.sequenceLineage.parentSequenceCode}.1`}{' '}
+                      └─▶ #
+                      {subBoard.sequenceLineage.internalSeqChain[
+                        subBoard.sequenceLineage.internalSeqChain.length - 1
+                      ] || `${subBoard.sequenceLineage.parentSequenceCode}.4`}
+                      )
+                    </span>
                   </span>
-                </span>
-                <span className="text-[9.5px] font-mono text-zinc-500">
-                  Ordered Chronological Sub-Step Chain
-                </span>
-              </div>
+                  <span className="text-[9.5px] font-mono text-zinc-500">
+                    Ordered Chronological Sub-Step Chain
+                  </span>
+                </div>
 
-              <div className="space-y-1.5">
-                {internalSteps.map((st, idx) => {
-                  const indentPx = Math.min(idx, 4) * 14;
-                  return (
-                    <div
-                      key={st.flow.id}
-                      style={{ marginLeft: `${indentPx}px` }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (st.toSubNode) {
-                          onSelectInternalSubNode?.(st.toSubNode.id);
-                        }
-                      }}
-                      className="p-2 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/70 hover:border-indigo-400 transition-colors flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono"
-                    >
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                        {idx > 0 && (
-                          <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
-                            └─▶
+                <div className="space-y-1.5">
+                  {internalSteps.map((st, idx) => {
+                    const indentPx = Math.min(idx, 4) * 14;
+                    return (
+                      <div
+                        key={st.flow.id}
+                        style={{ marginLeft: `${indentPx}px` }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (st.toSubNode) {
+                            onSelectInternalSubNode?.(st.toSubNode.id);
+                          }
+                        }}
+                        className="p-2 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/70 hover:border-indigo-400 transition-colors flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono"
+                      >
+                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                          {idx > 0 && (
+                            <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                              └─▶
+                            </span>
+                          )}
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-extrabold">
+                            #{st.sequenceCode}
                           </span>
-                        )}
-                        <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-extrabold">
-                          #{st.sequenceCode}
+                          {st.fromSubNode && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
+                              {st.fromSubNode.label}
+                            </span>
+                          )}
+                          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 font-bold">
+                            {st.forwardFlowBadge}
+                          </span>
+                          {st.toSubNode && (
+                            <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
+                              {st.toSubNode.label}
+                            </span>
+                          )}
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[9.5px] font-semibold">
+                          {st.returnFlowBadge}
                         </span>
-                        {st.fromSubNode && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
-                            {st.fromSubNode.label}
-                          </span>
-                        )}
-                        <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 font-bold">
-                          {st.forwardFlowBadge}
-                        </span>
-                        {st.toSubNode && (
-                          <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
-                            {st.toSubNode.label}
-                          </span>
-                        )}
                       </div>
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[9.5px] font-semibold">
-                        {st.returnFlowBadge}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="pt-1 flex flex-wrap items-center justify-between gap-1 text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
               <span>{subBoard.hostSystemLabel}</span>
@@ -543,7 +539,9 @@ export function StepByStepGuidePanel({
                           : 'bg-indigo-600 text-white'
                       }`}
                     >
-                      STEP #{step.sequenceCode} · SEQ #{step.sequenceCode}
+                      {isSeparatedScenario
+                        ? `STEP #${step.sequenceCode}`
+                        : `STEP #${step.sequenceCode} · SEQ #${step.sequenceCode}`}
                     </span>
                     <span className="text-xs font-mono font-bold leading-snug break-words">
                       {step.title}
@@ -568,7 +566,7 @@ export function StepByStepGuidePanel({
                   </div>
                 </div>
 
-                {/* Internal Step & Sequence Card Content */}
+                {/* Internal Step Card Content */}
                 <div className="p-3.5 space-y-3">
                   {/* Layer 1: Story Analogy for Internal Transition */}
                   <div
@@ -584,125 +582,129 @@ export function StepByStepGuidePanel({
                     </p>
                   </div>
 
-                  {/* Layer 2: Visual Initiator Sub-Node ⇄ Receiver Sub-Node Sequence Swimlane */}
-                  <div
-                    data-testid={`sequence-trace-row-${step.stepNumber}`}
-                    className="p-3 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/80 border border-zinc-200/80 dark:border-zinc-800 space-y-2"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                      <span className="inline-flex items-center gap-1.5">
-                        <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
-                        <span>
-                          2. Visual Sequence Exchange — Initiator Sub-Node ⇄ Receiver Sub-Node
+                  {/* Layer 2 (Unified Only): Visual Initiator Sub-Node ⇄ Receiver Sub-Node Sequence Swimlane */}
+                  {!isSeparatedScenario && (
+                    <div
+                      data-testid={`sequence-trace-row-${step.stepNumber}`}
+                      className="p-3 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/80 border border-zinc-200/80 dark:border-zinc-800 space-y-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        <span className="inline-flex items-center gap-1.5">
+                          <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
+                          <span>
+                            2. Visual Sequence Exchange — Initiator Sub-Node ⇄ Receiver Sub-Node
+                          </span>
                         </span>
-                      </span>
-                      <span className="text-zinc-500 dark:text-zinc-400">
-                        {step.protocolOrEventId}
-                      </span>
+                        <span className="text-zinc-500 dark:text-zinc-400">
+                          {step.protocolOrEventId}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch">
+                        {/* Left: Initiator Sub-Node */}
+                        <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2.5">
+                          {step.fromSubNode && (
+                            <div className="w-10 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
+                              <SketchNodeIcon
+                                iconType={step.fromSubNode.iconType}
+                                isActive={step.fromSubNode.isActive}
+                                isCompromised={step.fromSubNode.isCompromised}
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1 space-y-0.5 font-mono">
+                            <div className="text-[9px] font-extrabold uppercase text-rose-600 dark:text-rose-400">
+                              INITIATOR · #{step.fromSubNode?.sequenceCode || step.stepNumber}
+                            </div>
+                            <div className="text-[11px] font-bold text-zinc-900 dark:text-white leading-snug break-words">
+                              {step.fromSubNode?.label || step.flow.fromNodeId}
+                            </div>
+                            <div className="text-[9.5px] text-zinc-500 leading-snug break-words">
+                              {step.fromSubNode?.sublabel || step.fromSubNode?.actionBadge}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Center: Forward (#P.N→) & Return (⇠#P.N) Tracks */}
+                        <div className="lg:col-span-6 flex flex-col justify-center gap-2">
+                          <div className="p-2 rounded-lg bg-rose-50/75 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1 font-mono">
+                            <div className="flex flex-wrap items-center justify-between gap-1 text-[10.5px]">
+                              <span className="font-extrabold text-rose-700 dark:text-rose-300 inline-flex items-center gap-1">
+                                <span>{step.forwardFlowBadge}</span>
+                              </span>
+                              <span className="text-[9.5px] text-rose-600 dark:text-rose-400">
+                                FORWARD REQUEST ──▶
+                              </span>
+                            </div>
+                            <div className="h-0.5 w-full bg-rose-500/75 rounded-full" />
+                            <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
+                              {step.telemetryEvent.info}
+                            </div>
+                          </div>
+
+                          <div className="p-2 rounded-lg bg-emerald-50/75 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1 font-mono">
+                            <div className="flex flex-wrap items-center justify-between gap-1 text-[10.5px]">
+                              <span className="font-extrabold text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1">
+                                <span>{step.returnFlowBadge}</span>
+                              </span>
+                              <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400">
+                                ◀── RETURN CHANNEL
+                              </span>
+                            </div>
+                            <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
+                            <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
+                              {step.returnDescription}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Receiver Sub-Node */}
+                        <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2.5">
+                          {step.toSubNode && (
+                            <div className="w-10 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
+                              <SketchNodeIcon
+                                iconType={step.toSubNode.iconType}
+                                isActive={step.toSubNode.isActive}
+                                isCompromised={step.toSubNode.isCompromised}
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1 space-y-0.5 font-mono">
+                            <div className="text-[9px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">
+                              RECEIVER · #{step.toSubNode?.sequenceCode || step.stepNumber}
+                            </div>
+                            <div className="text-[11px] font-bold text-zinc-900 dark:text-white leading-snug break-words">
+                              {step.toSubNode?.label || step.flow.toNodeId}
+                            </div>
+                            <div className="text-[9.5px] text-zinc-500 leading-snug break-words">
+                              {step.toSubNode?.sublabel || step.toSubNode?.actionBadge}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {step.continuationHint && (
+                        <div className="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/60 text-[10.5px] font-mono text-indigo-900 dark:text-indigo-200 leading-snug break-words">
+                          ↪ {step.continuationHint}
+                        </div>
+                      )}
                     </div>
+                  )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-stretch">
-                      {/* Left: Initiator Sub-Node */}
-                      <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2.5">
-                        {step.fromSubNode && (
-                          <div className="w-10 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
-                            <SketchNodeIcon
-                              iconType={step.fromSubNode.iconType}
-                              isActive={step.fromSubNode.isActive}
-                              isCompromised={step.fromSubNode.isCompromised}
-                            />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1 space-y-0.5 font-mono">
-                          <div className="text-[9px] font-extrabold uppercase text-rose-600 dark:text-rose-400">
-                            INITIATOR · #{step.fromSubNode?.sequenceCode || step.stepNumber}
-                          </div>
-                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white leading-snug break-words">
-                            {step.fromSubNode?.label || step.flow.fromNodeId}
-                          </div>
-                          <div className="text-[9.5px] text-zinc-500 leading-snug break-words">
-                            {step.fromSubNode?.sublabel || step.fromSubNode?.actionBadge}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Center: Forward (#P.N→) & Return (⇠#P.N) Tracks */}
-                      <div className="lg:col-span-6 flex flex-col justify-center gap-2">
-                        <div className="p-2 rounded-lg bg-rose-50/75 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1 font-mono">
-                          <div className="flex flex-wrap items-center justify-between gap-1 text-[10.5px]">
-                            <span className="font-extrabold text-rose-700 dark:text-rose-300 inline-flex items-center gap-1">
-                              <span>{step.forwardFlowBadge}</span>
-                            </span>
-                            <span className="text-[9.5px] text-rose-600 dark:text-rose-400">
-                              FORWARD REQUEST ──▶
-                            </span>
-                          </div>
-                          <div className="h-0.5 w-full bg-rose-500/75 rounded-full" />
-                          <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
-                            {step.telemetryEvent.info}
-                          </div>
-                        </div>
-
-                        <div className="p-2 rounded-lg bg-emerald-50/75 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1 font-mono">
-                          <div className="flex flex-wrap items-center justify-between gap-1 text-[10.5px]">
-                            <span className="font-extrabold text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1">
-                              <span>{step.returnFlowBadge}</span>
-                            </span>
-                            <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400">
-                              ◀── RETURN CHANNEL
-                            </span>
-                          </div>
-                          <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
-                          <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
-                            {step.returnDescription}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Receiver Sub-Node */}
-                      <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2.5">
-                        {step.toSubNode && (
-                          <div className="w-10 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
-                            <SketchNodeIcon
-                              iconType={step.toSubNode.iconType}
-                              isActive={step.toSubNode.isActive}
-                              isCompromised={step.toSubNode.isCompromised}
-                            />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1 space-y-0.5 font-mono">
-                          <div className="text-[9px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">
-                            RECEIVER · #{step.toSubNode?.sequenceCode || step.stepNumber}
-                          </div>
-                          <div className="text-[11px] font-bold text-zinc-900 dark:text-white leading-snug break-words">
-                            {step.toSubNode?.label || step.flow.toNodeId}
-                          </div>
-                          <div className="text-[9.5px] text-zinc-500 leading-snug break-words">
-                            {step.toSubNode?.sublabel || step.toSubNode?.actionBadge}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {step.continuationHint && (
-                      <div className="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/60 text-[10.5px] font-mono text-indigo-900 dark:text-indigo-200 leading-snug break-words">
-                        ↪ {step.continuationHint}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Layer 3: Story-to-Scenario Technical Bridge (Structured Numbered Clauses) */}
+                  {/* Layer 2/3: Story-to-Scenario Technical Bridge */}
                   <div
                     data-testid={`step-guide-technical-bridge-${step.stepNumber}`}
                     className="space-y-1.5"
                   >
                     <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                      3. Story ↔ Scenario Technical Bridge (Step-by-Step Clauses & Why):
+                      {isSeparatedScenario
+                        ? '2. Story ↔ Scenario Technical Bridge:'
+                        : '3. Story ↔ Scenario Technical Bridge:'}
                     </div>
                     <StructuredClausesList clauses={structuredStepClauses} />
                   </div>
 
-                  {/* Layer 4: Documented Telemetry / Packet Inspection */}
+                  {/* Layer 3/4: Documented Telemetry / Packet Inspection */}
                   <div
                     data-testid={`step-guide-under-the-hood-${step.stepNumber}`}
                     className="p-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-800/60 space-y-1.5"
@@ -710,7 +712,9 @@ export function StepByStepGuidePanel({
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-800 dark:text-emerald-300">
                         <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                        <span>{`4. Documented Sensor Evidence · ${step.telemetryEvent.sourceType} · ${step.telemetryEvent.protocolOrEventId}`}</span>
+                        <span>{`${
+                          isSeparatedScenario ? '3' : '4'
+                        }. Documented Sensor Evidence · ${step.telemetryEvent.sourceType} · ${step.telemetryEvent.protocolOrEventId}`}</span>
                       </span>
 
                       {onSelectTelemetry && (
@@ -772,8 +776,9 @@ export function StepByStepGuidePanel({
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 text-[10px] font-mono font-bold">
                 <BookOpen className="w-3 h-3 shrink-0" />
                 <span>
-                  UNIFIED STEPS & SEQUENCE ({steps.length} STAGES ·{' '}
-                  {briefing.topologyNodes.length} NODES)
+                  {isSeparatedScenario
+                    ? `STEP-BY-STEP GUIDE (${steps.length} STAGES · ${briefing.topologyNodes.length} NODES)`
+                    : `UNIFIED STEPS & SEQUENCE (${steps.length} STAGES · ${briefing.topologyNodes.length} NODES)`}
                 </span>
               </span>
             )}
@@ -788,43 +793,80 @@ export function StepByStepGuidePanel({
           </span>
         </div>
 
-        {/* 3-Column Visual Sequence & Steps Reading Guide */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
-          <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-rose-200/80 dark:border-rose-900/50 space-y-0.5">
-            <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-rose-600 dark:text-rose-400">
-              <span>#N→</span>
-              <ArrowRight className="w-3 h-3 shrink-0" />
-              <span>FORWARD ACTION (REQUEST)</span>
+        {/* 3-Column Reading Guide */}
+        {isSeparatedScenario ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+            <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-amber-200/80 dark:border-amber-900/50 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-amber-700 dark:text-amber-400">
+                <Sparkles className="w-3 h-3 shrink-0" />
+                <span>1. REAL-WORLD STORY ANALOGY</span>
+              </div>
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                Plain-language mental model for each attack step before diving
+                into kernel, memory, and process internals.
+              </p>
             </div>
-            <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
-              Solid rose track showing the API call, exploit payload, or network
-              packet sent from Initiator to Receiver.
-            </p>
-          </div>
 
-          <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-emerald-200/80 dark:border-emerald-900/50 space-y-0.5">
-            <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
-              <ArrowLeft className="w-3 h-3 shrink-0" />
-              <span>⇠#N</span>
-              <span>RETURN CHANNEL (RESPONSE)</span>
+            <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-indigo-200/80 dark:border-indigo-900/50 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
+                <Layers className="w-3 h-3 shrink-0" />
+                <span>2. STORY ↔ SCENARIO BRIDGE</span>
+              </div>
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                Step-by-step technical narrative with inline parenthetical
+                explanations showing what each API, flag, and process does and why.
+              </p>
             </div>
-            <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
-              Dashed emerald track showing the kernel handle, memory pointer, or
-              ACK status returned by Receiver to Initiator.
-            </p>
-          </div>
 
-          <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-indigo-200/80 dark:border-indigo-900/50 space-y-0.5">
-            <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
-              <Layers className="w-3 h-3 shrink-0" />
-              <span>#N.1..#N.3 CLAUSES & WATERFALL</span>
+            <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-emerald-200/80 dark:border-emerald-900/50 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                <Terminal className="w-3 h-3 shrink-0" />
+                <span>3. STATE MACHINE & SIEM CATCH</span>
+              </div>
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                Step state transitions, parent-child process waterfalls, and
+                documented SIEM / EDR sensor evidence.
+              </p>
             </div>
-            <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
-              Numbered technical sub-clauses with parenthetical (why) specs,
-              process waterfall, and SIEM sensor catch.
-            </p>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+            <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-rose-200/80 dark:border-rose-900/50 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-rose-600 dark:text-rose-400">
+                <span>#N→</span>
+                <ArrowRight className="w-3 h-3 shrink-0" />
+                <span>FORWARD ACTION (REQUEST)</span>
+              </div>
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                Solid rose track showing the API call, exploit payload, or network
+                packet sent from Initiator to Receiver.
+              </p>
+            </div>
+
+            <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-emerald-200/80 dark:border-emerald-900/50 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                <ArrowLeft className="w-3 h-3 shrink-0" />
+                <span>⇠#N</span>
+                <span>RETURN CHANNEL (RESPONSE)</span>
+              </div>
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                Dashed emerald track showing the kernel handle, memory pointer, or
+                ACK status returned by Receiver to Initiator.
+              </p>
+            </div>
+
+            <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-950/90 border border-indigo-200/80 dark:border-indigo-900/50 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
+                <Layers className="w-3 h-3 shrink-0" />
+                <span>#N.1..#N.3 CLAUSES & WATERFALL</span>
+              </div>
+              <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                Numbered technical sub-clauses with parenthetical (why) specs,
+                process waterfall, and SIEM sensor catch.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Playback Controls & Quick Step Jump Bar */}
         <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-zinc-200/70 dark:border-zinc-800/80">
@@ -933,7 +975,11 @@ export function StepByStepGuidePanel({
         <div className="px-3.5 py-2.5 bg-slate-950 text-white flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
           <div className="inline-flex items-center gap-1.5 text-[10.5px] font-mono font-bold text-amber-400 uppercase tracking-wider min-w-0">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>STEP #0 · SCENARIO & SEQUENCE BRIEFING</span>
+            <span>
+              {isSeparatedScenario
+                ? 'STEP #0 · SCENARIO BRIEFING'
+                : 'STEP #0 · SCENARIO & SEQUENCE BRIEFING'}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {(cinematicPhase === 'INTRO_SURVEY' ||
@@ -983,18 +1029,18 @@ export function StepByStepGuidePanel({
             </p>
           </div>
 
-          {/* Layer 2: Story ↔ Scenario Technical Bridge (Structured Numbered Clauses & Why) */}
+          {/* Layer 2: Story ↔ Scenario Technical Bridge */}
           <div
             data-testid="step-guide-briefing-plain-summary"
             className="space-y-1.5"
           >
             <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-              2. Story ↔ Scenario Technical Bridge (Numbered Clauses & Why):
+              2. Story ↔ Scenario Technical Bridge:
             </div>
             <StructuredClausesList clauses={briefing.structuredSummaryClauses} />
           </div>
 
-          {/* Layer 3A: Visual Participating Topology Nodes Grid (①..⑥ with Node Icons) */}
+          {/* Layer 3: Visual Participating Topology Nodes Grid (①..⑥ with Node Icons) */}
           <div
             data-testid="sequence-participants-bar"
             className="p-3 rounded-xl bg-white/95 dark:bg-zinc-950/85 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5"
@@ -1003,11 +1049,13 @@ export function StepByStepGuidePanel({
               <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 <Network className="w-3.5 h-3.5 shrink-0" />
                 <span>
-                  3A. Participating Topology Nodes Roster ({briefing.topologyNodes.length} Nodes · ①..⑥)
+                  {isSeparatedScenario
+                    ? `3. Scenario Topology Nodes Roster (${briefing.topologyNodes.length} Nodes · ①..⑥)`
+                    : `3A. Participating Topology Nodes Roster (${briefing.topologyNodes.length} Nodes · ①..⑥)`}
                 </span>
               </span>
               <span className="text-[9.5px] font-mono text-zinc-500">
-                Ordered Left-to-Right by Kill-Chain Sequence
+                Ordered Left-to-Right by Kill-Chain Architecture
               </span>
             </div>
 
@@ -1045,99 +1093,101 @@ export function StepByStepGuidePanel({
             </div>
           </div>
 
-          {/* Layer 3B: Cascading Sequence Waterfall (Step #1 └─▶ Step #N with Visual Node Icons) */}
-          <div className="p-3 rounded-xl bg-white/95 dark:bg-zinc-950/85 border border-indigo-200/80 dark:border-indigo-900/50 space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
-                <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  3B. Cascading Sequence Waterfall (Step #1 └─▶ Step #{briefing.sequenceWaterfall.length})
+          {/* Layer 3B (Unified Only): Cascading Sequence Waterfall (Step #1 └─▶ Step #N with Visual Node Icons) */}
+          {!isSeparatedScenario && (
+            <div className="p-3 rounded-xl bg-white/95 dark:bg-zinc-950/85 border border-indigo-200/80 dark:border-indigo-900/50 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                  <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    3B. Cascading Sequence Waterfall (Step #1 └─▶ Step #{briefing.sequenceWaterfall.length})
+                  </span>
                 </span>
-              </span>
-              <span className="text-[9.5px] font-mono text-zinc-500">
-                Click any row to jump directly to that Step & Sequence card
-              </span>
-            </div>
+                <span className="text-[9.5px] font-mono text-zinc-500">
+                  Click any row to jump directly to that Step & Sequence card
+                </span>
+              </div>
 
-            <div className="space-y-1.5">
-              {briefing.sequenceWaterfall.map((wf, idx) => {
-                const indentPx = Math.min(idx, 5) * 14;
-                const isCurrentWf = activeStageIndex === wf.stepNumber;
-                return (
-                  <div
-                    key={wf.stepNumber}
-                    style={{ marginLeft: `${indentPx}px` }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectStage?.(wf.stepNumber);
-                    }}
-                    className={`p-2 rounded-lg border transition-all flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono ${
-                      isCurrentWf
-                        ? 'bg-rose-50/90 dark:bg-rose-950/40 border-rose-500 ring-1 ring-rose-500/30'
-                        : 'bg-zinc-50/85 dark:bg-zinc-900/75 border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-400'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                      {idx > 0 && (
-                        <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
-                          └─▶
+              <div className="space-y-1.5">
+                {briefing.sequenceWaterfall.map((wf, idx) => {
+                  const indentPx = Math.min(idx, 5) * 14;
+                  const isCurrentWf = activeStageIndex === wf.stepNumber;
+                  return (
+                    <div
+                      key={wf.stepNumber}
+                      style={{ marginLeft: `${indentPx}px` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectStage?.(wf.stepNumber);
+                      }}
+                      className={`p-2 rounded-lg border transition-all flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono ${
+                        isCurrentWf
+                          ? 'bg-rose-50/90 dark:bg-rose-950/40 border-rose-500 ring-1 ring-rose-500/30'
+                          : 'bg-zinc-50/85 dark:bg-zinc-900/75 border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-400'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        {idx > 0 && (
+                          <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                            └─▶
+                          </span>
+                        )}
+                        <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-extrabold">
+                          STEP #{wf.stepNumber}
                         </span>
-                      )}
-                      <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[9.5px] font-extrabold">
-                        STEP #{wf.stepNumber}
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-[9.5px] font-bold">
-                        {wf.mitreId}
-                      </span>
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 text-[9.5px] font-bold">
+                          {wf.mitreId}
+                        </span>
 
-                      {/* Initiator Chip with Mini Icon */}
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
-                        <span className="w-4 h-3.5 inline-flex items-center justify-center shrink-0">
-                          <SketchNodeIcon
-                            iconType={wf.fromNodeIcon}
-                            isActive={isCurrentWf}
-                            isCompromised={true}
-                          />
+                        {/* Initiator Chip with Mini Icon */}
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
+                          <span className="w-4 h-3.5 inline-flex items-center justify-center shrink-0">
+                            <SketchNodeIcon
+                              iconType={wf.fromNodeIcon}
+                              isActive={isCurrentWf}
+                              isCompromised={true}
+                            />
+                          </span>
+                          <span>
+                            {wf.fromNodeCircled} #{wf.fromNodeOrder} {wf.fromNodeLabel}
+                          </span>
                         </span>
-                        <span>
-                          {wf.fromNodeCircled} #{wf.fromNodeOrder} {wf.fromNodeLabel}
-                        </span>
-                      </span>
 
-                      {/* Forward Arrow Badge */}
-                      <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 font-bold">
-                        #{wf.stepNumber}→ {wf.actionLabel}
-                      </span>
+                        {/* Forward Arrow Badge */}
+                        <span className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 font-bold">
+                          #{wf.stepNumber}→ {wf.actionLabel}
+                        </span>
 
-                      {/* Receiver Chip with Mini Icon */}
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
-                        <span className="w-4 h-3.5 inline-flex items-center justify-center shrink-0">
-                          <SketchNodeIcon
-                            iconType={wf.toNodeIcon}
-                            isActive={isCurrentWf}
-                            isCompromised={wf.toNodeOrder <= 4}
-                          />
+                        {/* Receiver Chip with Mini Icon */}
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-semibold text-zinc-800 dark:text-zinc-200">
+                          <span className="w-4 h-3.5 inline-flex items-center justify-center shrink-0">
+                            <SketchNodeIcon
+                              iconType={wf.toNodeIcon}
+                              isActive={isCurrentWf}
+                              isCompromised={wf.toNodeOrder <= 4}
+                            />
+                          </span>
+                          <span>
+                            {wf.toNodeCircled} #{wf.toNodeOrder} {wf.toNodeLabel}
+                          </span>
                         </span>
-                        <span>
-                          {wf.toNodeCircled} #{wf.toNodeOrder} {wf.toNodeLabel}
+                      </div>
+
+                      {/* Return Channel & Protocol Chip */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[9.5px] font-semibold">
+                          ⇠#{wf.stepNumber} {wf.returnLabel}
                         </span>
-                      </span>
+                        <span className="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-[9.5px]">
+                          {wf.protocolOrEventId}
+                        </span>
+                      </div>
                     </div>
-
-                    {/* Return Channel & Protocol Chip */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[9.5px] font-semibold">
-                        ⇠#{wf.stepNumber} {wf.returnLabel}
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-[9.5px]">
-                        {wf.protocolOrEventId}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Documented Source Footer */}
           <div className="pt-1 flex flex-wrap items-center justify-between gap-1 text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400">
@@ -1205,7 +1255,9 @@ export function StepByStepGuidePanel({
                         : 'bg-indigo-600 text-white'
                     }`}
                   >
-                    STEP #{step.stepNumber} · SEQ #{step.forwardSeq}
+                    {isSeparatedScenario
+                      ? `STEP #${step.stepNumber}`
+                      : `STEP #${step.stepNumber} · SEQ #${step.forwardSeq}`}
                   </span>
                   <span className="text-xs font-mono font-bold leading-snug break-words">
                     {step.stageTitle}
@@ -1242,7 +1294,7 @@ export function StepByStepGuidePanel({
                 </div>
               </div>
 
-              {/* Step & Sequence Card Content */}
+              {/* Step Card Content */}
               <div className="p-3.5 space-y-3.5">
                 {/* Plain Title */}
                 <h5 className="text-xs sm:text-sm font-extrabold text-zinc-900 dark:text-white leading-snug break-words">
@@ -1263,157 +1315,165 @@ export function StepByStepGuidePanel({
                   </p>
                 </div>
 
-                {/* 2. Visual Sequence Exchange Swimlane — Initiator (Sender) ⇄ Receiver (Target) with Node Icons */}
-                <div
-                  data-testid={`sequence-trace-row-${step.stepNumber}`}
-                  className="p-3 rounded-xl bg-zinc-50/95 dark:bg-zinc-950/85 border border-zinc-200/90 dark:border-zinc-800 space-y-2.5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    <span className="inline-flex items-center gap-1.5">
-                      <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
-                      <span>
-                        2. Visual Sequence Exchange — Initiator (Sender) ⇄ Receiver (Target)
+                {/* 2 (Unified Only). Visual Sequence Exchange Swimlane — Initiator (Sender) ⇄ Receiver (Target) with Node Icons */}
+                {!isSeparatedScenario && (
+                  <div
+                    data-testid={`sequence-trace-row-${step.stepNumber}`}
+                    className="p-3 rounded-xl bg-zinc-50/95 dark:bg-zinc-950/85 border border-zinc-200/90 dark:border-zinc-800 space-y-2.5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                      <span className="inline-flex items-center gap-1.5">
+                        <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          2. Visual Sequence Exchange — Initiator (Sender) ⇄ Receiver (Target)
+                        </span>
                       </span>
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-                      {step.protocolOrEventId}
-                    </span>
-                  </div>
+                      <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                        {step.protocolOrEventId}
+                      </span>
+                    </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
-                    {/* Left Column: Initiator (Sender) with SketchNodeIcon */}
-                    <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-11 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
-                          <SketchNodeIcon
-                            iconType={step.fromNodeIcon}
-                            isActive={isActive}
-                            isCompromised={true}
-                          />
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+                      {/* Left Column: Initiator (Sender) with SketchNodeIcon */}
+                      <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-11 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
+                            <SketchNodeIcon
+                              iconType={step.fromNodeIcon}
+                              isActive={isActive}
+                              isCompromised={true}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-0.5 font-mono">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[9px] font-extrabold uppercase text-rose-600 dark:text-rose-400">
+                                INITIATOR (SENDER)
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300">
+                                {step.fromNodeCircled} #{step.fromNodeOrder}
+                              </span>
+                            </div>
+                            <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                              {step.fromNodeLabel}
+                            </div>
+                            <div className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug break-words">
+                              {step.fromNodeSublabel}
+                            </div>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1 space-y-0.5 font-mono">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-[9px] font-extrabold uppercase text-rose-600 dark:text-rose-400">
-                              INITIATOR (SENDER)
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300">
-                              {step.fromNodeCircled} #{step.fromNodeOrder}
-                            </span>
-                          </div>
-                          <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
-                            {step.fromNodeLabel}
-                          </div>
-                          <div className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug break-words">
-                            {step.fromNodeSublabel}
-                          </div>
+                        <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800/80 text-[9.5px] font-mono text-zinc-400 break-words">
+                          Zone: {step.fromNodeZone}
                         </div>
                       </div>
-                      <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800/80 text-[9.5px] font-mono text-zinc-400 break-words">
-                        Zone: {step.fromNodeZone}
+
+                      {/* Center Column: Bidirectional Forward (#N→) & Return (⇠#N) Tracks */}
+                      <div className="lg:col-span-6 flex flex-col justify-center space-y-2">
+                        {/* Forward Request Track (#N→) */}
+                        <div className="p-2.5 rounded-lg bg-rose-50/75 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+                            <span className="inline-flex items-center gap-1.5 font-extrabold text-rose-600 dark:text-rose-400">
+                              <span>#{step.forwardSeq}→</span>
+                              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                              <span className="break-words">
+                                {step.forwardActionLabel}
+                              </span>
+                            </span>
+                            <span className="text-[10px] font-mono font-semibold text-rose-700/80 dark:text-rose-300/80">
+                              {step.fromNodeLabel} ──▶ {step.toNodeLabel}
+                            </span>
+                          </div>
+                          <div className="h-0.5 w-full bg-rose-500/75 rounded-full" />
+                          <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                            {step.forwardPayloadSummary}
+                          </p>
+                        </div>
+
+                        {/* Return Response Track (⇠#N) */}
+                        <div className="p-2.5 rounded-lg bg-emerald-50/75 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+                            <span className="inline-flex items-center gap-1.5 font-extrabold text-emerald-700 dark:text-emerald-400">
+                              <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                              <span>⇠#{step.returnSeq}</span>
+                              <span className="break-words">
+                                {step.returnActionLabel}
+                              </span>
+                            </span>
+                            <span className="text-[10px] font-mono font-semibold text-emerald-700/80 dark:text-emerald-300/80">
+                              {step.fromNodeLabel} ◀── {step.toNodeLabel}
+                            </span>
+                          </div>
+                          <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
+                          <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+                            {step.returnDescription}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Receiver (Target) with SketchNodeIcon */}
+                      <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-11 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
+                            <SketchNodeIcon
+                              iconType={step.toNodeIcon}
+                              isActive={isActive}
+                              isCompromised={step.toNodeOrder <= 4}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-0.5 font-mono">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[9px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">
+                                RECEIVER (TARGET)
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
+                                {step.toNodeCircled} #{step.toNodeOrder}
+                              </span>
+                            </div>
+                            <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                              {step.toNodeLabel}
+                            </div>
+                            <div className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug break-words">
+                              {step.toNodeSublabel}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800/80 text-[9.5px] font-mono text-zinc-400 break-words">
+                          Zone: {step.toNodeZone}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Center Column: Bidirectional Forward (#N→) & Return (⇠#N) Tracks */}
-                    <div className="lg:col-span-6 flex flex-col justify-center space-y-2">
-                      {/* Forward Request Track (#N→) */}
-                      <div className="p-2.5 rounded-lg bg-rose-50/75 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-                          <span className="inline-flex items-center gap-1.5 font-extrabold text-rose-600 dark:text-rose-400">
-                            <span>#{step.forwardSeq}→</span>
-                            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-                            <span className="break-words">
-                              {step.forwardActionLabel}
-                            </span>
-                          </span>
-                          <span className="text-[10px] font-mono font-semibold text-rose-700/80 dark:text-rose-300/80">
-                            {step.fromNodeLabel} ──▶ {step.toNodeLabel}
-                          </span>
-                        </div>
-                        <div className="h-0.5 w-full bg-rose-500/75 rounded-full" />
-                        <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
-                          {step.forwardPayloadSummary}
-                        </p>
-                      </div>
-
-                      {/* Return Response Track (⇠#N) */}
-                      <div className="p-2.5 rounded-lg bg-emerald-50/75 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-                          <span className="inline-flex items-center gap-1.5 font-extrabold text-emerald-700 dark:text-emerald-400">
-                            <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
-                            <span>⇠#{step.returnSeq}</span>
-                            <span className="break-words">
-                              {step.returnActionLabel}
-                            </span>
-                          </span>
-                          <span className="text-[10px] font-mono font-semibold text-emerald-700/80 dark:text-emerald-300/80">
-                            {step.fromNodeLabel} ◀── {step.toNodeLabel}
-                          </span>
-                        </div>
-                        <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
-                        <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
-                          {step.returnDescription}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Right Column: Receiver (Target) with SketchNodeIcon */}
-                    <div className="lg:col-span-3 p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-2">
-                      <div className="flex items-start gap-2.5">
-                        <div className="w-11 h-9 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
-                          <SketchNodeIcon
-                            iconType={step.toNodeIcon}
-                            isActive={isActive}
-                            isCompromised={step.toNodeOrder <= 4}
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1 space-y-0.5 font-mono">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-[9px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400">
-                              RECEIVER (TARGET)
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
-                              {step.toNodeCircled} #{step.toNodeOrder}
-                            </span>
-                          </div>
-                          <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
-                            {step.toNodeLabel}
-                          </div>
-                          <div className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug break-words">
-                            {step.toNodeSublabel}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800/80 text-[9.5px] font-mono text-zinc-400 break-words">
-                        Zone: {step.toNodeZone}
-                      </div>
+                    {/* Next Sequence Handoff Banner */}
+                    <div className="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/60 text-[10.5px] font-mono text-indigo-900 dark:text-indigo-200 leading-snug break-words">
+                      ↪ {step.continuationHint}
                     </div>
                   </div>
+                )}
 
-                  {/* Next Sequence Handoff Banner */}
-                  <div className="px-2.5 py-1.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/60 text-[10.5px] font-mono text-indigo-900 dark:text-indigo-200 leading-snug break-words">
-                    ↪ {step.continuationHint}
-                  </div>
-                </div>
-
-                {/* 3. Story ↔ Scenario Technical Bridge (Structured Numbered Clauses & Why) */}
+                {/* 2/3. Story ↔ Scenario Technical Bridge */}
                 <div
                   data-testid={`step-guide-technical-bridge-${step.stepNumber}`}
                   className="space-y-1.5"
                 >
                   <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    3. Story ↔ Scenario Technical Bridge (Step-by-Step Clauses & Why):
+                    {isSeparatedScenario
+                      ? '2. Story ↔ Scenario Technical Bridge:'
+                      : '3. Story ↔ Scenario Technical Bridge:'}
                   </div>
                   <StructuredClausesList clauses={step.structuredClauses} />
                 </div>
 
-                {/* 4. Practical Under-the-Hood Mechanism & Specs */}
+                {/* 3/4. Practical Under-the-Hood Mechanism & Specs */}
                 <div
                   data-testid={`step-guide-under-the-hood-${step.stepNumber}`}
                   className="p-3 rounded-lg bg-indigo-50/45 dark:bg-indigo-950/20 border border-indigo-200/70 dark:border-indigo-800/60 space-y-2"
                 >
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
                     <Cpu className="w-3.5 h-3.5 shrink-0" />
-                    <span>4. Under the Hood (Why & How It Works + Key Specs):</span>
+                    <span>
+                      {isSeparatedScenario
+                        ? '3. Under the Hood (How It Works in Practice & Key Specs):'
+                        : '4. Under the Hood (How It Works in Practice & Key Specs):'}
+                    </span>
                   </div>
                   <StructuredClausesList
                     clauses={step.structuredPracticeClauses}
@@ -1436,7 +1496,7 @@ export function StepByStepGuidePanel({
                   )}
                 </div>
 
-                {/* 5. Step-Specific Structural State Machine & Cascading Process Lineage */}
+                {/* 4/5. Step-Specific Structural State Machine & Cascading Process Lineage */}
                 {stepDiagram && (
                   <div
                     data-testid={`step-guide-structural-diagram-${step.stepNumber}`}
@@ -1446,7 +1506,7 @@ export function StepByStepGuidePanel({
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
                         <Terminal className="w-3.5 h-3.5 shrink-0" />
                         <span>
-                          5. Visual State Machine & Cascading Process Waterfall (S
+                          {isSeparatedScenario ? '4' : '5'}. Visual State Machine & Cascading Process Waterfall (S
                           {step.stepNumber})
                         </span>
                       </span>
@@ -1526,7 +1586,7 @@ export function StepByStepGuidePanel({
                   </div>
                 )}
 
-                {/* 6. Documented Forensic & SIEM Sensor Evidence (With Visual Sensor Node Icon) */}
+                {/* 5/6. Documented Forensic & SIEM Sensor Evidence (With Visual Sensor Node Icon) */}
                 <div className="p-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="inline-flex items-center gap-2 min-w-0">
@@ -1540,7 +1600,7 @@ export function StepByStepGuidePanel({
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-800 dark:text-emerald-300 leading-snug break-words">
                         <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
                         <span>
-                          6. Documented SIEM Sensor Catch · Node {step.siemNodeCircled} (#
+                          {isSeparatedScenario ? '5' : '6'}. Documented SIEM Sensor Catch · Node {step.siemNodeCircled} (#
                           {step.siemNodeOrder} {step.siemNodeLabel})
                         </span>
                       </span>

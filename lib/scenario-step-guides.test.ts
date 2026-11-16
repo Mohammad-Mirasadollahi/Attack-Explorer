@@ -155,6 +155,28 @@ describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
           st.structuredClauses.some((c) => c.parentheticalReasons.length >= 1),
           `${sc.id} step ${st.stepNumber} structuredClauses must extract parentheticalReasons`
         );
+        assert.ok(
+          /\([^)]{15,}\)/.test(st.howItWorksInPractice),
+          `${sc.id} step ${st.stepNumber} howItWorksInPractice must contain a descriptive inline parenthetical explanation (...)`
+        );
+        for (const textField of [
+          st.plainTitle,
+          st.storyAnalogy,
+          st.simpleExplanation,
+          st.howItWorksInPractice,
+          st.detectionAndEvidence,
+          m.briefing.headline,
+          m.briefing.storyAnalogy,
+          m.briefing.plainSummary,
+        ]) {
+          assert.equal(
+            /WHY\s*\/\s*(SPEC|PROTOCOL\s*EFFECT)|\(\s*why\s*:|[`—]|\*\*[^*]+\*\*/i.test(
+              textField
+            ),
+            false,
+            `${sc.id} step ${st.stepNumber} must not contain WHY / SPEC, (why:, backticks, bold **, or em-dashes: ${textField}`
+          );
+        }
       });
     }
   });

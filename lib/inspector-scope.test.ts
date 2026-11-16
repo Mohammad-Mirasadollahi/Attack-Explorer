@@ -8,6 +8,7 @@ import {
   buildScopedStepGuideModel,
   formatExpandedNodeScopeLabel,
   formatInternalSubNodeScopeLabel,
+  isSeparatedStepsAndSequenceScenario,
   resolveInspectorScopeContext,
   resolveScopedMemoryForensics,
   resolveScopedTelemetrySelection,
@@ -544,6 +545,98 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(expandedSeq.exchanges[0].sequenceCode, '4.1');
     assert.equal(expandedSeq.exchanges[0].forwardSeq, '4.1');
     assert.equal(expandedSeq.exchanges[0].returnSeq, '4.1');
+
+    // 3. Verify that across all 85 scenarios, Step-by-Step Guide is streamlined (Seq removed from Steps UI and woven directly into Step prose)
+    for (const sc of ATTACK_SCENARIOS) {
+      assert.equal(
+        isSeparatedStepsAndSequenceScenario(sc.id),
+        true,
+        `All scenarios must have separated/streamlined Steps with Seq woven into Step prose (got false for ${sc.id})`
+      );
+    }
+
+    const mainStepGuide = buildScopedStepGuideModel(mainScope, 'OVERVIEW');
+    assert.equal(
+      mainSeq.exchanges.length,
+      mainStepGuide.scenarioGuide.steps.length
+    );
+    mainSeq.exchanges.forEach((seqEx, idx) => {
+      const stepCard = mainStepGuide.scenarioGuide.steps[idx];
+      assert.notEqual(
+        seqEx.plainTitle,
+        `Seq #${seqEx.sequenceCode} · ${stepCard.plainTitle}`,
+        `Stage ${seqEx.stepNumber} Sequence plainTitle must be distinct from Step Guide plainTitle`
+      );
+      assert.notEqual(
+        seqEx.storyAnalogy,
+        stepCard.storyAnalogy,
+        `Stage ${seqEx.stepNumber} Sequence storyAnalogy must be distinct from Step Guide storyAnalogy`
+      );
+      assert.notEqual(
+        seqEx.technicalBridge,
+        stepCard.simpleExplanation,
+        `Stage ${seqEx.stepNumber} Sequence technicalBridge must be distinct from Step Guide simpleExplanation`
+      );
+      assert.notEqual(
+        seqEx.underTheHood,
+        stepCard.howItWorksInPractice,
+        `Stage ${seqEx.stepNumber} Sequence underTheHood must be distinct from Step Guide howItWorksInPractice`
+      );
+      assert.notEqual(
+        seqEx.detectionAndEvidence,
+        stepCard.detectionAndEvidence,
+        `Stage ${seqEx.stepNumber} Sequence detectionAndEvidence must be distinct from Step Guide detectionAndEvidence`
+      );
+      // Verify inline parenthetical explanations exist inside the text without separate WHY / SPEC or why: prefixes
+      for (const field of [
+        seqEx.forwardPayloadSummary,
+        seqEx.returnDescription,
+        seqEx.technicalBridge,
+        seqEx.underTheHood,
+        seqEx.detectionAndEvidence,
+        stepCard.simpleExplanation,
+        stepCard.howItWorksInPractice,
+      ]) {
+        assert.ok(
+          /\([^)]{12,}\)/.test(field),
+          `Stage ${seqEx.stepNumber} field must contain a descriptive inline parenthetical (...) explanation inside the text: ${field}`
+        );
+        assert.equal(
+          /WHY\s*\/\s*(SPEC|PROTOCOL\s*EFFECT)|\(\s*why\s*:/i.test(field),
+          false,
+          `Stage ${seqEx.stepNumber} field must not contain literal WHY / SPEC or (why: prefix: ${field}`
+        );
+      }
+    });
+
+    // Verify essential Sequence request/response & handle details are woven directly into process-hollowing Step-by-Step Guide prose
+    const stepsByNum = mainStepGuide.scenarioGuide.steps;
+    assert.ok(
+      stepsByNum[0].simpleExplanation.includes('hProcess = 0x01C4') &&
+        stepsByNum[0].simpleExplanation.includes('hThread = 0x01C8') &&
+        stepsByNum[0].howItWorksInPractice.includes('SuspendCount = 1'),
+      'Step 1 must weave in returned PROCESS_INFORMATION handles (hProcess = 0x01C4, hThread = 0x01C8) and SuspendCount = 1'
+    );
+    assert.ok(
+      stepsByNum[1].simpleExplanation.includes('STATUS_SUCCESS') &&
+        stepsByNum[1].howItWorksInPractice.includes('MiUnmapViewOfSection'),
+      'Step 2 must weave in STATUS_SUCCESS (0x00000000) and kernel MiUnmapViewOfSection'
+    );
+    assert.ok(
+      stepsByNum[2].simpleExplanation.includes('lpNumberOfBytesWritten = 270,336') &&
+        stepsByNum[2].howItWorksInPractice.includes('MEM_PRIVATE'),
+      'Step 3 must weave in lpNumberOfBytesWritten = 270,336 and MEM_PRIVATE VAD details'
+    );
+    assert.ok(
+      stepsByNum[3].simpleExplanation.includes('PreviousSuspendCount = 1') &&
+        stepsByNum[3].howItWorksInPractice.includes('KTRAP_FRAME.Rcx = 0x004014A0'),
+      'Step 4 must weave in PreviousSuspendCount = 1 and KTRAP_FRAME.Rcx = 0x004014A0'
+    );
+    assert.ok(
+      stepsByNum[4].simpleExplanation.includes('HTTP 200 OK') &&
+        stepsByNum[4].simpleExplanation.includes('20% random jitter'),
+      'Step 5 must weave in C2 HTTP 200 OK response and 60s / 20% random jitter schedule'
+    );
   });
 
   it('builds structure-specific Documentation Architecture Blueprints, multi-depth Parent->Child cascading process waterfalls, and step-level diagrams across all 85 scenarios', () => {

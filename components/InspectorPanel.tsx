@@ -17,6 +17,7 @@ import {
   buildInspectorMiniMapModel,
   InspectorScopeContext,
   InspectorScopeMode,
+  isSeparatedStepsAndSequenceScenario,
   resolveInspectorScopeContext,
   resolveScopedMemoryForensics,
 } from '@/lib/inspector-scope';
@@ -411,6 +412,10 @@ export function InspectorPanel({
     [effectiveScopeContext, selectedTelemetry]
   );
 
+  const isStreamlinedStepGuideScenario = isSeparatedStepsAndSequenceScenario(
+    scenario.id
+  );
+
   const resolvedActiveTab: InspectorTab =
     rawActiveTab === 'MEMORY' && !scopedMemory.hasDocumentedMemory
       ? 'OVERVIEW'
@@ -462,6 +467,11 @@ export function InspectorPanel({
     : scenario.name;
 
   const visibleTabs = useMemo(() => {
+    const stepCount =
+      effectiveScope !== 'MAIN_SCENARIO' && effectiveScopeContext.internalSteps
+        ? effectiveScopeContext.internalSteps.length
+        : scenario.stages.length;
+
     const tabs: Array<{
       id: InspectorTab;
       label: string;
@@ -476,11 +486,9 @@ export function InspectorPanel({
       },
       {
         id: 'STEP_GUIDE',
-        label:
-          effectiveScope !== 'MAIN_SCENARIO' &&
-          effectiveScopeContext.internalSteps
-            ? `Steps & Sequence (${effectiveScopeContext.internalSteps.length})`
-            : `Steps & Sequence (${scenario.stages.length})`,
+        label: isStreamlinedStepGuideScenario
+          ? `Step-by-Step Guide (${stepCount})`
+          : `Steps & Sequence (${stepCount})`,
         testId: 'inspector-tab-steps',
         icon: <ListChecks className="w-3.5 h-3.5 shrink-0" />,
       },
@@ -517,6 +525,7 @@ export function InspectorPanel({
   }, [
     effectiveScope,
     effectiveScopeContext.internalSteps,
+    isStreamlinedStepGuideScenario,
     scenario.stages.length,
     scenario.telemetry.length,
     effectiveScopeContext.scopedTelemetryEvents.length,
@@ -1223,24 +1232,9 @@ export function InspectorPanel({
                               #{clause.clauseCode}
                             </span>
                             <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
-                              {clause.coreStatement}
+                              {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
                             </p>
                           </div>
-                          {clause.parentheticalReasons.length > 0 && (
-                            <div className="pl-6 space-y-1">
-                              {clause.parentheticalReasons.map((note, nIdx) => (
-                                <div
-                                  key={nIdx}
-                                  className="px-2.5 py-1 rounded-md bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
-                                >
-                                  <strong className="text-amber-700 dark:text-amber-400">
-                                    WHY / SPEC:
-                                  </strong>{' '}
-                                  ({note})
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -1372,26 +1366,9 @@ export function InspectorPanel({
                                       #{clause.clauseCode}
                                     </span>
                                     <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
-                                      {clause.coreStatement}
+                                      {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
                                     </p>
                                   </div>
-                                  {clause.parentheticalReasons.length > 0 && (
-                                    <div className="pl-6 space-y-1">
-                                      {clause.parentheticalReasons.map(
-                                        (note, nIdx) => (
-                                          <div
-                                            key={nIdx}
-                                            className="px-2.5 py-1 rounded-md bg-amber-50/85 dark:bg-amber-950/35 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-mono text-amber-950 dark:text-amber-200 leading-snug break-words"
-                                          >
-                                            <strong className="text-amber-700 dark:text-amber-400">
-                                              WHY / SPEC:
-                                            </strong>{' '}
-                                            ({note})
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
                                 </div>
                               ))}
                             </div>
@@ -1471,7 +1448,7 @@ export function InspectorPanel({
             </div>
           )}
 
-          {/* TAB 2: UNIFIED STEPS & SEQUENCE GUIDE */}
+          {/* TAB 2: STEP-BY-STEP GUIDE */}
           {resolvedActiveTab === 'STEP_GUIDE' && (
             <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm">
               <StepByStepGuidePanel
@@ -1492,7 +1469,7 @@ export function InspectorPanel({
             </div>
           )}
 
-          {/* TAB 4: DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE) */}
+          {/* TAB 3: DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE) */}
           {resolvedActiveTab === 'MEMORY' &&
             scopedMemory.hasDocumentedMemory && (
               <div className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 overflow-hidden shadow-sm">
