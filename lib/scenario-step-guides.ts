@@ -16,6 +16,7 @@ import { BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES } from './step-guides/batch6-supply
 import { BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES } from './step-guides/batch7-zeroday-appliances-guides';
 import { BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES } from './step-guides/batch8-kernel-firmware-byovd-guides';
 import { BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES } from './step-guides/batch9-ransomware-extortion-guides';
+import { VULNCHECK_CWP_AND_DFIR_STEP_GUIDES } from './step-guides/vulncheck-cwp-and-dfir-guides';
 
 export interface RawScenarioBriefingGuide {
   headline: string;
@@ -339,7 +340,8 @@ export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> 
     BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES,
     BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES,
     BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES,
-    BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES
+    BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES,
+    VULNCHECK_CWP_AND_DFIR_STEP_GUIDES
   );
 
 export function getRawScenarioStepGuide(

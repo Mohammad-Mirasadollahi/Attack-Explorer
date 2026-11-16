@@ -592,6 +592,50 @@ export function analyzeCustomLogInput(rawText: string): LogAnalysisFinding[] {
       recommendedScenarioId: 'splunk-screenconnect-slashandgrab' });
   }
 
+  if (
+    /cwpsrv|cwp-phpfpm|phpini_editor|protected_directory|127\.0\.0\.1:2302|restoredatabase|CVE-2026-73695|CVE-2026-73696|CVE-2026-73697|CVE-2026-77876|CVE-2026-104080|CWP2Shell/i.test(
+      text
+    )
+  ) {
+    findings.push({
+      title: 'VulnCheck: Control Web Panel Pre-Auth Module Dispatch to Root RCE (10-CVE Chain)',
+      mitreId: 'T1190',
+      severity: 'CRITICAL',
+      matchedPattern: 'services/users/index.php?module=phpini_editor / 127.0.0.1:2302 /v1/restoredatabase/ (CVE-2026-73695..77876)',
+      explanation: 'Missing exit() after header(Location: /login/) in CWPUserIndex::__construct() allows unauthenticated module dispatch in cwp-phpfpm, chaining phpini_editor command injection and loopback API :2302 to root RCE.',
+      recommendedScenarioId: 'vulncheck-cwp-preauth-module-dispatch-rce' });
+  }
+
+  if (/esentutl.*ntds\.dit|HarddiskVolumeShadowCopy.*ntds\.dit|EventID>325|EventID>326/i.test(text)) {
+    findings.push({
+      title: 'CISA & Microsoft DFIR: Active Directory NTDS.dit VSS Shadow Extraction',
+      mitreId: 'T1003.003',
+      severity: 'CRITICAL',
+      matchedPattern: 'vssadmin create shadow / esentutl.exe /y ntds.dit (ESENT EID 325/326)',
+      explanation: 'Volume Shadow Copy creation followed by esentutl.exe copying ntds.dit and the SYSTEM registry hive indicates offline domain credential harvesting.',
+      recommendedScenarioId: 'dfir-ntds-dit-vssadmin-esentutl-extraction' });
+  }
+
+  if (/comsvcs\.dll.*MiniDump|GrantedAccess>0x1fffff|GrantedAccess>0x1410|Dbgcore\.dll/i.test(text)) {
+    findings.push({
+      title: 'Microsoft Sysinternals DFIR: LSASS Process Memory Dump via comsvcs.dll MiniDump',
+      mitreId: 'T1003.001',
+      severity: 'CRITICAL',
+      matchedPattern: 'rundll32.exe comsvcs.dll, MiniDump / Sysmon EID 10 (0x1FFFFF)',
+      explanation: 'ProcessAccess against lsass.exe with CallTrace referencing comsvcs.dll and dbgcore.dll indicates LSASS credential memory dumping.',
+      recommendedScenarioId: 'dfir-lsass-minidump-comsvcs-sysmon-eid10' });
+  }
+
+  if (/1131f6ad-9c07-11d1-f79f-00c04fc2dcd2|1131f6aa-9c07-11d1-f79f-00c04fc2dcd2|DRSGetNCChanges/i.test(text)) {
+    findings.push({
+      title: 'Microsoft & CISA DFIR: Active Directory DCSync Replication Abuse (Event ID 4662)',
+      mitreId: 'T1003.006',
+      severity: 'CRITICAL',
+      matchedPattern: 'Event ID 4662 DS-Replication-Get-Changes-All (1131f6ad-9c07-11d1-f79f-00c04fc2dcd2)',
+      explanation: 'Directory Service Access for replication extended rights from a non-Domain Controller principal indicates active DCSync credential synchronization.',
+      recommendedScenarioId: 'dfir-dcsync-drsuapi-replication-eid4662' });
+  }
+
   if (findings.length === 0) {
     findings.push({
       title: 'General Security Telemetry Inspection',

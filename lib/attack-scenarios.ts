@@ -20,6 +20,10 @@ import { APT_BATCH6_SUPPLYCHAIN_CICD_SCENARIOS } from './scenarios/apt-batch6-su
 import { APT_BATCH7_ZERODAY_APPLIANCES_SCENARIOS } from './scenarios/apt-batch7-zeroday-appliances';
 import { APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS } from './scenarios/apt-batch8-kernel-firmware-byovd';
 import { APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS } from './scenarios/apt-batch9-ransomware-extortion';
+import { VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS } from './scenarios/vulncheck-cwp-and-dfir-batch1';
+import { DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS } from './scenarios/dfir-official-batch2-windows-artifacts';
+import { DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS } from './scenarios/dfir-official-batch3-linux-cloud-containers';
+import { DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS } from './scenarios/dfir-official-batch4-network-appliances-memory';
 import { normalizeLegacyDraftScenario } from './scenarios/normalize-legacy-draft-scenario';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
 import { ensureCascadingProcessHierarchy } from './documentation-structural-diagrams';
@@ -45,6 +49,10 @@ const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   ...APT_BATCH7_ZERODAY_APPLIANCES_SCENARIOS.map(normalizeLegacyDraftScenario),
   ...APT_BATCH8_KERNEL_FIRMWARE_BYOVD_SCENARIOS.map(normalizeLegacyDraftScenario),
   ...APT_BATCH9_RANSOMWARE_EXTORTION_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS.map(normalizeLegacyDraftScenario),
 ];
 
 function dedupeScenariosById(scenarios: AttackScenario[]): AttackScenario[] {

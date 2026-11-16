@@ -1,5 +1,6 @@
 import { AttackScenario } from './attack-scenarios';
 import { BATCH_1_TO_4_ATTRIBUTIONS } from './batch1-to-4-attributions-and-intel';
+import { VULNCHECK_CWP_AND_DFIR_ATTRIBUTIONS } from './vulncheck-cwp-and-dfir-attributions-intel';
 
 export interface SourceCitation {
   id: string;
@@ -1512,6 +1513,7 @@ export const SCENARIO_ATTRIBUTION_MAP: Record<
       'MSP server hostnames and rogue administrator usernames are synthetic simulation artifacts.',
   },
   ...BATCH_1_TO_4_ATTRIBUTIONS,
+  ...VULNCHECK_CWP_AND_DFIR_ATTRIBUTIONS,
 };
 
 export function getScenarioAttribution(

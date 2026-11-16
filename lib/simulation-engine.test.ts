@@ -19,9 +19,17 @@ import {
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 85 scenarios (including APT & zero-day campaigns)', () => {
+  it('filterScenarios filters by category and search query accurately across all 126 scenarios (including VulnCheck CWP & 40 official DFIR scenarios)', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 85);
+    assert.equal(all.length, 126);
+
+    const dfirScenarios = filterScenarios(ATTACK_SCENARIOS, 'LOG_ANALYSIS', '');
+    assert.equal(dfirScenarios.length, 42);
+    assert.ok(
+      dfirScenarios.some(
+        (s) => s.id === 'vulncheck-cwp-preauth-module-dispatch-rce'
+      )
+    );
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
     assert.ok(malwareOnly.length >= 16);
@@ -35,6 +43,13 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
     const unit42Scenarios = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'Unit 42');
     assert.ok(unit42Scenarios.length >= 3);
+
+    const vulncheckCwp = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'CVE-2026-73695');
+    assert.equal(vulncheckCwp.length, 1);
+    assert.equal(
+      vulncheckCwp[0].id,
+      'vulncheck-cwp-preauth-module-dispatch-rce'
+    );
   });
 
   it('stepForward and stepBackward bound stage indices properly', () => {
@@ -97,11 +112,27 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       talosArcaneFindings[0].recommendedScenarioId,
       'talos-arcanedoor-asa'
     );
+
+    const vulncheckCwpFindings = analyzeCustomLogInput(
+      'POST /user/index.php?module=phpini_editor&acc=update 127.0.0.1:2302 /v1/restoredatabase/ CVE-2026-73695'
+    );
+    assert.equal(
+      vulncheckCwpFindings[0].recommendedScenarioId,
+      'vulncheck-cwp-preauth-module-dispatch-rce'
+    );
+
+    const dcsyncFindings = analyzeCustomLogInput(
+      'EventID 4662 1131f6ad-9c07-11d1-f79f-00c04fc2dcd2 DRSGetNCChanges'
+    );
+    assert.equal(
+      dcsyncFindings[0].recommendedScenarioId,
+      'dfir-dcsync-drsuapi-replication-eid4662'
+    );
   });
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 85);
+    assert.equal(fullLib.totalCount, 126);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass
