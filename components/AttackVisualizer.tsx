@@ -1053,6 +1053,8 @@ export function AttackVisualizer({
             !e.metaKey
           ) {
             setMultiSelectedNodeIds((prev) => (prev.length === 0 ? prev : []));
+            onSelectNode(null);
+            setSelectedInternalSubNodeId(null);
           }
         }
       }
@@ -1099,7 +1101,14 @@ export function AttackVisualizer({
       window.addEventListener('pointercancel', handleWindowPointerUp);
       window.addEventListener('blur', handleWindowPointerUp);
     },
-    [activeNodes, hideMarqueeEl, interactionMode, paintMarqueeEl]
+    [
+      activeNodes,
+      hideMarqueeEl,
+      interactionMode,
+      onSelectNode,
+      paintMarqueeEl,
+      setSelectedInternalSubNodeId,
+    ]
   );
 
   // Dragging Single or Multiple Selected Nodes Simultaneously Across the Workspace (rAF-batched, cached rect)
@@ -1348,11 +1357,11 @@ export function AttackVisualizer({
     [activeNodes, activeZones, boardScopeKey]
   );
 
-  /** Single-click: select node for details / inspector. Does not expand. */
+  /** Single-click on main topology: keep Main Scenario Page active (shows all stages). */
   const handleNodeSelect = useCallback(
-    (node: WhiteboardSketchNode) => {
+    (_node: WhiteboardSketchNode) => {
       setLastReturnedNodeId(null);
-      onSelectNode(node.id);
+      onSelectNode(null);
       setMultiSelectedNodeIds([]);
     },
     [onSelectNode]
@@ -1399,10 +1408,8 @@ export function AttackVisualizer({
     });
     if (returningNode) {
       setLastReturnedNodeId(returningNode.id);
-      onSelectNode(returningNode.id);
-    } else {
-      onSelectNode(null);
     }
+    onSelectNode(null);
     setActiveSketchNodeId(null);
     setSelectedInternalSubNodeId(null);
     setMultiSelectedNodeIds([]);

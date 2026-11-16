@@ -141,7 +141,7 @@ export function FloatingHoverInspectorTrigger({
       : scopeContext.diagramScope === 'EXPANDED_NODE' &&
         scopeContext.expandedParentNode
       ? scopeContext.expandedParentNode
-      : scopeContext.selectedMainNode;
+      : null;
 
   const targetTypeBadge = selectedTelemetry
     ? `PACKET · ${selectedTelemetry.protocolOrEventId}`
@@ -154,8 +154,6 @@ export function FloatingHoverInspectorTrigger({
     : scopeContext.diagramScope === 'EXPANDED_NODE' &&
       scopeContext.expandedParentNode
     ? `PIPELINE · #${scopeContext.expandedParentNode.chainOrder}`
-    : scopeContext.selectedMainNode
-    ? `SECTION · NODE #${scopeContext.selectedMainNode.chainOrder}`
     : activeStageIndex > 0
     ? `STAGE S${activeStageIndex} · ${scenario.code}`
     : `SCENARIO · ${scenario.code}`;
@@ -181,7 +179,6 @@ export function FloatingHoverInspectorTrigger({
   const activeZoneLabel =
     scopeContext.selectedSubNodeZone?.title ||
     scopeContext.focusedInternalSubNodeZone?.title ||
-    scopeContext.selectedMainNodeZone?.title ||
     scopeContext.expandedParentNodeZone?.title ||
     activeTargetNode?.zoneLabel ||
     'Full Attack Topology';
@@ -193,7 +190,7 @@ export function FloatingHoverInspectorTrigger({
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
-      className="fixed top-14 right-3.5 z-40 flex flex-col items-end pointer-events-auto"
+      className="fixed top-14 right-3.5 z-50 flex flex-col items-end pointer-events-auto"
     >
       {/* Compact Hover Trigger Pill */}
       <motion.button
@@ -205,7 +202,7 @@ export function FloatingHoverInspectorTrigger({
         className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-lg backdrop-blur-md transition-all cursor-pointer ${
           activeTargetNode || selectedTelemetry
             ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/80 shadow-indigo-500/25'
-            : 'bg-zinc-900/95 hover:bg-zinc-800 dark:bg-zinc-100/95 dark:hover:bg-white text-white dark:text-zinc-900 border-zinc-700/80 dark:border-zinc-300'
+            : 'bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-900 border-zinc-700/80 dark:border-zinc-300'
         }`}
       >
         <span className="relative flex h-2 w-2 shrink-0">
@@ -247,7 +244,7 @@ export function FloatingHoverInspectorTrigger({
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             data-testid="floating-hover-inspector-preview-card"
-            className="mt-2 w-80 sm:w-96 max-h-[min(60vh,380px)] rounded-2xl bg-white/98 dark:bg-zinc-900/98 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl p-3.5 backdrop-blur-md text-left flex flex-col gap-2.5 overflow-hidden"
+            className="mt-2 w-80 sm:w-96 max-h-[min(60vh,380px)] rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-3.5 text-left flex flex-col gap-2.5 overflow-hidden z-50"
           >
             <div className="shrink-0 flex items-start justify-between gap-2.5 border-b border-zinc-100 dark:border-zinc-800 pb-2">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -263,8 +260,8 @@ export function FloatingHoverInspectorTrigger({
                 <div className="min-w-0">
                   <div className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                     {activeTargetNode || selectedTelemetry
-                      ? `CLICKED SECTION · ${activeZoneLabel}`
-                      : 'SCENARIO INSPECTOR'}
+                      ? `EXPANDED SECTION · ${activeZoneLabel}`
+                      : `SCENARIO INSPECTOR · ${scenario.stages.length} STAGES`}
                   </div>
                   <div className="text-xs font-extrabold text-zinc-900 dark:text-white leading-snug break-words">
                     {targetHeadline}
@@ -284,8 +281,37 @@ export function FloatingHoverInspectorTrigger({
             <div
               data-testid="hover-card-scrollable-summary"
               onWheel={(e) => e.stopPropagation()}
-              className="flex-1 min-h-0 max-h-[min(34vh,210px)] overflow-y-auto overscroll-contain pr-1.5"
+              className="flex-1 min-h-0 max-h-[min(34vh,210px)] overflow-y-auto overscroll-contain pr-1.5 space-y-2"
             >
+              {!activeTargetNode && !selectedTelemetry && scenario.stages.length > 0 && (
+                <div
+                  data-testid="hover-card-main-stages-list"
+                  className="pb-2 border-b border-zinc-100 dark:border-zinc-800 space-y-1"
+                >
+                  <div className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                    Attack Stages ({scenario.stages.length})
+                  </div>
+                  {scenario.stages.map((st) => (
+                    <div
+                      key={st.index}
+                      className={`flex items-start gap-1.5 text-[10.5px] leading-snug rounded px-1.5 py-0.5 ${
+                        activeStageIndex === st.index
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-semibold'
+                          : 'text-zinc-700 dark:text-zinc-300'
+                      }`}
+                    >
+                      <span className="font-mono font-bold text-[9.5px] text-indigo-600 dark:text-indigo-400 shrink-0">
+                        S{st.index}
+                      </span>
+                      <span className="break-words flex-1">{st.title}</span>
+                      <span className="font-mono text-[9px] text-zinc-400 shrink-0">
+                        {st.mitreTechniqueId}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed break-words">
                 {targetSummary}
               </p>
@@ -354,7 +380,7 @@ export function InspectorPanel({
     scopeContext?.effectiveScope || 'MAIN_SCENARIO';
 
   const effectiveScopeContext = useMemo<InspectorScopeContext>(() => {
-    return (
+    const base =
       scopeContext ||
       resolveInspectorScopeContext({
         scenario,
@@ -363,8 +389,20 @@ export function InspectorPanel({
         selectedNodeId: null,
         expandedNodeId: null,
         selectedInternalSubNodeId: null,
-      })
-    );
+      });
+    // When on the Main Topology Diagram (MAIN_SCENARIO), always present the full Main Scenario
+    // and all its stages rather than locking onto a single unexpanded node section.
+    if (base.effectiveScope === 'MAIN_SCENARIO' && base.selectedMainNode) {
+      return resolveInspectorScopeContext({
+        scenario,
+        activeStageIndex,
+        activeEnvironment,
+        selectedNodeId: null,
+        expandedNodeId: null,
+        selectedInternalSubNodeId: null,
+      });
+    }
+    return base;
   }, [scopeContext, scenario, activeStageIndex, activeEnvironment]);
 
   const scopedMemory = useMemo(
@@ -381,41 +419,39 @@ export function InspectorPanel({
       : rawActiveTab;
 
   const isInspectingSpecificMainNode = Boolean(
-    effectiveScope === 'MAIN_SCENARIO' && scopeContext?.selectedMainNode
+    effectiveScope === 'MAIN_SCENARIO' &&
+      effectiveScopeContext.selectedMainNode
   );
 
   // Build miniature topological context map model for top-left of the page
   const miniMapModel = useMemo(() => {
-    if (!scopeContext) return null;
     return buildInspectorMiniMapModel(
-      scopeContext,
+      effectiveScopeContext,
       selectedTelemetry,
       activeStageIndex,
       scenario.stages.length
     );
   }, [
-    scopeContext,
+    effectiveScopeContext,
     selectedTelemetry,
     activeStageIndex,
     scenario.stages.length,
   ]);
 
-  const activeInspectNode = scopeContext
-    ? scopeContext.effectiveScope === 'INTERNAL_SUBNODE' &&
-      scopeContext.focusedInternalSubNode
-      ? scopeContext.focusedInternalSubNode
-      : scopeContext.effectiveScope === 'EXPANDED_NODE' &&
-        scopeContext.expandedParentNode
-      ? scopeContext.expandedParentNode
-      : scopeContext.selectedMainNode
-    : null;
+  const activeInspectNode =
+    effectiveScopeContext.effectiveScope === 'INTERNAL_SUBNODE' &&
+    effectiveScopeContext.focusedInternalSubNode
+      ? effectiveScopeContext.focusedInternalSubNode
+      : effectiveScopeContext.effectiveScope === 'EXPANDED_NODE' &&
+        effectiveScopeContext.expandedParentNode
+      ? effectiveScopeContext.expandedParentNode
+      : null;
 
-  const activeInspectZone = scopeContext
-    ? scopeContext.effectiveScope !== 'MAIN_SCENARIO'
-      ? scopeContext.focusedInternalSubNodeZone ||
-        scopeContext.expandedParentNodeZone
-      : scopeContext.selectedMainNodeZone
-    : null;
+  const activeInspectZone =
+    effectiveScopeContext.effectiveScope !== 'MAIN_SCENARIO'
+      ? effectiveScopeContext.focusedInternalSubNodeZone ||
+        effectiveScopeContext.expandedParentNodeZone
+      : null;
 
   const pageTitle = selectedTelemetry
     ? `Packet Telemetry: ${selectedTelemetry.protocolOrEventId} (${selectedTelemetry.sourceLabel || selectedTelemetry.sourceNodeId} → ${selectedTelemetry.targetLabel || selectedTelemetry.targetNodeId})`
@@ -441,8 +477,9 @@ export function InspectorPanel({
       {
         id: 'STEP_GUIDE',
         label:
-          effectiveScope !== 'MAIN_SCENARIO' && scopeContext?.internalSteps
-            ? `Steps & Sequence (${scopeContext.internalSteps.length})`
+          effectiveScope !== 'MAIN_SCENARIO' &&
+          effectiveScopeContext.internalSteps
+            ? `Steps & Sequence (${effectiveScopeContext.internalSteps.length})`
             : `Steps & Sequence (${scenario.stages.length})`,
         testId: 'inspector-tab-steps',
         icon: <ListChecks className="w-3.5 h-3.5 shrink-0" />,
@@ -462,7 +499,7 @@ export function InspectorPanel({
       {
         id: 'SIEM_LOGS',
         label: `SIEM Logs (${
-          scopeContext?.scopedTelemetryEvents.length ||
+          effectiveScopeContext.scopedTelemetryEvents.length ||
           scenario.telemetry.length
         })`,
         testId: 'inspector-tab-logs',
@@ -479,10 +516,10 @@ export function InspectorPanel({
     return tabs;
   }, [
     effectiveScope,
-    scopeContext?.internalSteps,
+    effectiveScopeContext.internalSteps,
     scenario.stages.length,
     scenario.telemetry.length,
-    scopeContext?.scopedTelemetryEvents.length,
+    effectiveScopeContext.scopedTelemetryEvents.length,
     scopedMemory.hasDocumentedMemory,
     scopedMemory.memoryBlocks.length,
   ]);
@@ -758,7 +795,7 @@ export function InspectorPanel({
                   >
                     <Layers className="w-3 h-3 shrink-0" />
                     <span>
-                      {scopeContext?.scopeBadgeLabel ||
+                      {effectiveScopeContext.scopeBadgeLabel ||
                         `SCENARIO · ${scenario.code}`}
                     </span>
                   </span>
@@ -837,7 +874,7 @@ export function InspectorPanel({
               )}
 
               {/* Merged Page-Native Structural Architecture Blueprint & Cascading Process Waterfall */}
-              {miniMapModel && scopeContext && (
+              {miniMapModel && (
                 <InspectorContextMiniMap
                   miniMap={miniMapModel}
                   scopeContext={effectiveScopeContext}
@@ -845,6 +882,7 @@ export function InspectorPanel({
                   filterStageIndex={activeStageIndex > 0 ? activeStageIndex : null}
                   onSelectNode={(nodeId) => {
                     onClearTelemetrySelection();
+                    onExpandedNodeChange?.(nodeId);
                     onSelectNode?.(nodeId);
                   }}
                   onSelectInternalSubNode={(subNodeId) => {
@@ -1167,7 +1205,8 @@ export function InspectorPanel({
                       <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
                         Story-to-Spec Analogy & Executive Summary
                       </div>
-                      {scopeContext?.scopedStoryAnalogy || scenario.overview}
+                      {effectiveScopeContext.scopedStoryAnalogy ||
+                        scenario.overview}
                     </div>
 
                     <div className="space-y-2">
@@ -1208,60 +1247,59 @@ export function InspectorPanel({
                   </section>
 
                   {/* 2. Interactive Topology Sections Directory */}
-                  {scopeContext && (
-                    <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                          <Layers className="w-4 h-4 text-indigo-500" />
-                          <span>
-                            Diagram Topology Sections (
-                            {scopeContext.schematic.nodes.length} Nodes)
-                          </span>
-                        </h3>
-                        <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
-                          Click any section to view its dedicated page
+                  <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-indigo-500" />
+                        <span>
+                          Diagram Topology Sections (
+                          {effectiveScopeContext.schematic.nodes.length} Nodes)
                         </span>
-                      </div>
+                      </h3>
+                      <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
+                        Click any section to expand its dedicated pipeline page
+                      </span>
+                    </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {scopeContext.schematic.nodes.map((node) => (
-                          <button
-                            key={node.id}
-                            type="button"
-                            data-testid={`inspector-directory-node-${node.id}`}
-                            onClick={() => {
-                              onSelectNode?.(node.id);
-                            }}
-                            className="text-left p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-all cursor-pointer flex items-start gap-3"
-                          >
-                            <div className="w-12 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
-                              <SketchNodeIcon
-                                iconType={node.iconType}
-                                isActive={node.isActive}
-                                isCompromised={node.isCompromised}
-                              />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {effectiveScopeContext.schematic.nodes.map((node) => (
+                        <button
+                          key={node.id}
+                          type="button"
+                          data-testid={`inspector-directory-node-${node.id}`}
+                          onClick={() => {
+                            onExpandedNodeChange?.(node.id);
+                            onSelectNode?.(node.id);
+                          }}
+                          className="text-left p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-950/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-400 transition-all cursor-pointer flex items-start gap-3"
+                        >
+                          <div className="w-12 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center p-1 shrink-0">
+                            <SketchNodeIcon
+                              iconType={node.iconType}
+                              isActive={node.isActive}
+                              isCompromised={node.isCompromised}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-bold">
+                                #{node.chainOrder} · {node.actionBadge}
+                              </span>
+                              <span className="text-[10px] font-mono text-zinc-400">
+                                {node.zoneLabel || node.zoneId}
+                              </span>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-1.5">
-                                <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-bold">
-                                  #{node.chainOrder} · {node.actionBadge}
-                                </span>
-                                <span className="text-[10px] font-mono text-zinc-400">
-                                  {node.zoneLabel || node.zoneId}
-                                </span>
-                              </div>
-                              <div className="mt-1 text-xs font-bold text-zinc-900 dark:text-white leading-snug">
-                                {node.label}
-                              </div>
-                              <p className="mt-0.5 text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-snug">
-                                {node.activitySummary || node.internalSummary}
-                              </p>
+                            <div className="mt-1 text-xs font-bold text-zinc-900 dark:text-white leading-snug">
+                              {node.label}
                             </div>
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                            <p className="mt-0.5 text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-snug">
+                              {node.activitySummary || node.internalSummary}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
 
                   {/* 3. Complete Chronological Stages Breakdown with Stage-Specific Structural Diagrams */}
                   <section className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-4">

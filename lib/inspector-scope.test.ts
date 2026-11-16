@@ -963,6 +963,34 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
         );
       }
     }
+
+    // 9. Main Diagram always shows Main Scenario Page & Stages (never SECTION · NODE # or CLICKED SECTION on unexpanded main nodes)
+    const triggerSection = inspectorSrc.slice(
+      inspectorSrc.indexOf('export function FloatingHoverInspectorTrigger'),
+      inspectorSrc.indexOf('export function InspectorPanel')
+    );
+    assert.equal(
+      triggerSection.includes('SECTION · NODE #'),
+      false,
+      'FloatingHoverInspectorTrigger must never display SECTION · NODE # on the Main Topology Diagram'
+    );
+    assert.equal(
+      triggerSection.includes('CLICKED SECTION'),
+      false,
+      'FloatingHoverInspectorTrigger must never display CLICKED SECTION on the Main Topology Diagram'
+    );
+    assert.equal(
+      triggerSection.includes('data-testid="hover-card-main-stages-list"'),
+      true,
+      'FloatingHoverInspectorTrigger must display the Main Scenario Attack Stages list in the hover card when in MAIN_SCENARIO'
+    );
+    assert.equal(
+      inspectorSrc.includes(
+        "base.effectiveScope === 'MAIN_SCENARIO' && base.selectedMainNode"
+      ),
+      true,
+      'InspectorPanel must normalize effectiveScopeContext to the full Main Scenario when in MAIN_SCENARIO'
+    );
   });
 });
 
