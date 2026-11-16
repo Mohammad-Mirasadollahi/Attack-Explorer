@@ -30,6 +30,8 @@ import { SketchNodeIcon } from './SketchNodeIcons';
 import { ProcessMemoryView } from './canvas/ProcessMemoryView';
 import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
 import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
+import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
+import { CommandBreakdownList } from './CommandBreakdownList';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -1425,6 +1427,15 @@ export function InspectorPanel({
                                 </div>
                               </div>
                             </div>
+
+                            {/* Stage CommandLine & Technical Command Breakdown */}
+                            <CommandBreakdownList
+                              commands={buildStageCommandBreakdowns(
+                                scenario,
+                                st
+                              )}
+                              stageNumber={st.index}
+                            />
 
                             {st.keySpecs && st.keySpecs.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 pt-1">

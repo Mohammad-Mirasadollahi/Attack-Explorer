@@ -17,6 +17,10 @@ import { BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES } from './step-guides/batch7-zero
 import { BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES } from './step-guides/batch8-kernel-firmware-byovd-guides';
 import { BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES } from './step-guides/batch9-ransomware-extortion-guides';
 import { VULNCHECK_CWP_AND_DFIR_STEP_GUIDES } from './step-guides/vulncheck-cwp-and-dfir-guides';
+import {
+  buildStageCommandBreakdowns,
+  StageCommandBreakdownItem,
+} from './command-line-explanations';
 
 export interface RawScenarioBriefingGuide {
   headline: string;
@@ -116,6 +120,7 @@ export interface DiagramAlignedStepGuideItem extends RawScenarioStepGuideItem {
   protocolOrEventId: string;
   timestamp: string;
   keySpecs: Array<{ term: string; value: string }>;
+  commandBreakdowns: StageCommandBreakdownItem[];
   structuredClauses: StructuredExplanationClause[];
   structuredPracticeClauses: StructuredExplanationClause[];
   telemetryEvent: TelemetryEvent | null;
@@ -193,7 +198,21 @@ export function parseStructuredExplanationClauses(
     rawSentences.push(current.trim());
   }
 
-  return rawSentences.map((sentence, idx) => {
+  // Merge any sentence that starts with "(" onto the preceding sentence so parentheticals never become orphan clauses
+  const mergedSentences: string[] = [];
+  for (const s of rawSentences) {
+    if (s.startsWith('(') && mergedSentences.length > 0) {
+      const prev = mergedSentences[mergedSentences.length - 1].replace(
+        /[.;]+\s*$/,
+        ''
+      );
+      mergedSentences[mergedSentences.length - 1] = `${prev} ${s}`;
+    } else {
+      mergedSentences.push(s);
+    }
+  }
+
+  return mergedSentences.map((sentence, idx) => {
     const parentheticalReasons: string[] = [];
     let coreBuilder = '';
     let pDepth = 0;
@@ -318,7 +337,7 @@ function mergeStepGuidesFirstWins(
               .trim();
             return {
               ...cleanedStep,
-              simpleExplanation: `${cleanedStep.simpleExplanation} (${cleanPractice})`,
+              simpleExplanation: `${cleanedStep.simpleExplanation.replace(/\.+\s*$/, '')} (${cleanPractice}).`,
             };
           }),
         };
@@ -790,6 +809,7 @@ export function buildDiagramStepGuideModel(
           telemetryEvent?.protocolOrEventId || stage.mitreTechniqueId,
         timestamp: telemetryEvent?.timestamp || `00:00.${stage.index}00`,
         keySpecs: stage.keySpecs || [],
+        commandBreakdowns: buildStageCommandBreakdowns(scenario, stage),
         structuredClauses: parseStructuredExplanationClauses(
           simpleExplanationText,
           String(stage.index)

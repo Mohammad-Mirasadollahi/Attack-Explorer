@@ -18,6 +18,11 @@ import {
   buildScopedCorrelatedLogs,
   InspectorScopeContext,
 } from '@/lib/inspector-scope';
+import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
+import {
+  CommandBreakdownList,
+  SingleCommandExplanationCard,
+} from './CommandBreakdownList';
 import { Check, ChevronDown, Copy, Layers } from 'lucide-react';
 
 export interface LogInspectorProps {
@@ -184,6 +189,33 @@ export function LogInspector({
                   <p className="text-[11.5px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
                     {item.event.explanation}
                   </p>
+
+                  {(() => {
+                    const stObj = scenario.stages.find(
+                      (s) => s.index === item.stageIndex
+                    );
+                    if (stObj && !isExpandedScope) {
+                      const cmds = buildStageCommandBreakdowns(scenario, stObj);
+                      return (
+                        <CommandBreakdownList
+                          commands={cmds}
+                          stageNumber={item.stageIndex}
+                          compact
+                        />
+                      );
+                    }
+                    return (
+                      <SingleCommandExplanationCard
+                        rawCommand={
+                          item.event.shortAction || item.event.rawLog
+                        }
+                        badgeLabel={`LOG EVENT COMMANDLINE (${item.event.protocolOrEventId})`}
+                        stageTitle={item.stageTitle}
+                        stageDescription={item.event.explanation}
+                        mitreId={item.event.mitreId}
+                      />
+                    );
+                  })()}
 
                   <div
                     dir="ltr"

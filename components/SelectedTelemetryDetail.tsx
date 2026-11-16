@@ -15,6 +15,7 @@ import {
   tokenizeLogLineForHighlight } from '@/lib/log-inspector-utils';
 import { InspectorScopeMode } from '@/lib/inspector-scope';
 import { buildBidirectionalTraceMeta } from '@/lib/sketch-zones-and-drilldown';
+import { SingleCommandExplanationCard } from './CommandBreakdownList';
 
 interface SelectedTelemetryDetailProps {
   selectedTelemetry: TelemetryEvent;
@@ -122,6 +123,20 @@ export function SelectedTelemetryDetail({
           <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pt-1">
             {selectedTelemetry.explanation}
           </p>
+
+          <div className="pt-2">
+            <SingleCommandExplanationCard
+              rawCommand={
+                selectedTelemetry.shortAction || selectedTelemetry.rawLog
+              }
+              badgeLabel={`TRACE #${selectedTelemetry.no} COMMANDLINE (${selectedTelemetry.protocolOrEventId})`}
+              stageTitle={
+                currentStage?.title || selectedTelemetry.shortAction
+              }
+              stageDescription={selectedTelemetry.explanation}
+              mitreId={selectedTelemetry.mitreId}
+            />
+          </div>
         </div>
 
         <div className="h-px bg-zinc-200/70 dark:bg-zinc-800/80" />

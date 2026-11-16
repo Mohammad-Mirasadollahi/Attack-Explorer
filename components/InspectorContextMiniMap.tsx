@@ -24,6 +24,7 @@ import {
   buildDocumentationArchitectureBlueprint,
   CascadingProcessWaterfallNode,
 } from '@/lib/documentation-structural-diagrams';
+import { ProcessCommandLineInlineExplanation } from './CommandBreakdownList';
 
 export interface InspectorContextMiniMapProps {
   miniMap?: InspectorMiniMapModel | null;
@@ -486,6 +487,12 @@ export const InspectorContextMiniMap: React.FC<
                       </span>
                       {node.process.commandLine}
                     </div>
+
+                    <ProcessCommandLineInlineExplanation
+                      process={node.process}
+                      scenario={scenario}
+                      stage={activeStageObj}
+                    />
 
                     {/* Syscall / API Call Chain + Memory Summary */}
                     <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">

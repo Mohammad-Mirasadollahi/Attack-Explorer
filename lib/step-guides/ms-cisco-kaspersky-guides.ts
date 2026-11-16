@@ -1,4 +1,4 @@
-import { RawScenarioStepGuideData } from '../scenario-step-guides';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
 
 export const MS_CISCO_KASPERSKY_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   'ms-volt-typhoon-lotl': {

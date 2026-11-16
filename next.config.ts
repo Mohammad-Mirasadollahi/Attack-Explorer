@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ['motion'],
   webpack: (config, { dev }) => {
+    if (dev) {
+      config.cache = false;
+    }
     if (dev && process.env.DISABLE_HMR === 'true') {
       config.watchOptions = {
         ignored: /.*/,

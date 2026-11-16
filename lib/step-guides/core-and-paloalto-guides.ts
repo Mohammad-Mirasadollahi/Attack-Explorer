@@ -1,4 +1,4 @@
-import { RawScenarioStepGuideData } from '../scenario-step-guides';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
 
 export const CORE_AND_PALOALTO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   'process-hollowing': {

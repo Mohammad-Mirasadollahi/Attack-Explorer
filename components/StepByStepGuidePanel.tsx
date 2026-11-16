@@ -24,6 +24,11 @@ import {
 import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
 import { SketchNodeIcon } from './SketchNodeIcons';
 import {
+  CommandBreakdownList,
+  ProcessCommandLineInlineExplanation,
+  SingleCommandExplanationCard,
+} from './CommandBreakdownList';
+import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
@@ -703,6 +708,19 @@ export function StepByStepGuidePanel({
                     </div>
                     <StructuredClausesList clauses={structuredStepClauses} />
                   </div>
+
+                  {/* Sub-Step CommandLine & Technical Operation Breakdown */}
+                  <SingleCommandExplanationCard
+                    rawCommand={
+                      step.telemetryEvent.shortAction ||
+                      step.telemetryEvent.rawLog ||
+                      step.title
+                    }
+                    badgeLabel={`SUB-STEP #${step.sequenceCode} COMMANDLINE`}
+                    stageTitle={step.title}
+                    stageDescription={step.explanation}
+                    mitreId={step.mitreId}
+                  />
 
                   {/* Layer 3/4: Documented Telemetry / Packet Inspection */}
                   <div
@@ -1479,6 +1497,13 @@ export function StepByStepGuidePanel({
                     clauses={step.structuredPracticeClauses}
                     accent="slate"
                   />
+                  {step.commandBreakdowns &&
+                    step.commandBreakdowns.length > 0 && (
+                      <CommandBreakdownList
+                        commands={step.commandBreakdowns}
+                        stageNumber={step.stepNumber}
+                      />
+                    )}
                   {step.keySpecs.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {step.keySpecs.map((spec, sIdx) => (
@@ -1556,28 +1581,35 @@ export function StepByStepGuidePanel({
                             <div
                               key={`${step.stepNumber}-${pNode.process.pid}`}
                               style={{ marginLeft: `${indentPx}px` }}
-                              className="p-2 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 flex flex-wrap items-center justify-between gap-2 text-[10.5px] font-mono"
+                              className="p-2.5 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 space-y-1.5 text-[10.5px] font-mono"
                             >
-                              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                {pNode.depth > 0 && (
-                                  <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
-                                    └─▶
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                  {pNode.depth > 0 && (
+                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">
+                                      └─▶
+                                    </span>
+                                  )}
+                                  <span className="px-1.5 py-0.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[9.5px] font-bold">
+                                    D{pNode.depth} · S{pNode.stageNumber}
                                   </span>
-                                )}
-                                <span className="px-1.5 py-0.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[9.5px] font-bold">
-                                  D{pNode.depth} · S{pNode.stageNumber}
-                                </span>
-                                <span className="font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
-                                  {pNode.process.name}
-                                </span>
-                                <span className="text-zinc-500 dark:text-zinc-400 leading-snug break-words">
-                                  (PPID {pNode.parentPid} ──▶ PID{' '}
-                                  {pNode.process.pid})
+                                  <span className="font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
+                                    {pNode.process.name}
+                                  </span>
+                                  <span className="text-zinc-500 dark:text-zinc-400 leading-snug break-words">
+                                    (PPID {pNode.parentPid} ──▶ PID{' '}
+                                    {pNode.process.pid})
+                                  </span>
+                                </div>
+                                <span className="px-2 py-0.5 rounded bg-zinc-950 text-emerald-300 border border-zinc-800 text-[10px] leading-snug break-words">
+                                  $ {pNode.process.commandLine}
                                 </span>
                               </div>
-                              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 leading-snug break-words">
-                                {pNode.process.commandLine}
-                              </span>
+                              <ProcessCommandLineInlineExplanation
+                                process={pNode.process}
+                                scenario={scenario}
+                                stage={stageObj}
+                              />
                             </div>
                           );
                         })}

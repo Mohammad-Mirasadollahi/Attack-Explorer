@@ -1,5 +1,6 @@
-import { RawScenarioStepGuideData } from '../scenario-step-guides';
-import { LegacyDraftScenario } from '../scenarios/normalize-legacy-draft-scenario';
+import type { RawScenarioStepGuideData } from '../scenario-step-guides';
+import type { LegacyDraftScenario } from '../scenarios/normalize-legacy-draft-scenario';
+import { explainCommandLine } from '../command-line-explanations';
 import { VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS } from '../scenarios/vulncheck-cwp-and-dfir-batch1';
 import { DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS } from '../scenarios/dfir-official-batch2-windows-artifacts';
 import { DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS } from '../scenarios/dfir-official-batch3-linux-cloud-containers';
@@ -265,18 +266,42 @@ function buildOfficialDfirStepGuide(
       const cleanStageTitle = cleanForStepGuide(
         stage.title.replace(/^Stage\s+\d+:\s*/i, '')
       );
-      const cleanNarration = cleanForStepGuide(stage.narration);
+      const cleanNarration = cleanForStepGuide(stage.narration).replace(
+        /\.+\s*$/,
+        ''
+      );
       const log = stage.logs?.[0];
       const cmd0 = cleanForStepGuide(
         stage.technicalCommands?.[0] || log?.CommandLine || cleanStageTitle
       );
-      const cmd1 = cleanForStepGuide(
-        stage.technicalCommands?.[1] || log?.raw || cleanStageTitle
-      );
+      const rawStageCommands =
+        stage.technicalCommands && stage.technicalCommands.length > 0
+          ? stage.technicalCommands
+          : [log?.CommandLine || cmd0];
+      const commandNarratives = rawStageCommands
+        .map((rawCmd, cIdx) => {
+          const cleanCmd = cleanForStepGuide(rawCmd);
+          const explained = explainCommandLine(cleanCmd, {
+            termLabel: `COMMAND ${cIdx + 1}`,
+            stageTitle: cleanStageTitle,
+            stageDescription: cleanNarration,
+            mitreId: stageMitre,
+            scenarioName: cleanTitle,
+          });
+          const meaningClean = cleanForStepGuide(explained.whatItMeans).replace(
+            /\.+\s*$/,
+            ''
+          );
+          const purposeClean = cleanForStepGuide(
+            explained.exactPurpose
+          ).replace(/\.+\s*$/, '');
+          return `Command #${cIdx + 1} executes ${cleanCmd}, where ${meaningClean} (exact tactical and forensic purpose: ${purposeClean}).`;
+        })
+        .join(' ');
       const mitigation = cleanForStepGuide(
         stage.defenseMitigation ||
           'Enforce centralized telemetry forwarding and correlate multi-source forensic artifacts.'
-      );
+      ).replace(/\.+\s*$/, '');
       const parsedSummary = Object.entries(log?.parsedFields || {})
         .map(([k, v]) => `${k}=${cleanForStepGuide(v)}`)
         .join(', ');
@@ -291,7 +316,7 @@ function buildOfficialDfirStepGuide(
         plainTitle: cleanStageTitle,
         storyAnalogy: stepAnalogy,
         simpleExplanation: `${cleanNarration} (specifically recording ${parsedSummary || cmd0} inside the ${log?.source || 'system'} telemetry stream so DFIR investigators can attribute the exact process, principal, and timestamp).`,
-        howItWorksInPractice: `At the technical telemetry layer, the system executes ${cmd0} and generates ${cmd1} (providing deterministic forensic proof of ${cleanStageTitle} under MITRE ${stageMitre} that links the initiator activity on ${n1} to the target artifact state on ${n3} and ${n5}).`,
+        howItWorksInPractice: commandNarratives,
         diagramAlignment: `On the diagram, follow Step #${stepNo} / Link #${stepNo} across the topology from ${n1} and ${n2} toward ${n3} and ${n4}.`,
         detectionAndEvidence: `${mitigation} (correlating ${log?.source || 'SIEM'} EventCode ${log?.EventCode ?? stageMitre} and ${parsedSummary || cmd0} to confirm the forensic indicator).`,
       };
