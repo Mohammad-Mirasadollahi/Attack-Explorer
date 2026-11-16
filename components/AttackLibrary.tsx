@@ -38,6 +38,11 @@ const LIBRARY_CATEGORY_GROUPS: Array<{
   { id: 'ZERO_DAY_APPLIANCES', label: 'Zero-Day Appliances' },
   { id: 'KERNEL_FIRMWARE_BYOVD', label: 'Kernel, Firmware & BYOVD' },
   { id: 'RANSOMWARE_EXTORTION', label: 'Ransomware & Extortion' },
+  { id: 'CONTAINERS_KUBERNETES', label: 'Containers, Kubernetes & Mesh' },
+  { id: 'ICS_OT_SCADA', label: 'ICS, OT & Industrial SCADA' },
+  { id: 'MOBILE_TELECOM_SPYWARE', label: 'Mobile Spyware & Telecom (5G/SS7)' },
+  { id: 'DATABASE_DATA_PLATFORMS', label: 'Database Engines & Data Platforms' },
+  { id: 'AI_LLM_MLOPS_SECURITY', label: 'AI, LLM Agents & MLOps Security' },
 ];
 
 export function AttackLibrary({

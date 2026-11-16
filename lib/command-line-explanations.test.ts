@@ -11,11 +11,31 @@ import {
   parseStructuredExplanationClauses,
 } from './scenario-step-guides';
 
-test('all 126 scenarios and all stages produce comprehensive CommandLine breakdowns', () => {
+test('all 141 scenarios across all 13 categories produce comprehensive CommandLine breakdowns', () => {
   assert.ok(
-    ATTACK_SCENARIOS.length >= 126,
-    `Expected at least 126 scenarios, got ${ATTACK_SCENARIOS.length}`
+    ATTACK_SCENARIOS.length >= 141,
+    `Expected at least 141 scenarios, got ${ATTACK_SCENARIOS.length}`
   );
+
+  const expectedCategories = [
+    'MALWARE',
+    'ACTIVE_DIRECTORY',
+    'NETWORK_WEB',
+    'CLOUD_SAAS',
+    'SUPPLY_CHAIN_CICD',
+    'ZERO_DAY_APPLIANCES',
+    'KERNEL_FIRMWARE_BYOVD',
+    'RANSOMWARE_EXTORTION',
+    'CONTAINERS_KUBERNETES',
+    'ICS_OT_SCADA',
+    'MOBILE_TELECOM_SPYWARE',
+    'DATABASE_DATA_PLATFORMS',
+    'AI_LLM_MLOPS_SECURITY',
+  ];
+  for (const cat of expectedCategories) {
+    const count = ATTACK_SCENARIOS.filter((s) => s.category === cat).length;
+    assert.ok(count >= 3, `Expected at least 3 scenarios in category ${cat}, got ${count}`);
+  }
 
   let totalStages = 0;
   let totalCommandsExplained = 0;

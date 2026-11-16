@@ -750,6 +750,71 @@ export function explainCommandLine(
     };
   }
 
+  if (/\betcdctl\b|\bkubelet\b|\brunc\b|\/proc\/self\/fd\/|AdmissionReview|nginx\s+-t/i.test(cmd)) {
+    return {
+      id: `${termLabel}-${cmd.slice(0, 24)}`,
+      commandIndex: 1,
+      badgeLabel: termLabel,
+      rawCommand: cmd,
+      toolOrSubsystem: 'Kubernetes Control Plane / OCI Container Runtime (runc / kubelet / etcdctl)',
+      whatItMeans: `Executes or inspects a container runtime or Kubernetes control-plane operation (${cmd}) involving OCI container namespaces, leaked host file descriptors (/proc/self/fd/*), AdmissionReview webhook verification, or etcd v3 key-value store snapshots.`,
+      exactPurpose: `Provides forensic visibility and runtime verification for container boundary isolation or cluster secret access (${mitreId}) during "${stageTitle}".`,
+      parameters,
+    };
+  }
+
+  if (/\bicsnpp-modbus\b|\biec60870\b|\btrilog\.exe\b|\bOPC-UA\b|\bCODESYS\b|\bTriStation\b|\bASDU\b|\bIOA\b/i.test(cmd)) {
+    return {
+      id: `${termLabel}-${cmd.slice(0, 24)}`,
+      commandIndex: 1,
+      badgeLabel: termLabel,
+      rawCommand: cmd,
+      toolOrSubsystem: 'ICS / OT Industrial Protocol & PLC/SIS Telemetry (Modbus / IEC-104 / OPC-UA / TriStation)',
+      whatItMeans: `Captures or inspects industrial control system (ICS/OT) protocol frames and engineering workstation logs (${cmd}) across Modbus TCP (502), OPC-UA (4840), IEC 60870-5-104 (2404), CODESYS, or Schneider Electric TriStation 1131 (UDP 1502).`,
+      exactPurpose: `Reconstructs PLC logic transfers, substation breaker telecontrol commands, or Safety Instrumented System (SIS) controller state changes (${mitreId}) during "${stageTitle}".`,
+      parameters,
+    };
+  }
+
+  if (/\bmvt-ios\b|\bmvt-android\b|\bShutdown\.log\b|\bDataUsage\.sqlite\b|\bgtp_v1\b|\bgtp_create_pdp_context\b|\bmali_kbase\b/i.test(cmd)) {
+    return {
+      id: `${termLabel}-${cmd.slice(0, 24)}`,
+      commandIndex: 1,
+      badgeLabel: termLabel,
+      rawCommand: cmd,
+      toolOrSubsystem: 'Mobile Spyware Forensics (MVT) & 5G/LTE Telecom GTP/SS7 Interconnect Audit',
+      whatItMeans: `Runs Mobile Verification Toolkit (mvt-ios / mvt-android) forensic parsers or inspects cellular GRX/IPX GTP-C/GTP-U roaming signaling (${cmd}) across iOS Shutdown.log, DataUsage.sqlite, Android SELinux auditd, or telecom SGSN/GGSN nodes.`,
+      exactPurpose: `Identifies zero-click mobile spyware execution traces, kernel driver privilege escalation, or anomalous cross-carrier roaming tunnels (${mitreId}) during "${stageTitle}".`,
+      parameters,
+    };
+  }
+
+  if (/\bredis-cli\b|\bpsql\b|\bpgaudit\b|\bsqlservr\.exe\b|\bpackage\.loadlib\b|\bsp_addlinkedserver\b|\bCOPY\b.*\bPROGRAM\b/i.test(cmd)) {
+    return {
+      id: `${termLabel}-${cmd.slice(0, 24)}`,
+      commandIndex: 1,
+      badgeLabel: termLabel,
+      rawCommand: cmd,
+      toolOrSubsystem: 'Database Engine Runtime & Audit Subsystem (PostgreSQL pgAudit / Redis Lua / MS SQL Server)',
+      whatItMeans: `Executes or audits database engine statements and administrative procedures (${cmd}) across PostgreSQL libpq/pgAudit, Redis Lua scripting (EVAL / MONITOR), or Microsoft SQL Server TDS RPC and CLR assembly catalogs.`,
+      exactPurpose: `Detects multi-statement SQL injection, Lua sandbox breakouts, or administrative OS command spawning from the database service account (${mitreId}) during "${stageTitle}".`,
+      parameters,
+    };
+  }
+
+  if (/\bray\b|\bfickling\b|\bpickletools\b|\btorch\.load\b|\bsafetensors\b|\bmcp\.call_tool\b|\b8265\/api\/jobs\b/i.test(cmd)) {
+    return {
+      id: `${termLabel}-${cmd.slice(0, 24)}`,
+      commandIndex: 1,
+      badgeLabel: termLabel,
+      rawCommand: cmd,
+      toolOrSubsystem: 'AI / LLM Agent & MLOps Infrastructure Security (Ray Cluster / PyTorch Pickle / MCP Tool Audit)',
+      whatItMeans: `Inspects or executes AI/ML infrastructure operations (${cmd}) across Ray Dashboard Jobs API (:8265/api/jobs/), PyTorch pickle opcode streams (fickling / pickletools), safetensors weight loading, or LLM Model Context Protocol (MCP) tool invocations.`,
+      exactPurpose: `Exposes unauthenticated ML cluster job submission, unsafe model checkpoint deserialization, or indirect prompt injection via RAG context retrieval (${mitreId}) during "${stageTitle}".`,
+      parameters,
+    };
+  }
+
   // General high-precision analysis based on command structure
   const cleanStageDesc = (options.stageDescription || '')
     .replace(/\s+/g, ' ')

@@ -5,12 +5,14 @@ import { VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS } from '../scenarios/vulncheck-
 import { DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS } from '../scenarios/dfir-official-batch2-windows-artifacts';
 import { DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS } from '../scenarios/dfir-official-batch3-linux-cloud-containers';
 import { DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS } from '../scenarios/dfir-official-batch4-network-appliances-memory';
+import { OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS } from '../scenarios/official-batch5-specialized-categories';
 
 const ALL_NEW_DFIR_AND_CWP_DRAFTS: LegacyDraftScenario[] = [
   ...VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS,
   ...DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS,
   ...DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS,
   ...DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS,
+  ...OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS,
 ];
 
 interface CustomScenarioNarrativeMeta {

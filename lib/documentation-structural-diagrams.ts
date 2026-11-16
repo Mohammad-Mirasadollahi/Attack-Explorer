@@ -307,7 +307,8 @@ export function resolveStructuralArchetype(
 
   if (
     cat === 'SUPPLY_CHAIN_CICD' ||
-    /supply-chain|sunspot|msbuild|npm|pypi|codecov|tj-actions|3cx|xz-utils|teamcity/.test(
+    cat === 'AI_LLM_MLOPS_SECURITY' ||
+    /supply-chain|sunspot|msbuild|npm|pypi|codecov|tj-actions|3cx|xz-utils|teamcity|pytorch|mlflow|shadowray/.test(
       textBlob
     )
   ) {
@@ -315,7 +316,9 @@ export function resolveStructuralArchetype(
   }
   if (
     cat === 'KERNEL_FIRMWARE_BYOVD' ||
-    /byovd|bootkit|uefi|rootkit|ring-0|bpfdoor|fudmodule|cosmicstrand|clfs|demodex/.test(
+    cat === 'CONTAINERS_KUBERNETES' ||
+    cat === 'MOBILE_TELECOM_SPYWARE' ||
+    /byovd|bootkit|uefi|rootkit|ring-0|bpfdoor|fudmodule|cosmicstrand|clfs|demodex|runc|chroot|nsenter|triangulation|predator|forcedentry/.test(
       textBlob
     )
   ) {
@@ -323,7 +326,8 @@ export function resolveStructuralArchetype(
   }
   if (
     cat === 'RANSOMWARE_EXTORTION' ||
-    /ransomware|vssadmin|shadow-wipe|wiper|lockbit|blackbasta|akira|rhysida|hermeticwiper|acidrain|caddywiper/.test(
+    cat === 'ICS_OT_SCADA' ||
+    /ransomware|vssadmin|shadow-wipe|wiper|lockbit|blackbasta|akira|rhysida|hermeticwiper|acidrain|caddywiper|industroyer|triton|pipedream|frostygoop/.test(
       textBlob
     )
   ) {
