@@ -1025,7 +1025,7 @@ function getScenarioTopologyBlueprint(scenario: AttackScenario): ScenarioTopolog
         ? scenario.nodes[2]
         : scenario.nodes[1] || scenario.nodes[0];
       const netIcon: SketchIconType =
-        scenario.category === 'NETWORK_WEB' || scenario.category === 'LOG_ANALYSIS'
+        scenario.category === 'NETWORK_WEB'
           ? 'WAF_REVERSE_PROXY'
           : scenario.category === 'ACTIVE_DIRECTORY'
             ? 'CORE_SWITCH'

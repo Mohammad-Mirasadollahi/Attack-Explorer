@@ -2,7 +2,6 @@
 export type AttackCategory =
   | 'ALL'
   | 'MALWARE'
-  | 'LOG_ANALYSIS'
   | 'NETWORK_WEB'
   | 'ACTIVE_DIRECTORY'
   | 'CLOUD_SAAS'

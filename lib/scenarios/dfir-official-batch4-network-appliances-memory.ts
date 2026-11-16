@@ -4,7 +4,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-zeek-ja3-ja4-cobalt-strike-malleable-c2-beaconing',
     title: 'Salesforce JA3, FoxIO JA4+ & CISA DFIR — Zeek ssl.log JA3/JA4 Fingerprint & Malleable C2 Jitter Beaconing Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1071.001',
     description:
       'Grounded in Salesforce JA3/JA3S specifications, FoxIO JA4+ Network Fingerprinting documentation, and CISA / Mandiant Cobalt Strike detection guides: network forensic analysts detect a custom Malleable C2 HTTPS beacon by correlating Zeek ssl.log client/server TLS fingerprints (ja3 / ja3s / ja4), X.509 certificate serial anomalies, and conn.log / http.log periodic interval jitter histograms.',
@@ -116,7 +116,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-iis-w3wp-http-sys-kernel-cache-in-memory-webshell',
     title: 'Microsoft Exchange/IIS IR, ESET & Unit 42 DFIR — IIS HTTP.sys Kernel URI Registration & In-Memory Module Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1505.004',
     description:
       'Grounded in Microsoft Incident Response IIS Module guidance, ESET IIS malware research, and Unit 42 HTTP.sys analysis: a fileless .NET implant or native IIS module registers a rogue HTTP listener directly inside the Windows kernel driver HTTP.sys (bypassing IIS W3C disk webroots) or hooks IHttpModule inside w3wp.exe—detectable via Microsoft-Windows-HttpService/Operational EventID 113, netsh http show servicestate, appcmd list modules, and Sysmon EventID 7.',
@@ -230,7 +230,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-exchange-ews-autodiscover-proxylogon-iis-forensics',
     title: 'Microsoft MSTIC, Volexity & CISA ED 21-02 DFIR — Exchange HttpProxy, MSExchange Management & OAB Webshell Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1190',
     description:
       'Grounded in Microsoft Threat Intelligence (MSTIC) Hafnium / ProxyLogon forensic guidance, Volexity Exchange exploitation research, and CISA Emergency Directive 21-02: an investigator correlates three Exchange-specific log sources: (1) V15\\Logging\\HttpProxy\\Autodiscover\\*.LOG showing SSRF backend cookie routing (ServerInfo~a]@), (2) the MSExchange Management event log (EventID 1) showing Set-OabVirtualDirectory or New-MailboxExportRequest with an embedded ASPX webshell in ExternalUrl/FilePath, and (3) Sysmon EventID 1 showing w3wp.exe (MSExchangeOWAAppPool) spawning cmd.exe.',
@@ -343,7 +343,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-mssql-xp-cmdshell-sp-oacreate-sqlservr-audit-trace',
     title: 'Microsoft SQL Server Security & Mandiant DFIR — MSSQL xp_cmdshell / Ole Automation Reconfiguration (EventID 15457) & sqlservr.exe Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1505.001',
     description:
       'Grounded in Microsoft SQL Server Security & Error Log documentation, Mandiant database intrusion forensics, and MITRE ATT&CK T1505.001 / T1059.003: an attacker authenticates to Microsoft SQL Server (TCP 1433) or exploits SQL injection, runs sp_configure to enable "xp_cmdshell" or "Ole Automation Procedures" (generating Windows Application EventID 15457 and SQL ERRORLOG entries), and executes OS commands that spawn cmd.exe under sqlservr.exe.',
@@ -454,7 +454,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-postgresql-copy-from-program-pg-log-auditd-trace',
     title: 'PostgreSQL Security & SigmaHQ DFIR — PostgreSQL COPY FROM PROGRAM & Large Object (pg_largeobject) Execution Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1190',
     description:
       'Grounded in official PostgreSQL Security Documentation (CVE-2019-9193 / pg_execute_server_program role privilege), Rapid7 research, and SigmaHQ detection rules: an attacker with superuser or pg_execute_server_program credentials invokes COPY ... FROM PROGRAM (or writes an ELF shared object via lo_import/lo_export in pg_largeobject and loads it via CREATE FUNCTION ... AS), leaving forensic artifacts in postgresql.log, pg_stat_activity, and Linux auditd (postgres spawning /bin/sh -c).',
@@ -566,7 +566,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-volatility3-malfind-vad-hollowing-kernel-callbacks',
     title: 'Volatility Foundation, SANS FOR526 & Elastic DFIR — Volatility 3 windows.malfind, psscan vs pslist & Kernel Callbacks Memory Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'KERNEL_FIRMWARE_BYOVD',
     mitreId: 'T1055',
     description:
       'Grounded in Official Volatility 3 Framework Documentation, SANS FOR526 Advanced Memory Forensics, and Elastic Security Labs memory analysis: a DFIR investigator analyzes a raw RAM capture (memdump.raw) using Volatility 3 plugins: (1) windows.malfind to detect private unbacked VAD regions with PAGE_EXECUTE_READWRITE (VAD_PROTECTION_EXECUTE_READWRITE) containing MZ/PE headers or shellcode prologues, (2) windows.psscan vs windows.pslist to uncover DKOM EPROCESS ActiveProcessLinks unlinking, and (3) windows.callbacks / windows.ssdt to detect kernel rootkit hooks.',
@@ -681,7 +681,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-esxi-hostd-vobd-shell-log-ransomware-encryption-trace',
     title: 'VMware/Broadcom, CISA AA23-039A & Mandiant DFIR — ESXi /var/log/shell.log, hostd.log & VMDK Hypervisor Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'RANSOMWARE_EXTORTION',
     mitreId: 'T1486',
     description:
       'Grounded in VMware vSphere/ESXi Official Log Documentation, CISA Joint Advisory AA23-039A (ESXiArgs), and Mandiant hypervisor DFIR playbooks: an attacker gains SSH/SLP access to a VMware ESXi hypervisor, enumerates running guest VMs via esxcli vm process list, forcefully terminates vmx processes via esxcli vm process kill --type=force, and encrypts the backing -flat.vmdk, .nvram, and .vmx files on /vmfs/volumes/<datastore>/—reconstructed via /var/log/shell.log, /var/log/auth.log, /var/log/hostd.log, and /var/log/vobd.log.',
@@ -792,7 +792,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-sharepoint-iis-viewstate-losformatter-deserialization',
     title: 'Microsoft MSRC & CISA KEV DFIR — ASP.NET / SharePoint __VIEWSTATE MachineKey LosFormatter Deserialization Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1190',
     description:
       'Grounded in Microsoft Security Response Center (MSRC) advisories (CVE-2020-0688 / CVE-2023-29357 / ASP.NET ViewState guidance) and CISA KEV incident response reports: an attacker extracts or abuses a static ASP.NET <machineKey> validationKey from web.config, crafts a signed LosFormatter / ObjectStateFormatter serialized gadget payload in the __VIEWSTATE parameter, and triggers in-memory .NET deserialization inside w3wp.exe—generating ASP.NET Warning EventID 1309 / 1316 in the Windows Application log when tampered and spawning child processes under w3wp.exe when valid.',
@@ -905,7 +905,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-apache-tomcat-ghostcat-ajp-manager-war-deployment',
     title: 'Apache Tomcat Security & CISA DFIR — Tomcat AJP Ghostcat (CVE-2020-1938) & /manager/text/deploy WAR Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'NETWORK_WEB',
     mitreId: 'T1190',
     description:
       'Grounded in Official Apache Tomcat Security Advisories (CVE-2020-1938), Chaitin Tech Ghostcat research, and CISA web server DFIR guides: an attacker connects to an exposed Apache JServ Protocol (AJP/1.3) listener on TCP 8009, sets the request attributes javax.servlet.include.request_uri and javax.servlet.include.path_info="/WEB-INF/web.xml" to read internal configuration credentials, and authenticates to /manager/text/deploy (logged in localhost_access_log.*.txt and catalina.out) to deploy a malicious .war archive.',
@@ -1016,7 +1016,7 @@ export const DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS: LegacyDra
   {
     id: 'dfir-smb-ntlm-relay-petitpotam-efs-lsarpc-coercion',
     title: 'Microsoft KB5005413, CERT-FR & CISA DFIR — MS-EFSRPC PetitPotam Coercion (Zeek dce_rpc) & NTLM Relay Forensics (EID 4624)',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1187',
     description:
       'Grounded in Microsoft Security Advisory KB5005413, CERT-FR PetitPotam analysis, and CISA NTLM Relay guidance: an attacker connects to the Encrypting File System Remote Protocol (MS-EFSRPC over \\pipe\\lsarpc or \\pipe\\efsrpc) on a Domain Controller and invokes EfsRpcOpenFileRaw(FileName="\\\\10.10.4.99\\test\\Settings.ini"), coercing the DC machine account (CORP-DC01$) to authenticate via NTLMv2 to the attacker relay listener—detectable via Zeek dce_rpc.log, Security EventID 5145 (\\pipe\\lsarpc), and relayed Security EventID 4624 (LogonType 3, AuthenticationPackageName=NTLM).',

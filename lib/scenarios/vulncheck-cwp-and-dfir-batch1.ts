@@ -4,7 +4,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'vulncheck-cwp-preauth-module-dispatch-rce',
     title: 'VulnCheck — Control Web Panel (CWP) Pre-Auth Module Dispatch to Root RCE (CVE-2026-73695..104080)',
-    category: 'LOG_ANALYSIS',
+    category: 'ZERO_DAY_APPLIANCES',
     mitreId: 'T1190',
     description:
       'VulnCheck research ("CWP2Shell", Nov 2026) chains 10 CVEs across Control Web Panel (CWP): an Execution After Redirect (EAR) flaw in CWPUserIndex::__construct() (CVE-2026-73696) and unvalidated module LFI in services/users/index.php (CVE-2026-73695) expose every user module pre-authentication on port 2083, enabling per-account RCE via phpini_editor.php (CVE-2026-73697) or protected_directory.php (CVE-2026-77876) and instant privilege escalation to root (uid=0) through the ungated loopback User API on 127.0.0.1:2302 (CVE-2026-77877, CVE-2026-77878, CVE-2026-77879, CVE-2026-77880, CVE-2026-77881, CVE-2026-104080).',
@@ -209,7 +209,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-ntds-dit-vssadmin-esentutl-extraction',
     title: 'CISA & Microsoft DFIR — Volume Shadow Copy & esentutl.exe NTDS.dit Extraction Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1003.003',
     description:
       'Grounded in CISA Advisory AA23-075A, Microsoft ESENT Event Logging documentation, and MITRE ATT&CK T1003.003: an adversary with Domain Admin privileges creates a Volume Shadow Copy of C: on a Domain Controller via vssadmin.exe or ntdsutil.exe, copies the locked Active Directory database (C:\\Windows\\NTDS\\ntds.dit) using esentutl.exe /y /vss, and extracts the SYSTEM registry hive for offline password hash cracking.',
@@ -325,7 +325,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-lsass-minidump-comsvcs-sysmon-eid10',
     title: 'Microsoft Sysinternals & Splunk SURGe DFIR — LSASS MiniDump via comsvcs.dll & Sysmon EventID 10',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1003.001',
     description:
       'Grounded in Microsoft Sysinternals Sysmon Event ID 10 documentation, Splunk SURGe credential dumping research, and MITRE ATT&CK T1003.001: an attacker dumps lsass.exe process memory using the signed Windows COM+ Services DLL (rundll32.exe C:\\Windows\\System32\\comsvcs.dll,MiniDump), generating a characteristic GrantedAccess mask (0x1FFFFF or 0x1410) and CallTrace signature in Sysmon EventID 10 and Security EventID 4656.',
@@ -442,7 +442,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-dcsync-drsuapi-replication-eid4662',
     title: 'Microsoft Security Auditing & CISA DFIR — Active Directory DCSync DRSUAPI Replication (EventID 4662)',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1003.006',
     description:
       'Grounded in Microsoft Windows Security Auditing Event ID 4662 documentation, CISA AD Defense Guidance, and MITRE ATT&CK T1003.006: an attacker with Replicating Directory Changes permissions invokes the MS-DRSR (DRSUAPI) IDL_DRSGetNCChanges RPC method from a non-Domain Controller workstation to replicate the krbtgt and administrator password hashes without touching disk on the DC.',
@@ -558,7 +558,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-wmi-event-subscription-persistence-sysmon',
     title: 'Microsoft Sysmon & Mandiant DFIR — WMI Permanent Event Subscription Persistence (EventID 19 / 20 / 21)',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1546.003',
     description:
       'Grounded in Microsoft Sysinternals Sysmon v15 documentation (Event IDs 19, 20, 21), Mandiant WMI forensics research, and MITRE ATT&CK T1546.003: an adversary registers a permanent WMI Event Subscription in the root\\subscription namespace consisting of an __EventFilter, a CommandLineEventConsumer, and a __FilterToConsumerBinding stored inside C:\\Windows\\System32\\wbem\\Repository\\OBJECTS.DATA so scrcons.exe or wmiprvse.exe executes a payload as SYSTEM.',
@@ -673,7 +673,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-bitsadmin-qmgr-persistence-bits-client',
     title: 'Microsoft & Mandiant DFIR — BITS Job Persistence & qmgr.db SetNotifyCmdLine Forensics (EventID 59 / 60 / 3)',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1197',
     description:
       'Grounded in Microsoft Background Intelligent Transfer Service (BITS) documentation, Mandiant qmgr.db forensic research, and MITRE ATT&CK T1197: an adversary creates a persistent BITS transfer job using bitsadmin.exe and configures /SetNotifyCmdLine so svchost.exe (-k netsvcs -s BITS) repeatedly downloads and executes a payload while storing state in C:\\ProgramData\\Microsoft\\Network\\Downloader\\qmgr.db.',
@@ -789,7 +789,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-schtasks-xml-registry-taskcache-forensics',
     title: 'Microsoft MSTIC & SANS DFIR — Scheduled Task Creation & TaskCache SD Descriptor Deletion (EventID 4698 / Sysmon EID 12)',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1053.005',
     description:
       'Grounded in Microsoft Security Auditing Event ID 4698/4702 documentation, Microsoft Threat Intelligence (MSTIC) "Tarrask" research, and SANS DFIR guides: an adversary registers a SYSTEM Scheduled Task (generating Security EventID 4698, TaskScheduler EventID 106, and an XML file in C:\\Windows\\System32\\Tasks\\) and then deletes the SD (Security Descriptor) registry value under HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tree\\ to hide the task from schtasks /query and Task Scheduler GUI.',
@@ -904,7 +904,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-rdp-lateral-movement-tsclient-bitmap-cache',
     title: 'SANS DFIR & Microsoft Event Log — RDP Lateral Movement, Session Reconnection & BMC Bitmap Cache Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1021.001',
     description:
       'Grounded in SANS DFIR Poster (Windows RDP Forensics), Microsoft TerminalServices Event Log documentation, and MITRE ATT&CK T1021.001: an investigator reconstructs an interactive Remote Desktop lateral movement pivot across source and destination hosts by correlating RdpCoreTS EventID 131, Security EventID 4624 (LogonType 10), LocalSessionManager EventIDs 21/24/25, TerminalServices-RDPClient EventID 1024/1102, and client-side Bitmap Cache (cache*.bin / bmc) tiles.',
@@ -1020,7 +1020,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-smb-psexec-named-pipe-eid5145-7045',
     title: 'Microsoft & CISA DFIR — SMB ADMIN$ Share, PSEXESVC Named Pipe & Service Install Forensics (EID 5145 / 7045)',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1569.002',
     description:
       'Grounded in Microsoft Security Auditing Event ID 5145 & System Event ID 7045 specifications, CISA Advisory AA23-165A, and SigmaHQ rules: an attacker uses PsExec / Impacket smbexec to authenticate over SMB, write a service binary to the ADMIN$ share (EventID 5145), create a temporary Windows service (System EventID 7045 / Security EventID 4697), and redirect stdin/stdout/stderr over named pipes (Sysmon EventID 17 & 18).',
@@ -1135,7 +1135,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-evtx-log-clearing-wevtutil-eid1102-104',
     title: 'NIST SP 800-86 & Microsoft DFIR — Event Log Clearing via wevtutil.exe & USN Journal Recovery (EID 1102 / 104)',
-    category: 'LOG_ANALYSIS',
+    category: 'RANSOMWARE_EXTORTION',
     mitreId: 'T1070.001',
     description:
       'Grounded in NIST SP 800-86 (Guide to Integrating Forensic Techniques into Incident Response), Microsoft Security Event ID 1102 / System Event ID 104 specifications, and MITRE ATT&CK T1070.001: an adversary attempts anti-forensics by wiping Security.evtx, System.evtx, and Microsoft-Windows-Sysmon%4Operational.evtx via wevtutil.exe cl or Clear-EventLog, generating immutable clearing events (1102/104) while leaving unallocated EVTX record slack and NTFS $UsnJrnl:$J transactions behind.',
@@ -1249,7 +1249,7 @@ export const VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS: LegacyDraftScenario[] = [
   {
     id: 'dfir-ntfs-timestomp-mft-si-fn-mismatch-eid2',
     title: 'SANS DFIR & Microsoft Sysmon — NTFS $MFT $STANDARD_INFORMATION vs $FILE_NAME Timestomping (Sysmon EventID 2)',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1070.006',
     description:
       'Grounded in SANS FOR508 NTFS Master File Table ($MFT) analysis, Microsoft Sysinternals Sysmon Event ID 2 specifications, and MITRE ATT&CK T1070.006: a malware dropper calls NtSetInformationFile (FileBasicInformation) to backdate a newly dropped binary to match kernel32.dll, modifying the $STANDARD_INFORMATION (0x10) attribute while leaving the kernel-managed $FILE_NAME (0x30) attribute and $UsnJrnl:$J creation timestamp at the true drop time.',

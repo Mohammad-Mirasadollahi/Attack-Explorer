@@ -30,9 +30,14 @@ const LIBRARY_CATEGORY_GROUPS: Array<{
   id: Exclude<AttackCategory, 'ALL'>;
   label: string;
 }> = [
-  { id: 'MALWARE', label: 'Malware & Execution Techniques' },
-  { id: 'LOG_ANALYSIS', label: 'DFIR, SIEM & Log Forensics' },
-  { id: 'ACTIVE_DIRECTORY', label: 'Active Directory, Cloud & Network' },
+  { id: 'MALWARE', label: 'Malware & Process Execution' },
+  { id: 'ACTIVE_DIRECTORY', label: 'Active Directory & Identity' },
+  { id: 'NETWORK_WEB', label: 'Network & C2 Exfiltration' },
+  { id: 'CLOUD_SAAS', label: 'Cloud & SaaS' },
+  { id: 'SUPPLY_CHAIN_CICD', label: 'Supply Chain & CI/CD' },
+  { id: 'ZERO_DAY_APPLIANCES', label: 'Zero-Day Appliances' },
+  { id: 'KERNEL_FIRMWARE_BYOVD', label: 'Kernel, Firmware & BYOVD' },
+  { id: 'RANSOMWARE_EXTORTION', label: 'Ransomware & Extortion' },
 ];
 
 export function AttackLibrary({

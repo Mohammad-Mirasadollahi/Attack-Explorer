@@ -4,7 +4,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-shimcache-amcache-execution-artifact-triage',
     title: 'Mandiant, ANSSI & SANS DFIR — Application Compatibility Shimcache (AppCompatCache) & Amcache.hve Triage',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1059.003',
     description:
       'Grounded in the Mandiant Application Compatibility Cache (Shimcache) Whitepaper, ANSSI Amcache.hve Analysis Guide, and SANS FOR508: even after an attacker deletes a staging binary (C:\\Users\\Public\\psexec64.exe) and clears Event Logs, Windows preserves its LastModifiedTime and execution flag in HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\AppCompatCache and its full SHA-1 FileId hash, PE CompileTime, and size in C:\\Windows\\AppCompat\\Programs\\Amcache.hve.',
@@ -119,7 +119,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-windows-prefetch-srum-network-execution-trace',
     title: 'NIST SP 800-86 & SANS DFIR — Windows Prefetch (MAM .pf) & SRUM (SRUDB.dat) Execution & Exfiltration Trace',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1041',
     description:
       'Grounded in SANS DFIR Windows Artifact Analysis, Microsoft System Resource Usage Monitor (SRUM) architecture, and NIST SP 800-86: when an attacker renames rclone.exe to svchost_upd.exe, runs it to exfiltrate data over HTTPS, and deletes the binary, Windows Prefetch (C:\\Windows\\Prefetch\\SVCHOST_UPD.EXE-<Hash>.pf) records the run count, last 8 execution timestamps, and every referenced file/directory, while C:\\Windows\\System32\\sru\\SRUDB.dat logs the exact Process SID, AppId, and BytesSent.',
@@ -233,7 +233,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-powershell-eid4104-4103-clm-downgrade-forensics',
     title: 'Microsoft PowerShell Team, CISA & Mandiant DFIR — PowerShell EventID 4104 / 4103, Engine v2.0 Downgrade & PSReadLine History',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1059.001',
     description:
       'Grounded in Microsoft PowerShell Team Logging Specifications, CISA PowerShell Security Guidance, and Mandiant DFIR research: an adversary attempts to bypass AMSI and Script Block Logging by launching powershell.exe -Version 2 (generating Windows PowerShell EventID 400 with EngineVersion=2.0 vs HostVersion=5.1), while post-exploitation commands on v5.1 hosts are captured in de-obfuscated form by EventID 4104 (ScriptBlockLogging), EventID 4103 (ModuleLogging), and %APPDATA%\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt.',
@@ -346,7 +346,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-dpapi-masterkey-lsass-browser-vault-forensics',
     title: 'Microsoft DPAPI, SpecterOps & Elastic DFIR — DPAPI MasterKey Backup RPC & Browser/Vault Credential Theft (EID 4692 / 4693)',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1555.004',
     description:
       'Grounded in Microsoft Data Protection API (DPAPI) documentation, SpecterOps DPAPI abuse research, and Elastic Security Labs infostealer forensics: an attacker or stealer accesses DPAPI MasterKey files under %APPDATA%\\Microsoft\\Protect\\<SID>\\<GUID>, requests domain MasterKey decryption from the Domain Controller via the MS-BKRP BackupKey RPC protocol (logging Security EventID 4692 / 4693 on the DC), and decrypts Windows Credentials (%LOCALAPPDATA%\\Microsoft\\Credentials) and Chromium Local State AES-GCM keys.',
@@ -461,7 +461,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-golden-ticket-krbtgt-eid4768-4769-lifetime-anomaly',
     title: 'Microsoft Defender for Identity, CERT-FR & MITRE DFIR — Kerberos Golden Ticket Forgery Forensics (EID 4768 / 4769)',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1558.001',
     description:
       'Grounded in Microsoft Defender for Identity Kerberos analytics, CERT-FR Active Directory Golden Ticket detection guides, and MITRE ATT&CK T1558.001: after stealing the krbtgt hash, an attacker forges a custom TGT offline using Mimikatz or Rubeus and injects it via Pass-the-Ticket, producing three definitive KDC forensic anomalies on Domain Controllers: (1) an orphaned EventID 4769 (TGS-REQ) with no preceding EventID 4768 (AS-REQ), (2) a non-existent or forged Privilege Attribute Certificate (PAC) user/RID (e.g., RID 500 with fake username), and (3) a 10-year ticket lifetime or RC4 (0x17) encryption downgrade.',
@@ -576,7 +576,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-adcs-esc1-petitpotam-certificate-enrollment-eid4886',
     title: 'SpecterOps, Microsoft ADV210003 & CISA DFIR — AD CS ESC1 SubjectAltName Spoofing & PKINIT Forensics (EID 4886 / 4768)',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1649',
     description:
       'Grounded in SpecterOps "Certified Pre-Owned" research, Microsoft Security Advisory ADV210003, and MITRE ATT&CK T1649: an attacker abuses an Active Directory Certificate Services (AD CS) template with CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT (ESC1) to request a client authentication certificate specifying a Domain Admin User Principal Name (UPN) in the Subject Alternative Name (SAN) extension (CertificationAuthority EventID 4886 / 4887) and exchanges it for a Domain Admin TGT via PKINIT (KDC EventID 4768 with CertificateThumbprint).',
@@ -690,7 +690,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-winrm-wsman-remote-powershell-eid91-4624',
     title: 'Microsoft WinRM, CrowdStrike & SigmaHQ DFIR — WinRM / WS-Management Lateral Movement & wsmprovhost.exe Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'ACTIVE_DIRECTORY',
     mitreId: 'T1021.006',
     description:
       'Grounded in Microsoft Windows Remote Management (WinRM) Operational Logging specifications, CrowdStrike lateral movement hunting guides, and MITRE ATT&CK T1021.006: an attacker pivots laterally using Enter-PSSession or Invoke-Command over TCP 5985/5986 (/wsman), generating WinRM/Operational EventID 142 (Source Client) and EventID 91 (Destination Server Shell Creation), Security EventID 4624 (LogonType 3), and child processes under C:\\Windows\\System32\\wsmprovhost.exe.',
@@ -802,7 +802,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-vhd-iso-motw-bypass-zone-identifier-forensics',
     title: 'Microsoft Threat Intel & Elastic DFIR — ISO / VHD Virtual Disk Mount, Zone.Identifier ADS & LNK Shellbags Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1553.005',
     description:
       'Grounded in Microsoft Threat Intelligence Mark-of-the-Web (MotW) research, Elastic Security Labs container delivery analysis, and MITRE ATT&CK T1553.005: an initial-access payload is delivered inside an optical/virtual disk container (Invoice_Oct.iso / .vhd). Double-clicking mounts the container as a virtual drive letter via vhdmp.sys (logging VHDMP-Operational EventID 1 / 12 and Sysmon EventID 15 Zone.Identifier ADS on the outer container), while the user’s interaction inside the mounted volume is recorded in USRCLASS.DAT Shellbags and a weaponized .lnk file.',
@@ -917,7 +917,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-printspooler-spl-shd-spool-file-persistence',
     title: 'Microsoft Print Spooler, Kaspersky & MITRE DFIR — Print Spooler Port Monitor & .SPL/.SHD Spool Forensics (EID 307 / 808)',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1547.012',
     description:
       'Grounded in Microsoft PrintService Operational Logging specifications, Kaspersky Print Spooler exploitation research, and MITRE ATT&CK T1547.012: an attacker abuses the Windows Print Spooler service (spoolsv.exe running as SYSTEM) via AddMonitor / Point-and-Print driver loading or persistent Port Monitor registration, leaving forensic traces in Microsoft-Windows-PrintService/Operational EventID 316 / 808, HKLM\\SYSTEM\\CurrentControlSet\\Control\\Print\\Monitors, and C:\\Windows\\System32\\spool\\PRINTERS\\*.SHD / *.SPL files.',
@@ -1032,7 +1032,7 @@ export const DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS: LegacyDraftScenar
   {
     id: 'dfir-wer-silentprocessexit-localdumps-registry-hijack',
     title: 'Microsoft WER, Mandiant & Elastic DFIR — IFEO SilentProcessExit & WerFault.exe LSASS Dump Hijack (Sysmon EID 12 / 13)',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1546.012',
     description:
       'Grounded in Microsoft Windows Error Reporting (WER) & Image File Execution Options (IFEO) documentation, Mandiant persistence & credential access research, and MITRE ATT&CK T1546.012 / T1003.001: an attacker sets the GlobalFlag (FLG_MONITOR_SILENT_PROCESS_EXIT = 0x200) under IFEO\\lsass.exe and configures HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SilentProcessExit\\lsass.exe with ReportingMode=2 (LOCAL_DUMP) and MonitorProcess, tricking the trusted Windows Error Reporting binary (WerFault.exe) into dumping lsass.exe memory and launching an arbitrary SYSTEM command.',

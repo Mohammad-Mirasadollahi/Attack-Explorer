@@ -19,20 +19,26 @@ import {
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 126 scenarios (including VulnCheck CWP & 40 official DFIR scenarios)', () => {
+  it('filterScenarios filters by category and search query accurately across all 126 scenarios organized into specialized categories', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
     assert.equal(all.length, 126);
 
-    const dfirScenarios = filterScenarios(ATTACK_SCENARIOS, 'LOG_ANALYSIS', '');
-    assert.equal(dfirScenarios.length, 42);
+    const zeroDayAppliances = filterScenarios(
+      ATTACK_SCENARIOS,
+      'ZERO_DAY_APPLIANCES',
+      ''
+    );
     assert.ok(
-      dfirScenarios.some(
+      zeroDayAppliances.some(
         (s) => s.id === 'vulncheck-cwp-preauth-module-dispatch-rce'
       )
     );
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
-    assert.ok(malwareOnly.length >= 16);
+    assert.ok(malwareOnly.length >= 25);
+
+    const cloudSaas = filterScenarios(ATTACK_SCENARIOS, 'CLOUD_SAAS', '');
+    assert.ok(cloudSaas.length >= 15);
 
     const byMitre = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'T1055.012');
     assert.equal(byMitre.length, 1);

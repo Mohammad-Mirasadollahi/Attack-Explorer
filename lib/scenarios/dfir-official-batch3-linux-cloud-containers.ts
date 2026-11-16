@@ -4,7 +4,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-linux-auditd-pam-sshd-authorized-keys-persistence',
     title: 'Red Hat, CISA & MITRE DFIR — Linux auditd SSH authorized_keys & PAM Module Persistence Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1098.004',
     description:
       'Grounded in the Red Hat Enterprise Linux Security & Auditd Guide, CISA Linux Incident Response Guidance, and MITRE ATT&CK T1098.004 / T1556.003: an incident responder investigates unauthorized SSH key persistence and Pluggable Authentication Modules (PAM) tampering on a production Linux server by correlating Linux kernel auditd SYSCALL/PATH records (openat, write, chmod on ~/.ssh/authorized_keys and /lib64/security/pam_unix.so) with /var/log/secure and /var/log/auth.log Accepted publickey Fingerprints.',
@@ -120,7 +120,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-linux-ebpf-bpfdoor-raw-socket-magic-packet-forensics',
     title: 'PwC, CrowdStrike & Elastic DFIR — Linux BPFDoor Raw Socket Filter, /dev/shm Masquerading & /proc/net/packet Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'KERNEL_FIRMWARE_BYOVD',
     mitreId: 'T1205.002',
     description:
       'Grounded in PwC Threat Intelligence (Red Menshen / BPFDoor), CrowdStrike Linux DFIR guides, and Elastic Security Labs analysis: a passive Linux implant copies itself to /dev/shm, unlink-deletes its on-disk binary, masquerades its process argv[0] as a kernel worker thread ([kdmtmpflush]), and attaches a Berkeley Packet Filter (SO_ATTACH_FILTER) to an AF_PACKET SOCK_RAW socket without opening any listening TCP/UDP port—detectable via /proc/net/packet, ss -0pb, auditd syscall=41 (socket), and /proc/<pid>/exe (deleted).',
@@ -236,7 +236,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-linux-ld-so-preload-userland-rootkit-proc-maps',
     title: 'NCSC-NL, Red Hat & MITRE DFIR — Linux /etc/ld.so.preload Userland Rootkit & /proc/1/maps Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'KERNEL_FIRMWARE_BYOVD',
     mitreId: 'T1574.006',
     description:
       'Grounded in NCSC-NL Linux Incident Response guidelines, Red Hat Dynamic Linker (ld.so) documentation, and MITRE ATT&CK T1574.006: a userland shared-object rootkit writes the path of a malicious library (/lib64/libudev- guardian.so) into /etc/ld.so.preload so the dynamic linker (/lib64/ld-linux-x86-64.so.2) injects it into every dynamically linked process to hook readdir(), fopen(), and accept()—detectable via /proc/1/maps, LD_TRACE_LOADED_OBJECTS, and statically linked busybox/auditd.',
@@ -350,7 +350,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-linux-systemd-generator-cron-udev-persistence',
     title: 'Freedesktop Systemd Spec & Elastic DFIR — Linux systemd Generator (/run/systemd/generator) & Unit Persistence Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'MALWARE',
     mitreId: 'T1543.002',
     description:
       'Grounded in the Freedesktop.org systemd.generator(7) and systemd.unit(5) specifications, Elastic Security Labs Linux persistence research, and MITRE ATT&CK T1543.002: an adversary achieves stealthy boot/daemon-reload persistence by placing a script inside /etc/systemd/system-generators/ (or a drop-in .conf inside /etc/systemd/system/<service>.service.d/) that dynamically generates an ephemeral unit in /run/systemd/generator/ whenever systemctl daemon-reload runs.',
@@ -464,7 +464,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-kubernetes-kube-audit-privileged-pod-hostpath-escape',
     title: 'NSA/CISA Kubernetes Guide & CNCF Falco DFIR — Kubernetes Audit Log Privileged Pod & hostPath Container Escape',
-    category: 'LOG_ANALYSIS',
+    category: 'CLOUD_SAAS',
     mitreId: 'T1611',
     description:
       'Grounded in the NSA/CISA Kubernetes Hardening Guidance, Official Kubernetes Auditing Documentation, and CNCF Falco eBPF runtime security rules: an attacker with a compromised ServiceAccount token creates a privileged pod mounting the worker node root filesystem (hostPath: / and hostPID: true), logged in the Kubernetes API Server audit.log (ObjectRef Resource="pods" Subresource="" Verb="create"), and uses nsenter -t 1 -m -u -i -n to enter the host OS namespaces.',
@@ -580,7 +580,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-aws-cloudtrail-imdsv1-ssrf-s3-exfiltration-forensics',
     title: 'AWS CIRT & Unit 42 DFIR — AWS CloudTrail IMDSv1 Role Theft, Off-Instance Replay & S3 Data Events Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'CLOUD_SAAS',
     mitreId: 'T1552.005',
     description:
       'Grounded in the AWS Security Incident Response Guide (AWS CIRT), Palo Alto Networks Unit 42 Cloud Threat Reports, and MITRE ATT&CK T1552.005: an attacker exploits an SSRF vulnerability on an EC2 web application to query the Instance Metadata Service (http://169.254.169.254/latest/meta-data/iam/security-credentials/) and exfiltrates the temporary ASIA... STS session token, replaying it from an external ASN IP—detectable in AWS CloudTrail via userIdentity.arn AssumedRole usage from a non-EC2 sourceIPAddress and GuardDuty InstanceCredentialExfiltration.OutsideAWS.',
@@ -695,7 +695,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-aws-cloudtrail-iam-shadow-admin-passrole-lambda',
     title: 'AWS CIRT & CISA Cloud DFIR — AWS IAM PassRole + Lambda Privilege Escalation & StopLogging Tampering',
-    category: 'LOG_ANALYSIS',
+    category: 'CLOUD_SAAS',
     mitreId: 'T1098.001',
     description:
       'Grounded in AWS CIRT IAM Privilege Escalation Playbooks, Rhino Security Labs AWS IAM research, and CISA Cloud Security Technical Reference Architecture: an attacker with iam:PassRole and lambda:CreateFunction/InvokeFunction privileges passes an existing AdministratorExecutionRole to a new Lambda function that calls iam:AttachUserPolicy (AdministratorAccess) and attempts cloudtrail:StopLogging—all captured in immutable CloudTrail Management Events.',
@@ -809,7 +809,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-m365-unified-audit-log-mailitemsaccessed-new-inboxrule',
     title: 'Microsoft IR & CISA AA23-320A DFIR — M365 Purview Unified Audit Log MailItemsAccessed & New-InboxRule Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'CLOUD_SAAS',
     mitreId: 'T1114.003',
     description:
       'Grounded in Microsoft Incident Response BEC/Cloud Playbooks, CISA Microsoft 365 Audit Logging Guidance, and MITRE ATT&CK T1114.003 / T1564.008: after hijacking an Exchange Online session, an attacker creates a stealthy Inbox Rule via OWA/PowerShell (Operation="New-InboxRule" or "Set-InboxRule" with MoveToFolder="RSS Feeds" and ForwardTo) and exfiltrates sensitive messages tracked via Microsoft Purview Unified Audit Log (UAL) MailItemsAccessed (InternetMessageId + FolderPathName + SessionId).',
@@ -924,7 +924,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-entra-id-prt-roadtools-device-registration-forensics',
     title: 'Microsoft MSRC & Dirk-jan Mollema DFIR — Entra ID Primary Refresh Token (PRT) & Rogue Device Registration Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'CLOUD_SAAS',
     mitreId: 'T1528',
     description:
       'Grounded in Microsoft Entra ID Primary Refresh Token (PRT) architecture documentation, Dirk-jan Mollema (ROADtools) research, and CISA Cloud Identity guidance: an attacker uses a stolen session or PRT cookie (x-ms-RefreshTokenCredential) to register a rogue Entra ID Joined device via the Device Registration Service (urn:ms-drs:enterpriseregistration.windows.net), minting a hardware-less Primary Refresh Token with an embedded MFA claim (AuthenticationRequirement="multiFactorAuthentication", IncomingTokenType="primaryRefreshToken").',
@@ -1037,7 +1037,7 @@ export const DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS: LegacyDraftS
   {
     id: 'dfir-gcp-cloud-audit-service-account-key-impersonation',
     title: 'Google Cloud Mandiant IR & MITRE DFIR — GCP Cloud Audit ServiceAccountKey Creation & Impersonation Chain Forensics',
-    category: 'LOG_ANALYSIS',
+    category: 'CLOUD_SAAS',
     mitreId: 'T1098.001',
     description:
       'Grounded in Google Cloud Mandiant Incident Response guides, GCP Cloud Audit Logs documentation, and MITRE ATT&CK T1098.001 / T1530: an attacker compromises a workload identity, invokes iam.serviceAccounts.getAccessToken (producing a serviceAccountDelegationInfo impersonation chain in Admin Activity / Data Access logs), creates an exported JSON private key via google.iam.admin.v1.CreateServiceAccountKey, and runs a BigQuery export job (JobInserted).',
