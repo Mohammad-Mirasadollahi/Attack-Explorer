@@ -25,7 +25,7 @@ export const AD_KERBEROASTING_SCENARIO: AttackScenario = {
       y: 55,
       details: {
         osOrType: 'Windows 11 Enterprise',
-        pidOrPort: 'User: CORP\\m.karimi (Standard User)',
+        pidOrPort: 'User: CORP\\m.davis (Standard User)',
         privilege: 'Domain User',
         artifacts: ['Rubeus.exe kerberoast /rc4opsec', 'Impacket psexec.py'],
         description: 'Initial compromised workstation where the attacker runs Rubeus to request RC4-encrypted Kerberos service tickets.' } },
@@ -75,7 +75,7 @@ export const AD_KERBEROASTING_SCENARIO: AttackScenario = {
       ppid: 2104,
       name: 'Rubeus.exe',
       commandLine: 'Rubeus.exe kerberoast /spn:MSSQLSvc/sql01.corp.local:1433 /nowrap',
-      user: 'CORP\\m.karimi',
+      user: 'CORP\\m.davis',
       integrity: 'Medium',
       status: 'malicious',
       activeFromStage: 1,
@@ -156,7 +156,7 @@ export const AD_KERBEROASTING_SCENARIO: AttackScenario = {
       timestamp: '09:41:12.310',
       sourceNodeId: 'ws_compromised',
       targetNodeId: 'dc01',
-      sourceLabel: '10.10.20.45 (m.karimi)',
+      sourceLabel: '10.10.20.45 (m.davis)',
       targetLabel: 'DC01.corp.local:88',
       sourceType: 'WIN_EVENT',
       protocolOrEventId: 'WinSec EID 4769',
@@ -165,7 +165,7 @@ export const AD_KERBEROASTING_SCENARIO: AttackScenario = {
       sizeOrCode: 'Event 4769',
       severity: 'HIGH',
       mitreId: 'T1558.003',
-      explanation: 'Windows Security Event ID 4769 on DC01 captures user m.karimi requesting a Kerberos TGS for svc_mssql with TicketEncryptionType 0x17 (RC4-HMAC). Hunting for 0x17 on non-machine accounts is the primary SIEM rule for Kerberoasting.',
+      explanation: 'Windows Security Event ID 4769 on DC01 captures user m.davis requesting a Kerberos TGS for svc_mssql with TicketEncryptionType 0x17 (RC4-HMAC). Hunting for 0x17 on non-machine accounts is the primary SIEM rule for Kerberoasting.',
       rawLog: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
   <System>
     <Provider Name="Microsoft-Windows-Security-Auditing"/>
@@ -173,7 +173,7 @@ export const AD_KERBEROASTING_SCENARIO: AttackScenario = {
     <Computer>DC01.corp.local</Computer>
   </System>
   <EventData>
-    <Data Name="TargetUserName">m.karimi@CORP.LOCAL</Data>
+    <Data Name="TargetUserName">m.davis@CORP.LOCAL</Data>
     <Data Name="ServiceName">svc_mssql</Data>
     <Data Name="IpAddress">::ffff:10.10.20.45</Data>
     <Data Name="TicketOptions">0x40810000</Data>

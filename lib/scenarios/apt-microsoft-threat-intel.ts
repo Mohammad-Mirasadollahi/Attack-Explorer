@@ -1213,7 +1213,7 @@ export const MS_FOREST_BLIZZARD_GOOSEEGG_SCENARIO: AttackScenario = {
       ppid: 3100,
       name: 'justice.exe (GooseEgg)',
       commandLine: 'C:\\ProgramData\\justice.exe -d C:\\ProgramData\\wayzgoose23.dll',
-      user: 'CORP\\v.petrov',
+      user: 'CORP\\v.parker',
       integrity: 'Medium',
       status: 'malicious',
       activeFromStage: 1,

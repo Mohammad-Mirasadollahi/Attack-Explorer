@@ -141,11 +141,11 @@ export const DNS_TUNNELING_SCENARIO: AttackScenario = {
       sourceType: 'SYSMON',
       protocolOrEventId: 'Sysmon EID 22',
       shortAction: 'DNS TXT EXFIL',
-      info: 'QueryName="001.343130322c616c695f72657a6165692c30393132.c2.badactor-dns.net"',
+      info: 'QueryName="001.343130322c6a6f686e5f736d6974682c32303635.c2.badactor-dns.net"',
       sizeOrCode: '112 B',
       severity: 'HIGH',
       mitreId: 'T1048.003',
-      explanation: 'Sysmon Event ID 22 links the DNS query directly to C:\\ProgramData\\sync_agent.exe. Decoding the hex subdomain label "343130322c616c695f72657a6165692c30393132" reveals the plaintext CSV row "4102,ali_rezaei,0912"!',
+      explanation: 'Sysmon Event ID 22 links the DNS query directly to C:\\ProgramData\\sync_agent.exe. Decoding the hex subdomain label "343130322c6a6f686e5f736d6974682c32303635" reveals the plaintext CSV row "4102,john_smith,2065"!',
       rawLog: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
   <System>
     <Provider Name="Microsoft-Windows-Sysmon"/>
@@ -154,7 +154,7 @@ export const DNS_TUNNELING_SCENARIO: AttackScenario = {
   <EventData>
     <Data Name="UtcTime">2026-11-12 22:10:04.015</Data>
     <Data Name="ProcessId">4412</Data>
-    <Data Name="QueryName">001.343130322c616c695f72657a6165692c30393132.c2.badactor-dns.net</Data>
+    <Data Name="QueryName">001.343130322c6a6f686e5f736d6974682c32303635.c2.badactor-dns.net</Data>
     <Data Name="QueryStatus">0</Data>
     <Data Name="QueryResults">type: 16 ACK:001:NEXT;</Data>
     <Data Name="Image">C:\\ProgramData\\sync_agent.exe</Data>
@@ -191,7 +191,7 @@ level: high`,
       mitreId: 'T1071.004',
       explanation: 'Zeek dns.log captures the recursive query leaving the internal resolver and returning a TXT record with TTL=0.000000 to bypass caching.',
       rawLog: `#fields ts uid id.orig_h id.orig_p id.resp_h id.resp_p proto trans_id query qtype_name rcode_name answers TTLs
-1794521404.042 CHhAvVGS1DHFjwGM9 10.50.1.53 58192 45.133.1.99 53 udp 41902 001.343130322c616c695f72657a6165692c30393132.c2.badactor-dns.net TXT NOERROR ACK:001:NEXT 0.000000`,
+1794521404.042 CHhAvVGS1DHFjwGM9 10.50.1.53 58192 45.133.1.99 53 udp 41902 001.343130322c6a6f686e5f736d6974682c32303635.c2.badactor-dns.net TXT NOERROR ACK:001:NEXT 0.000000`,
       detectionRule: {
         type: 'SURICATA',
         title: 'Abnormal Volume of DNS TXT Queries with Zero TTL',
@@ -220,7 +220,7 @@ level: high`,
       mitreId: 'T1071.004',
       explanation: 'Attacker authoritative Name Server (45.133.1.99) strips and reassembles the hex-encoded subdomain chunks into customers_pii.csv, then responds with a DNS TXT answer ("ACK:001:CMD:SLEEP_60", TTL=0) that the internal resolver relays back to sync_agent.exe (PID 4412) on DB-BACKUP-02.',
       rawLog: `22:10:04.095210 IP 45.133.1.99.53 > 10.50.1.53.58192: 41902* 1/0/0 TXT "ACK:001:CMD:SLEEP_60" (ttl 0)
-[dnscat2-server] Chunk #001 reassembled -> customers_pii.csv (48 bytes appended: "4102,ali_rezaei,0912...")`,
+[dnscat2-server] Chunk #001 reassembled -> customers_pii.csv (48 bytes appended: "4102,john_smith,2065...")`,
       detectionRule: {
         type: 'SIGMA',
         title: 'DNS TXT Response Carrying Encoded C2 Tasking with Zero TTL',

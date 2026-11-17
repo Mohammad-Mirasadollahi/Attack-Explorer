@@ -1,4 +1,4 @@
-import { AttackScenario, DiagramNode, TelemetryEvent } from './attack-scenarios';
+import type { AttackScenario, DiagramNode, TelemetryEvent } from './scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
@@ -1191,10 +1191,10 @@ function getScenarioNodeMetas(
     case 'ad-kerberoasting':
       return [
         {
-          label: 'Foothold Session (CORP\\m.karimi)',
+          label: 'Foothold Session (CORP\\m.davis)',
           sublabel: '10.10.20.45 · Standard Domain User',
           actionBadge: 'SESSION ① · Domain User Foothold',
-          hostContext: '🔑 User Context: Standard Domain Session CORP\\m.karimi on VLAN 24',
+          hostContext: '🔑 User Context: Standard Domain Session CORP\\m.davis on VLAN 24',
           activitySummary: 'Activities: Queries Active Directory LDAP for Service Principal Names (SPNs)' },
         gatewayMeta,
         {

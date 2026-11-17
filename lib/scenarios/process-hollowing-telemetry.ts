@@ -29,11 +29,11 @@ export const PROCESS_HOLLOWING_TELEMETRY: TelemetryEvent[] = [
     <Data Name="ProcessId">4892</Data>
     <Data Name="Image">C:\\Windows\\System32\\svchost.exe</Data>
     <Data Name="CommandLine">C:\\Windows\\System32\\svchost.exe</Data>
-    <Data Name="User">CORP\\s.ahmadi</Data>
+    <Data Name="User">CORP\\j.smith</Data>
     <Data Name="IntegrityLevel">Medium</Data>
     <Data Name="ParentProcessId">3104</Data>
-    <Data Name="ParentImage">C:\\Users\\s.ahmadi\\Downloads\\Invoice_Q4.exe</Data>
-    <Data Name="ParentCommandLine">"C:\\Users\\s.ahmadi\\Downloads\\Invoice_Q4.exe"</Data>
+    <Data Name="ParentImage">C:\\Users\\j.smith\\Downloads\\Invoice_Q4.exe</Data>
+    <Data Name="ParentCommandLine">"C:\\Users\\j.smith\\Downloads\\Invoice_Q4.exe"</Data>
   </EventData>
 </Event>`,
     detectionRule: {
@@ -121,11 +121,11 @@ NTSTATUS status = NtUnmapViewOfSection(pi.hProcess, imageBase);
   </System>
   <EventData>
     <Data Name="SourceProcessId">3104</Data>
-    <Data Name="SourceImage">C:\\Users\\s.ahmadi\\Downloads\\Invoice_Q4.exe</Data>
+    <Data Name="SourceImage">C:\\Users\\j.smith\\Downloads\\Invoice_Q4.exe</Data>
     <Data Name="TargetProcessId">4892</Data>
     <Data Name="TargetImage">C:\\Windows\\System32\\svchost.exe</Data>
     <Data Name="GrantedAccess">0x1fffff</Data>
-    <Data Name="CallTrace">C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c4|C:\\Users\\s.ahmadi\\Downloads\\Invoice_Q4.exe+14a20</Data>
+    <Data Name="CallTrace">C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c4|C:\\Users\\j.smith\\Downloads\\Invoice_Q4.exe+14a20</Data>
   </EventData>
 </Event>`,
     detectionRule: {
@@ -174,7 +174,7 @@ level: critical`,
     <Data Name="ProcessId">4892</Data>
     <Data Name="Image">C:\\Windows\\System32\\svchost.exe</Data>
     <Data Name="Type">Image is replaced</Data>
-    <Data Name="User">CORP\\s.ahmadi</Data>
+    <Data Name="User">CORP\\j.smith</Data>
   </EventData>
 </Event>`,
     detectionRule: {

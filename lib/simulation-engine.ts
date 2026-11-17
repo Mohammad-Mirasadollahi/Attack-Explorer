@@ -1,10 +1,9 @@
-import {
-  ATTACK_SCENARIOS,
+import type {
   AttackCategory,
   AttackScenario,
   AttackStage,
   TelemetryEvent,
-  TelemetrySourceType } from './attack-scenarios';
+  TelemetrySourceType } from './scenarios/types';
 import {
   formatAttackCategoryLabel,
   getAttackCategoryGroupMeta,
@@ -673,7 +672,7 @@ export function analyzeCustomLogInput(rawText: string): LogAnalysisFinding[] {
       severity: 'MEDIUM',
       matchedPattern: `Custom Input (${text.length} chars)`,
       explanation: 'No known critical exploit signature matched directly; select any scenario in the explorer to compare expected Sysmon and network telemetry.',
-      recommendedScenarioId: ATTACK_SCENARIOS[0].id });
+      recommendedScenarioId: 'process-hollowing' });
   }
 
   return findings;

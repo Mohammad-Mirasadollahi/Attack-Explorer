@@ -866,7 +866,7 @@ export const ELASTIC_LOTUS_BLOSSOM_CHRYSALIS_SCENARIO: AttackScenario = {
       ppid: 2890,
       name: 'GUP.exe',
       commandLine: '"C:\\ProgramData\\NotepadPlus\\GUP.exe" -v',
-      user: 'CORP\\a.chen',
+      user: 'CORP\\a.collins',
       integrity: 'Medium',
       status: 'injected',
       activeFromStage: 1,

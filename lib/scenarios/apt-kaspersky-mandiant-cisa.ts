@@ -484,7 +484,7 @@ export const KASPERSKY_TODDYCAT_ESET_DLL_SCENARIO: AttackScenario = {
       ppid: 3412,
       name: 'ecls.exe',
       commandLine: '"C:\\ProgramData\\ESET\\ecls.exe" /base-dir="C:\\ProgramData\\ESET"',
-      user: 'CORP\\k.tanaka',
+      user: 'CORP\\k.turner',
       integrity: 'High',
       status: 'injected',
       activeFromStage: 1,

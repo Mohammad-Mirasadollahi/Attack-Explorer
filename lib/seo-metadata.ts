@@ -41,11 +41,10 @@ function isUsableAbsoluteHttpUrl(value: string): boolean {
  * so `new URL(siteUrl)` in the root layout never throws Invalid URL.
  */
 export function resolveSiteUrl(envUrl?: string): string {
-  const candidates = [
-    envUrl,
-    process.env.NEXT_PUBLIC_SITE_URL,
-    process.env.APP_URL,
-  ];
+  const candidates =
+    envUrl !== undefined
+      ? [envUrl]
+      : [process.env.NEXT_PUBLIC_SITE_URL, process.env.APP_URL];
 
   for (const candidate of candidates) {
     if (typeof candidate !== 'string') continue;

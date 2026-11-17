@@ -672,10 +672,18 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       assert.ok(attr.primarySources.length >= 2);
       assert.ok(attr.syntheticDataNotice.length > 20);
 
+      const serializedScenario = JSON.stringify(scenario);
       assert.equal(
-        /[\u0600-\u06FF]/.test(JSON.stringify(scenario)),
+        /[\u0600-\u06FF]/.test(serializedScenario),
         false,
         `Scenario ${scenario.id} should contain zero Persian characters`
+      );
+      assert.equal(
+        /ahmadi|karimi|admin_reza|ali_rezaei|343130322c616c695f72657a6165692c30393132/i.test(
+          serializedScenario
+        ),
+        false,
+        `Scenario ${scenario.id} should use simple English names instead of Persian transliterated names`
       );
     }
   });

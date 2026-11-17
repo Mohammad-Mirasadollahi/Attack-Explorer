@@ -75,7 +75,7 @@ export const AMSI_REFLECTIVE_DLL_SCENARIO: AttackScenario = {
       ppid: 4100,
       name: 'powershell.exe',
       commandLine: 'powershell.exe -NoP -NonI -W Hidden -Exec Bypass',
-      user: 'CORP\\admin_reza',
+      user: 'CORP\\admin_clark',
       integrity: 'High',
       status: 'injected',
       activeFromStage: 1,

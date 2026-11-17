@@ -180,7 +180,7 @@ export function buildCorrelatedRawLog(
     const cmd = cmdMatch ? cmdMatch[1] : img;
     const parentImg = parentImgMatch
       ? parentImgMatch[1]
-      : 'C:\\Users\\s.ahmadi\\Downloads\\Invoice_Q4.exe';
+      : 'C:\\Users\\j.smith\\Downloads\\Invoice_Q4.exe';
 
     return `${envHeader}
 ${baseLog}
