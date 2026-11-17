@@ -10,6 +10,9 @@ import { AUTHOR_PROFILE, PLATFORM_FAQ_ITEMS } from '@/lib/seo-metadata';
 const FEATURED_SCENARIO_IDS = [
   'process-hollowing',
   'ransomware-shadow-wipe',
+  'pikered-clr-profiler-trusted-binary-loader-chain',
+  'alphv-blackcat-sphynx-rust-impacket-exmatter',
+  'rspack-solana-web3js-npm-supply-chain-2024',
   'log4shell-dfir',
   'ad-kerberoasting',
   'dns-tunneling-exfil',
@@ -59,8 +62,8 @@ export function SeoSemanticDocumentation() {
         expand internal host and process pipelines, and evaluate defensive
         mitigations grounded in authoritative vendor research from CISA,
         Mandiant, Microsoft Threat Intelligence, Palo Alto Networks Unit 42,
-        CrowdStrike, Kaspersky GReAT, Elastic Security Labs, and The DFIR
-        Report.
+        CrowdStrike, Kaspersky GReAT, Elastic Security Labs, PikeRed Security
+        Research, and The DFIR Report.
       </p>
 
       <h3>Featured Cyber Attack &amp; DFIR Investigation Scenarios</h3>

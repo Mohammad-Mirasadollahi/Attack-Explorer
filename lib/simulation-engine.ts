@@ -636,6 +636,36 @@ export function analyzeCustomLogInput(rawText: string): LogAnalysisFinding[] {
       recommendedScenarioId: 'dfir-dcsync-drsuapi-replication-eid4662' });
   }
 
+  if (/COR_ENABLE_PROFILING|COR_PROFILER_PATH|ICorProfilerCallback|PerformanceTrace\.dll/i.test(text)) {
+    findings.push({
+      title: 'PikeRed Research: .NET CLR Profiler Trusted-Binary Loader Chain (T1574.012)',
+      mitreId: 'T1574.012',
+      severity: 'CRITICAL',
+      matchedPattern: 'COR_ENABLE_PROFILING=1 / COR_PROFILER_PATH / Signed .NET Host (KeePass.exe)',
+      explanation: 'Volatile process environment variables (COR_ENABLE_PROFILING=1 and COR_PROFILER_PATH) force clr.dll inside a signed .NET binary to load an arbitrary unmanaged DLL without registry writes.',
+      recommendedScenarioId: 'pikered-clr-profiler-trusted-binary-loader-chain' });
+  }
+
+  if (/--access-token|ExMatter|SymlinkEvaluation\s+R2L:1\s+R2R:1|RECOVER-.*-FILES\.txt/i.test(text)) {
+    findings.push({
+      title: 'CISA AA23-353A: ALPHV / BlackCat (Sphynx Rust) Ransomware & ExMatter',
+      mitreId: 'T1486',
+      severity: 'CRITICAL',
+      matchedPattern: '--access-token / fsutil SymlinkEvaluation R2R:1 / ExMatter',
+      explanation: 'ALPHV/BlackCat Sphynx Rust encryptor using SHA-256 access token validation, ExMatter exfiltration, and remote-to-remote SMB symlink encryption.',
+      recommendedScenarioId: 'alphv-blackcat-sphynx-rust-impacket-exmatter' });
+  }
+
+  if (/addToQueue|sol-rpc\.xyz|@solana\/web3\.js|@rspack\/core/i.test(text)) {
+    findings.push({
+      title: 'Supply Chain Compromise: @solana/web3.js & @rspack/core npm Backdoor',
+      mitreId: 'T1195.002',
+      severity: 'CRITICAL',
+      matchedPattern: 'addToQueue() / sol-rpc.xyz / npm postinstall token theft',
+      explanation: 'Compromised npm package versions exfiltrating Ed25519 private keys via CloudFlare headers or harvesting NPM_TOKEN and GITHUB_TOKEN in CI/CD runners.',
+      recommendedScenarioId: 'rspack-solana-web3js-npm-supply-chain-2024' });
+  }
+
   if (findings.length === 0) {
     findings.push({
       title: 'General Security Telemetry Inspection',

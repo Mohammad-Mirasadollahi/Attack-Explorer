@@ -2,25 +2,36 @@
 
 > Visual Cyber Attack, Log & Malware Analyzer mapped to MITRE ATT&CK.
 
-Attack Explorer is an interactive forensic simulation and security analysis web platform designed for security engineers, SOC analysts, DFIR investigators, and red/blue teams.
+Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (157 documented scenarios across 13 specialized categories).
 
 ## Core Capabilities
 - **Attack Simulation:** Step-by-step visual execution of real-world adversary scenarios across Workstation, Domain Controller, and Cloud environments.
-- **Log Forensics:** Live Sysmon, Windows Event Log, and SIEM packet breakdown with correlated Sigma detection rules.
-- **Behavioral Mapping:** Direct mapping to the MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).
-- **Process Memory Inspection:** Process hollowing, VAD memory forensics, and AMSI / ETW bypass flowcharts.
+- **Log Forensics:** Live Sysmon, Windows Event Log, Linux auditd, and SIEM packet breakdown with correlated Sigma/YARA/KQL detection rules.
+- **Behavioral Mapping:** Direct mapping to MITRE ATT&CK tactics, techniques, and sub-techniques (TTPs).
+- **Process Memory Inspection:** Process hollowing, VAD memory forensics, CLR Profiler hijacking, and AMSI bypass flowcharts.
 
-## Key Scenarios Included
-- [Process Hollowing & Portable Executable Injection (T1055.012)](https://attackexplorer.org/scenarios/process-hollowing)
-- [Ransomware Volume Shadow Copy Wipe & Encryption (T1490, T1486)](https://attackexplorer.org/scenarios/ransomware-shadow-wipe)
-- [Log4Shell JNDI Remote Code Execution & DFIR Investigation (T1190, CVE-2021-44228)](https://attackexplorer.org/scenarios/log4shell-dfir)
-- [Active Directory Kerberoasting & Service Ticket Extraction (T1558.003)](https://attackexplorer.org/scenarios/ad-kerberoasting)
-- [DNS Tunneling Covert Command & Control & Data Exfiltration (T1071.004, T1048)](https://attackexplorer.org/scenarios/dns-tunneling-exfil)
-- [AMSI Bypass & Reflective DLL Memory Injection (T1562.001, T1620)](https://attackexplorer.org/scenarios/amsi-reflective-dll)
+## Featured & Newly Added Scenarios (Ransomware, Supply Chain & CLR Loader)
+- [Process Hollowing (T1055.012)](https://attackexplorer.org/scenarios/process-hollowing): `svchost.exe` suspension, section unmapping (`NtUnmapViewOfSection`), and memory injection.
+- [PikeRed — Abusing the .NET CLR Profiler: Trusted-Binary Loader Chain (T1574.012)](https://attackexplorer.org/scenarios/pikered-clr-profiler-trusted-binary-loader-chain): `.vhdx` MotW bypass, `+h +s` super-hidden files, and `COR_ENABLE_PROFILING=1` / `COR_PROFILER_PATH` hijacking of signed `KeePass.exe` ([PikeRed Research](https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/)).
+- [ALPHV / BlackCat (Sphynx Rust) Ransomware (CISA AA23-353A)](https://attackexplorer.org/scenarios/alphv-blackcat-sphynx-rust-impacket-exmatter): `--access-token` SHA-256 gate, ExMatter exfiltration, and `fsutil` symlink encryption.
+- [Royal & BlackSuit Ransomware (CISA AA23-061A / AA24-219A)](https://attackexplorer.org/scenarios/royal-blacksuit-ransomware-chacha20-restartmanager): Windows Restart Manager (`RstrtMgr.dll`) handle unlocking and partial-stripe encryption.
+- [RansomHub Ransomware (CISA AA24-242A)](https://attackexplorer.org/scenarios/ransomhub-edrkiller-tdsskiller-golocks): `EDRKillShifter` / `TDSSKiller.exe` BYOVD kernel termination and `-pass` SHA-256 config decryption.
+- [Medusa Ransomware (CISA AA25-071A)](https://attackexplorer.org/scenarios/medusa-ransomware-gaze-abyss-pdqdeploy): PDQ Deploy & SimpleHelp RMM fleet push and `gaze.exe` `.medusa` encryption.
+- [Qilin (Agenda) Rust Ransomware](https://attackexplorer.org/scenarios/qilin-agenda-rust-chrome-cred-harvester-esxi): SYSVOL GPO Chrome DPAPI credential harvester and ESXi `vim-cmd` encryption.
+- [Hunters International Ransomware (Hive Rust Lineage)](https://attackexplorer.org/scenarios/hunters-international-hive-rust-wsus-sharpwmi): WSUS & SharpWMI deployment and `wbadmin` catalog wipe.
+- [INC Ransom & Lynx Ransomware](https://attackexplorer.org/scenarios/inc-ransom-lynx-citrix-netscaler-wmic-mega): Citrix NetScaler initial access, `WMIC /node:@targets.txt` propagation, and `PrintBombing`.
+- [Cactus Ransomware](https://attackexplorer.org/scenarios/cactus-ransomware-qlik-sense-ssh-batch-unpacker): Qlik Sense `CVE-2023-41265` exploitation and self-decrypting `-i <HexKey>` payload execution.
+- [8Base & Phobos Ransomware (CISA AA24-045A)](https://attackexplorer.org/scenarios/eightbase-phobos-smoke-loader-process-hacker): SmokeLoader delivery into `explorer.exe` and `.eight8` encryption.
+- [Cl0p Ransomware Full Intrusion Chain (CISA AA23-158A)](https://attackexplorer.org/scenarios/cl0p-truebot-flawedgrace-sdbbot-ransomware): `TrueBot` -> `FlawedGrace` / `SDBbot` -> Cl0p 660+ process/service killer.
+- [@solana/web3.js & @rspack/core npm Supply-Chain Compromise (Dec 2024)](https://attackexplorer.org/scenarios/rspack-solana-web3js-npm-supply-chain-2024): `addToQueue` Ed25519 private key exfiltration and `postinstall` CI token theft.
+- [@lottiefiles/lottie-player npm & CDN Supply-Chain Attack (Oct 2024)](https://attackexplorer.org/scenarios/lottie-player-npm-ace-supply-chain-2024): Unpinned `unpkg`/`jsDelivr` CDN Ace Drainer modal injection.
+- [CircleCI OAuth & CI/CD Secret Store Supply-Chain Breach](https://attackexplorer.org/scenarios/circleci-oauth-github-token-rotation-breach): Engineer laptop infostealer -> 2FA SSO session hijack -> customer GitHub/AWS token theft.
+- [JetBrains TeamCity CVE-2024-27198 CI/CD Supply-Chain Build Poisoning](https://attackexplorer.org/scenarios/jetbrains-teamcity-cve-2024-27198-supply-chain-build-poisoning): `;jsp=.jsp` auth bypass, `SYSTEM_ADMIN` token minting, and release runner injection.
+- [PyTorch-Nightly torchtriton PyPI Dependency Confusion](https://attackexplorer.org/scenarios/pypi-pytorch-torchtriton-dependency-confusion-supply-chain): Public PyPI namespace shadowing and chunked DNS exfiltration (`*.h4ck.cfd`).
 
-## Links
-- Homepage & Interactive Simulator: https://attackexplorer.org/
-- Full Scenario & MITRE ATT&CK Catalog for LLMs: https://attackexplorer.org/llms-full.txt
-- Authoritative Analytical Sources & Legal Compliance: https://attackexplorer.org/sources
-- About the Creator (Mohammad Mirasadollahi): https://attackexplorer.org/about
-- Security Disclosure Policy: https://attackexplorer.org/.well-known/security.txt
+## Canonical Documentation & E-E-A-T Links
+- [Interactive Workbench](https://attackexplorer.org/)
+- [About the Creator — Mohammad Mirasadollahi](https://attackexplorer.org/about)
+- [Authoritative Sources, Citations & Legal Compliance](https://attackexplorer.org/sources)
+- [Full Scenario Encyclopedia for AI Agents (157 Scenarios)](https://attackexplorer.org/llms-full.txt)
+- [XML Sitemap](https://attackexplorer.org/sitemap.xml)

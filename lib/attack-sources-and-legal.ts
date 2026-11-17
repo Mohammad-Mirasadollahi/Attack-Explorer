@@ -78,6 +78,16 @@ export const GLOBAL_FRAMEWORK_SOURCES: SourceCitation[] = [
     usageSummary:
       'Used for incident response workflow modeling, CVE-2021-44228 (Log4Shell) forensic artifacts, and ransomware shadow-copy deletion indicators.',
   },
+  {
+    id: 'pikered-clr-profiler-research',
+    organization: 'PikeRed Cybersecurity Research',
+    title: 'Abusing the CLR Profiler: A Trusted-Binary Loader Chain for Initial Access',
+    referenceCode: 'PIKERED-CLR-PROFILER-T1574.012',
+    licenseOrTerms: 'PikeRed Public Defensive & Threat Research Publication',
+    url: 'https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/',
+    usageSummary:
+      'Documents the .vhdx Mark-of-the-Web (MotW) container bypass, attrib +h +s super-hidden file evasion, and volatile process-environment COR_ENABLE_PROFILING=1 / COR_PROFILER_PATH injection into signed .NET binaries (KeePass.exe).',
+  },
 ];
 
 export const SCENARIO_ATTRIBUTION_MAP: Record<

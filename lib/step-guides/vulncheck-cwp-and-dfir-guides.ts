@@ -6,6 +6,7 @@ import { DFIR_OFFICIAL_BATCH2_WINDOWS_ARTIFACTS_SCENARIOS } from '../scenarios/d
 import { DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS } from '../scenarios/dfir-official-batch3-linux-cloud-containers';
 import { DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS } from '../scenarios/dfir-official-batch4-network-appliances-memory';
 import { OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS } from '../scenarios/official-batch5-specialized-categories';
+import { OFFICIAL_BATCH6_RANSOMWARE_SUPPLYCHAIN_CLR_SCENARIOS } from '../scenarios/official-batch6-ransomware-supplychain-clr';
 
 const ALL_NEW_DFIR_AND_CWP_DRAFTS: LegacyDraftScenario[] = [
   ...VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS,
@@ -13,6 +14,7 @@ const ALL_NEW_DFIR_AND_CWP_DRAFTS: LegacyDraftScenario[] = [
   ...DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS,
   ...DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS,
   ...OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS,
+  ...OFFICIAL_BATCH6_RANSOMWARE_SUPPLYCHAIN_CLR_SCENARIOS,
 ];
 
 interface CustomScenarioNarrativeMeta {
@@ -22,6 +24,17 @@ interface CustomScenarioNarrativeMeta {
 }
 
 const CUSTOM_DFIR_NARRATIVE_META: Record<string, CustomScenarioNarrativeMeta> = {
+  'pikered-clr-profiler-trusted-binary-loader-chain': {
+    advisory:
+      'PikeRed Security Research ("Abusing the CLR Profiler: A Trusted-Binary Loader Chain for Initial Access"), Microsoft .NET Unmanaged Profiling API Specification & MITRE ATT&CK T1574.012',
+    briefingAnalogy:
+      'Imagine shipping a locked virtual cargo container (.vhdx) so individual items inside bypass the customs stamp (Mark-of-the-Web Zone.Identifier), hiding the real engine parts behind a false wall (attrib +h +s), and setting an official diagnostic inspection flag (COR_ENABLE_PROFILING=1 and COR_PROFILER_PATH) before starting a trusted, digitally signed vehicle (KeePass.exe) so the vehicle own runtime engine (clr.dll) automatically bolts on and executes the attacker custom module (PerformanceTrace.dll).',
+    stepAnalogies: [
+      'Think of mounting a sealed virtual shipping crate (.vhdx) where only the outer crate has a customs tag, so the shortcut inside runs without SmartScreen warnings while real binaries stay invisible behind super-hidden OS flags (+h +s).',
+      'Think of writing diagnostic override instructions onto the workshop clipboard (process environment block COR_ENABLE_PROFILING=1, COR_PROFILER, COR_PROFILER_PATH) right before launching a trusted, signed .NET application (KeePass.exe).',
+      'Think of the .NET engine (mscoree.dll and clr.dll) obediently reading that clipboard at startup, loading the attacker unmanaged DLL without touching the Windows Registry, and running its Initialize() callback inside the signed process.',
+    ],
+  },
   'dfir-ntds-dit-vssadmin-esentutl-extraction': {
     advisory:
       'CISA Joint Advisory AA23-075A, Microsoft ESENT Event Logging Specification (EventID 325/326) & MITRE ATT&CK T1003.003',

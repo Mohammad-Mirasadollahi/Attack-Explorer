@@ -169,4 +169,63 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
       'Expected InspectorPanel.tsx scope title to use <h2> while preserving data-testid'
     );
   });
+
+  it('indexes all 10 new official Ransomware scenarios, the PikeRed CLR Profiler scenario + URL, and 5 famous recent Supply Chain scenarios across sitemap, JSON-LD, and agent Markdown', () => {
+    const newRansomwareIds = [
+      'alphv-blackcat-sphynx-rust-impacket-exmatter',
+      'royal-blacksuit-ransomware-chacha20-restartmanager',
+      'ransomhub-edrkiller-tdsskiller-golocks',
+      'medusa-ransomware-gaze-abyss-pdqdeploy',
+      'qilin-agenda-rust-chrome-cred-harvester-esxi',
+      'hunters-international-hive-rust-wsus-sharpwmi',
+      'inc-ransom-lynx-citrix-netscaler-wmic-mega',
+      'cactus-ransomware-qlik-sense-ssh-batch-unpacker',
+      'eightbase-phobos-smoke-loader-process-hacker',
+      'cl0p-truebot-flawedgrace-sdbbot-ransomware',
+    ];
+    const newSupplyChainIds = [
+      'rspack-solana-web3js-npm-supply-chain-2024',
+      'lottie-player-npm-ace-supply-chain-2024',
+      'circleci-oauth-github-token-rotation-breach',
+      'jetbrains-teamcity-cve-2024-27198-supply-chain-build-poisoning',
+      'pypi-pytorch-torchtriton-dependency-confusion-supply-chain',
+    ];
+    const pikeredId = 'pikered-clr-profiler-trusted-binary-loader-chain';
+    const pikeredUrl =
+      'https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/';
+
+    const sitemapUrls = sitemap().map((e) => e.url);
+
+    for (const id of [...newRansomwareIds, ...newSupplyChainIds, pikeredId]) {
+      const scenario = ATTACK_SCENARIOS.find((s) => s.id === id);
+      assert.ok(scenario, `Expected scenario ${id} in ATTACK_SCENARIOS`);
+      assert.ok(
+        sitemapUrls.some((u) => u.endsWith(`/scenarios/${id}`)),
+        `Expected /scenarios/${id} in XML sitemap`
+      );
+      const jsonLd = buildScenarioJsonLd(scenario, 'https://attackexplorer.org');
+      assert.equal(jsonLd['@graph'][0]['@type'], 'TechArticle');
+      assert.equal(jsonLd['@graph'][1]['@type'], 'HowTo');
+      assert.equal(jsonLd['@graph'][1].step.length, 3);
+    }
+
+    const pikeredScenario = ATTACK_SCENARIOS.find((s) => s.id === pikeredId)!;
+    const pikeredJsonLd = buildScenarioJsonLd(
+      pikeredScenario,
+      'https://attackexplorer.org'
+    );
+    const citations = pikeredJsonLd['@graph'][0].citation;
+    assert.ok(
+      citations.some((c: { url: string }) => c.url === pikeredUrl),
+      'Expected PikeRed CLR Profiler URL in Schema.org TechArticle citation'
+    );
+
+    const pikeredMd = buildAgentMarkdownResponse(
+      `/scenarios/${pikeredId}`,
+      undefined,
+      'https://attackexplorer.org'
+    );
+    assert.ok(pikeredMd.includes(pikeredUrl));
+    assert.ok(pikeredMd.includes('COR_ENABLE_PROFILING'));
+  });
 });

@@ -34,7 +34,7 @@ export const PLATFORM_FAQ_ITEMS = [
   {
     question: 'What is Attack Explorer and how does it map to MITRE ATT&CK?',
     answer:
-      'Attack Explorer is an interactive step-by-step visual cybersecurity simulator, SIEM/Sysmon log analyzer, and malware behavioral analysis workbench. It maps 141 documented adversary intrusion scenarios across Workstation, Active Directory Domain Controller, and Cloud environments directly to MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).',
+      'Attack Explorer is an interactive step-by-step visual cybersecurity simulator, SIEM/Sysmon log analyzer, and malware behavioral analysis workbench. It maps 157 documented adversary intrusion scenarios across Workstation, Active Directory Domain Controller, and Cloud environments directly to MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).',
   },
   {
     question:
