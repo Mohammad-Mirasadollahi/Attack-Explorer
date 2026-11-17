@@ -34,9 +34,15 @@ const patrickHand = Patrick_Hand({
 });
 
 const siteUrl = resolveSiteUrl();
+let metadataBaseUrl: URL;
+try {
+  metadataBaseUrl = new URL(siteUrl);
+} catch {
+  metadataBaseUrl = new URL('https://www.attackexplorer.com');
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: metadataBaseUrl,
   title: {
     default: 'Attack Explorer — Visual Cyber Attack, Log & Malware Analyzer',
     template: '%s | Attack Explorer',

@@ -23,9 +23,11 @@ import manifest from '../app/manifest';
 
 describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
   it('resolves canonical site URL without trailing slashes', () => {
-    assert.equal(resolveSiteUrl('https://attackexplorer.org/'), 'https://attackexplorer.org');
-    assert.equal(resolveSiteUrl('https://attackexplorer.org///'), 'https://attackexplorer.org');
-    assert.equal(resolveSiteUrl(''), 'https://attackexplorer.org');
+    assert.equal(resolveSiteUrl('https://www.attackexplorer.com/'), 'https://www.attackexplorer.com');
+    assert.equal(resolveSiteUrl('https://www.attackexplorer.com///'), 'https://www.attackexplorer.com');
+    assert.equal(resolveSiteUrl(''), 'https://www.attackexplorer.com');
+    assert.equal(resolveSiteUrl('MY_APP_URL'), 'https://www.attackexplorer.com');
+    assert.equal(resolveSiteUrl('not-a-url'), 'https://www.attackexplorer.com');
   });
 
   it('generates valid robots.txt rules with AI crawler policies and sitemap pointer (Module 02)', () => {

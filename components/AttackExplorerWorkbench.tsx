@@ -71,6 +71,7 @@ import {
   WorkbenchLayoutMode,
 } from '@/lib/layout-preference';
 import {
+  clearDiagramMemoryForTesting,
   hasStoredDiagramSnapshot,
   parseWorkbenchUrlState,
   readLastVisitedDiagramSnapshot,
@@ -206,50 +207,74 @@ export function AttackExplorerWorkbench() {
   const [memoryHydrated, setMemoryHydrated] = useState<boolean>(false);
 
   const applyUrlOrSnapshotState = useCallback(() => {
-    const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
-    const parsed = parseWorkbenchUrlState(
-      typeof window !== 'undefined' ? window.location.search : '',
-      typeof window !== 'undefined' ? window.location.hash : '',
-      remembered
-    );
+    try {
+      const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
+      const parsed = parseWorkbenchUrlState(
+        typeof window !== 'undefined' ? window.location.search : '',
+        typeof window !== 'undefined' ? window.location.hash : '',
+        remembered
+      );
 
-    const targetSnapshot = parsed.state;
-    const validScenario =
-      ATTACK_SCENARIOS.find((s) => s.id === targetSnapshot.scenarioId) ||
-      ATTACK_SCENARIOS.find((s) => s.id === remembered.scenarioId) ||
-      ATTACK_SCENARIOS[0];
+      const targetSnapshot = parsed.state;
+      const validScenario =
+        ATTACK_SCENARIOS.find((s) => s.id === targetSnapshot.scenarioId) ||
+        ATTACK_SCENARIOS.find((s) => s.id === remembered.scenarioId) ||
+        ATTACK_SCENARIOS[0];
 
-    const clampedStage = Math.min(
-      Math.max(0, targetSnapshot.activeStageIndex),
-      validScenario.stages.length
-    );
+      const clampedStage = Math.min(
+        Math.max(0, targetSnapshot.activeStageIndex),
+        validScenario.stages.length
+      );
 
-    setSelectedScenarioId(validScenario.id);
-    setActiveStageIndex(clampedStage);
-    setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
-    if (parsed.hasUrlOverrides) {
-      setShowIntro(false);
-    }
-    setActiveEnvironment(targetSnapshot.activeEnvironment);
-    setExpandedNodeId(targetSnapshot.expandedNodeId);
-    setSelectedNodeId(targetSnapshot.selectedNodeId);
-    setSelectedInternalSubNodeId(targetSnapshot.selectedInternalSubNodeId);
-    setSelectedTelemetryId(targetSnapshot.selectedTelemetryId);
-    setTacticalMode(targetSnapshot.tacticalMode);
-    setViewMode(targetSnapshot.viewMode);
-    setInspectorOpen(targetSnapshot.inspectorOpen);
-    setInspectorTab(targetSnapshot.inspectorTab);
-    setInspectorScopeOverride(targetSnapshot.inspectorScopeOverride);
-    setIsDark(targetSnapshot.isDark);
-    setPlaybackSpeed(targetSnapshot.playbackSpeed);
-    setFocusedPartHash(parsed.focusedPartHash);
-    setMemoryHydrated(true);
+      // Only keep topology/raw view modes that DiagramCanvas can render.
+      const safeViewMode =
+        targetSnapshot.viewMode === 'RAW_TABLES' ? 'RAW_TABLES' : 'TOPOLOGY';
 
-    if (parsed.focusedPartHash && typeof document !== 'undefined') {
-      window.setTimeout(() => {
-        const el = document.getElementById(parsed.focusedPartHash!);
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 120);
+      setSelectedScenarioId(validScenario.id);
+      setActiveStageIndex(clampedStage);
+      setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+      if (parsed.hasUrlOverrides) {
+        setShowIntro(false);
+      }
+      setActiveEnvironment(targetSnapshot.activeEnvironment);
+      setExpandedNodeId(targetSnapshot.expandedNodeId);
+      setSelectedNodeId(targetSnapshot.selectedNodeId);
+      setSelectedInternalSubNodeId(targetSnapshot.selectedInternalSubNodeId);
+      setSelectedTelemetryId(targetSnapshot.selectedTelemetryId);
+      setTacticalMode(targetSnapshot.tacticalMode);
+      setViewMode(safeViewMode);
+      setInspectorOpen(targetSnapshot.inspectorOpen);
+      setInspectorTab(targetSnapshot.inspectorTab);
+      setInspectorScopeOverride(targetSnapshot.inspectorScopeOverride);
+      setIsDark(targetSnapshot.isDark);
+      setPlaybackSpeed(targetSnapshot.playbackSpeed);
+      setFocusedPartHash(parsed.focusedPartHash);
+      setMemoryHydrated(true);
+
+      if (parsed.focusedPartHash && typeof document !== 'undefined') {
+        window.setTimeout(() => {
+          const el = document.getElementById(parsed.focusedPartHash!);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }
+    } catch (error) {
+      console.error('Failed to restore workbench URL/snapshot state:', error);
+      try {
+        clearDiagramMemoryForTesting();
+      } catch {
+        // Ignore storage failures
+      }
+      setSelectedScenarioId(ATTACK_SCENARIOS[0].id);
+      setActiveStageIndex(0);
+      setCinematicPhase('OVERVIEW');
+      setViewMode('TOPOLOGY');
+      setInspectorOpen(false);
+      setExpandedNodeId(null);
+      setSelectedNodeId(null);
+      setSelectedInternalSubNodeId(null);
+      setSelectedTelemetryId(null);
+      setFocusedPartHash(null);
+      setMemoryHydrated(true);
     }
   }, []);
 
@@ -270,25 +295,8 @@ export function AttackExplorerWorkbench() {
   // Automatically save the complete workbench state in localStorage AND synchronize the browser URL whenever the user navigates across scenarios, steps, sections, nodes, sub-nodes, packets, or inspector tabs
   useEffect(() => {
     if (!memoryHydrated) return;
-    saveLastVisitedDiagramSnapshot({
-      scenarioId: selectedScenarioId,
-      activeStageIndex,
-      activeEnvironment,
-      expandedNodeId,
-      selectedNodeId,
-      selectedInternalSubNodeId,
-      selectedTelemetryId,
-      tacticalMode,
-      viewMode,
-      inspectorOpen,
-      inspectorTab,
-      inspectorScopeOverride,
-      isDark,
-      playbackSpeed,
-    });
-
-    if (typeof window !== 'undefined') {
-      const nextRelativeUrl = serializeWorkbenchUrlState({
+    try {
+      saveLastVisitedDiagramSnapshot({
         scenarioId: selectedScenarioId,
         activeStageIndex,
         activeEnvironment,
@@ -296,21 +304,42 @@ export function AttackExplorerWorkbench() {
         selectedNodeId,
         selectedInternalSubNodeId,
         selectedTelemetryId,
+        tacticalMode,
         viewMode,
         inspectorOpen,
         inspectorTab,
         inspectorScopeOverride,
-        focusedPartHash,
-        currentSearch: window.location.search,
+        isDark,
+        playbackSpeed,
       });
-      const currentRelativeUrl = `${window.location.search}${window.location.hash}`;
-      if (currentRelativeUrl !== nextRelativeUrl) {
-        window.history.replaceState(
-          null,
-          '',
-          `${window.location.pathname}${nextRelativeUrl}`
-        );
+
+      if (typeof window !== 'undefined') {
+        const nextRelativeUrl = serializeWorkbenchUrlState({
+          scenarioId: selectedScenarioId,
+          activeStageIndex,
+          activeEnvironment,
+          expandedNodeId,
+          selectedNodeId,
+          selectedInternalSubNodeId,
+          selectedTelemetryId,
+          viewMode,
+          inspectorOpen,
+          inspectorTab,
+          inspectorScopeOverride,
+          focusedPartHash,
+          currentSearch: window.location.search,
+        });
+        const currentRelativeUrl = `${window.location.search}${window.location.hash}`;
+        if (currentRelativeUrl !== nextRelativeUrl) {
+          window.history.replaceState(
+            null,
+            '',
+            `${window.location.pathname}${nextRelativeUrl}`
+          );
+        }
       }
+    } catch (error) {
+      console.error('Failed to persist / sync workbench URL state:', error);
     }
   }, [
     memoryHydrated,
@@ -491,13 +520,13 @@ export function AttackExplorerWorkbench() {
         setViewMode('TOPOLOGY');
       }
 
+      const baseSchematic = buildWhiteboardSchematic(
+        activeScenario,
+        activeStageIndex,
+        activeEnvironment
+      );
       setInjectedVectorsByScenario((prev) => {
         const current = prev[activeScenario.id] || { nodes: [], flows: [] };
-        const baseSchematic = buildWhiteboardSchematic(
-          activeScenario,
-          activeStageIndex,
-          activeEnvironment
-        );
         const existingNodes = [...baseSchematic.nodes, ...current.nodes];
         const existingFlows = [...baseSchematic.flows, ...current.flows];
         const { node, flow } = instantiateAttackVectorNode({
@@ -510,10 +539,14 @@ export function AttackExplorerWorkbench() {
           sequenceOffset: current.nodes.length + 1,
         });
 
-        setSelectedNodeId(node.id);
-        if (flow) {
-          setSelectedTelemetryId(flow.telemetryEvent.id);
-        }
+        // Schedule selection updates outside the state updater to avoid
+        // nested setState / update-depth crashes in React 19.
+        queueMicrotask(() => {
+          setSelectedNodeId(node.id);
+          if (flow) {
+            setSelectedTelemetryId(flow.telemetryEvent.id);
+          }
+        });
 
         return {
           ...prev,

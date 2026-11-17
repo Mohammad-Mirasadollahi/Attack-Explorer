@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { clearDiagramMemoryForTesting } from '@/lib/diagram-memory-store';
 
 export default function GlobalErrorBoundary({
   error,
@@ -13,6 +14,17 @@ export default function GlobalErrorBoundary({
   useEffect(() => {
     console.error('Attack Explorer recovered from client exception:', error);
   }, [error]);
+
+  const handleResume = () => {
+    try {
+      // Drop a corrupt persisted workbench snapshot so remount does not
+      // immediately re-enter the same render crash loop.
+      clearDiagramMemoryForTesting();
+    } catch {
+      // Ignore storage failures in private mode
+    }
+    reset();
+  };
 
   return (
     <div
@@ -33,7 +45,7 @@ export default function GlobalErrorBoundary({
         <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={handleResume}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />

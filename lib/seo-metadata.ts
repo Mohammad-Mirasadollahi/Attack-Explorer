@@ -7,18 +7,57 @@ import {
 } from './attack-sources-and-legal';
 import { getCuratedThreatIntel } from './threat-intel-service';
 
-export const DEFAULT_SITE_URL = 'https://attackexplorer.org';
+export const DEFAULT_SITE_URL = 'https://www.attackexplorer.com';
 export const CANONICAL_CONTENT_LAST_MODIFIED = '2026-11-17';
 
+const PLACEHOLDER_SITE_URL_PATTERN =
+  /^(MY_APP_URL|YOUR_APP_URL|APP_URL|CHANGE_ME|TODO)$/i;
+
+function isUsableAbsoluteHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    if (!parsed.hostname) {
+      return false;
+    }
+    // Reject placeholder hostnames that are not real deploy targets.
+    if (
+      parsed.hostname === 'example.com' ||
+      parsed.hostname === 'www.example.com'
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolves the canonical public origin for metadata, sitemap, robots, and JSON-LD.
+ * Rejects empty values and AI Studio / Cloud Run placeholders such as `MY_APP_URL`
+ * so `new URL(siteUrl)` in the root layout never throws Invalid URL.
+ */
 export function resolveSiteUrl(envUrl?: string): string {
-  const raw = (
-    envUrl ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.APP_URL ??
-    DEFAULT_SITE_URL
-  ).trim();
-  if (!raw) return DEFAULT_SITE_URL;
-  return raw.replace(/\/+$/, '');
+  const candidates = [
+    envUrl,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.APP_URL,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const raw = candidate.trim();
+    if (!raw || PLACEHOLDER_SITE_URL_PATTERN.test(raw)) continue;
+    const normalized = raw.replace(/\/+$/, '');
+    if (isUsableAbsoluteHttpUrl(normalized)) {
+      return normalized;
+    }
+  }
+
+  return DEFAULT_SITE_URL;
 }
 
 export const AUTHOR_PROFILE = {
