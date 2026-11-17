@@ -5,6 +5,8 @@ import path from 'node:path';
 import {
   resolveSiteUrl,
   buildRootJsonLd,
+  buildAboutJsonLd,
+  buildSourcesJsonLd,
   buildScenarioJsonLd,
   buildAgentMarkdownResponse,
   AUTHOR_PROFILE,
@@ -55,18 +57,26 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
     assert.ok(Array.isArray(webManifest.icons) && webManifest.icons.length >= 3);
   });
 
-  it('builds root Schema.org JSON-LD @graph with WebApplication, TechArticle, and Person (Module 04)', () => {
+  it('builds root Schema.org JSON-LD @graph with WebApplication, TechArticle, Person, and FAQPage (Module 04)', () => {
     const graphObj = buildRootJsonLd('https://attackexplorer.org');
     assert.equal(graphObj['@context'], 'https://schema.org');
-    assert.equal(graphObj['@graph'].length, 3);
+    assert.equal(graphObj['@graph'].length, 4);
 
-    const [webApp, techArticle, person] = graphObj['@graph'];
+    const [webApp, techArticle, person, faqPage] = graphObj['@graph'];
     assert.equal(webApp['@type'], 'WebApplication');
     assert.equal(webApp.applicationCategory, 'SecurityApplication');
     assert.equal(techArticle['@type'], 'TechArticle');
     assert.equal(person['@type'], 'Person');
     assert.equal(person.name, AUTHOR_PROFILE.name);
     assert.ok(Array.isArray(person.sameAs) && person.sameAs.length >= 3);
+    assert.equal(faqPage['@type'], 'FAQPage');
+    assert.ok(Array.isArray(faqPage.mainEntity) && faqPage.mainEntity.length >= 3);
+
+    const aboutGraph = buildAboutJsonLd('https://attackexplorer.org');
+    assert.equal(aboutGraph['@graph'][0]['@type'], 'ProfilePage');
+
+    const sourcesGraph = buildSourcesJsonLd('https://attackexplorer.org');
+    assert.equal(sourcesGraph['@graph'][0]['@type'], 'CollectionPage');
   });
 
   it('builds per-scenario Schema.org JSON-LD with TechArticle, HowTo, and BreadcrumbList (Module 04)', () => {
@@ -84,11 +94,17 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
     assert.equal(breadcrumb.itemListElement.length, 2);
   });
 
-  it('builds clean Markdown responses for AI agents negotiating Accept: text/markdown (Module 06)', () => {
+  it('builds clean Markdown responses for AI agents negotiating Accept: text/markdown across /, /about, /sources, and /scenarios/[id] (Module 06)', () => {
     const rootMd = buildAgentMarkdownResponse('/', undefined, 'https://attackexplorer.org');
     assert.ok(rootMd.startsWith('# Attack Explorer'));
     assert.ok(rootMd.includes('## Core Capabilities'));
     assert.ok(rootMd.includes('/llms-full.txt'));
+
+    const aboutMd = buildAgentMarkdownResponse('/about', undefined, 'https://attackexplorer.org');
+    assert.ok(aboutMd.includes('Mohammad Mirasadollahi'));
+
+    const sourcesMd = buildAgentMarkdownResponse('/sources', undefined, 'https://attackexplorer.org');
+    assert.ok(sourcesMd.includes('Global Analytical Frameworks'));
 
     const scenarioMd = buildAgentMarkdownResponse(
       '/scenarios/process-hollowing',

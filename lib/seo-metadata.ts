@@ -30,8 +30,28 @@ export const AUTHOR_PROFILE = {
   ],
 } as const;
 
+export const PLATFORM_FAQ_ITEMS = [
+  {
+    question: 'What is Attack Explorer and how does it map to MITRE ATT&CK?',
+    answer:
+      'Attack Explorer is an interactive step-by-step visual cybersecurity simulator, SIEM/Sysmon log analyzer, and malware behavioral analysis workbench. It maps 141 documented adversary intrusion scenarios across Workstation, Active Directory Domain Controller, and Cloud environments directly to MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).',
+  },
+  {
+    question:
+      'How does Attack Explorer correlate network diagrams with Sysmon and SIEM logs?',
+    answer:
+      'Each kill-chain stage synchronizes live 2D network topology flows with host process trees, Virtual Address Descriptor (VAD) memory allocations, Windows Event IDs (4624, 4688, 4769, 7045), Sysmon Event IDs (1, 3, 8, 10, 11, 22, 25), and defensive Sigma, YARA, Suricata, and KQL detection rules.',
+  },
+  {
+    question:
+      'Are the malware payloads, IP addresses, and forensic logs in Attack Explorer safe for training?',
+    answer:
+      'Yes. 100% of telemetry, IP subnets (RFC 1918 / RFC 5737 documentation blocks), hostnames, process IDs, and hex memory previews in Attack Explorer are synthetic, de-identified educational simulations designed strictly for defensive SOC training, DFIR education, and detection engineering.',
+  },
+] as const;
+
 /**
- * Builds the root Schema.org JSON-LD @graph (WebApplication + TechArticle + Person)
+ * Builds the root Schema.org JSON-LD @graph (WebApplication + TechArticle + Person + FAQPage)
  * per Module 04 and Module 08 of the SEO Audit blueprint.
  */
 export function buildRootJsonLd(siteUrlInput?: string) {
@@ -103,6 +123,105 @@ export function buildRootJsonLd(siteUrlInput?: string) {
         jobTitle: AUTHOR_PROFILE.role,
         url: `${siteUrl}/about`,
         sameAs: [...AUTHOR_PROFILE.sameAs],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${siteUrl}/#faq`,
+        mainEntity: PLATFORM_FAQ_ITEMS.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      },
+    ],
+  };
+}
+
+/**
+ * Builds Schema.org ProfilePage + BreadcrumbList JSON-LD for /about.
+ */
+export function buildAboutJsonLd(siteUrlInput?: string) {
+  const siteUrl = resolveSiteUrl(siteUrlInput);
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'ProfilePage',
+        '@id': `${siteUrl}/about#profile`,
+        url: `${siteUrl}/about`,
+        name: `About ${AUTHOR_PROFILE.name} — Creator of Attack Explorer`,
+        inLanguage: 'en',
+        mainEntity: {
+          '@type': 'Person',
+          '@id': `${siteUrl}/#author`,
+          name: AUTHOR_PROFILE.name,
+          jobTitle: AUTHOR_PROFILE.role,
+          url: `${siteUrl}/about`,
+          sameAs: [...AUTHOR_PROFILE.sameAs],
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${siteUrl}/about#breadcrumb`,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Attack Explorer',
+            item: siteUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'About the Creator',
+            item: `${siteUrl}/about`,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Builds Schema.org CollectionPage + BreadcrumbList JSON-LD for /sources.
+ */
+export function buildSourcesJsonLd(siteUrlInput?: string) {
+  const siteUrl = resolveSiteUrl(siteUrlInput);
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${siteUrl}/sources#collection`,
+        url: `${siteUrl}/sources`,
+        name: 'Analytical Sources, Citations, Legal Compliance & Scenario Directory | Attack Explorer',
+        description:
+          'Authoritative cybersecurity threat intelligence sources, MITRE ATT&CK citations, synthetic telemetry compliance, and scenario directory for Attack Explorer.',
+        inLanguage: 'en',
+        isPartOf: {
+          '@id': `${siteUrl}/#webapp`,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${siteUrl}/sources#breadcrumb`,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Attack Explorer',
+            item: siteUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Sources, Citations & Scenario Directory',
+            item: `${siteUrl}/sources`,
+          },
+        ],
       },
     ],
   };
@@ -209,6 +328,53 @@ export function buildAgentMarkdownResponse(
   siteUrlInput?: string
 ): string {
   const siteUrl = resolveSiteUrl(siteUrlInput);
+
+  if (pathname === '/about' || pathname === '/about/') {
+    return [
+      `# About ${AUTHOR_PROFILE.name} — Creator of Attack Explorer`,
+      '',
+      `- **Role:** ${AUTHOR_PROFILE.role}`,
+      `- **Canonical URL:** ${siteUrl}/about`,
+      `- **GitHub:** https://github.com/Mohammad-Mirasadollahi`,
+      `- **X (Twitter):** https://x.com/M_Mirasadollahi`,
+      `- **LinkedIn:** https://www.linkedin.com/in/mohammad-mirasadollahi/`,
+      `- **Security Contact:** mailto:security@attackexplorer.org`,
+      '',
+      '## Platform Mission',
+      `Attack Explorer bridges high-level network architecture diagrams with low-level SIEM/Sysmon log and process memory forensics across ${ATTACK_SCENARIOS.length} documented adversary scenarios mapped to MITRE ATT&CK.`,
+      '',
+      '## Legal & Synthetic Telemetry Notice',
+      LEGAL_COMPLIANCE_STATEMENT.syntheticDataGuarantee,
+      '',
+    ].join('\n');
+  }
+
+  if (pathname === '/sources' || pathname === '/sources/') {
+    const fwList = GLOBAL_FRAMEWORK_SOURCES.map(
+      (fw) =>
+        `- **${fw.organization} (${fw.referenceCode}):** [${fw.title}](${fw.url}) — ${fw.usageSummary}`
+    ).join('\n');
+    const allScenariosList = ATTACK_SCENARIOS.map(
+      (sc) =>
+        `- [${sc.code}: ${sc.name}](${siteUrl}/scenarios/${sc.id}) — ${sc.shortSubtitle}`
+    ).join('\n');
+
+    return [
+      '# Analytical Sources, Citations, Legal Compliance & Scenario Directory',
+      '',
+      `- **Canonical URL:** ${siteUrl}/sources`,
+      '',
+      '## Global Analytical Frameworks',
+      fwList,
+      '',
+      '## Legal & Synthetic Telemetry Notice',
+      LEGAL_COMPLIANCE_STATEMENT.syntheticDataGuarantee,
+      '',
+      `## Complete Scenario Directory (${ATTACK_SCENARIOS.length} Scenarios)`,
+      allScenariosList,
+      '',
+    ].join('\n');
+  }
 
   // Check if a specific scenario was requested via /scenarios/[id] or ?scenario=<id>
   const scenarioMatch = pathname.match(/^\/scenarios\/([^/]+)\/?$/);

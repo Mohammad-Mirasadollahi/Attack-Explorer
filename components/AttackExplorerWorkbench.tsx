@@ -43,8 +43,9 @@ import {
   InspectorPanel,
   InspectorTab,
 } from './InspectorPanel';
-import { AnimeIntroLoader } from './AnimeIntroLoader';
-
+const AnimeIntroLoader = dynamic(() =>
+  import('./AnimeIntroLoader').then((m) => m.AnimeIntroLoader)
+);
 const AttackLibrary = dynamic(() =>
   import('./AttackLibrary').then((m) => m.AttackLibrary)
 );
@@ -79,8 +80,8 @@ export function AttackExplorerWorkbench() {
   // Strictly English-only interface
   const [isDark, setIsDark] = useState<boolean>(false);
 
-  // Minimal Anime Game-Style Entrance Loading Sequence State
-  const [showIntro, setShowIntro] = useState<boolean>(true);
+  // Default to false on SSR & initial load so crawlers, Lighthouse, and users see the workbench immediately without LCP delay or aria-hidden
+  const [showIntro, setShowIntro] = useState<boolean>(false);
 
   // Responsive (native mobile) by default; Desktop available in Settings
   const [layoutMode, setLayoutMode] =
@@ -92,11 +93,13 @@ export function AttackExplorerWorkbench() {
 
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
+      const params = new URLSearchParams(window.location.search);
       if (
-        shouldSkipIntroFromSearch(window.location.search) ||
-        hasStoredDiagramSnapshot()
+        params.get('intro') === '1' &&
+        !shouldSkipIntroFromSearch(window.location.search) &&
+        !hasStoredDiagramSnapshot()
       ) {
-        setShowIntro(false);
+        setShowIntro(true);
       }
     });
     return () => window.cancelAnimationFrame(rafId);
@@ -720,21 +723,12 @@ export function AttackExplorerWorkbench() {
           )}
         </AnimatePresence>
 
-        {/* Main workbench reveals with motion after intro exits (no hard cut) */}
+        {/* Main workbench shell remains accessible in SSR HTML for crawlers and screen readers */}
         <motion.div
           data-testid="workbench-shell"
           data-workbench-revealed={showIntro ? 'false' : 'true'}
-          aria-hidden={showIntro}
           initial={false}
-          animate={
-            showIntro
-              ? {
-                  opacity: 0,
-                }
-              : {
-                  opacity: 1,
-                }
-          }
+          animate={{ opacity: 1 }}
           transition={{
             duration: 0.35,
             ease: 'easeOut',

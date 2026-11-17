@@ -106,7 +106,7 @@ export default async function ScenarioLandingPage({
         >
           <div className="flex items-center gap-2 text-xs font-mono">
             <Link
-              href="/?autostart=1"
+              href="/"
               className="inline-flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -126,7 +126,7 @@ export default async function ScenarioLandingPage({
           </div>
 
           <Link
-            href={`/?scenario=${encodeURIComponent(scenario.id)}&autostart=1`}
+            href={`/?scenario=${encodeURIComponent(scenario.id)}`}
             data-testid="launch-scenario-in-simulator-btn"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm transition-colors"
           >

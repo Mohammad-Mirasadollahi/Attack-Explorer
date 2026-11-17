@@ -5,7 +5,7 @@ import {
   GLOBAL_FRAMEWORK_SOURCES,
   LEGAL_COMPLIANCE_STATEMENT,
 } from '@/lib/attack-sources-and-legal';
-import { AUTHOR_PROFILE } from '@/lib/seo-metadata';
+import { AUTHOR_PROFILE, PLATFORM_FAQ_ITEMS } from '@/lib/seo-metadata';
 
 const FEATURED_SCENARIO_IDS = [
   'process-hollowing',
@@ -74,6 +74,16 @@ export function SeoSemanticDocumentation() {
           </li>
         ))}
       </ul>
+
+      <h3>Frequently Asked Questions (MITRE ATT&amp;CK &amp; DFIR Simulation)</h3>
+      <dl>
+        {PLATFORM_FAQ_ITEMS.map((faq, idx) => (
+          <React.Fragment key={idx}>
+            <dt>{faq.question}</dt>
+            <dd>{faq.answer}</dd>
+          </React.Fragment>
+        ))}
+      </dl>
 
       <h3>
         Authoritative Analytical Methodology, Privacy Policy &amp; Responsible

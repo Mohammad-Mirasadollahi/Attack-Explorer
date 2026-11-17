@@ -134,7 +134,7 @@ export function PlaybackControlBar({
             className="h-6 px-2 flex items-center gap-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 text-[10px] font-semibold shadow-md backdrop-blur-md transition-colors cursor-pointer"
           >
             <Eye className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <span>Controls</span>
+            <span>Controls</span>{' '}
             <span className="px-1 py-0.1 rounded bg-zinc-100 dark:bg-zinc-800 text-[9.5px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
               {Math.round(effectiveScale * 100)}%
             </span>

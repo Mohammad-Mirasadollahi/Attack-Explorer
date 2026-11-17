@@ -5,7 +5,7 @@ import {
   GLOBAL_FRAMEWORK_SOURCES,
   LEGAL_COMPLIANCE_STATEMENT,
 } from '@/lib/attack-sources-and-legal';
-import { resolveSiteUrl } from '@/lib/seo-metadata';
+import { buildSourcesJsonLd, resolveSiteUrl } from '@/lib/seo-metadata';
 import { ArrowLeft, ExternalLink, Scale, ShieldCheck } from 'lucide-react';
 
 const siteUrl = resolveSiteUrl();
@@ -23,21 +23,45 @@ export const metadata: Metadata = {
     description:
       'Verified technical references from MITRE ATT&CK, CISA, Mandiant, Microsoft Threat Intelligence, Unit 42, and The DFIR Report.',
     url: `${siteUrl}/sources`,
+    siteName: 'Attack Explorer',
+    locale: 'en_US',
     type: 'article',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1600,
+        height: 900,
+        alt: 'Attack Explorer — Visual Cyber Attack, Log & Malware Analyzer',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title:
+      'Analytical Sources, Citations & Legal Compliance | Attack Explorer',
+    description:
+      'Verified technical references from MITRE ATT&CK, CISA, Mandiant, Microsoft Threat Intelligence, Unit 42, and The DFIR Report.',
+    images: ['/og-image.png'],
   },
 };
 
 export default function SourcesPage() {
+  const sourcesJsonLd = JSON.stringify(buildSourcesJsonLd());
+
   return (
     <main
       dir="ltr"
       data-testid="sources-seo-page"
       className="min-h-screen bg-[#FAFAFA] dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 py-10 px-4 sm:px-8"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: sourcesJsonLd }}
+      />
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between gap-4">
           <Link
-            href="/?autostart=1"
+            href="/"
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-900 text-xs font-bold transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
