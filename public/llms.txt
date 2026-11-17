@@ -2,7 +2,7 @@
 
 > Visual Cyber Attack, Log & Malware Analyzer mapped to MITRE ATT&CK.
 
-Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (158 documented scenarios across 13 specialized categories).
+Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (178 documented scenarios across 13 specialized categories, including 25 Cloud & SaaS scenarios and 13 Docker/Container/Kubernetes scenarios).
 
 ## Core Capabilities
 - **Attack Simulation:** Step-by-step visual execution of real-world adversary scenarios across Workstation, Domain Controller, and Cloud environments.
@@ -10,10 +10,18 @@ Attack Explorer is an interactive step-by-step visual simulator and analyzer for
 - **Behavioral Mapping:** Direct mapping to MITRE ATT&CK tactics, techniques, and sub-techniques (TTPs).
 - **Process Memory Inspection:** Process hollowing, VAD memory forensics, CLR Profiler hijacking, and AMSI bypass flowcharts.
 
-## Featured & Newly Added Scenarios (Ransomware, Supply Chain, CLR Loader & AI Multi-Agent Intrusions)
+## Featured & Newly Added Scenarios (Cloud & SaaS, Docker/Containers, Ransomware, Supply Chain & AI Intrusions)
 - [Process Hollowing (T1055.012)](https://attackexplorer.org/scenarios/process-hollowing): `svchost.exe` suspension, section unmapping (`NtUnmapViewOfSection`), and memory injection.
 - [PikeRed — Abusing the .NET CLR Profiler: Trusted-Binary Loader Chain (T1574.012)](https://attackexplorer.org/scenarios/pikered-clr-profiler-trusted-binary-loader-chain): `.vhdx` MotW bypass, `+h +s` super-hidden files, and `COR_ENABLE_PROFILING=1` / `COR_PROFILER_PATH` hijacking of signed `KeePass.exe` ([PikeRed Research](https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/)).
 - [Jeffrey Appel — ARTEX Multi-Agent LLM Framework: Machine-Speed Attacks & Microsoft Defender XDR Disruption (T1110.003)](https://attackexplorer.org/scenarios/jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr): Go + Next.js Planner-Worker LLM agents chaining `Storm-0940` password spraying, web shells, `RC4` Kerberoasting, and 5-minute Azure Key Vault exfiltration countered by Defender XDR Automatic Attack Disruption and KQL multi-alert burst correlation ([Jeffrey Appel Research](https://jeffreyappel.nl/artex-old-attacks-at-machine-speed-and-how-microsoft-defender-keeps-up/)).
+- [Midnight Blizzard (APT29) — Entra ID Legacy OAuth App Compromise & Exchange full_access_as_app Role Audit (CISA ED 24-02)](https://attackexplorer.org/scenarios/cloud-midnight-blizzard-oauth-legacy-test-app-audit): Legacy OAuth app password spray, Service Principal credential injection, and `full_access_as_app` Exchange Graph EWS audit.
+- [AWS IAM & STS — GetFederationToken Console Sign-In Token Minting & MFA Bypass Audit (T1550.001)](https://attackexplorer.org/scenarios/cloud-aws-sts-federation-token-console-signin-audit): `sts:GetFederationToken` to `signin.aws.amazon.com/federation` console session minting with `MFAUsed: "No"`.
+- [AWS S3 & KMS — Cross-Account KMS Key Re-Encryption & S3 Object Lifecycle Extortion Audit (T1486)](https://attackexplorer.org/scenarios/cloud-aws-s3-kms-external-account-encryption-extortion-audit): In-place `CopyObject` re-encryption with external KMS Customer Managed Keys and 1-day `PutBucketLifecycleConfiguration` purge.
+- [GitHub Actions & Cloud OIDC — pull_request_target Untrusted Checkout & Federated Role Token Audit (T1195.002)](https://attackexplorer.org/scenarios/cloud-github-actions-pull-request-target-oidc-token-audit): `pull_request_target` untrusted fork checkout and `sts:AssumeRoleWithWebIdentity` OIDC token exchange.
+- [Docker Engine — Unauthenticated TCP Port 2375 REST API Exposure & Host File System Bind Mount Audit (T1610)](https://attackexplorer.org/scenarios/docker-engine-unauthenticated-tcp-2375-api-socket-audit): Unauthenticated Docker REST API `POST /v1.43/containers/create` with `Privileged:true` and `Binds:["/:/hostfs:rw"]`.
+- [Docker BuildKit & runc — Cache Mount Race & WORKDIR File Descriptor Leak Audit (CVE-2024-23651 & CVE-2024-21626)](https://attackexplorer.org/scenarios/docker-buildkit-runc-cache-mount-race-cve-2024-23651): Leaky Vessels `RUN --mount=type=cache` symlink race (`CVE-2024-23651`) and `runc` `/proc/self/fd` leak (`CVE-2024-21626`).
+- [Linux Containers — CAP_SYS_ADMIN Cgroup v1 notify_on_release & release_agent Host Execution Audit (T1611)](https://attackexplorer.org/scenarios/container-cap-sys-admin-cgroup-release-agent-notify-audit): Over-privileged container `CAP_SYS_ADMIN` cgroup v1 `release_agent` execution via `overlayfs` `upperdir`.
+- [Kubernetes Admission Control — MutatingWebhookConfiguration Registration & Pod Sidecar Injection Audit (T1546)](https://attackexplorer.org/scenarios/k8s-mutating-admission-webhook-sidecar-injection-audit): Cluster-wide `MutatingWebhookConfiguration` intercepting `pods/CREATE` to inject JSONPatch sidecar containers.
 - [ALPHV / BlackCat (Sphynx Rust) Ransomware (CISA AA23-353A)](https://attackexplorer.org/scenarios/alphv-blackcat-sphynx-rust-impacket-exmatter): `--access-token` SHA-256 gate, ExMatter exfiltration, and `fsutil` symlink encryption.
 - [Royal & BlackSuit Ransomware (CISA AA23-061A / AA24-219A)](https://attackexplorer.org/scenarios/royal-blacksuit-ransomware-chacha20-restartmanager): Windows Restart Manager (`RstrtMgr.dll`) handle unlocking and partial-stripe encryption.
 - [RansomHub Ransomware (CISA AA24-242A)](https://attackexplorer.org/scenarios/ransomhub-edrkiller-tdsskiller-golocks): `EDRKillShifter` / `TDSSKiller.exe` BYOVD kernel termination and `-pass` SHA-256 config decryption.
@@ -34,5 +42,5 @@ Attack Explorer is an interactive step-by-step visual simulator and analyzer for
 - [Interactive Workbench](https://attackexplorer.org/)
 - [About the Creator — Mohammad Mirasadollahi](https://attackexplorer.org/about)
 - [Authoritative Sources, Citations & Legal Compliance](https://attackexplorer.org/sources)
-- [Full Scenario Encyclopedia for AI Agents (158 Scenarios)](https://attackexplorer.org/llms-full.txt)
+- [Full Scenario Encyclopedia for AI Agents (178 Scenarios)](https://attackexplorer.org/llms-full.txt)
 - [XML Sitemap](https://attackexplorer.org/sitemap.xml)

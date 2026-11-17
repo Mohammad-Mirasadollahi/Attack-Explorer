@@ -19,9 +19,9 @@ import {
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 158 scenarios organized into 13 specialized categories', () => {
+  it('filterScenarios filters by category and search query accurately across all 178 scenarios organized into 13 specialized categories', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 158);
+    assert.equal(all.length, 178);
 
     const zeroDayAppliances = filterScenarios(
       ATTACK_SCENARIOS,
@@ -38,7 +38,14 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.ok(malwareOnly.length >= 25);
 
     const cloudSaas = filterScenarios(ATTACK_SCENARIOS, 'CLOUD_SAAS', '');
-    assert.ok(cloudSaas.length >= 15);
+    assert.ok(cloudSaas.length >= 25);
+
+    const containersK8s = filterScenarios(
+      ATTACK_SCENARIOS,
+      'CONTAINERS_KUBERNETES',
+      ''
+    );
+    assert.ok(containersK8s.length >= 13);
 
     const byMitre = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'T1055.012');
     assert.equal(byMitre.length, 1);
@@ -138,7 +145,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 158);
+    assert.equal(fullLib.totalCount, 178);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass

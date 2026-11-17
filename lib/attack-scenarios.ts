@@ -26,6 +26,7 @@ import { DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS } from './scenari
 import { DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS } from './scenarios/dfir-official-batch4-network-appliances-memory';
 import { OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS } from './scenarios/official-batch5-specialized-categories';
 import { OFFICIAL_BATCH6_RANSOMWARE_SUPPLYCHAIN_CLR_SCENARIOS } from './scenarios/official-batch6-ransomware-supplychain-clr';
+import { OFFICIAL_BATCH7_CLOUD_AND_CONTAINERS_SCENARIOS } from './scenarios/official-batch7-cloud-and-containers';
 import { normalizeLegacyDraftScenario } from './scenarios/normalize-legacy-draft-scenario';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
 import { ensureCascadingProcessHierarchy } from './documentation-structural-diagrams';
@@ -57,6 +58,7 @@ const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   ...DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS.map(normalizeLegacyDraftScenario),
   ...OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS.map(normalizeLegacyDraftScenario),
   ...OFFICIAL_BATCH6_RANSOMWARE_SUPPLYCHAIN_CLR_SCENARIOS.map(normalizeLegacyDraftScenario),
+  ...OFFICIAL_BATCH7_CLOUD_AND_CONTAINERS_SCENARIOS.map(normalizeLegacyDraftScenario),
 ];
 
 function dedupeScenariosById(scenarios: AttackScenario[]): AttackScenario[] {

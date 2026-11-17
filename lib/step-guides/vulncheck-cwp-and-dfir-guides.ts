@@ -7,6 +7,7 @@ import { DFIR_OFFICIAL_BATCH3_LINUX_CLOUD_CONTAINERS_SCENARIOS } from '../scenar
 import { DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS } from '../scenarios/dfir-official-batch4-network-appliances-memory';
 import { OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS } from '../scenarios/official-batch5-specialized-categories';
 import { OFFICIAL_BATCH6_RANSOMWARE_SUPPLYCHAIN_CLR_SCENARIOS } from '../scenarios/official-batch6-ransomware-supplychain-clr';
+import { OFFICIAL_BATCH7_CLOUD_AND_CONTAINERS_SCENARIOS } from '../scenarios/official-batch7-cloud-and-containers';
 
 const ALL_NEW_DFIR_AND_CWP_DRAFTS: LegacyDraftScenario[] = [
   ...VULNCHECK_CWP_AND_DFIR_BATCH1_SCENARIOS,
@@ -15,6 +16,7 @@ const ALL_NEW_DFIR_AND_CWP_DRAFTS: LegacyDraftScenario[] = [
   ...DFIR_OFFICIAL_BATCH4_NETWORK_APPLIANCES_MEMORY_SCENARIOS,
   ...OFFICIAL_BATCH5_SPECIALIZED_CATEGORIES_SCENARIOS,
   ...OFFICIAL_BATCH6_RANSOMWARE_SUPPLYCHAIN_CLR_SCENARIOS,
+  ...OFFICIAL_BATCH7_CLOUD_AND_CONTAINERS_SCENARIOS,
 ];
 
 interface CustomScenarioNarrativeMeta {

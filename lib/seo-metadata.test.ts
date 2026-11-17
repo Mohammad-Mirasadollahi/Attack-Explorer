@@ -271,6 +271,51 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
     );
     assert.ok(pikeredMd.includes(pikeredUrl));
     assert.ok(pikeredMd.includes('COR_ENABLE_PROFILING'));
+
+    const newCloudSaasIds = [
+      'cloud-midnight-blizzard-oauth-legacy-test-app-audit',
+      'cloud-aws-sts-federation-token-console-signin-audit',
+      'cloud-entra-id-conditional-access-device-code-phishing-audit',
+      'cloud-aws-s3-kms-external-account-encryption-extortion-audit',
+      'cloud-azure-vm-custom-script-extension-managed-identity-audit',
+      'cloud-github-actions-pull-request-target-oidc-token-audit',
+      'cloud-salesforce-connected-app-oauth-bulk-api-export-audit',
+      'cloud-aws-eks-aws-auth-configmap-system-masters-audit',
+      'cloud-gcp-cloud-build-default-service-account-artifact-audit',
+      'cloud-m365-sharepoint-ediscovery-compliance-search-export-audit',
+    ];
+    const newContainerDockerIds = [
+      'docker-engine-unauthenticated-tcp-2375-api-socket-audit',
+      'docker-var-run-docker-sock-mounted-socket-breakout-audit',
+      'docker-buildkit-runc-cache-mount-race-cve-2024-23651',
+      'container-cap-sys-admin-cgroup-release-agent-notify-audit',
+      'container-cap-sys-module-kernel-ko-insmod-load-audit',
+      'k8s-coredns-dns-poisoning-service-account-token-audit',
+      'k8s-mutating-admission-webhook-sidecar-injection-audit',
+      'k8s-daemonset-node-selector-cluster-wide-pod-scheduling-audit',
+      'k8s-ephemeral-debug-container-process-namespace-share-audit',
+      'docker-oci-registry-manifest-layer-poisoning-cosign-audit',
+    ];
+
+    for (const id of newCloudSaasIds) {
+      const scenario = ATTACK_SCENARIOS.find((s) => s.id === id);
+      assert.ok(scenario, `Expected Cloud & SaaS scenario ${id} in ATTACK_SCENARIOS`);
+      assert.equal(scenario.category, 'CLOUD_SAAS');
+      assert.ok(
+        sitemapUrls.some((u) => u.endsWith(`/scenarios/${id}`)),
+        `Expected /scenarios/${id} in XML sitemap`
+      );
+    }
+
+    for (const id of newContainerDockerIds) {
+      const scenario = ATTACK_SCENARIOS.find((s) => s.id === id);
+      assert.ok(scenario, `Expected Docker/Container scenario ${id} in ATTACK_SCENARIOS`);
+      assert.equal(scenario.category, 'CONTAINERS_KUBERNETES');
+      assert.ok(
+        sitemapUrls.some((u) => u.endsWith(`/scenarios/${id}`)),
+        `Expected /scenarios/${id} in XML sitemap`
+      );
+    }
   });
 
   it('enforces the Mandatory New Scenario & Article Ingestion + SEO/GEO Synchronization Standard across every scenario in ATTACK_SCENARIOS', () => {
