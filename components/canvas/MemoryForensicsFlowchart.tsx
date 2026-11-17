@@ -249,7 +249,6 @@ export function MemoryForensicsFlowchart({
                   );
                 }
               }}
-              aria-label={`Filter by ${macro.title}`}
               className={`relative flex flex-col justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
                 theme.cardBg
               } ${isSelected ? theme.activeRing : ''} ${

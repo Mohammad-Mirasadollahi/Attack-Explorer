@@ -171,7 +171,7 @@ export function AnimeIntroLoader({
         <button
           type="button"
           data-testid="skip-intro-btn"
-          aria-label="Skip intro animation"
+          aria-label="Skip Intro"
           onClick={onComplete}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-300/90 dark:border-zinc-700/90 bg-white/90 dark:bg-zinc-900/90 hover:bg-zinc-900 hover:text-white dark:hover:bg-zinc-100 dark:hover:text-zinc-900 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0 shadow-2xs"
         >

@@ -818,12 +818,12 @@ export function InspectorPanel({
                   </span>
                 </div>
 
-                <h1
+                <h2
                   data-testid="inspector-scope-title"
                   className="text-base sm:text-lg font-extrabold text-zinc-950 dark:text-white leading-snug break-words"
                 >
                   {pageTitle}
-                </h1>
+                </h2>
               </section>
               {/* Context-Aware Documented Virtual Memory Forensics Callout */}
               {scopedMemory.hasDocumentedMemory && (

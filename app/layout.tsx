@@ -10,6 +10,7 @@ import {
   DESKTOP_LAYOUT_WIDTH,
   LAYOUT_MODE_STORAGE_KEY,
 } from '@/lib/layout-preference';
+import { buildRootJsonLd, resolveSiteUrl } from '@/lib/seo-metadata';
 
 const jakartaSans = Plus_Jakarta_Sans({
   weight: ['400', '500', '600', '700', '800'],
@@ -32,21 +33,83 @@ const patrickHand = Patrick_Hand({
   display: 'swap',
 });
 
+const siteUrl = resolveSiteUrl();
+
 export const metadata: Metadata = {
-  title: 'Attack Explorer — Visual Cyber Attack, Log & Malware Analyzer',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Attack Explorer — Visual Cyber Attack, Log & Malware Analyzer',
+    template: '%s | Attack Explorer',
+  },
   description:
     'An interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to MITRE ATT&CK.',
+  applicationName: 'Attack Explorer',
+  alternates: {
+    canonical: '/',
+  },
+  keywords: [
+    'MITRE ATT&CK',
+    'Cyber Attack Simulator',
+    'SIEM Log Analysis',
+    'Sysmon Telemetry',
+    'Malware Behavior Analysis',
+    'DFIR Forensics',
+    'Process Hollowing',
+    'Ransomware Simulation',
+    'Kerberoasting',
+  ],
+  authors: [
+    {
+      name: 'Mohammad Mirasadollahi',
+      url: 'https://github.com/Mohammad-Mirasadollahi',
+    },
+    { name: 'Attack Explorer Team' },
+  ],
+  creator: 'Attack Explorer',
+  publisher: 'Attack Explorer',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: {
     title: 'Attack Explorer — Visual Cyber Attack, Log & Malware Analyzer',
     description:
       'An interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to MITRE ATT&CK.',
+    url: siteUrl,
+    siteName: 'Attack Explorer',
+    locale: 'en_US',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1600,
+        height: 900,
+        alt: 'Attack Explorer Interactive Simulation Canvas',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Attack Explorer — Visual Cyber Attack, Log & Malware Analyzer',
     description:
       'An interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to MITRE ATT&CK.',
+    creator: '@M_Mirasadollahi',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -113,6 +176,8 @@ const LAYOUT_BOOTSTRAP_SCRIPT = `
 })();
 `;
 
+const ROOT_JSON_LD = JSON.stringify(buildRootJsonLd(siteUrl));
+
 export default function RootLayout({
   children,
 }: {
@@ -127,6 +192,10 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{ __html: LAYOUT_BOOTSTRAP_SCRIPT }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: ROOT_JSON_LD }}
         />
       </head>
       <body

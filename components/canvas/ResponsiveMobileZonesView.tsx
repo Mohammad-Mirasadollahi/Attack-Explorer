@@ -125,16 +125,16 @@ export function ResponsiveMobileZonesView({
                                     : 'bg-amber-500 text-slate-950 border-amber-700'
                           }`}
                         >
-                          <div className="text-[10.5px] font-bold leading-snug break-words">
+                          <code className="text-[10.5px] font-sans font-bold leading-snug break-words">
                             {merged.seqBadge} {merged.shortTitle}
-                          </div>
-                          <div
+                          </code>
+                          <code
                             className={`text-[9px] font-mono font-semibold leading-snug break-words ${
                               isDarkPill ? 'text-white/90' : 'text-slate-900/85'
                             }`}
                           >
                             {merged.keyMetric}
-                          </div>
+                          </code>
                         </div>
                       </div>
 
@@ -142,7 +142,7 @@ export function ResponsiveMobileZonesView({
                         <button
                           type="button"
                           data-testid={`mobile-node-expand-indicator-${node.id}`}
-                          aria-label={`Expand internal pipeline of ${node.label}`}
+                          aria-label={`Expand ${node.label}`}
                           title={`Expand inside #${node.chainOrder} ${node.label}`}
                           onClick={(e) => {
                             e.stopPropagation();

@@ -1,0 +1,6 @@
+Contact: mailto:security@attackexplorer.org
+Contact: https://github.com/Mohammad-Mirasadollahi
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://attackexplorer.org/.well-known/security.txt
+Policy: https://attackexplorer.org/sources

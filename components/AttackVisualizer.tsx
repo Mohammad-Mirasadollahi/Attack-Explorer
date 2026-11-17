@@ -202,6 +202,17 @@ export function AttackVisualizer({
   // Visibility toggle for Top Toolbar
   const [topBarHidden, setTopBarHidden] = useState<boolean>(false);
 
+  // Only mount the compact mobile zones view on narrow viewports (< 640px) so desktop/SSR DOM stays under 1,500 nodes
+  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(false);
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobileViewport(window.innerWidth < 640);
+    };
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    return () => window.removeEventListener('resize', syncViewport);
+  }, []);
+
   // Force-Directed Auto-Layout state per board scope
   const [autoLayoutModeByScope, setAutoLayoutModeByScope] = useState<
     Record<string, ForceLayoutPresetMode | null>
@@ -1923,7 +1934,7 @@ export function AttackVisualizer({
                   type="button"
                   data-testid="show-canvas-top-bar-btn"
                   onClick={() => setTopBarHidden(false)}
-                  aria-label="Show Canvas Top Bar"
+                  aria-label="Show Header"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 text-zinc-700 dark:text-zinc-200 hover:text-indigo-600 dark:hover:text-indigo-400 border border-zinc-200/90 dark:border-zinc-700 text-[11px] font-mono font-semibold shadow-md backdrop-blur-md transition-colors cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5 text-indigo-500" />
@@ -2147,7 +2158,7 @@ export function AttackVisualizer({
           </AnimatePresence>
 
           {/* 4A. Compact Mobile Board (Native vertical touch scroll, outside TransformWrapper) */}
-          {!forceDesktopCanvas && (
+          {!forceDesktopCanvas && isMobileViewport && (
             <div className="sm:hidden relative w-full h-full z-20 overflow-hidden">
               <ResponsiveMobileZonesView
                 zones={activeZones}
@@ -2638,16 +2649,18 @@ export function AttackVisualizer({
       </div>
 
       {/* Interactive Keyboard Shortcuts & Canvas Navigation Overlay */}
-      <KeyboardShortcutsModal
-        isOpen={shortcutsModalOpen}
-        onClose={() => onCloseShortcutsModal?.()}
-        activeToolMode={interactionMode}
-        effectiveScale={effectiveScale}
-        autoCameraEnabled={autoCameraEnabled}
-        tacticalMode={tacticalMode}
-        isPlaying={isPlaying}
-        onExecuteCommand={executeShortcutCommand}
-      />
+      {shortcutsModalOpen && (
+        <KeyboardShortcutsModal
+          isOpen={shortcutsModalOpen}
+          onClose={() => onCloseShortcutsModal?.()}
+          activeToolMode={interactionMode}
+          effectiveScale={effectiveScale}
+          autoCameraEnabled={autoCameraEnabled}
+          tacticalMode={tacticalMode}
+          isPlaying={isPlaying}
+          onExecuteCommand={executeShortcutCommand}
+        />
+      )}
     </div>
   );
 }

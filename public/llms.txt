@@ -1,0 +1,26 @@
+# Attack Explorer
+
+> Visual Cyber Attack, Log & Malware Analyzer mapped to MITRE ATT&CK.
+
+Attack Explorer is an interactive forensic simulation and security analysis web platform designed for security engineers, SOC analysts, DFIR investigators, and red/blue teams.
+
+## Core Capabilities
+- **Attack Simulation:** Step-by-step visual execution of real-world adversary scenarios across Workstation, Domain Controller, and Cloud environments.
+- **Log Forensics:** Live Sysmon, Windows Event Log, and SIEM packet breakdown with correlated Sigma detection rules.
+- **Behavioral Mapping:** Direct mapping to the MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).
+- **Process Memory Inspection:** Process hollowing, VAD memory forensics, and AMSI / ETW bypass flowcharts.
+
+## Key Scenarios Included
+- [Process Hollowing & Portable Executable Injection (T1055.012)](https://attackexplorer.org/scenarios/process-hollowing)
+- [Ransomware Volume Shadow Copy Wipe & Encryption (T1490, T1486)](https://attackexplorer.org/scenarios/ransomware-shadow-wipe)
+- [Log4Shell JNDI Remote Code Execution & DFIR Investigation (T1190, CVE-2021-44228)](https://attackexplorer.org/scenarios/log4shell-dfir)
+- [Active Directory Kerberoasting & Service Ticket Extraction (T1558.003)](https://attackexplorer.org/scenarios/ad-kerberoasting)
+- [DNS Tunneling Covert Command & Control & Data Exfiltration (T1071.004, T1048)](https://attackexplorer.org/scenarios/dns-tunneling-exfil)
+- [AMSI Bypass & Reflective DLL Memory Injection (T1562.001, T1620)](https://attackexplorer.org/scenarios/amsi-reflective-dll)
+
+## Links
+- Homepage & Interactive Simulator: https://attackexplorer.org/
+- Full Scenario & MITRE ATT&CK Catalog for LLMs: https://attackexplorer.org/llms-full.txt
+- Authoritative Analytical Sources & Legal Compliance: https://attackexplorer.org/sources
+- About the Creator (Mohammad Mirasadollahi): https://attackexplorer.org/about
+- Security Disclosure Policy: https://attackexplorer.org/.well-known/security.txt

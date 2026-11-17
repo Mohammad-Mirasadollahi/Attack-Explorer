@@ -348,7 +348,7 @@ export function WorkbenchIconTooltip({
               <button
                 type="button"
                 data-testid="workbench-tooltip-copy-btn"
-                aria-label="Copy tooltip text"
+                aria-label={copied ? 'Copied' : 'Copy'}
                 onClick={handleCopyText}
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800/90 hover:bg-zinc-700 text-[9px] font-mono font-semibold text-zinc-200 border border-zinc-700 transition-colors cursor-pointer"
               >
@@ -369,11 +369,7 @@ export function WorkbenchIconTooltip({
                 <button
                   type="button"
                   data-testid="workbench-diagram-tooltip-collapse-toggle"
-                  aria-label={
-                    isDetailCollapsed
-                      ? 'Show diagram tooltip details'
-                      : 'Hide diagram tooltip details'
-                  }
+                  aria-label={isDetailCollapsed ? 'Show' : 'Hide'}
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();

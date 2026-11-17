@@ -129,7 +129,7 @@ export function PlaybackControlBar({
           <button
             type="button"
             data-testid="show-playback-bar-btn"
-            aria-label="Show Playback and Canvas Controls"
+            aria-label={`Controls ${Math.round(effectiveScale * 100)}%`}
             onClick={() => setIsHidden(false)}
             className="h-6 px-2 flex items-center gap-1 rounded-lg bg-white/95 dark:bg-zinc-900/95 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200/90 dark:border-zinc-800 text-zinc-700 dark:text-zinc-200 text-[10px] font-semibold shadow-md backdrop-blur-md transition-colors cursor-pointer"
           >
@@ -196,7 +196,11 @@ export function PlaybackControlBar({
             whileTap={{ scale: 0.97 }}
             data-testid="playback-bar-play-pause-btn"
             aria-label={
-              isPlaying ? 'Pause Attack Sequence' : 'Play Attack Sequence'
+              isPlaying
+                ? 'Pause'
+                : activeStageIndex === 0 || activeStageIndex >= totalStages
+                  ? 'Play'
+                  : 'Resume'
             }
             onClick={onTogglePlay}
             className={`h-6 px-2 flex items-center gap-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer whitespace-nowrap shadow-2xs ${
@@ -361,7 +365,7 @@ export function PlaybackControlBar({
               <button
                 type="button"
                 data-testid="canvas-mode-select-btn"
-                aria-label="Box Select Tool"
+                aria-label="Select"
                 aria-pressed={interactionMode === 'SELECT'}
                 onClick={() => onInteractionModeChange?.('SELECT')}
                 className={`h-5 px-1.5 inline-flex items-center justify-center gap-1 rounded text-[9.5px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
@@ -384,7 +388,7 @@ export function PlaybackControlBar({
               <button
                 type="button"
                 data-testid="canvas-mode-pan-btn"
-                aria-label="Pan Page Tool"
+                aria-label="Pan"
                 aria-pressed={interactionMode === 'PAN'}
                 onClick={() => onInteractionModeChange?.('PAN')}
                 className={`h-5 px-1.5 inline-flex items-center justify-center gap-1 rounded text-[9.5px] font-mono font-semibold transition-colors cursor-pointer whitespace-nowrap ${
@@ -527,7 +531,7 @@ export function PlaybackControlBar({
               <button
                 type="button"
                 data-testid="canvas-reset-layout-btn"
-                aria-label="Reset Canvas Layout"
+                aria-label="Reset"
                 onClick={onResetZoom}
                 className="h-6 px-1.5 inline-flex items-center gap-1 rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[9.5px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap"
               >
@@ -566,9 +570,6 @@ export function PlaybackControlBar({
             }`}
           >
             <Camera className="w-3 h-3 shrink-0" />
-            <span className="sr-only">
-              {autoCameraEnabled ? 'AutoCam' : 'Manual'}
-            </span>
           </button>
         </WorkbenchIconTooltip>
 

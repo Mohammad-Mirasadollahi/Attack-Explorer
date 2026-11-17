@@ -484,7 +484,7 @@ export function AttackSidebar({
                             <button
                               type="button"
                               data-testid={`inject-attack-vector-btn-${vec.id}`}
-                              aria-label={`Inject ${vec.name} into canvas`}
+                              aria-label={`Canvas — Inject ${vec.name}`}
                               onClick={() => onInjectAttackVector?.(vec.id)}
                               className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-[9.5px] font-semibold transition-colors cursor-pointer shrink-0"
                             >

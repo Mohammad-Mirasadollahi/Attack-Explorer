@@ -183,6 +183,10 @@ export function AttackHeader({
       >
         {/* Left Zone: Animated Logo (Returns to Last Visited Diagram in Memory) + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
+          <h1 className="sr-only">
+            Attack Explorer — Visual Cyber Attack, Log &amp; Malware Analyzer
+            mapped to MITRE ATT&amp;CK
+          </h1>
           <WorkbenchIconTooltip
             label="Attack Explorer"
             badge="MEMORY"

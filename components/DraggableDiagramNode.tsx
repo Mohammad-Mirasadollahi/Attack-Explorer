@@ -300,9 +300,9 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
             }`}
           >
             <div className="text-[8.5px] font-bold leading-tight tracking-tight flex items-center justify-center gap-1">
-              <span>
+              <code className="font-sans">
                 {merged.seqBadge} {merged.shortTitle}
-              </span>
+              </code>
               {!isSubBoard && (
                 <Maximize2
                   aria-hidden="true"
@@ -310,7 +310,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
                 />
               )}
             </div>
-            <div
+            <code
               className={`text-[7.5px] font-mono font-semibold leading-tight ${
                 tacticalMode
                   ? 'text-emerald-400'
@@ -320,7 +320,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
               }`}
             >
               {merged.keyMetric}
-            </div>
+            </code>
           </div>
         );
       })()}

@@ -33,9 +33,9 @@ import {
   instantiateAttackVectorNode,
   PREDEFINED_ATTACK_VECTOR_LIBRARY,
 } from '@/lib/canvas-interaction-engine';
+import dynamic from 'next/dynamic';
 import { AttackHeader } from './AttackHeader';
 import { AttackSidebar } from './AttackSidebar';
-import { AttackLibrary } from './AttackLibrary';
 import { CanvasViewMode, DiagramCanvas } from './DiagramCanvas';
 import {
   DEFAULT_INSPECTOR_WIDTH,
@@ -43,11 +43,23 @@ import {
   InspectorPanel,
   InspectorTab,
 } from './InspectorPanel';
-import { LogAnalyzerModal } from './LogAnalyzerModal';
-import { SourcesAndLegalModal } from './SourcesAndLegalModal';
-import { AboutAuthorModal } from './AboutAuthorModal';
 import { AnimeIntroLoader } from './AnimeIntroLoader';
-import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
+
+const AttackLibrary = dynamic(() =>
+  import('./AttackLibrary').then((m) => m.AttackLibrary)
+);
+const LogAnalyzerModal = dynamic(() =>
+  import('./LogAnalyzerModal').then((m) => m.LogAnalyzerModal)
+);
+const SourcesAndLegalModal = dynamic(() =>
+  import('./SourcesAndLegalModal').then((m) => m.SourcesAndLegalModal)
+);
+const AboutAuthorModal = dynamic(() =>
+  import('./AboutAuthorModal').then((m) => m.AboutAuthorModal)
+);
+const KeyboardShortcutsModal = dynamic(() =>
+  import('./KeyboardShortcutsModal').then((m) => m.KeyboardShortcutsModal)
+);
 import { shouldSkipIntroFromSearch } from '@/lib/intro-loader-sequence';
 import { resolveKeyboardShortcutCommand } from '@/lib/keyboard-shortcuts';
 import {
@@ -184,33 +196,58 @@ export function AttackExplorerWorkbench() {
   const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
-  // Restore last visited workbench state from localStorage on mount
+  // Restore last visited workbench state or URL ?scenario=<id> parameter on mount
   const [memoryHydrated, setMemoryHydrated] = useState<boolean>(false);
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
       const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
-      const validScenario = ATTACK_SCENARIOS.find(
-        (s) => s.id === remembered.scenarioId
-      );
-      if (validScenario) {
-        setSelectedScenarioId(validScenario.id);
-        const clampedStage = Math.min(
-          remembered.activeStageIndex,
-          validScenario.stages.length
+      let queryScenarioId: string | null = null;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        queryScenarioId = params.get('scenario');
+      } catch {
+        queryScenarioId = null;
+      }
+
+      const queryScenario = queryScenarioId
+        ? ATTACK_SCENARIOS.find((s) => s.id === queryScenarioId)
+        : undefined;
+
+      if (queryScenario) {
+        setSelectedScenarioId(queryScenario.id);
+        setActiveStageIndex(0);
+        setCinematicPhase('OVERVIEW');
+        setShowIntro(false);
+      } else {
+        const validScenario = ATTACK_SCENARIOS.find(
+          (s) => s.id === remembered.scenarioId
         );
-        setActiveStageIndex(clampedStage);
-        setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+        if (validScenario) {
+          setSelectedScenarioId(validScenario.id);
+          const clampedStage = Math.min(
+            remembered.activeStageIndex,
+            validScenario.stages.length
+          );
+          setActiveStageIndex(clampedStage);
+          setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+        }
       }
       setActiveEnvironment(remembered.activeEnvironment);
-      setExpandedNodeId(remembered.expandedNodeId);
-      setSelectedNodeId(remembered.selectedNodeId);
-      setSelectedInternalSubNodeId(remembered.selectedInternalSubNodeId);
-      setSelectedTelemetryId(remembered.selectedTelemetryId);
+      setExpandedNodeId(queryScenario ? null : remembered.expandedNodeId);
+      setSelectedNodeId(queryScenario ? null : remembered.selectedNodeId);
+      setSelectedInternalSubNodeId(
+        queryScenario ? null : remembered.selectedInternalSubNodeId
+      );
+      setSelectedTelemetryId(
+        queryScenario ? null : remembered.selectedTelemetryId
+      );
       setTacticalMode(remembered.tacticalMode);
       setViewMode(remembered.viewMode);
-      setInspectorOpen(remembered.inspectorOpen);
+      setInspectorOpen(queryScenario ? false : remembered.inspectorOpen);
       setInspectorTab(remembered.inspectorTab);
-      setInspectorScopeOverride(remembered.inspectorScopeOverride);
+      setInspectorScopeOverride(
+        queryScenario ? null : remembered.inspectorScopeOverride
+      );
       setIsDark(remembered.isDark);
       setPlaybackSpeed(remembered.playbackSpeed);
       setMemoryHydrated(true);
@@ -887,35 +924,40 @@ export function AttackExplorerWorkbench() {
           </main>
         </motion.div>
 
-        {/* MITRE ATT&CK Technique & Scenario Library Modal */}
-        <AttackLibrary
-          isOpen={attackLibraryOpen}
-          onClose={() => setAttackLibraryOpen(false)}
-          activeScenarioId={activeScenario.id}
-          onSelectScenario={handleSelectScenario}
-        />
+        {/* Lazy-loaded Modals (mounted only when opened to keep initial DOM < 1500 nodes) */}
+        {attackLibraryOpen && (
+          <AttackLibrary
+            isOpen={attackLibraryOpen}
+            onClose={() => setAttackLibraryOpen(false)}
+            activeScenarioId={activeScenario.id}
+            onSelectScenario={handleSelectScenario}
+          />
+        )}
 
-        {/* Interactive Raw Log & Malware Trace Analyzer Modal */}
-        <LogAnalyzerModal
-          isOpen={analyzerModalOpen}
-          onClose={() => setAnalyzerModalOpen(false)}
-          onSelectScenario={(id) => handleSelectScenario(id, 0)}
-        />
+        {analyzerModalOpen && (
+          <LogAnalyzerModal
+            isOpen={analyzerModalOpen}
+            onClose={() => setAnalyzerModalOpen(false)}
+            onSelectScenario={(id) => handleSelectScenario(id, 0)}
+          />
+        )}
 
-        {/* Authoritative Sources, Citations & Legal Compliance Modal */}
-        <SourcesAndLegalModal
-          isOpen={sourcesModalOpen}
-          onClose={() => setSourcesModalOpen(false)}
-          scenario={activeScenario}
-        />
+        {sourcesModalOpen && (
+          <SourcesAndLegalModal
+            isOpen={sourcesModalOpen}
+            onClose={() => setSourcesModalOpen(false)}
+            scenario={activeScenario}
+          />
+        )}
 
-        <AboutAuthorModal
-          isOpen={aboutModalOpen}
-          onClose={() => setAboutModalOpen(false)}
-        />
+        {aboutModalOpen && (
+          <AboutAuthorModal
+            isOpen={aboutModalOpen}
+            onClose={() => setAboutModalOpen(false)}
+          />
+        )}
 
-        {/* Fallback Keyboard Shortcuts Modal when not in TOPOLOGY view */}
-        {viewMode !== 'TOPOLOGY' && (
+        {viewMode !== 'TOPOLOGY' && shortcutsModalOpen && (
           <KeyboardShortcutsModal
             isOpen={shortcutsModalOpen}
             onClose={() => setShortcutsModalOpen(false)}
