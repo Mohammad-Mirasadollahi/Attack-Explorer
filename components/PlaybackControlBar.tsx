@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Hand,
-  Keyboard,
   MousePointer,
   Move,
   Pause,
@@ -58,7 +57,6 @@ interface PlaybackControlBarProps {
   onSelectAllNodes?: () => void;
   diagramTooltipsEnabled?: boolean;
   onToggleDiagramTooltips?: () => void;
-  onOpenShortcutsModal?: () => void;
   hasCustomLayoutOrView?: boolean;
   isSearchFiltering?: boolean;
   searchQuery?: string;
@@ -97,7 +95,6 @@ export function PlaybackControlBar({
   onSelectAllNodes,
   diagramTooltipsEnabled = true,
   onToggleDiagramTooltips,
-  onOpenShortcutsModal,
   hasCustomLayoutOrView = false,
   isSearchFiltering = false,
   searchQuery = '',
@@ -494,27 +491,6 @@ export function PlaybackControlBar({
                 ) : (
                   <EyeOff className="w-3 h-3 shrink-0" />
                 )}
-              </button>
-            </WorkbenchIconTooltip>
-          )}
-
-          {/* Keyboard Shortcuts Overlay Trigger Button */}
-          {onOpenShortcutsModal && (
-            <WorkbenchIconTooltip
-              label="Keyboard Shortcuts"
-              badge="?"
-              detail="Hotkeys for Tools (B/P) & Canvas Navigation"
-              side="top"
-              align="right"
-            >
-              <button
-                type="button"
-                data-testid="canvas-shortcuts-btn"
-                aria-label="Open Keyboard Shortcuts Overlay"
-                onClick={onOpenShortcutsModal}
-                className="h-6 w-6 inline-flex items-center justify-center rounded-md bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 transition-colors cursor-pointer"
-              >
-                <Keyboard className="w-3 h-3 text-indigo-500 shrink-0" />
               </button>
             </WorkbenchIconTooltip>
           )}

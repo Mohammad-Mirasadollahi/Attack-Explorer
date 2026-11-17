@@ -1387,7 +1387,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(controlBarSrc.includes('canvas-auto-layout-btn'), true);
     assert.equal(controlBarSrc.includes('canvas-select-all-btn'), true);
     assert.equal(controlBarSrc.includes('canvas-toggle-diagram-tooltips-btn'), true);
-    assert.equal(controlBarSrc.includes('canvas-shortcuts-btn'), true);
+    assert.equal(controlBarSrc.includes('canvas-shortcuts-btn'), false);
     assert.equal(controlBarSrc.includes('canvas-reset-layout-btn'), true);
   });
 });

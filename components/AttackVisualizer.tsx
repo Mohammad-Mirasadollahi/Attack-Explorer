@@ -2627,7 +2627,6 @@ export function AttackVisualizer({
               onToggleDiagramTooltips={() =>
                 setDiagramTooltipsEnabled((prev) => !prev)
               }
-              onOpenShortcutsModal={onOpenShortcutsModal}
               hasCustomLayoutOrView={hasCustomLayoutOrView}
               isSearchFiltering={searchResult.isFiltering}
               searchQuery={searchResult.query}
