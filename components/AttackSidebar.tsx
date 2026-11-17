@@ -4,7 +4,6 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   ATTACK_SCENARIOS,
-  AttackCategory,
   AttackScenario,
 } from '@/lib/attack-scenarios';
 import {
@@ -34,8 +33,6 @@ import {
 import { OperationalGuideIcon } from './OperationalGuideIcon';
 
 interface AttackSidebarProps {
-  category?: AttackCategory;
-  onSelectCategory?: (cat: AttackCategory) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   displayedScenarios: AttackScenario[];

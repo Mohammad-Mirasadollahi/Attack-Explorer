@@ -55,17 +55,6 @@ import {
   Terminal,
 } from 'lucide-react';
 
-export const DEFAULT_INSPECTOR_WIDTH = 300;
-export const MIN_INSPECTOR_WIDTH = 240;
-export const MAX_INSPECTOR_WIDTH = 560;
-
-export function clampInspectorWidth(width: number): number {
-  if (!Number.isFinite(width)) return DEFAULT_INSPECTOR_WIDTH;
-  return Math.max(
-    MIN_INSPECTOR_WIDTH,
-    Math.min(MAX_INSPECTOR_WIDTH, Math.round(width))
-  );
-}
 
 export type InspectorTab =
   | 'OVERVIEW'
@@ -94,19 +83,13 @@ interface InspectorPanelProps {
   onSelectNode?: (nodeId: string | null) => void;
   onExpandedNodeChange?: (nodeId: string | null) => void;
   onSelectInternalSubNode?: (subNodeId: string | null) => void;
-  onScopeOverrideChange?: (override: InspectorScopeMode | null) => void;
   /** Controlled active tab for persistence across reloads */
   activeTab?: InspectorTab;
   onTabChange?: (tab: InspectorTab) => void;
   /** Close full-screen inspector page and return to the active diagram */
   onCloseInspectorPage?: () => void;
-  /** Return to the last visited diagram stored in memory when clicking Attack Explorer logo */
-  onReturnToRememberedDiagram?: () => void;
   /** Controlled visibility of the left navigation panel via the single main top-header button */
   sidebarOpen?: boolean;
-  /** Controlled width in px (kept for API compatibility) */
-  width?: number;
-  onResizeWidth?: (nextWidth: number) => void;
 }
 
 export interface FloatingHoverInspectorTriggerProps {
@@ -679,7 +662,6 @@ export function InspectorPanel({
                 activeEnvironment={activeEnvironment}
                 scopeBadgeText={scopeContext?.scopeBadgeText}
                 effectiveScope={effectiveScope}
-                width={1280}
               />
             </div>
           )}

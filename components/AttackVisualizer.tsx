@@ -453,7 +453,7 @@ export function AttackVisualizer({
     [rawSketchNodes, mainBoardNodeOffsets]
   );
 
-  const { flows: sketchFlows, backboneLinks: movedMainBackboneLinks } = useMemo(
+  const { flows: sketchFlows } = useMemo(
     () =>
       recomputeGeometryForMovedBoard(
         rawSketchNodes,
@@ -543,9 +543,6 @@ export function AttackVisualizer({
     [internalSubBoard, scenarioZones, currentBoardZoneOffsets]
   );
 
-  const activeBackboneLinks = internalSubBoard
-    ? internalSubBoard.backboneLinks
-    : movedMainBackboneLinks;
   const activeNodes = internalSubBoard
     ? internalSubBoard.subNodes
     : sketchNodes;
@@ -2290,7 +2287,6 @@ export function AttackVisualizer({
               >
                 <SketchWhiteboardSvg
                   zones={activeZones}
-                  backboneLinks={activeBackboneLinks}
                   sketchFlows={activeFlows}
                   selectedTelemetryId={selectedTelemetryId}
                   onSelectTelemetry={onSelectTelemetry}
@@ -2313,7 +2309,6 @@ export function AttackVisualizer({
                     }
                   activeEnvironment={activeEnvironment}
                   tacticalMode={tacticalMode}
-                    isInteracting={isCanvasInteracting}
                   />
 
                   {/* Persistent marquee node — painted imperatively during drag */}

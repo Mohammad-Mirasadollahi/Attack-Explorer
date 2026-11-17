@@ -2120,15 +2120,6 @@ export function buildScopedSequenceModel(
 
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const zoneById = new Map(zones.map((z) => [z.id, z]));
-  const scenarioGuide = buildDiagramStepGuideModel(
-    scenario,
-    activeStageIndex,
-    'OVERVIEW',
-    activeEnvironment
-  );
-  const stepCardByNumber = new Map(
-    scenarioGuide.steps.map((s) => [s.stepNumber, s])
-  );
 
   const selectedMainNode = scopeContext.selectedMainNode;
   const scopedFlows = selectedMainNode
@@ -2177,7 +2168,6 @@ export function buildScopedSequenceModel(
     const dstNode = nodeById.get(fl.toNodeId) || null;
     const srcZone = srcNode ? zoneById.get(srcNode.zoneId) : null;
     const dstZone = dstNode ? zoneById.get(dstNode.zoneId) : null;
-    const stepCard = stepCardByNumber.get(fl.stepNo) || null;
     const stageObj =
       scenario.stages[(fl.stageIndex || fl.stepNo) - 1] || scenario.stages[0];
     const taggedEv = tagTelemetryEventWithEnvironment(

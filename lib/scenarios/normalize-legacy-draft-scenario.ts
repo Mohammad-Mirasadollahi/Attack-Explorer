@@ -144,7 +144,6 @@ function mapSourceType(source: string | undefined): TelemetrySourceType {
 }
 
 function layoutNodes(rawNodes: LegacyDraftNode[]): DiagramNode[] {
-  const count = Math.max(1, rawNodes.length);
   return rawNodes.map((node, index) => {
     const col = index % 3;
     const row = Math.floor(index / 3);

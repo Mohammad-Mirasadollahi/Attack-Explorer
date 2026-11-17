@@ -9,7 +9,6 @@ import {
 } from '@/lib/simulation-engine';
 import {
   NETWORK_ZONE_COLUMNS,
-  NetworkBackboneLink,
   NetworkZoneColumn,
   sampleBezierPointAndAngle,
   WhiteboardSketchFlow,
@@ -17,7 +16,6 @@ import {
 
 interface SketchWhiteboardSvgProps {
   zones?: NetworkZoneColumn[];
-  backboneLinks?: NetworkBackboneLink[];
   sketchFlows: WhiteboardSketchFlow[];
   selectedTelemetryId: string | null;
   onSelectTelemetry: (event: TelemetryEvent) => void;
@@ -28,7 +26,6 @@ interface SketchWhiteboardSvgProps {
   ) => void;
   activeEnvironment?: ActiveEnvironmentId;
   tacticalMode?: boolean;
-  isInteracting?: boolean;
 }
 
 export const SketchWhiteboardSvg = memo(function SketchWhiteboardSvg({

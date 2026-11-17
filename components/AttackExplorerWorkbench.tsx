@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ATTACK_SCENARIOS,
-  AttackCategory,
   TelemetryEvent } from '@/lib/attack-scenarios';
 import {
   ActiveEnvironmentId,
@@ -15,9 +14,7 @@ import {
   ScenarioGroupByMode,
   ScenarioSortOption,
   stepBackward,
-  stepForward,
-  tagTelemetryEventWithEnvironment } from '@/lib/simulation-engine';
-import { ActiveEnvironmentProvider } from '@/lib/active-environment-context';
+  stepForward } from '@/lib/simulation-engine';
 import { CinematicPhase } from '@/lib/cinematic-camera-director';
 import {
   InspectorScopeMode,
@@ -38,7 +35,6 @@ import { AttackHeader } from './AttackHeader';
 import { AttackSidebar } from './AttackSidebar';
 import { CanvasViewMode, DiagramCanvas } from './DiagramCanvas';
 import {
-  DEFAULT_INSPECTOR_WIDTH,
   FloatingHoverInspectorTrigger,
   InspectorPanel,
   InspectorTab,
@@ -141,7 +137,6 @@ export function AttackExplorerWorkbench() {
     useState<ActiveEnvironmentId>(DEFAULT_ACTIVE_ENVIRONMENT);
 
   // Scenario, Filter, Sort & Categorize State
-  const [category, setCategory] = useState<AttackCategory>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<ScenarioSortOption>('DEFAULT');
   const [groupBy, setGroupBy] = useState<ScenarioGroupByMode>('CATEGORY');
@@ -193,9 +188,6 @@ export function AttackExplorerWorkbench() {
   // Inspector is now a dedicated full-screen page (closed by default on the diagram page, opened via Hover Inspector trigger or Header button)
   const [inspectorOpen, setInspectorOpen] = useState<boolean>(false);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>('OVERVIEW');
-  const [inspectorWidth, setInspectorWidth] = useState<number>(
-    DEFAULT_INSPECTOR_WIDTH
-  );
   const [attackLibraryOpen, setAttackLibraryOpen] = useState<boolean>(false);
   const [analyzerModalOpen, setAnalyzerModalOpen] = useState<boolean>(false);
   const [sourcesModalOpen, setSourcesModalOpen] = useState<boolean>(false);
@@ -411,8 +403,8 @@ export function AttackExplorerWorkbench() {
   }, [isDark]);
 
   const filteredScenarios = useMemo(
-    () => filterScenarios(ATTACK_SCENARIOS, category, searchQuery),
-    [category, searchQuery]
+    () => filterScenarios(ATTACK_SCENARIOS, 'ALL', searchQuery),
+    [searchQuery]
   );
 
   const activeScenario = useMemo(
@@ -690,21 +682,6 @@ export function AttackExplorerWorkbench() {
     }
   };
 
-  const displayedScenarios = useMemo(() => {
-    if (category === 'ACTIVE_DIRECTORY') {
-      const q = searchQuery.trim().toLowerCase();
-      return ATTACK_SCENARIOS.filter(
-        (s) =>
-          (s.category === 'ACTIVE_DIRECTORY' ||
-            s.category === 'NETWORK_WEB') &&
-          (!q ||
-            s.name.toLowerCase().includes(q) ||
-            s.code.toLowerCase().includes(q))
-      );
-    }
-    return filteredScenarios;
-  }, [category, searchQuery, filteredScenarios]);
-
   // Global Workbench Hotkeys (?, T, 1-4, [, ], Space, Esc)
   useEffect(() => {
     const onGlobalKeyDown = (e: KeyboardEvent) => {
@@ -778,10 +755,6 @@ export function AttackExplorerWorkbench() {
   }, [activeScenario]);
 
   return (
-    <ActiveEnvironmentProvider
-      value={activeEnvironment}
-      onChange={setActiveEnvironment}
-    >
       <div
         data-testid="workbench-root"
         data-active-environment={activeEnvironment}
@@ -881,11 +854,9 @@ export function AttackExplorerWorkbench() {
             <AnimatePresence initial={false}>
               {sidebarOpen && !inspectorOpen && (
                 <AttackSidebar
-                  category={category}
-                  onSelectCategory={setCategory}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
-                  displayedScenarios={displayedScenarios}
+                  displayedScenarios={filteredScenarios}
                   activeScenarioId={activeScenario.id}
                   onSelectScenario={(id) => handleSelectScenario(id, 0)}
                   sortBy={sortBy}
@@ -920,19 +891,13 @@ export function AttackExplorerWorkbench() {
                   onSelectNode={setSelectedNodeId}
                   onExpandedNodeChange={handleExpandedNodeChange}
                   onSelectInternalSubNode={handleSelectInternalSubNode}
-                  onScopeOverrideChange={setInspectorScopeOverride}
                   activeTab={inspectorTab}
                   onTabChange={setInspectorTab}
                   onCloseInspectorPage={() => {
                     setInspectorScopeOverride(null);
                     setInspectorOpen(false);
                   }}
-                  onReturnToRememberedDiagram={
-                    handleReturnToLastVisitedDiagram
-                  }
                   sidebarOpen={sidebarOpen}
-                  width={inspectorWidth}
-                  onResizeWidth={setInspectorWidth}
                 />
               ) : (
                 /* Main Active Workbench View + Floating Hover Inspector Option */
@@ -1046,6 +1011,5 @@ export function AttackExplorerWorkbench() {
           />
         )}
       </div>
-    </ActiveEnvironmentProvider>
   );
 }

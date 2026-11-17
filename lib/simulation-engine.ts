@@ -133,7 +133,7 @@ export function tagTelemetryEventWithEnvironment(
     environmentTaggedInfo: `[${profile.badgeLabel} · ${profile.telemetryTag}] ${event.info}` };
 }
 
-export function tagTelemetryListWithEnvironment(
+function tagTelemetryListWithEnvironment(
   events: TelemetryEvent[],
   envId: ActiveEnvironmentId = DEFAULT_ACTIVE_ENVIRONMENT
 ): TaggedTelemetryEvent[] {

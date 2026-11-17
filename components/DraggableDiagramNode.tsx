@@ -128,7 +128,7 @@ export const DraggableDiagramNode = memo(function DraggableDiagramNode({
       data-wy={node.wy}
       initial={false}
       // 2D transforms only — translate3d compositor tiles blur under parent zoom.
-      transformTemplate={({ x, y, scale }) =>
+      transformTemplate={({ y, scale }) =>
         `translate(-50%, calc(-50% + ${y ?? 0}px)) scale(${scale ?? 1})`
       }
       animate={{

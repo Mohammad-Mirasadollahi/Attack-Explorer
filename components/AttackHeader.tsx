@@ -702,8 +702,6 @@ export function AttackHeader({
         onSpeedChange={onSpeedChange}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={onToggleSidebar}
-        inspectorOpen={inspectorOpen}
-        onToggleInspector={onToggleInspector}
         onOpenAttackLibrary={onOpenAttackLibrary}
         onOpenAnalyzerModal={onOpenAnalyzerModal}
         onOpenSourcesModal={() => onOpenSourcesModal?.()}

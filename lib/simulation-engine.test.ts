@@ -1050,10 +1050,8 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       'components/InspectorPanel.tsx',
       'components/PlaybackControlBar.tsx',
       'components/StepByStepGuidePanel.tsx',
-      'components/MitreStats.tsx',
       'components/ThreatIntelCard.tsx',
       'components/canvas/ProcessMemoryView.tsx',
-      'components/canvas/SequenceView.tsx',
       'components/canvas/RawTablesView.tsx',
     ];
     for (const relPath of zeroTruncateFiles) {
@@ -1320,7 +1318,10 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       'components/DiagramLegendPanel.tsx',
       'components/EntityDrillDownDrawer.tsx',
       'components/IsometricNodeIcons.tsx',
+      'components/MitreStats.tsx',
+      'components/canvas/SequenceView.tsx',
       'hooks/use-mobile.ts',
+      'lib/active-environment-context.tsx',
       'lib/attack-visualizer-geometry.ts',
       'lib/camera-choreography.ts',
     ];

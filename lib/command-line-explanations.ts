@@ -88,7 +88,7 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     pattern: /\besentutl(?:\.exe)?\b|\bESENT\b/i,
     toolOrSubsystem:
       'esentutl.exe · Microsoft Extensible Storage Engine (ESE) Database Utility',
-    meaningBuilder: (cmd) =>
+    meaningBuilder: () =>
       `Executes Microsoft's signed Extensible Storage Engine utility (esentutl.exe) with the /y (file copy) and /vss (Volume Shadow Copy) switches to stream a locked ESE database file (such as ntds.dit or qmgr.db) to an attacker-accessible destination path.`,
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Performs Living-off-the-Land credential database extraction (${mitreId}) during "${contextTitle}" using a trusted Microsoft binary in C:\\Windows\\System32, while inadvertently generating deterministic ESENT EventID 325/326 telemetry in the Windows Application log.`,
@@ -97,7 +97,7 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     pattern: /\bntdsutil(?:\.exe)?\b|\bntds\.dit\b/i,
     toolOrSubsystem:
       'ntdsutil.exe · Active Directory Domain Services Management Utility',
-    meaningBuilder: (cmd) =>
+    meaningBuilder: () =>
       `Runs the native Active Directory maintenance CLI (ntdsutil.exe) with chained interactive subcommands ("ac i ntds" -> activate instance ntds, "ifm" -> Install From Media, "create full <path>") to generate a complete offline replica of the Active Directory database (ntds.dit) alongside the SYSTEM and SECURITY registry hives.`,
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Extracts every domain user, administrator, and krbtgt password hash in a single signed utility invocation (${mitreId}) during "${contextTitle}" so the attacker can crack hashes or forge Golden Tickets offline.`,
@@ -142,7 +142,7 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     pattern: /\bwevtutil(?:\.exe)?\b|\bClear-EventLog\b|\bEventID\s*(?:1102|104)\b/i,
     toolOrSubsystem:
       'wevtutil.exe / EventLog Service · Windows Event Log Management CLI',
-    meaningBuilder: (cmd) =>
+    meaningBuilder: () =>
       `Invokes the Windows Event Collector CLI utility (wevtutil.exe) with the cl (clear-log) or el (enum-logs) parameter to instruct svchost.exe (EventLog service) to truncate the active .evtx ring buffer under C:\\Windows\\System32\\winevt\\Logs\\.`,
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Attempts anti-forensic indicator removal (${mitreId}) during "${contextTitle}" by wiping recorded Windows Security, System, PowerShell, or Sysmon audit trails—which immediately causes the OS to write Security EventID 1102 or System EventID 104 and USN_REASON_DATA_TRUNCATION in $UsnJrnl:$J.`,
@@ -151,7 +151,7 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     pattern: /\bschtasks(?:\.exe)?\b|\bTaskCache\b|\b4698\b/i,
     toolOrSubsystem:
       'schtasks.exe / Schedule Service · Windows Task Scheduler Subsystem',
-    meaningBuilder: (cmd) =>
+    meaningBuilder: () =>
       `Calls the Windows Task Scheduler CLI (schtasks.exe) or ITaskService RPC interface to register, modify, or execute a scheduled task XML definition under C:\\Windows\\System32\\Tasks\\ and HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache.`,
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Establishes recurring execution persistence (${mitreId}) during "${contextTitle}" under SYSTEM or privileged account authority so the implant automatically respawns on schedule, boot, or user logon.`,
@@ -194,7 +194,7 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     pattern: /\bpsexec(?:\.exe|svc\.exe)?\b|\bsvcctl\b|\b5145\b|\b7045\b/i,
     toolOrSubsystem:
       'PsExec / PSEXESVC.exe · SMB ADMIN$ Share & Service Control Manager (SCM) RPC',
-    meaningBuilder: (cmd) =>
+    meaningBuilder: () =>
       `Uploads a service binary (such as PSEXESVC.exe) over SMB2/3 to the target's administrative \\\\<target>\\ADMIN$ share (C:\\Windows\\), opens the \\\\<target>\\IPC$\\svcctl RPC pipe to call CreateServiceW and StartServiceW, and redirects interactive console I/O over named pipes (-stdin, -stdout, -stderr).`,
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Executes lateral movement with immediate NT AUTHORITY\\SYSTEM privileges on the remote host (${mitreId}) during "${contextTitle}", leaving correlated forensic traces in Security EventID 5145, System EventID 7045, and Sysmon EventID 17/18.`,

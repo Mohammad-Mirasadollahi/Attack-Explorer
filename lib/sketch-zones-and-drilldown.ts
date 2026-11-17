@@ -537,37 +537,6 @@ export const NETWORK_ZONE_COLUMNS: NetworkZoneColumn[] = [
     bgTintClass: 'bg-violet-500/5' },
 ];
 
-export function classifyNodeDrillDownArchetype(
-  node: DiagramNode
-): DrillDownArchetype {
-  const text = `${node.id} ${node.label} ${node.sublabel} ${node.details.osOrType}`.toLowerCase();
-
-  if (
-    node.role === 'memory' ||
-    node.role === 'process' ||
-    /dropper|invoice|loader|reflective|lockbit|beacon|ntdll|amsi|hollow/i.test(text)
-  ) {
-    return 'MALWARE_PROCESSES';
-  }
-
-  if (
-    node.role === 'victim_host' ||
-    /wks|laptop|workstation|host|victim|endpoint/i.test(text)
-  ) {
-    return 'LAPTOP_HOST_ACTIVITY';
-  }
-
-  if (
-    node.role === 'domain_controller' ||
-    node.role === 'server' ||
-    /dc01|sql|domain|spring|fileserver|lateral|vss/i.test(text)
-  ) {
-    return 'LATERAL_MOVEMENT';
-  }
-
-  return 'PACKET_AND_GATEWAY';
-}
-
 interface ScenarioTopologyBlueprint {
   zones: NetworkZoneColumn[];
   nodeCoords: [

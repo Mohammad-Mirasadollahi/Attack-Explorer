@@ -24,8 +24,6 @@ interface SelectedTelemetryDetailProps {
   activeEnvironment?: ActiveEnvironmentId;
   scopeBadgeText?: string;
   effectiveScope?: InspectorScopeMode;
-  width?: number;
-  resizeHandle?: React.ReactNode;
 }
 
 export function SelectedTelemetryDetail({
@@ -34,9 +32,7 @@ export function SelectedTelemetryDetail({
   onClearTelemetrySelection,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   scopeBadgeText,
-  effectiveScope = 'MAIN_SCENARIO',
-  width = 300,
-  resizeHandle }: SelectedTelemetryDetailProps) {
+  effectiveScope = 'MAIN_SCENARIO' }: SelectedTelemetryDetailProps) {
   const [artifactTab, setArtifactTab] = useState<'RAW_LOG' | 'DETECTION_RULE'>(
     'RAW_LOG'
   );
@@ -60,7 +56,6 @@ export function SelectedTelemetryDetail({
       dir="ltr"
       className="w-full bg-white dark:bg-zinc-950 flex flex-col overflow-hidden"
     >
-      {resizeHandle}
       {/* Clean Header with Back Action */}
       <div className="min-h-12 py-2 flex items-center justify-between gap-2 px-4 border-b border-zinc-200/70 dark:border-zinc-800/80 shrink-0">
         <div className="min-w-0 flex flex-col gap-1">

@@ -46,8 +46,6 @@ interface SettingsDrawerProps {
   onSpeedChange: (speed: number) => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
-  inspectorOpen: boolean;
-  onToggleInspector: () => void;
   onOpenAttackLibrary: () => void;
   onOpenAnalyzerModal: () => void;
   onOpenSourcesModal: () => void;
@@ -70,8 +68,6 @@ export function SettingsDrawer({
   onSpeedChange,
   sidebarOpen,
   onToggleSidebar,
-  inspectorOpen,
-  onToggleInspector,
   onOpenAttackLibrary,
   onOpenAnalyzerModal,
   onOpenSourcesModal,
