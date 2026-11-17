@@ -271,3 +271,309 @@ export function clearDiagramMemoryForTesting(): void {
   }
 }
 
+export interface WorkbenchUrlSerializationInput {
+  scenarioId: string;
+  activeStageIndex: number;
+  activeEnvironment?: ActiveEnvironmentId;
+  expandedNodeId?: string | null;
+  selectedNodeId?: string | null;
+  selectedInternalSubNodeId?: string | null;
+  selectedTelemetryId?: string | null;
+  viewMode?: PersistedCanvasViewMode;
+  inspectorOpen?: boolean;
+  inspectorTab?: PersistedInspectorTab;
+  inspectorScopeOverride?: PersistedInspectorScopeOverride;
+  /** Optional specific clause/sub-part hash (e.g. "clause-2.1") selected by the user */
+  focusedPartHash?: string | null;
+  /** Optional current window.location.search to preserve utility flags like autostart=1 */
+  currentSearch?: string;
+}
+
+/**
+ * Serializes the active workbench state (scenario, step/stage, expanded section,
+ * internal sub-node, selected node, packet, inspector page & tab, view mode, and
+ * environment) into a shareable relative URL (`?scenario=...&step=...#...`).
+ */
+export function serializeWorkbenchUrlState(
+  input: WorkbenchUrlSerializationInput
+): string {
+  const params = new URLSearchParams();
+
+  // Preserve utility query parameters if present in currentSearch
+  if (input.currentSearch) {
+    try {
+      const existing = new URLSearchParams(input.currentSearch);
+      if (existing.get('autostart') === '1') {
+        params.set('autostart', '1');
+      }
+      if (existing.get('intro') === '1') {
+        params.set('intro', '1');
+      }
+    } catch {
+      // Ignore malformed search strings
+    }
+  }
+
+  params.set('scenario', input.scenarioId);
+
+  if (input.activeStageIndex > 0) {
+    params.set('step', String(input.activeStageIndex));
+  }
+
+  if (input.expandedNodeId) {
+    params.set('expanded', input.expandedNodeId);
+  }
+
+  if (input.selectedInternalSubNodeId) {
+    params.set('subnode', input.selectedInternalSubNodeId);
+  }
+
+  if (
+    input.selectedNodeId &&
+    input.selectedNodeId !== input.expandedNodeId
+  ) {
+    params.set('node', input.selectedNodeId);
+  }
+
+  if (input.selectedTelemetryId) {
+    params.set('packet', input.selectedTelemetryId);
+  }
+
+  if (input.inspectorOpen) {
+    params.set('inspector', '1');
+    const tab = input.inspectorTab || 'OVERVIEW';
+    params.set('tab', tab);
+  }
+
+  if (input.viewMode === 'RAW_TABLES' && !input.inspectorOpen) {
+    params.set('view', 'RAW_TABLES');
+  }
+
+  if (
+    input.activeEnvironment &&
+    input.activeEnvironment !== DEFAULT_ACTIVE_ENVIRONMENT
+  ) {
+    params.set('env', input.activeEnvironment);
+  }
+
+  // Compute semantic #hash for the current section / step / sub-part
+  let hash = '';
+  const cleanPartHash = input.focusedPartHash
+    ? input.focusedPartHash.replace(/^#+/, '').trim()
+    : '';
+
+  if (cleanPartHash) {
+    hash = `#${cleanPartHash}`;
+  } else if (input.selectedInternalSubNodeId) {
+    hash = `#substep-${input.selectedInternalSubNodeId}`;
+  } else if (input.expandedNodeId) {
+    hash = `#section-${input.expandedNodeId}`;
+  } else if (input.selectedTelemetryId) {
+    hash = `#packet-${input.selectedTelemetryId}`;
+  } else if (input.selectedNodeId) {
+    hash = `#node-${input.selectedNodeId}`;
+  } else if (input.inspectorOpen) {
+    const tabSlug = (input.inspectorTab || 'OVERVIEW')
+      .toLowerCase()
+      .replace(/_/g, '-');
+    hash =
+      input.activeStageIndex > 0
+        ? `#${tabSlug}-step-${input.activeStageIndex}`
+        : `#inspector-${tabSlug}`;
+  } else if (input.activeStageIndex > 0) {
+    hash = `#step-${input.activeStageIndex}`;
+  } else if (input.viewMode === 'RAW_TABLES') {
+    hash = '#raw-tables';
+  }
+
+  const queryString = params.toString();
+  return `${queryString ? `?${queryString}` : ''}${hash}`;
+}
+
+export interface ParsedWorkbenchUrlResult {
+  hasUrlOverrides: boolean;
+  state: LastVisitedDiagramSnapshot;
+  focusedPartHash: string | null;
+}
+
+/**
+ * Parses URL query parameters and hash fragments into a sanitized workbench state.
+ * Supports sharing specific scenarios, steps (`step=2` or `#step-2` or `#clause-2.1`),
+ * expanded sections (`expanded=...` or `#section-...`), sub-nodes (`subnode=...` or `#substep-...`),
+ * nodes (`node=...`), packets (`packet=...`), and inspector tabs (`inspector=1&tab=STEP_GUIDE`).
+ */
+export function parseWorkbenchUrlState(
+  search: string,
+  hash: string,
+  fallbackSnapshot: LastVisitedDiagramSnapshot
+): ParsedWorkbenchUrlResult {
+  let params: URLSearchParams;
+  try {
+    params = new URLSearchParams(search || '');
+  } catch {
+    params = new URLSearchParams();
+  }
+
+  const cleanHash = (hash || '').replace(/^#+/, '').trim();
+
+  const paramScenario = params.get('scenario');
+  const paramStep = params.get('step') ?? params.get('stage');
+  const paramExpanded = params.get('expanded') ?? params.get('section');
+  const paramSubNode = params.get('subnode');
+  const paramNode = params.get('node');
+  const paramPacket = params.get('packet') ?? params.get('telemetry');
+  const paramInspector = params.get('inspector');
+  const paramTab = params.get('tab');
+  const paramView = params.get('view');
+  const paramEnv = params.get('env');
+
+  // Parse hash-based deep-link shortcuts if corresponding query param is absent
+  let hashStep: number | null = null;
+  let hashExpanded: string | null = null;
+  let hashSubNode: string | null = null;
+  let hashNode: string | null = null;
+  let hashPacket: string | null = null;
+  let hashInspectorOpen: boolean | null = null;
+  let hashInspectorTab: PersistedInspectorTab | null = null;
+  let focusedPartHash: string | null = null;
+
+  if (cleanHash) {
+    const stepMatch = cleanHash.match(/^(?:step|stage)-(\d+)$/i);
+    const clauseMatch = cleanHash.match(/^clause-(\d+)\.(\d+)$/i);
+    const tabStepMatch = cleanHash.match(
+      /^(overview|step-guide|sequence|memory|siem-logs|sources)-step-(\d+)$/i
+    );
+    const inspectorTabMatch = cleanHash.match(
+      /^inspector-(overview|step-guide|sequence|memory|siem-logs|sources)$/i
+    );
+
+    if (stepMatch) {
+      hashStep = parseInt(stepMatch[1], 10);
+    } else if (clauseMatch) {
+      hashStep = parseInt(clauseMatch[1], 10);
+      focusedPartHash = cleanHash;
+    } else if (tabStepMatch) {
+      const candidateTab = tabStepMatch[1].toUpperCase().replace(/-/g, '_');
+      if (isValidInspectorTab(candidateTab)) {
+        hashInspectorOpen = true;
+        hashInspectorTab = candidateTab;
+      }
+      hashStep = parseInt(tabStepMatch[2], 10);
+    } else if (inspectorTabMatch) {
+      const candidateTab = inspectorTabMatch[1]
+        .toUpperCase()
+        .replace(/-/g, '_');
+      if (isValidInspectorTab(candidateTab)) {
+        hashInspectorOpen = true;
+        hashInspectorTab = candidateTab;
+      }
+    } else if (cleanHash.startsWith('section-')) {
+      hashExpanded = cleanHash.slice('section-'.length) || null;
+    } else if (cleanHash.startsWith('substep-')) {
+      hashSubNode = cleanHash.slice('substep-'.length) || null;
+    } else if (cleanHash.startsWith('node-')) {
+      hashNode = cleanHash.slice('node-'.length) || null;
+    } else if (cleanHash.startsWith('packet-')) {
+      hashPacket = cleanHash.slice('packet-'.length) || null;
+    } else {
+      focusedPartHash = cleanHash;
+    }
+  }
+
+  const hasUrlOverrides = Boolean(
+    paramScenario ||
+      paramStep !== null ||
+      paramExpanded !== null ||
+      paramSubNode !== null ||
+      paramNode !== null ||
+      paramPacket !== null ||
+      paramInspector !== null ||
+      paramTab !== null ||
+      paramView !== null ||
+      paramEnv !== null ||
+      hashStep !== null ||
+      hashExpanded !== null ||
+      hashSubNode !== null ||
+      hashNode !== null ||
+      hashPacket !== null ||
+      hashInspectorOpen !== null
+  );
+
+  if (!hasUrlOverrides) {
+    return {
+      hasUrlOverrides: false,
+      state: fallbackSnapshot,
+      focusedPartHash: null,
+    };
+  }
+
+  const parsedStepNumber =
+    paramStep !== null && /^\d+$/.test(paramStep.trim())
+      ? parseInt(paramStep.trim(), 10)
+      : hashStep;
+
+  const resolvedExpanded = paramExpanded ?? hashExpanded ?? null;
+  const resolvedSubNode = paramSubNode ?? hashSubNode ?? null;
+  const resolvedNode = paramNode ?? hashNode ?? resolvedExpanded ?? null;
+  const resolvedPacket = paramPacket ?? hashPacket ?? null;
+
+  const normalizedParamTab = paramTab
+    ? paramTab.trim().toUpperCase().replace(/-/g, '_')
+    : null;
+  const resolvedTab: PersistedInspectorTab = isValidInspectorTab(
+    normalizedParamTab
+  )
+    ? normalizedParamTab
+    : hashInspectorTab ??
+      (paramScenario ? 'OVERVIEW' : fallbackSnapshot.inspectorTab);
+
+  const resolvedInspectorOpen =
+    paramInspector === '1' ||
+    paramInspector === 'true' ||
+    Boolean(normalizedParamTab && isValidInspectorTab(normalizedParamTab)) ||
+    hashInspectorOpen === true
+      ? true
+      : paramInspector === '0' || paramInspector === 'false'
+      ? false
+      : false;
+
+  const normalizedView = paramView ? paramView.trim().toUpperCase() : null;
+  const resolvedViewMode: PersistedCanvasViewMode = isValidViewMode(
+    normalizedView
+  )
+    ? normalizedView
+    : 'TOPOLOGY';
+
+  const normalizedEnv = paramEnv ? paramEnv.trim().toUpperCase() : null;
+  const resolvedEnv: ActiveEnvironmentId = isValidEnvironment(normalizedEnv)
+    ? normalizedEnv
+    : fallbackSnapshot.activeEnvironment;
+
+  const nextState = sanitizeDiagramSnapshot(
+    {
+      ...fallbackSnapshot,
+      scenarioId: paramScenario || fallbackSnapshot.scenarioId,
+      activeStageIndex:
+        parsedStepNumber !== null && Number.isFinite(parsedStepNumber)
+          ? parsedStepNumber
+          : 0,
+      activeEnvironment: resolvedEnv,
+      expandedNodeId: resolvedExpanded,
+      selectedNodeId: resolvedNode,
+      selectedInternalSubNodeId: resolvedSubNode,
+      selectedTelemetryId: resolvedPacket,
+      viewMode: resolvedViewMode,
+      inspectorOpen: resolvedInspectorOpen,
+      inspectorTab: resolvedTab,
+      inspectorScopeOverride: null,
+    },
+    fallbackSnapshot.scenarioId
+  );
+
+  return {
+    hasUrlOverrides: true,
+    state: nextState,
+    focusedPartHash,
+  };
+}
+

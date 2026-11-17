@@ -79,31 +79,43 @@ function StructuredClausesList({
 
   return (
     <div className="space-y-2">
-      {clauses.map((clause, idx) => (
-        <div
-          key={`${clause.clauseCode}-${idx}`}
-          className={`p-2.5 rounded-lg border transition-colors ${
-            accent === 'indigo'
-              ? 'bg-white/95 dark:bg-zinc-900/90 border-indigo-200/80 dark:border-indigo-900/50'
-              : 'bg-white/90 dark:bg-zinc-900/80 border-zinc-200/80 dark:border-zinc-800'
-          }`}
-        >
-          <div className="flex items-start gap-2">
-            <span
-              className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono font-extrabold shrink-0 mt-0.5 ${
-                accent === 'indigo'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
-              }`}
-            >
-              #{clause.clauseCode}
-            </span>
-            <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
-              {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
-            </p>
+      {clauses.map((clause, idx) => {
+        const clauseAnchorId = `clause-${clause.clauseCode}`;
+        return (
+          <div
+            key={`${clause.clauseCode}-${idx}`}
+            id={clauseAnchorId}
+            data-testid={`step-clause-${clause.clauseCode}`}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                const nextUrl = `${window.location.pathname}${window.location.search}#${clauseAnchorId}`;
+                window.history.replaceState(null, '', nextUrl);
+              }
+            }}
+            className={`p-2.5 rounded-lg border transition-colors scroll-mt-20 ${
+              accent === 'indigo'
+                ? 'bg-white/95 dark:bg-zinc-900/90 border-indigo-200/80 dark:border-indigo-900/50 hover:border-indigo-400'
+                : 'bg-white/90 dark:bg-zinc-900/80 border-zinc-200/80 dark:border-zinc-800 hover:border-zinc-400'
+            }`}
+          >
+            <div className="flex items-start gap-2">
+              <span
+                title={`Direct URL anchor: #${clauseAnchorId}`}
+                className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono font-extrabold shrink-0 mt-0.5 ${
+                  accent === 'indigo'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
+                }`}
+              >
+                #{clause.clauseCode}
+              </span>
+              <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -292,11 +304,12 @@ export function StepByStepGuidePanel({
 
         {/* 0. EXPANDED NODE INTERNAL PIPELINE & SEQUENCE BRIEFING CARD */}
         <div
+          id="step-0"
           ref={briefingRef}
           data-testid="step-guide-scenario-briefing"
           data-briefing-active={!selectedSubNode ? 'true' : 'false'}
           onClick={() => onSelectInternalSubNode?.(null)}
-          className={`rounded-xl border transition-all cursor-pointer overflow-hidden ${
+          className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
             !selectedSubNode
               ? 'border-amber-500/80 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm ring-1 ring-amber-500/30'
               : 'border-zinc-200/90 dark:border-zinc-800/90 bg-zinc-50/70 dark:bg-zinc-900/50 hover:border-amber-500/50'
@@ -507,6 +520,7 @@ export function StepByStepGuidePanel({
             return (
               <motion.div
                 key={step.flow.id}
+                id={`substep-${step.toSubNode?.id || step.stepNumber}`}
                 ref={(el) => {
                   stepCardRefs.current[step.stepNumber] = el;
                 }}
@@ -522,7 +536,7 @@ export function StepByStepGuidePanel({
                     onSelectInternalSubNode?.(step.toSubNode.id);
                   }
                 }}
-                className={`rounded-xl border transition-all cursor-pointer overflow-hidden ${
+                className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
                   isActive
                     ? 'border-rose-500 bg-rose-50/35 dark:bg-rose-950/20 shadow-md ring-1 ring-rose-500/35'
                     : 'border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900/40 hover:border-indigo-500/50'
@@ -979,11 +993,12 @@ export function StepByStepGuidePanel({
 
       {/* 0. SCENARIO & SEQUENCE BRIEFING CARD (With Visual Participating Nodes & Cascading Sequence Waterfall) */}
       <div
+        id="step-0"
         ref={briefingRef}
         data-testid="step-guide-scenario-briefing"
         data-briefing-active={briefing.isActiveBriefing ? 'true' : 'false'}
         onClick={() => onSelectStage?.(0)}
-        className={`rounded-xl border transition-all cursor-pointer overflow-hidden ${
+        className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
           briefing.isActiveBriefing
             ? 'border-amber-500/80 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm ring-1 ring-amber-500/30'
             : 'border-zinc-200/90 dark:border-zinc-800/90 bg-zinc-50/70 dark:bg-zinc-900/50 hover:border-amber-500/50'
@@ -1235,6 +1250,7 @@ export function StepByStepGuidePanel({
           return (
             <motion.div
               key={step.stepNumber}
+              id={`step-${step.stepNumber}`}
               ref={(el) => {
                 stepCardRefs.current[step.stepNumber] = el;
               }}
@@ -1245,7 +1261,7 @@ export function StepByStepGuidePanel({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.18 }}
               onClick={() => onSelectStage?.(step.stepNumber)}
-              className={`rounded-xl border transition-all cursor-pointer overflow-hidden ${
+              className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
                 isActive || isSelectedPacket
                   ? 'border-rose-500 bg-rose-50/35 dark:bg-rose-950/20 shadow-md ring-1 ring-rose-500/35'
                   : isCompleted

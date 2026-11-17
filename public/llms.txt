@@ -2,7 +2,7 @@
 
 > Visual Cyber Attack, Log & Malware Analyzer mapped to MITRE ATT&CK.
 
-Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (157 documented scenarios across 13 specialized categories).
+Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (158 documented scenarios across 13 specialized categories).
 
 ## Core Capabilities
 - **Attack Simulation:** Step-by-step visual execution of real-world adversary scenarios across Workstation, Domain Controller, and Cloud environments.
@@ -10,9 +10,10 @@ Attack Explorer is an interactive step-by-step visual simulator and analyzer for
 - **Behavioral Mapping:** Direct mapping to MITRE ATT&CK tactics, techniques, and sub-techniques (TTPs).
 - **Process Memory Inspection:** Process hollowing, VAD memory forensics, CLR Profiler hijacking, and AMSI bypass flowcharts.
 
-## Featured & Newly Added Scenarios (Ransomware, Supply Chain & CLR Loader)
+## Featured & Newly Added Scenarios (Ransomware, Supply Chain, CLR Loader & AI Multi-Agent Intrusions)
 - [Process Hollowing (T1055.012)](https://attackexplorer.org/scenarios/process-hollowing): `svchost.exe` suspension, section unmapping (`NtUnmapViewOfSection`), and memory injection.
 - [PikeRed — Abusing the .NET CLR Profiler: Trusted-Binary Loader Chain (T1574.012)](https://attackexplorer.org/scenarios/pikered-clr-profiler-trusted-binary-loader-chain): `.vhdx` MotW bypass, `+h +s` super-hidden files, and `COR_ENABLE_PROFILING=1` / `COR_PROFILER_PATH` hijacking of signed `KeePass.exe` ([PikeRed Research](https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/)).
+- [Jeffrey Appel — ARTEX Multi-Agent LLM Framework: Machine-Speed Attacks & Microsoft Defender XDR Disruption (T1110.003)](https://attackexplorer.org/scenarios/jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr): Go + Next.js Planner-Worker LLM agents chaining `Storm-0940` password spraying, web shells, `RC4` Kerberoasting, and 5-minute Azure Key Vault exfiltration countered by Defender XDR Automatic Attack Disruption and KQL multi-alert burst correlation ([Jeffrey Appel Research](https://jeffreyappel.nl/artex-old-attacks-at-machine-speed-and-how-microsoft-defender-keeps-up/)).
 - [ALPHV / BlackCat (Sphynx Rust) Ransomware (CISA AA23-353A)](https://attackexplorer.org/scenarios/alphv-blackcat-sphynx-rust-impacket-exmatter): `--access-token` SHA-256 gate, ExMatter exfiltration, and `fsutil` symlink encryption.
 - [Royal & BlackSuit Ransomware (CISA AA23-061A / AA24-219A)](https://attackexplorer.org/scenarios/royal-blacksuit-ransomware-chacha20-restartmanager): Windows Restart Manager (`RstrtMgr.dll`) handle unlocking and partial-stripe encryption.
 - [RansomHub Ransomware (CISA AA24-242A)](https://attackexplorer.org/scenarios/ransomhub-edrkiller-tdsskiller-golocks): `EDRKillShifter` / `TDSSKiller.exe` BYOVD kernel termination and `-pass` SHA-256 config decryption.
@@ -33,5 +34,5 @@ Attack Explorer is an interactive step-by-step visual simulator and analyzer for
 - [Interactive Workbench](https://attackexplorer.org/)
 - [About the Creator — Mohammad Mirasadollahi](https://attackexplorer.org/about)
 - [Authoritative Sources, Citations & Legal Compliance](https://attackexplorer.org/sources)
-- [Full Scenario Encyclopedia for AI Agents (157 Scenarios)](https://attackexplorer.org/llms-full.txt)
+- [Full Scenario Encyclopedia for AI Agents (158 Scenarios)](https://attackexplorer.org/llms-full.txt)
 - [XML Sitemap](https://attackexplorer.org/sitemap.xml)

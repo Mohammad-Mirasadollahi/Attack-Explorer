@@ -11,6 +11,7 @@ const FEATURED_SCENARIO_IDS = [
   'process-hollowing',
   'ransomware-shadow-wipe',
   'pikered-clr-profiler-trusted-binary-loader-chain',
+  'jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr',
   'alphv-blackcat-sphynx-rust-impacket-exmatter',
   'rspack-solana-web3js-npm-supply-chain-2024',
   'log4shell-dfir',

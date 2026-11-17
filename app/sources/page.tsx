@@ -2,10 +2,18 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ATTACK_SCENARIOS } from '@/lib/attack-scenarios';
 import {
+  formatAttackCategoryLabel,
+  getAttackCategoryGroupMeta,
+} from '@/lib/attack-category-labels';
+import {
   GLOBAL_FRAMEWORK_SOURCES,
   LEGAL_COMPLIANCE_STATEMENT,
 } from '@/lib/attack-sources-and-legal';
-import { buildSourcesJsonLd, resolveSiteUrl } from '@/lib/seo-metadata';
+import {
+  buildSourcesJsonLd,
+  formatCategoryAnchorId,
+  resolveSiteUrl,
+} from '@/lib/seo-metadata';
 import { ArrowLeft, ExternalLink, Scale, ShieldCheck } from 'lucide-react';
 
 const siteUrl = resolveSiteUrl();
@@ -47,6 +55,12 @@ export const metadata: Metadata = {
 
 export default function SourcesPage() {
   const sourcesJsonLd = JSON.stringify(buildSourcesJsonLd());
+  const categoryCodes = Array.from(
+    new Set(ATTACK_SCENARIOS.map((sc) => sc.category))
+  ).sort(
+    (a, b) =>
+      getAttackCategoryGroupMeta(a).order - getAttackCategoryGroupMeta(b).order
+  );
 
   return (
     <main
@@ -161,31 +175,76 @@ export default function SourcesPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4">
-          <h2 className="text-lg font-bold text-zinc-950 dark:text-white">
-            Documented Attack &amp; DFIR Scenario Directory ({ATTACK_SCENARIOS.length}{' '}
-            Scenarios)
-          </h2>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            {ATTACK_SCENARIOS.map((sc) => (
-              <li key={sc.id}>
-                <Link
-                  href={`/scenarios/${sc.id}`}
-                  className="block p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 transition-colors"
+        <section
+          id="scenario-directory"
+          className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-6"
+        >
+          <div className="space-y-2">
+            <h2 className="text-lg font-bold text-zinc-950 dark:text-white">
+              Documented Attack &amp; DFIR Scenario Directory (
+              {ATTACK_SCENARIOS.length} Scenarios Across {categoryCodes.length}{' '}
+              Categories)
+            </h2>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {categoryCodes.map((cat) => (
+                <a
+                  key={cat}
+                  href={`#${formatCategoryAnchorId(cat)}`}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-zinc-700 dark:text-zinc-300 hover:text-indigo-600 text-[11px] font-mono font-semibold transition-colors"
                 >
-                  <div className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                    {sc.code} · {sc.stages.length} Stages · {sc.severity}
+                  {formatAttackCategoryLabel(cat)}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {categoryCodes.map((cat) => {
+              const catScenarios = ATTACK_SCENARIOS.filter(
+                (sc) => sc.category === cat
+              );
+              const anchorId = formatCategoryAnchorId(cat);
+              const label = formatAttackCategoryLabel(cat);
+              return (
+                <div
+                  key={cat}
+                  id={anchorId}
+                  data-testid={`scenario-category-section-${anchorId}`}
+                  className="space-y-3 scroll-mt-6"
+                >
+                  <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+                      {label}
+                    </h3>
+                    <span className="text-[11px] font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+                      {catScenarios.length} Scenarios
+                    </span>
                   </div>
-                  <div className="text-xs font-bold text-zinc-900 dark:text-white">
-                    {sc.name}
-                  </div>
-                  <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {sc.shortSubtitle}
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {catScenarios.map((sc) => (
+                      <li key={sc.id}>
+                        <Link
+                          href={`/scenarios/${sc.id}`}
+                          className="block p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500 transition-colors"
+                        >
+                          <div className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                            {sc.code} · {sc.stages.length} Stages ·{' '}
+                            {sc.severity}
+                          </div>
+                          <div className="text-xs font-bold text-zinc-900 dark:text-white">
+                            {sc.name}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                            {sc.shortSubtitle}
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </section>
       </div>
     </main>

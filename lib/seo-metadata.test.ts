@@ -7,16 +7,21 @@ import {
   buildRootJsonLd,
   buildAboutJsonLd,
   buildSourcesJsonLd,
+  buildScenarioBreadcrumbs,
+  buildScenarioBreadcrumbJsonLd,
   buildScenarioJsonLd,
   buildAgentMarkdownResponse,
+  formatCategoryAnchorId,
+  getRelatedClusterScenarios,
   AUTHOR_PROFILE,
 } from './seo-metadata';
+import { formatAttackCategoryLabel } from './attack-category-labels';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
 import robots from '../app/robots';
 import sitemap from '../app/sitemap';
 import manifest from '../app/manifest';
 
-describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
+describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
   it('resolves canonical site URL without trailing slashes', () => {
     assert.equal(resolveSiteUrl('https://attackexplorer.org/'), 'https://attackexplorer.org');
     assert.equal(resolveSiteUrl('https://attackexplorer.org///'), 'https://attackexplorer.org');
@@ -79,7 +84,7 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
     assert.equal(sourcesGraph['@graph'][0]['@type'], 'CollectionPage');
   });
 
-  it('builds per-scenario Schema.org JSON-LD with TechArticle, HowTo, and BreadcrumbList (Module 04)', () => {
+  it('builds per-scenario Schema.org JSON-LD with TechArticle (including image, dateModified, keywords, mentions), HowTo, and dynamic 4-level BreadcrumbList (Module 04)', () => {
     const scenario = ATTACK_SCENARIOS[0];
     const jsonLd = buildScenarioJsonLd(scenario, 'https://attackexplorer.org');
     assert.equal(jsonLd['@context'], 'https://schema.org');
@@ -88,10 +93,45 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
     const [article, howTo, breadcrumb] = jsonLd['@graph'];
     assert.equal(article['@type'], 'TechArticle');
     assert.ok(article.headline.includes(scenario.name));
+    assert.equal(article.image, 'https://attackexplorer.org/og-image.png');
+    assert.ok(article.datePublished);
+    assert.ok(article.dateModified);
+    assert.equal(article.articleSection, formatAttackCategoryLabel(scenario.category));
+    assert.equal(article.breadcrumb['@id'], breadcrumb['@id']);
+    assert.ok(Array.isArray(article.keywords) && article.keywords.includes(scenario.code));
+    assert.ok(Array.isArray(article.mentions) && article.mentions.length >= 1);
     assert.equal(howTo['@type'], 'HowTo');
     assert.equal(howTo.step.length, scenario.stages.length);
     assert.equal(breadcrumb['@type'], 'BreadcrumbList');
-    assert.equal(breadcrumb.itemListElement.length, 2);
+    assert.equal(breadcrumb.numberOfItems, 4);
+    assert.equal(breadcrumb.itemListElement.length, 4);
+    assert.deepEqual(
+      breadcrumb.itemListElement.map((el) => el.position),
+      [1, 2, 3, 4]
+    );
+    assert.equal(breadcrumb.itemListElement[0].name, 'Attack Explorer');
+    assert.equal(breadcrumb.itemListElement[0].item, 'https://attackexplorer.org');
+    assert.equal(breadcrumb.itemListElement[1].name, 'Scenarios');
+    assert.equal(
+      breadcrumb.itemListElement[1].item,
+      'https://attackexplorer.org/sources#scenario-directory'
+    );
+    assert.equal(
+      breadcrumb.itemListElement[2].name,
+      formatAttackCategoryLabel(scenario.category)
+    );
+    assert.equal(
+      breadcrumb.itemListElement[2].item,
+      `https://attackexplorer.org/sources#${formatCategoryAnchorId(scenario.category)}`
+    );
+    assert.equal(
+      breadcrumb.itemListElement[3].name,
+      `${scenario.code}: ${scenario.name}`
+    );
+    assert.equal(
+      breadcrumb.itemListElement[3].item,
+      `https://attackexplorer.org/scenarios/${scenario.id}`
+    );
   });
 
   it('builds clean Markdown responses for AI agents negotiating Accept: text/markdown across /, /about, /sources, and /scenarios/[id] (Module 06)', () => {
@@ -112,8 +152,10 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
       'https://attackexplorer.org'
     );
     assert.ok(scenarioMd.includes('Process Hollowing'));
+    assert.ok(scenarioMd.includes('## Answer-First Forensic Fact Sheet'));
     assert.ok(scenarioMd.includes('## MITRE ATT&CK® Techniques Mapped'));
     assert.ok(scenarioMd.includes('## Kill-Chain Execution Stages'));
+    assert.ok(scenarioMd.includes('## Related Scenarios in This Topic Cluster'));
   });
 
   it('verifies static SEO, GEO, and security files exist in /public (Modules 05, 06, 07)', () => {
@@ -227,5 +269,99 @@ describe('SEO Audit Compliance Suite (Modules 01–08)', () => {
     );
     assert.ok(pikeredMd.includes(pikeredUrl));
     assert.ok(pikeredMd.includes('COR_ENABLE_PROFILING'));
+  });
+
+  it('enforces the Mandatory New Scenario & Article Ingestion + SEO/GEO Synchronization Standard across every scenario in ATTACK_SCENARIOS', () => {
+    const rootDir = process.cwd();
+    const ingestionDocPath = path.join(
+      rootDir,
+      'docs/scenario-ingestion-and-seo-standard.md'
+    );
+    const auditChecklistPath = path.join(
+      rootDir,
+      'seo-audit/09-new-scenario-seo-checklist.md'
+    );
+    assert.ok(
+      fs.existsSync(ingestionDocPath),
+      'Expected docs/scenario-ingestion-and-seo-standard.md to exist'
+    );
+    assert.ok(
+      fs.existsSync(auditChecklistPath),
+      'Expected seo-audit/09-new-scenario-seo-checklist.md to exist'
+    );
+
+    const llmsFullTxt = fs.readFileSync(
+      path.join(rootDir, 'public/llms-full.txt'),
+      'utf8'
+    );
+    const sitemapUrls = new Set(sitemap().map((e) => e.url));
+
+    for (const scenario of ATTACK_SCENARIOS) {
+      // 1. Valid URL-safe hyphenated slug
+      assert.ok(
+        /^[a-zA-Z0-9-]+$/.test(scenario.id),
+        `Scenario ID "${scenario.id}" must be URL-safe kebab-case for SEO URL /scenarios/${scenario.id}`
+      );
+
+      // 2. Present in XML Sitemap
+      assert.ok(
+        sitemapUrls.has(`https://attackexplorer.org/scenarios/${scenario.id}`) ||
+          Array.from(sitemapUrls).some((u) =>
+            u.endsWith(`/scenarios/${scenario.id}`)
+          ),
+        `Scenario "${scenario.id}" is missing from app/sitemap.ts output`
+      );
+
+      // 3. Valid Schema.org TechArticle + HowTo + BreadcrumbList JSON-LD with >= 3 citations, mentions, keywords, dateModified, and image
+      const jsonLd = buildScenarioJsonLd(scenario, 'https://attackexplorer.org');
+      const [article, howTo, breadcrumb] = jsonLd['@graph'];
+      assert.equal(article['@type'], 'TechArticle');
+      assert.ok(
+        Array.isArray(article.citation) && article.citation.length >= 3,
+        `Scenario "${scenario.id}" must have >= 3 citations in Schema.org TechArticle JSON-LD`
+      );
+      assert.ok(
+        Array.isArray(article.mentions) && article.mentions.length >= 1,
+        `Scenario "${scenario.id}" must include Threat Actor / CVE mentions in Schema.org TechArticle JSON-LD`
+      );
+      assert.ok(
+        Array.isArray(article.keywords) && article.keywords.length > 0,
+        `Scenario "${scenario.id}" must include keywords in Schema.org TechArticle JSON-LD`
+      );
+      assert.equal(howTo['@type'], 'HowTo');
+      assert.equal(howTo.step.length, scenario.stages.length);
+      assert.equal(breadcrumb['@type'], 'BreadcrumbList');
+      assert.equal(breadcrumb.itemListElement.length, 4);
+
+      const uiCrumbs = buildScenarioBreadcrumbs(scenario, 'https://attackexplorer.org');
+      const standaloneBreadcrumbLd = buildScenarioBreadcrumbJsonLd(
+        scenario,
+        'https://attackexplorer.org'
+      );
+      assert.deepEqual(breadcrumb, standaloneBreadcrumbLd);
+      assert.equal(uiCrumbs.length, 4);
+      assert.equal(
+        uiCrumbs[2].name,
+        formatAttackCategoryLabel(scenario.category)
+      );
+      assert.ok(
+        !uiCrumbs[2].name.includes('_'),
+        `Breadcrumb category label "${uiCrumbs[2].name}" must be human-readable without raw underscores`
+      );
+      assert.equal(uiCrumbs[3].isCurrent, true);
+
+      // 4. Topic Cluster Lateral Links (getRelatedClusterScenarios returns related scenarios)
+      const related = getRelatedClusterScenarios(scenario, 6);
+      assert.ok(
+        related.length >= 3 && !related.some((r) => r.id === scenario.id),
+        `Scenario "${scenario.id}" must resolve related Topic Cluster lateral scenarios`
+      );
+
+      // 5. Present in /public/llms-full.txt for AI crawlers (fails if llms-full.txt is not regenerated after adding a scenario)
+      assert.ok(
+        llmsFullTxt.includes(`/scenarios/${scenario.id}`),
+        `Scenario "${scenario.id}" is missing from /public/llms-full.txt — regenerate public/llms-full.txt per docs/scenario-ingestion-and-seo-standard.md`
+      );
+    }
   });
 });

@@ -5,8 +5,7 @@ import { ArrowLeft, BookOpen, ShieldAlert } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Page or Scenario Not Found (404)',
-  description:
-    'The requested Attack Explorer page or cyber attack scenario could not be found. Browse our complete directory of 157 MITRE ATT&CK & DFIR scenarios.',
+  description: `The requested Attack Explorer page or cyber attack scenario could not be found. Browse our complete directory of ${ATTACK_SCENARIOS.length} MITRE ATT&CK & DFIR scenarios.`,
   robots: {
     index: false,
     follow: true,

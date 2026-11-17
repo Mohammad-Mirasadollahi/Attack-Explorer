@@ -20,6 +20,7 @@
 | **06** | [`06-agentic-seo-and-geo.md`](./06-agentic-seo-and-geo.md) | `llms.txt`, markdown for agents, token-weight ratio | Additive |
 | **07** | [`07-performance-and-security.md`](./07-performance-and-security.md) | DOM size, critical CSS chains, CSP, `security.txt` | Medium |
 | **08** | [`08-nextjs-code-blueprints.md`](./08-nextjs-code-blueprints.md) | Drop-in Next.js 15 code blueprints | Implementation |
+| **09** | [`09-new-scenario-seo-checklist.md`](./09-new-scenario-seo-checklist.md) | Mandatory SEO & GEO checklist when adding new scenarios/articles | Ongoing |
 
 ---
 

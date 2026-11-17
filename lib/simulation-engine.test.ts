@@ -19,9 +19,9 @@ import {
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 157 scenarios organized into 13 specialized categories', () => {
+  it('filterScenarios filters by category and search query accurately across all 158 scenarios organized into 13 specialized categories', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 157);
+    assert.equal(all.length, 158);
 
     const zeroDayAppliances = filterScenarios(
       ATTACK_SCENARIOS,
@@ -138,7 +138,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 157);
+    assert.equal(fullLib.totalCount, 158);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass

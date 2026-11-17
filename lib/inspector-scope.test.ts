@@ -15,8 +15,10 @@ import {
 } from './inspector-scope';
 import {
   clearDiagramMemoryForTesting,
+  parseWorkbenchUrlState,
   readLastVisitedDiagramSnapshot,
   saveLastVisitedDiagramSnapshot,
+  serializeWorkbenchUrlState,
 } from './diagram-memory-store';
 import { buildWhiteboardSchematic } from './sketch-zones-and-drilldown';
 import {
@@ -359,6 +361,56 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     assert.equal(restored.inspectorScopeOverride, 'EXPANDED_NODE');
     assert.equal(restored.isDark, true);
     assert.equal(restored.playbackSpeed, 2);
+
+    // Verify URL state serialization & parsing for sharing steps, sections, sub-nodes, tabs, and clauses
+    const stepInspectorUrl = serializeWorkbenchUrlState({
+      scenarioId: 'process-hollowing',
+      activeStageIndex: 2,
+      inspectorOpen: true,
+      inspectorTab: 'STEP_GUIDE',
+    });
+    assert.equal(
+      stepInspectorUrl,
+      '?scenario=process-hollowing&step=2&inspector=1&tab=STEP_GUIDE#step-guide-step-2'
+    );
+
+    const parsedStepInspector = parseWorkbenchUrlState(
+      '?scenario=process-hollowing&step=2&inspector=1&tab=STEP_GUIDE',
+      '#step-guide-step-2',
+      fallback
+    );
+    assert.equal(parsedStepInspector.hasUrlOverrides, true);
+    assert.equal(parsedStepInspector.state.scenarioId, 'process-hollowing');
+    assert.equal(parsedStepInspector.state.activeStageIndex, 2);
+    assert.equal(parsedStepInspector.state.inspectorOpen, true);
+    assert.equal(parsedStepInspector.state.inspectorTab, 'STEP_GUIDE');
+
+    // Verify sub-node & expanded section URL serialization & parsing
+    const subNodeUrl = serializeWorkbenchUrlState({
+      scenarioId: 'dns-tunneling-exfil',
+      activeStageIndex: 1,
+      expandedNodeId: 'victim_laptop_node',
+      selectedInternalSubNodeId: 'sub_node_2',
+      inspectorOpen: true,
+      inspectorTab: 'STEP_GUIDE',
+    });
+    assert.equal(
+      subNodeUrl,
+      '?scenario=dns-tunneling-exfil&step=1&expanded=victim_laptop_node&subnode=sub_node_2&inspector=1&tab=STEP_GUIDE#substep-sub_node_2'
+    );
+
+    // Verify clause hash deep-linking (#clause-2.1 automatically resolves step 2 and focusedPartHash)
+    const parsedClause = parseWorkbenchUrlState(
+      '?scenario=log4shell-dfir&inspector=1&tab=STEP_GUIDE',
+      '#clause-2.1',
+      fallback
+    );
+    assert.equal(parsedClause.hasUrlOverrides, true);
+    assert.equal(parsedClause.state.scenarioId, 'log4shell-dfir');
+    assert.equal(parsedClause.state.activeStageIndex, 2);
+    assert.equal(parsedClause.state.inspectorOpen, true);
+    assert.equal(parsedClause.state.inspectorTab, 'STEP_GUIDE');
+    assert.equal(parsedClause.focusedPartHash, 'clause-2.1');
 
     clearDiagramMemoryForTesting();
   });

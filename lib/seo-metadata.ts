@@ -1,11 +1,14 @@
 import { ATTACK_SCENARIOS, AttackScenario } from './attack-scenarios';
+import { formatAttackCategoryLabel } from './attack-category-labels';
 import {
   getScenarioAttribution,
   GLOBAL_FRAMEWORK_SOURCES,
   LEGAL_COMPLIANCE_STATEMENT,
 } from './attack-sources-and-legal';
+import { getCuratedThreatIntel } from './threat-intel-service';
 
 export const DEFAULT_SITE_URL = 'https://attackexplorer.org';
+export const CANONICAL_CONTENT_LAST_MODIFIED = '2026-11-17';
 
 export function resolveSiteUrl(envUrl?: string): string {
   const raw = (
@@ -33,8 +36,7 @@ export const AUTHOR_PROFILE = {
 export const PLATFORM_FAQ_ITEMS = [
   {
     question: 'What is Attack Explorer and how does it map to MITRE ATT&CK?',
-    answer:
-      'Attack Explorer is an interactive step-by-step visual cybersecurity simulator, SIEM/Sysmon log analyzer, and malware behavioral analysis workbench. It maps 157 documented adversary intrusion scenarios across Workstation, Active Directory Domain Controller, and Cloud environments directly to MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).',
+    answer: `Attack Explorer is an interactive step-by-step visual cybersecurity simulator, SIEM/Sysmon log analyzer, and malware behavioral analysis workbench. It maps ${ATTACK_SCENARIOS.length} documented adversary intrusion scenarios across Workstation, Active Directory Domain Controller, and Cloud environments directly to MITRE ATT&CK Enterprise Matrix tactics, techniques, and sub-techniques (TTPs).`,
   },
   {
     question:
@@ -228,8 +230,128 @@ export function buildSourcesJsonLd(siteUrlInput?: string) {
 }
 
 /**
+ * Returns up to `limit` related scenarios in the same attack category or MITRE tactic phase
+ * to enforce Cybersecurity Topic Cluster lateral internal linking.
+ */
+export function getRelatedClusterScenarios(
+  scenario: AttackScenario,
+  limit = 6
+): AttackScenario[] {
+  const sameCategory = ATTACK_SCENARIOS.filter(
+    (s) => s.id !== scenario.id && s.category === scenario.category
+  );
+  if (sameCategory.length >= limit) {
+    return sameCategory.slice(0, limit);
+  }
+  const samePhase = ATTACK_SCENARIOS.filter(
+    (s) =>
+      s.id !== scenario.id &&
+      s.category !== scenario.category &&
+      s.primaryMitrePhase === scenario.primaryMitrePhase
+  );
+  return [...sameCategory, ...samePhase].slice(0, limit);
+}
+
+export interface ScenarioBreadcrumbItem {
+  position: number;
+  name: string;
+  /** Relative path/hash for Next.js <Link> navigation in the UI */
+  href: string;
+  /** Absolute canonical URL for Schema.org ListItem.item */
+  item: string;
+  isCurrent?: boolean;
+}
+
+/**
+ * Converts an AttackCategory code (e.g. "RANSOMWARE_EXTORTION") into a deterministic
+ * HTML anchor slug (e.g. "category-ransomware-extortion") used in /sources and breadcrumbs.
+ */
+export function formatCategoryAnchorId(category: string): string {
+  const clean = category
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `category-${clean || 'general'}`;
+}
+
+/**
+ * Dynamically builds the 4-level navigation hierarchy for a scenario page:
+ * 1. Attack Explorer (/)
+ * 2. Scenarios (/sources#scenario-directory)
+ * 3. <Category Label> (/sources#category-<slug>)
+ * 4. <Scenario Code>: <Scenario Name> (/scenarios/<id>)
+ */
+export function buildScenarioBreadcrumbs(
+  scenario: AttackScenario,
+  siteUrlInput?: string
+): ScenarioBreadcrumbItem[] {
+  const siteUrl = resolveSiteUrl(siteUrlInput);
+  const categoryLabel = formatAttackCategoryLabel(scenario.category);
+  const categoryAnchor = formatCategoryAnchorId(scenario.category);
+  const encodedId = encodeURIComponent(scenario.id);
+  const scenarioPath = `/scenarios/${encodedId}`;
+
+  return [
+    {
+      position: 1,
+      name: 'Attack Explorer',
+      href: '/',
+      item: siteUrl,
+    },
+    {
+      position: 2,
+      name: 'Scenarios',
+      href: '/sources#scenario-directory',
+      item: `${siteUrl}/sources#scenario-directory`,
+    },
+    {
+      position: 3,
+      name: categoryLabel,
+      href: `/sources#${categoryAnchor}`,
+      item: `${siteUrl}/sources#${categoryAnchor}`,
+    },
+    {
+      position: 4,
+      name: `${scenario.code}: ${scenario.name}`,
+      href: scenarioPath,
+      item: `${siteUrl}${scenarioPath}`,
+      isCurrent: true,
+    },
+  ];
+}
+
+/**
+ * Builds the Schema.org BreadcrumbList JSON-LD object dynamically from the
+ * scenario's navigation hierarchy (Root -> Scenarios -> Category -> Scenario).
+ */
+export function buildScenarioBreadcrumbJsonLd(
+  scenario: AttackScenario,
+  siteUrlInput?: string
+) {
+  const siteUrl = resolveSiteUrl(siteUrlInput);
+  const scenarioUrl = `${siteUrl}/scenarios/${encodeURIComponent(scenario.id)}`;
+  const breadcrumbs = buildScenarioBreadcrumbs(scenario, siteUrl);
+
+  return {
+    '@type': 'BreadcrumbList' as const,
+    '@id': `${scenarioUrl}#breadcrumb`,
+    name: `${scenario.code} Navigation Hierarchy`,
+    numberOfItems: breadcrumbs.length,
+    itemListElement: breadcrumbs.map((crumb) => ({
+      '@type': 'ListItem' as const,
+      position: crumb.position,
+      name: crumb.name,
+      item: crumb.item,
+    })),
+  };
+}
+
+/**
  * Builds per-scenario Schema.org JSON-LD (TechArticle + HowTo + BreadcrumbList)
  * for path-based scenario landing pages (/scenarios/[id]).
+ * Includes Google Search Central & CTI SEO recommended properties:
+ * image, datePublished, dateModified, proficiencyLevel, articleSection, keywords, about, mentions, and citation.
  */
 export function buildScenarioJsonLd(
   scenario: AttackScenario,
@@ -238,6 +360,37 @@ export function buildScenarioJsonLd(
   const siteUrl = resolveSiteUrl(siteUrlInput);
   const scenarioUrl = `${siteUrl}/scenarios/${encodeURIComponent(scenario.id)}`;
   const attribution = getScenarioAttribution(scenario);
+  const intel = getCuratedThreatIntel(scenario);
+  const categoryLabel = formatAttackCategoryLabel(scenario.category);
+  const breadcrumbNode = buildScenarioBreadcrumbJsonLd(scenario, siteUrl);
+
+  const keywords = Array.from(
+    new Set([
+      scenario.code,
+      scenario.category,
+      categoryLabel,
+      ...scenario.stages.map((st) => st.mitreTechniqueId),
+      ...intel.cves.map((c) => c.id),
+      'MITRE ATT&CK',
+      'DFIR',
+      'SIEM',
+      'Sysmon',
+    ])
+  );
+
+  const mentions = [
+    ...intel.cves.map((cve) => ({
+      '@type': 'Thing',
+      name: `${cve.id} (${cve.cvss})`,
+      description: cve.description,
+    })),
+    ...intel.actorGroups.map((actor) => ({
+      '@type': 'Organization',
+      name: actor.name,
+      alternateName: actor.aliases,
+      description: actor.notableCampaign,
+    })),
+  ];
 
   return {
     '@context': 'https://schema.org',
@@ -247,9 +400,17 @@ export function buildScenarioJsonLd(
         '@id': `${scenarioUrl}#article`,
         headline: `${scenario.code}: ${scenario.name} — MITRE ATT&CK & DFIR Forensic Analysis`,
         description: scenario.overview,
+        image: `${siteUrl}/og-image.png`,
+        datePublished: CANONICAL_CONTENT_LAST_MODIFIED,
+        dateModified: CANONICAL_CONTENT_LAST_MODIFIED,
         url: scenarioUrl,
         inLanguage: 'en',
         proficiencyLevel: 'Expert',
+        articleSection: categoryLabel,
+        keywords,
+        breadcrumb: {
+          '@id': `${scenarioUrl}#breadcrumb`,
+        },
         author: {
           '@type': 'Person',
           name: AUTHOR_PROFILE.name,
@@ -269,6 +430,7 @@ export function buildScenarioJsonLd(
           name: `${tech.id} — ${tech.name} (${tech.tactic})`,
           url: tech.url,
         })),
+        mentions,
         citation: attribution.primarySources.map((src) => ({
           '@type': 'CreativeWork',
           name: `${src.organization}: ${src.title}`,
@@ -296,24 +458,7 @@ export function buildScenarioJsonLd(
           };
         }),
       },
-      {
-        '@type': 'BreadcrumbList',
-        '@id': `${scenarioUrl}#breadcrumb`,
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Attack Explorer',
-            item: siteUrl,
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: `${scenario.code}: ${scenario.name}`,
-            item: scenarioUrl,
-          },
-        ],
-      },
+      breadcrumbNode,
     ],
   };
 }
@@ -388,8 +533,19 @@ export function buildAgentMarkdownResponse(
     const scenario = ATTACK_SCENARIOS.find((s) => s.id === targetScenarioId);
     if (scenario) {
       const attribution = getScenarioAttribution(scenario);
+      const intel = getCuratedThreatIntel(scenario);
+      const relatedCluster = getRelatedClusterScenarios(scenario, 5);
       const mitreList = attribution.mitreTechniques
         .map((t) => `- **${t.id}** (${t.name} — *${t.tactic}*): ${t.url}`)
+        .join('\n');
+      const cveList = intel.cves
+        .map((c) => `- **${c.id}** (CVSS: ${c.cvss} · ${c.status}): ${c.description}`)
+        .join('\n');
+      const actorList = intel.actorGroups
+        .map(
+          (a) =>
+            `- **${a.name}** (*Aliases: ${a.aliases}* · Sectors: ${a.targetSectors}): ${a.notableCampaign}`
+        )
         .join('\n');
       const stagesList = scenario.stages
         .map((st) => {
@@ -411,18 +567,36 @@ export function buildAgentMarkdownResponse(
             `- **${src.organization} (${src.referenceCode}):** [${src.title}](${src.url}) — ${src.usageSummary}`
         )
         .join('\n');
+      const relatedLinks = relatedCluster
+        .map(
+          (rel) =>
+            `- [${rel.code}: ${rel.name}](${siteUrl}/scenarios/${rel.id}) — ${rel.shortSubtitle}`
+        )
+        .join('\n');
 
       return [
         `# ${scenario.code}: ${scenario.name}`,
         '',
         `> ${scenario.shortSubtitle}`,
         '',
+        '## Answer-First Forensic Fact Sheet',
         `- **Canonical URL:** ${siteUrl}/scenarios/${scenario.id}`,
         `- **Interactive Simulator:** ${siteUrl}/?scenario=${scenario.id}`,
-        `- **Category:** ${scenario.category} | **Severity:** ${scenario.severity}`,
+        `- **Category:** ${scenario.category} | **Severity:** ${scenario.severity} | **Stages:** ${scenario.stages.length}`,
+        `- **MITRE ATT&CK IDs:** ${scenario.stages.map((s) => s.mitreTechniqueId).join(', ')}`,
+        `- **CVEs / Advisories:** ${intel.cves.map((c) => `${c.id} (${c.cvss})`).join(', ')}`,
+        `- **Attributed Threat Actors:** ${intel.actorGroups.map((a) => a.name).join(', ')}`,
         '',
         '## Scenario Overview',
         scenario.overview,
+        '',
+        '## Multi-Source Cross-Vendor Synthesis',
+        attribution.multiSourceSynthesis,
+        '',
+        '## CVEs, Vulnerability Advisories & Attributed Threat Actors',
+        cveList,
+        '',
+        actorList,
         '',
         '## MITRE ATT&CK® Techniques Mapped',
         mitreList,
@@ -432,6 +606,9 @@ export function buildAgentMarkdownResponse(
         '',
         '## Authoritative Analytical Sources & Citations',
         sourcesList,
+        '',
+        '## Related Scenarios in This Topic Cluster',
+        relatedLinks,
         '',
         '## Legal & Synthetic Telemetry Notice',
         LEGAL_COMPLIANCE_STATEMENT.syntheticDataGuarantee,

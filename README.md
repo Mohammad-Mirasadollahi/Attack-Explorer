@@ -66,6 +66,7 @@ GET /api/attacks?category=ALL&mitrePhase=ALL&severity=ALL&search=
 ## Docs
 
 - [Authoritative Analytical Sources, Multi-Source Synthesis Standard & Scenario Reference Index](./docs/analytical-sources-and-references.md)
+- [Mandatory New Scenario & Article Ingestion + SEO / GEO Synchronization Standard](./docs/scenario-ingestion-and-seo-standard.md)
 - [Story-to-Spec 3-Layer Explanation & Context-Aware Inspector Standard](./docs/story-to-spec-explanation-standard.md)
 - [Inline Purpose & Cause-and-Effect Parenthetical Standard](./docs/inline-purpose-parenthetical-standard.md)
 - [UI & Canvas Engineering Standards](./docs/ui-canvas-engineering-standards.md)

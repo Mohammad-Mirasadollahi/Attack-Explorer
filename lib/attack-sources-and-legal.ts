@@ -88,6 +88,16 @@ export const GLOBAL_FRAMEWORK_SOURCES: SourceCitation[] = [
     usageSummary:
       'Documents the .vhdx Mark-of-the-Web (MotW) container bypass, attrib +h +s super-hidden file evasion, and volatile process-environment COR_ENABLE_PROFILING=1 / COR_PROFILER_PATH injection into signed .NET binaries (KeePass.exe).',
   },
+  {
+    id: 'jeffreyappel-artex-defender-research',
+    organization: 'Jeffrey Appel Security Research (Microsoft Security MVP)',
+    title: 'ARTEX: Old Attacks at Machine Speed, and How Microsoft Defender Keeps Up',
+    referenceCode: 'JEFFREYAPPEL-ARTEX-DEFENDER-XDR',
+    licenseOrTerms: 'Jeffrey Appel Public Defensive & Microsoft Defender XDR Research Publication',
+    url: 'https://jeffreyappel.nl/artex-old-attacks-at-machine-speed-and-how-microsoft-defender-keeps-up/',
+    usageSummary:
+      'Documents the ARTEX Go + Next.js multi-agent LLM framework orchestrating Storm-0940 password spraying, web shells, Kerberoasting, and 5-minute Azure Key Vault exfiltration at machine speed, alongside Microsoft Defender XDR Automatic Attack Disruption and KQL multi-alert burst correlation.',
+  },
 ];
 
 export const SCENARIO_ATTRIBUTION_MAP: Record<

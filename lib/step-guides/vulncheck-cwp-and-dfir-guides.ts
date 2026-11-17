@@ -24,6 +24,17 @@ interface CustomScenarioNarrativeMeta {
 }
 
 const CUSTOM_DFIR_NARRATIVE_META: Record<string, CustomScenarioNarrativeMeta> = {
+  'jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr': {
+    advisory:
+      'Jeffrey Appel Security Research ("ARTEX: Old Attacks at Machine Speed, and how Microsoft Defender keeps up"), Microsoft Threat Intelligence (Storm-0940 & Defender XDR Automatic Attack Disruption) & MITRE ATT&CK T1110.003 / T1558.003 / T1552.004',
+    briefingAnalogy:
+      'Imagine a bank heist crew that replaces slow human lockpickers with a coordinated swarm of high-speed robotic arms (the ARTEX Go + Next.js LLM Planner-Worker framework): instead of inventing a brand-new laser cutter, the master robot (LLM Planner) dispatches 8 worker robots that test every door handle (nmap/curl + Storm-0940 password spray), prop open a side window (web shell + RC4 Kerberoasting), and empty the upstairs safe (Azure Key Vault SecretGet) in under 15 minutes—forcing the building security system (Microsoft Defender XDR) to slam down steel blast doors automatically (Automatic Attack Disruption) because waiting for a human guard to read the alarm log would be too late.',
+    stepAnalogies: [
+      'Think of a central AI dispatcher (artex-server Go Planner) handing out parallel checklists to robotic scouts (Worker agents running nmap -sV, curl, and Storm-0940 low-and-slow OAuth2 password sprays) so the moment one password clicks open, the next robot is already in motion.',
+      'Think of the second robot immediately wedging open a service door (dropping an ASPX web shell under w3wp.exe) and requesting a downgraded RC4 ticket voucher (EventID 4769 etype 0x17) within 8 minutes—compressing what used to take human hackers days of manual typing into seconds.',
+      'Think of the cloud robot sprinting straight to the master key vault (Azure Key Vault SecretGet) within 5 minutes, only for the building automated defense grid (Microsoft Defender XDR KQL multi-alert burst correlation + Automatic Attack Disruption) to spot 3+ alarms on the same badge in a 15-minute window, isolate the machine (sense.exe), and shred the badge (Entra ID session revocation).',
+    ],
+  },
   'pikered-clr-profiler-trusted-binary-loader-chain': {
     advisory:
       'PikeRed Security Research ("Abusing the CLR Profiler: A Trusted-Binary Loader Chain for Initial Access"), Microsoft .NET Unmanaged Profiling API Specification & MITRE ATT&CK T1574.012',

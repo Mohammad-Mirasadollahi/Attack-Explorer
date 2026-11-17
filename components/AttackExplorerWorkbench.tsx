@@ -72,8 +72,10 @@ import {
 } from '@/lib/layout-preference';
 import {
   hasStoredDiagramSnapshot,
+  parseWorkbenchUrlState,
   readLastVisitedDiagramSnapshot,
   saveLastVisitedDiagramSnapshot,
+  serializeWorkbenchUrlState,
 } from '@/lib/diagram-memory-store';
 
 export function AttackExplorerWorkbench() {
@@ -199,66 +201,73 @@ export function AttackExplorerWorkbench() {
   const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
 
-  // Restore last visited workbench state or URL ?scenario=<id> parameter on mount
+  // Restore last visited workbench state or URL deep-link parameters (?scenario=...&step=...&expanded=...&subnode=...&node=...&packet=...&inspector=1&tab=...#...) on mount and browser navigation
+  const [focusedPartHash, setFocusedPartHash] = useState<string | null>(null);
   const [memoryHydrated, setMemoryHydrated] = useState<boolean>(false);
-  useEffect(() => {
-    const rafId = window.requestAnimationFrame(() => {
-      const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
-      let queryScenarioId: string | null = null;
-      try {
-        const params = new URLSearchParams(window.location.search);
-        queryScenarioId = params.get('scenario');
-      } catch {
-        queryScenarioId = null;
-      }
 
-      const queryScenario = queryScenarioId
-        ? ATTACK_SCENARIOS.find((s) => s.id === queryScenarioId)
-        : undefined;
+  const applyUrlOrSnapshotState = useCallback(() => {
+    const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
+    const parsed = parseWorkbenchUrlState(
+      typeof window !== 'undefined' ? window.location.search : '',
+      typeof window !== 'undefined' ? window.location.hash : '',
+      remembered
+    );
 
-      if (queryScenario) {
-        setSelectedScenarioId(queryScenario.id);
-        setActiveStageIndex(0);
-        setCinematicPhase('OVERVIEW');
-        setShowIntro(false);
-      } else {
-        const validScenario = ATTACK_SCENARIOS.find(
-          (s) => s.id === remembered.scenarioId
-        );
-        if (validScenario) {
-          setSelectedScenarioId(validScenario.id);
-          const clampedStage = Math.min(
-            remembered.activeStageIndex,
-            validScenario.stages.length
-          );
-          setActiveStageIndex(clampedStage);
-          setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
-        }
-      }
-      setActiveEnvironment(remembered.activeEnvironment);
-      setExpandedNodeId(queryScenario ? null : remembered.expandedNodeId);
-      setSelectedNodeId(queryScenario ? null : remembered.selectedNodeId);
-      setSelectedInternalSubNodeId(
-        queryScenario ? null : remembered.selectedInternalSubNodeId
-      );
-      setSelectedTelemetryId(
-        queryScenario ? null : remembered.selectedTelemetryId
-      );
-      setTacticalMode(remembered.tacticalMode);
-      setViewMode(remembered.viewMode);
-      setInspectorOpen(queryScenario ? false : remembered.inspectorOpen);
-      setInspectorTab(remembered.inspectorTab);
-      setInspectorScopeOverride(
-        queryScenario ? null : remembered.inspectorScopeOverride
-      );
-      setIsDark(remembered.isDark);
-      setPlaybackSpeed(remembered.playbackSpeed);
-      setMemoryHydrated(true);
-    });
-    return () => window.cancelAnimationFrame(rafId);
+    const targetSnapshot = parsed.state;
+    const validScenario =
+      ATTACK_SCENARIOS.find((s) => s.id === targetSnapshot.scenarioId) ||
+      ATTACK_SCENARIOS.find((s) => s.id === remembered.scenarioId) ||
+      ATTACK_SCENARIOS[0];
+
+    const clampedStage = Math.min(
+      Math.max(0, targetSnapshot.activeStageIndex),
+      validScenario.stages.length
+    );
+
+    setSelectedScenarioId(validScenario.id);
+    setActiveStageIndex(clampedStage);
+    setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
+    if (parsed.hasUrlOverrides) {
+      setShowIntro(false);
+    }
+    setActiveEnvironment(targetSnapshot.activeEnvironment);
+    setExpandedNodeId(targetSnapshot.expandedNodeId);
+    setSelectedNodeId(targetSnapshot.selectedNodeId);
+    setSelectedInternalSubNodeId(targetSnapshot.selectedInternalSubNodeId);
+    setSelectedTelemetryId(targetSnapshot.selectedTelemetryId);
+    setTacticalMode(targetSnapshot.tacticalMode);
+    setViewMode(targetSnapshot.viewMode);
+    setInspectorOpen(targetSnapshot.inspectorOpen);
+    setInspectorTab(targetSnapshot.inspectorTab);
+    setInspectorScopeOverride(targetSnapshot.inspectorScopeOverride);
+    setIsDark(targetSnapshot.isDark);
+    setPlaybackSpeed(targetSnapshot.playbackSpeed);
+    setFocusedPartHash(parsed.focusedPartHash);
+    setMemoryHydrated(true);
+
+    if (parsed.focusedPartHash && typeof document !== 'undefined') {
+      window.setTimeout(() => {
+        const el = document.getElementById(parsed.focusedPartHash!);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 120);
+    }
   }, []);
 
-  // Automatically save the complete workbench state in localStorage whenever the user interacts with stage, node, or view configuration
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => {
+      applyUrlOrSnapshotState();
+    });
+    const onPopState = () => {
+      applyUrlOrSnapshotState();
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [applyUrlOrSnapshotState]);
+
+  // Automatically save the complete workbench state in localStorage AND synchronize the browser URL whenever the user navigates across scenarios, steps, sections, nodes, sub-nodes, packets, or inspector tabs
   useEffect(() => {
     if (!memoryHydrated) return;
     saveLastVisitedDiagramSnapshot({
@@ -277,6 +286,32 @@ export function AttackExplorerWorkbench() {
       isDark,
       playbackSpeed,
     });
+
+    if (typeof window !== 'undefined') {
+      const nextRelativeUrl = serializeWorkbenchUrlState({
+        scenarioId: selectedScenarioId,
+        activeStageIndex,
+        activeEnvironment,
+        expandedNodeId,
+        selectedNodeId,
+        selectedInternalSubNodeId,
+        selectedTelemetryId,
+        viewMode,
+        inspectorOpen,
+        inspectorTab,
+        inspectorScopeOverride,
+        focusedPartHash,
+        currentSearch: window.location.search,
+      });
+      const currentRelativeUrl = `${window.location.search}${window.location.hash}`;
+      if (currentRelativeUrl !== nextRelativeUrl) {
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${nextRelativeUrl}`
+        );
+      }
+    }
   }, [
     memoryHydrated,
     viewMode,
@@ -293,6 +328,7 @@ export function AttackExplorerWorkbench() {
     selectedInternalSubNodeId,
     selectedTelemetryId,
     tacticalMode,
+    focusedPartHash,
   ]);
 
   // Handler when clicking the "Attack Explorer" logo: return immediately to the active diagram view
@@ -424,6 +460,7 @@ export function AttackExplorerWorkbench() {
     setSelectedInternalSubNodeId(null);
     setInspectorScopeOverride(null);
     setSelectedTelemetryId(null);
+    setFocusedPartHash(null);
   }, []);
 
   const handleSelectInternalSubNode = useCallback(
@@ -431,6 +468,7 @@ export function AttackExplorerWorkbench() {
       setSelectedInternalSubNodeId(subNodeId);
       setInspectorScopeOverride(null);
       setSelectedTelemetryId(null);
+      setFocusedPartHash(null);
     },
     []
   );
@@ -439,6 +477,7 @@ export function AttackExplorerWorkbench() {
     setFocusedSearchNodeId(nodeId);
     setFocusSearchSeq((prev) => prev + 1);
     setSelectedNodeId(nodeId);
+    setFocusedPartHash(null);
   }, []);
 
   const handleInjectAttackVector = useCallback(
@@ -534,6 +573,7 @@ export function AttackExplorerWorkbench() {
     setExpandedNodeId(null);
     setSelectedInternalSubNodeId(null);
     setInspectorScopeOverride(null);
+    setFocusedPartHash(null);
     setIsPlaying(false);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setSidebarOpen(false);
@@ -546,11 +586,13 @@ export function AttackExplorerWorkbench() {
     setCinematicPhase(stageIdx === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
     setSelectedTelemetryId(null);
     setSelectedNodeId(null);
+    setFocusedPartHash(null);
   };
 
   const handleStepForward = () => {
     setIsPlaying(false);
     setSelectedTelemetryId(null);
+    setFocusedPartHash(null);
     setCinematicPhase('STAGE_ACTIVE');
     setActiveStageIndex((prev) => stepForward(activeScenario, prev));
   };
@@ -558,6 +600,7 @@ export function AttackExplorerWorkbench() {
   const handleStepBackward = () => {
     setIsPlaying(false);
     setSelectedTelemetryId(null);
+    setFocusedPartHash(null);
     setActiveStageIndex((prev) => {
       const next = stepBackward(prev);
       setCinematicPhase(next === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
@@ -574,6 +617,7 @@ export function AttackExplorerWorkbench() {
     setExpandedNodeId(null);
     setSelectedInternalSubNodeId(null);
     setInspectorScopeOverride(null);
+    setFocusedPartHash(null);
   };
 
   const handleStartGuidedWalkthrough = () => {
@@ -582,6 +626,7 @@ export function AttackExplorerWorkbench() {
     setExpandedNodeId(null);
     setSelectedInternalSubNodeId(null);
     setInspectorScopeOverride(null);
+    setFocusedPartHash(null);
     setActiveStageIndex(1);
     setCinematicPhase('INTRO_SURVEY');
     setIsPlaying(true);
@@ -606,6 +651,7 @@ export function AttackExplorerWorkbench() {
   const handleSelectTelemetry = (event: TelemetryEvent) => {
     setIsPlaying(false);
     setSelectedTelemetryId((prev) => (prev === event.id ? null : event.id));
+    setFocusedPartHash(null);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setSidebarOpen(false);
     }

@@ -6,11 +6,21 @@ import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
 } from '@/lib/attack-sources-and-legal';
-import { buildScenarioJsonLd, resolveSiteUrl } from '@/lib/seo-metadata';
+import {
+  buildScenarioBreadcrumbs,
+  buildScenarioJsonLd,
+  formatCategoryAnchorId,
+  getRelatedClusterScenarios,
+  resolveSiteUrl,
+} from '@/lib/seo-metadata';
+import { formatAttackCategoryLabel } from '@/lib/attack-category-labels';
+import { getCuratedThreatIntel } from '@/lib/threat-intel-service';
 import {
   ArrowLeft,
   BookOpenCheck,
+  ChevronRight,
   ExternalLink,
+  GitBranch,
   Layers,
   Play,
   ShieldAlert,
@@ -86,6 +96,11 @@ export default async function ScenarioLandingPage({
   }
 
   const attribution = getScenarioAttribution(scenario);
+  const intel = getCuratedThreatIntel(scenario);
+  const relatedScenarios = getRelatedClusterScenarios(scenario, 6);
+  const breadcrumbs = buildScenarioBreadcrumbs(scenario);
+  const categoryLabel = formatAttackCategoryLabel(scenario.category);
+  const categoryAnchor = formatCategoryAnchorId(scenario.category);
   const scenarioJsonLd = JSON.stringify(buildScenarioJsonLd(scenario));
 
   return (
@@ -95,6 +110,8 @@ export default async function ScenarioLandingPage({
       className="min-h-screen bg-[#FAFAFA] dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 py-8 px-4 sm:px-8"
     >
       <script
+        id={`scenario-jsonld-${scenario.id}`}
+        data-testid="scenario-jsonld-script"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: scenarioJsonLd }}
       />
@@ -102,28 +119,41 @@ export default async function ScenarioLandingPage({
       <div className="max-w-5xl mx-auto space-y-6">
         <nav
           aria-label="Breadcrumb"
+          data-testid="scenario-breadcrumb-nav"
           className="flex flex-wrap items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Attack Explorer Workbench</span>
-            </Link>
-            <span className="text-zinc-400">/</span>
-            <Link
-              href="/sources"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-indigo-600"
-            >
-              Scenarios
-            </Link>
-            <span className="text-zinc-400">/</span>
-            <span className="text-indigo-600 dark:text-indigo-400 font-bold">
-              {scenario.code}
-            </span>
-          </div>
+          <ol className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+            {breadcrumbs.map((crumb, index) => (
+              <li
+                key={crumb.position}
+                className="inline-flex items-center gap-1.5"
+              >
+                {index > 0 && (
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="w-3.5 h-3.5 text-zinc-400 shrink-0"
+                  />
+                )}
+                {crumb.isCurrent ? (
+                  <span
+                    aria-current="page"
+                    data-testid="breadcrumb-current-scenario"
+                    className="text-indigo-600 dark:text-indigo-400 font-bold"
+                  >
+                    {crumb.name}
+                  </span>
+                ) : (
+                  <Link
+                    href={crumb.href}
+                    className="inline-flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-semibold transition-colors"
+                  >
+                    {index === 0 && <ArrowLeft className="w-3.5 h-3.5" />}
+                    <span>{crumb.name}</span>
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ol>
 
           <Link
             href={`/?scenario=${encodeURIComponent(scenario.id)}`}
@@ -140,9 +170,12 @@ export default async function ScenarioLandingPage({
             <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white font-mono text-xs font-bold">
               {scenario.code}
             </span>
-            <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono text-xs font-bold">
-              {scenario.category}
-            </span>
+            <Link
+              href={`/sources#${categoryAnchor}`}
+              className="px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-500 font-mono text-xs font-bold transition-colors"
+            >
+              {categoryLabel}
+            </Link>
             <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-xs font-semibold">
               {scenario.stages.length} Kill-Chain Stages · Severity:{' '}
               {scenario.severity}
@@ -162,12 +195,83 @@ export default async function ScenarioLandingPage({
           </p>
         </header>
 
-        <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4">
+        <section
+          id="forensic-fact-sheet"
+          aria-label="Forensic Fact Sheet and Threat Intelligence"
+          className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4 scroll-mt-6"
+        >
+          <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-rose-600" />
+            <a href="#forensic-fact-sheet" className="hover:underline">
+              Answer-First Forensic Fact Sheet &amp; Threat Intelligence
+            </a>
+          </h2>
+
+          <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-zinc-950/70 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            {attribution.multiSourceSynthesis}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2">
+              <div className="text-xs font-mono font-bold uppercase text-rose-600 dark:text-rose-400">
+                Associated CVEs &amp; Vulnerability Mechanics
+              </div>
+              {intel.cves.length > 0 ? (
+                <ul className="space-y-2">
+                  {intel.cves.map((cve) => (
+                    <li
+                      key={cve.id}
+                      className="text-xs text-zinc-700 dark:text-zinc-300 space-y-0.5"
+                    >
+                      <div className="font-mono font-bold text-zinc-900 dark:text-white">
+                        {cve.id} · CVSS {cve.cvss} ({cve.status})
+                      </div>
+                      <div>{cve.description}</div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  Post-exploitation / Living-off-the-Land (LOTL) tradecraft
+                  operating via native OS/API primitives without requiring a
+                  single CVE exploit.
+                </p>
+              )}
+            </div>
+
+            <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2">
+              <div className="text-xs font-mono font-bold uppercase text-indigo-600 dark:text-indigo-400">
+                Attributed Threat Actor Groups &amp; Tradecraft
+              </div>
+              <ul className="space-y-2">
+                {intel.actorGroups.map((actor) => (
+                  <li
+                    key={actor.name}
+                    className="text-xs text-zinc-700 dark:text-zinc-300 space-y-0.5"
+                  >
+                    <div className="font-mono font-bold text-zinc-900 dark:text-white">
+                      {actor.name}{' '}
+                      <span className="text-zinc-500 font-normal">
+                        ({actor.aliases}) · {actor.targetSectors}
+                      </span>
+                    </div>
+                    <div>{actor.notableCampaign}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="kill-chain-stages"
+          className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4 scroll-mt-6"
+        >
           <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-indigo-600" />
-            <span>
+            <a href="#kill-chain-stages" className="hover:underline">
               Step-by-Step Kill-Chain Stages ({scenario.stages.length} Stages)
-            </span>
+            </a>
           </h2>
 
           <div className="space-y-4">
@@ -181,20 +285,38 @@ export default async function ScenarioLandingPage({
                 <article
                   key={st.index}
                   id={`stage-${st.index}`}
-                  className="p-4 sm:p-5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2.5"
+                  className="p-4 sm:p-5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2.5 scroll-mt-6"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-indigo-600 text-white font-mono text-xs font-bold">
+                      <a
+                        href={`#stage-${st.index}`}
+                        className="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition-colors"
+                      >
                         Stage {st.index}
-                      </span>
+                      </a>
                       <h3 className="text-base font-bold text-zinc-950 dark:text-white">
-                        {st.title}
+                        <a
+                          href={`#stage-${st.index}`}
+                          className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        >
+                          {st.title}
+                        </a>
                       </h3>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25 font-mono text-xs font-bold">
-                      {st.mitreTechniqueId} · {st.mitreTechniqueName}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25 font-mono text-xs font-bold">
+                        {st.mitreTechniqueId} · {st.mitreTechniqueName}
+                      </span>
+                      <Link
+                        href={`/?scenario=${encodeURIComponent(scenario.id)}&step=${st.index}#step-${st.index}`}
+                        data-testid={`simulate-stage-${st.index}-btn`}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono text-[11px] font-bold transition-colors"
+                      >
+                        <Play className="w-2.5 h-2.5 fill-current" />
+                        <span>Simulate Stage {st.index}</span>
+                      </Link>
+                    </div>
                   </div>
 
                   <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
@@ -300,6 +422,62 @@ export default async function ScenarioLandingPage({
             ))}
           </div>
         </section>
+
+        {relatedScenarios.length > 0 && (
+          <section
+            aria-label="Related Cyber Attack and DFIR Scenarios"
+            className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4"
+          >
+            <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
+              <GitBranch className="w-5 h-5 text-indigo-600" />
+              <span>
+                Related {categoryLabel} &amp; MITRE ATT&amp;CK Scenarios (Topic
+                Cluster)
+              </span>
+            </h2>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              Explore laterally related attack chains sharing the same tactic
+              cluster, MITRE ATT&amp;CK® techniques, or forensic detection
+              surface:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {relatedScenarios.map((rel) => {
+                const relMitre = Array.from(
+                  new Set(rel.stages.map((st) => st.mitreTechniqueId))
+                )
+                  .slice(0, 2)
+                  .join(', ');
+                return (
+                  <Link
+                    key={rel.id}
+                    href={`/scenarios/${rel.id}`}
+                    className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/60 transition-colors flex flex-col justify-between gap-2"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-1.5 text-[11px] font-mono">
+                        <span className="font-bold text-rose-600 dark:text-rose-400">
+                          {rel.code}
+                        </span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                          {relMitre}
+                        </span>
+                      </div>
+                      <h3 className="text-xs font-bold text-zinc-900 dark:text-white line-clamp-2">
+                        {rel.name}
+                      </h3>
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                        {rel.shortSubtitle}
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-mono font-semibold text-indigo-600 dark:text-indigo-400">
+                      Inspect Forensic Breakdown →
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <footer className="rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 p-5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-emerald-900 dark:text-emerald-200">
