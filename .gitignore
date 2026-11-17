@@ -160,6 +160,11 @@ firebase-export-*
 .agent/**
 .agents/
 .agents/**
+skills-lock.json
+.skills/
+.skills/**
+.squirrel/
+.squirrel*
 .factory/
 .factory/**
 .augment/
