@@ -2,7 +2,7 @@
 
 > Visual Cyber Attack, Log & Malware Analyzer mapped to MITRE ATT&CK.
 
-Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (178 documented scenarios across 13 specialized categories, including 25 Cloud & SaaS scenarios and 13 Docker/Container/Kubernetes scenarios).
+Attack Explorer is an interactive step-by-step visual simulator and analyzer for cyber attacks, SIEM/Sysmon log analysis, and malware behavioral execution mapped to the MITRE ATT&CK Enterprise Matrix (188 documented scenarios across 13 specialized categories, including 25 Cloud & SaaS scenarios, 13 Docker/Container/Kubernetes scenarios, and expanded ICS/OT, Mobile/Telecom, Database, AI/MLOps, and Zero-Day Appliance coverage).
 
 ## Core Capabilities
 - **Attack Simulation:** Step-by-step visual execution of real-world adversary scenarios across Workstation, Domain Controller, and Cloud environments.
@@ -10,10 +10,15 @@ Attack Explorer is an interactive step-by-step visual simulator and analyzer for
 - **Behavioral Mapping:** Direct mapping to MITRE ATT&CK tactics, techniques, and sub-techniques (TTPs).
 - **Process Memory Inspection:** Process hollowing, VAD memory forensics, CLR Profiler hijacking, and AMSI bypass flowcharts.
 
-## Featured & Newly Added Scenarios (Cloud & SaaS, Docker/Containers, Ransomware, Supply Chain & AI Intrusions)
+## Featured & Newly Added Scenarios (Cloud & SaaS, Docker/Containers, ICS/OT, Mobile/5G, Database, AI/MLOps & Zero-Day Appliances)
 - [Process Hollowing (T1055.012)](https://attackexplorer.org/scenarios/process-hollowing): `svchost.exe` suspension, section unmapping (`NtUnmapViewOfSection`), and memory injection.
 - [PikeRed — Abusing the .NET CLR Profiler: Trusted-Binary Loader Chain (T1574.012)](https://attackexplorer.org/scenarios/pikered-clr-profiler-trusted-binary-loader-chain): `.vhdx` MotW bypass, `+h +s` super-hidden files, and `COR_ENABLE_PROFILING=1` / `COR_PROFILER_PATH` hijacking of signed `KeePass.exe` ([PikeRed Research](https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/)).
 - [Jeffrey Appel — ARTEX Multi-Agent LLM Framework: Machine-Speed Attacks & Microsoft Defender XDR Disruption (T1110.003)](https://attackexplorer.org/scenarios/jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr): Go + Next.js Planner-Worker LLM agents chaining `Storm-0940` password spraying, web shells, `RC4` Kerberoasting, and 5-minute Azure Key Vault exfiltration countered by Defender XDR Automatic Attack Disruption and KQL multi-alert burst correlation ([Jeffrey Appel Research](https://jeffreyappel.nl/artex-old-attacks-at-machine-speed-and-how-microsoft-defender-keeps-up/)).
+- [Dragos FrostyGoop — Industrial ENCO Controller Modbus TCP Port 502 Register Audit (T1190)](https://attackexplorer.org/scenarios/ics-frostygoop-modbus-tcp-district-heating-controller-audit): Modbus TCP port 502 Function Code `0x03`/`0x06`/`0x10` district heating register manipulation and Zeek ICS telemetry.
+- [Citizen Lab FORCEDENTRY & Google Project Zero — iOS JBIG2 Stream & MVT DataUsage Forensics (CVE-2021-30860)](https://attackexplorer.org/scenarios/mobile-pegasus-forcedentry-imessage-jbigh2-blastdoor-forensics): Zero-click iMessage PDF/JBIG2 `CoreGraphics` logic circuit emulation and `DataUsage.sqlite` / `IMTransferAgent` forensics.
+- [Mandiant & Snowflake UNC5537 — Single-Factor Session & QUERY_HISTORY Egress Forensics (T1078.004)](https://attackexplorer.org/scenarios/db-snowflake-unc5537-single-factor-auth-data-egress-audit): `ACCOUNT_USAGE.LOGIN_HISTORY` single-factor sessions and `COPY INTO @~` stage exfiltration.
+- [MLflow Tracking Server URI Fragment Path Traversal & Artifact Store Audit (CVE-2024-2928)](https://attackexplorer.org/scenarios/ai-mlflow-unauthenticated-tracking-server-artifact-lfi-cve-2024-2928): `artifact_location` URI fragment differential and `/model-versions/get-artifact` file read.
+- [Black Lotus Labs Volt Typhoon — Versa Director SD-WAN Port 4566 Favicon Upload & VersaMem Java Agent Audit (CVE-2024-39717)](https://attackexplorer.org/scenarios/versa-director-sdwan-guiclient-jar-upload-cve-2024-39717-audit): Port 4566 `change_Dynamic_Favicon` `.png`-disguised JAR upload and Tomcat JVM `ApplicationFilterChain` instrumentation.
 - [Midnight Blizzard (APT29) — Entra ID Legacy OAuth App Compromise & Exchange full_access_as_app Role Audit (CISA ED 24-02)](https://attackexplorer.org/scenarios/cloud-midnight-blizzard-oauth-legacy-test-app-audit): Legacy OAuth app password spray, Service Principal credential injection, and `full_access_as_app` Exchange Graph EWS audit.
 - [AWS IAM & STS — GetFederationToken Console Sign-In Token Minting & MFA Bypass Audit (T1550.001)](https://attackexplorer.org/scenarios/cloud-aws-sts-federation-token-console-signin-audit): `sts:GetFederationToken` to `signin.aws.amazon.com/federation` console session minting with `MFAUsed: "No"`.
 - [AWS S3 & KMS — Cross-Account KMS Key Re-Encryption & S3 Object Lifecycle Extortion Audit (T1486)](https://attackexplorer.org/scenarios/cloud-aws-s3-kms-external-account-encryption-extortion-audit): In-place `CopyObject` re-encryption with external KMS Customer Managed Keys and 1-day `PutBucketLifecycleConfiguration` purge.
@@ -42,5 +47,5 @@ Attack Explorer is an interactive step-by-step visual simulator and analyzer for
 - [Interactive Workbench](https://attackexplorer.org/)
 - [About the Creator — Mohammad Mirasadollahi](https://attackexplorer.org/about)
 - [Authoritative Sources, Citations & Legal Compliance](https://attackexplorer.org/sources)
-- [Full Scenario Encyclopedia for AI Agents (178 Scenarios)](https://attackexplorer.org/llms-full.txt)
+- [Full Scenario Encyclopedia for AI Agents (188 Scenarios)](https://attackexplorer.org/llms-full.txt)
 - [XML Sitemap](https://attackexplorer.org/sitemap.xml)

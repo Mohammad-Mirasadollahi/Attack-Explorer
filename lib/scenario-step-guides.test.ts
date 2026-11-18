@@ -11,13 +11,13 @@ import { getScenarioAttribution } from './attack-sources-and-legal';
 import { getCuratedThreatIntel } from './threat-intel-service';
 
 describe('Scenario Step-by-Step Guides & Scenario Briefing Alignment', () => {
-  it('validates that all 178 scenarios have complete step-by-step guides and Scenario Briefings across all 13 categories', () => {
+  it('validates that all 188 scenarios have complete step-by-step guides and Scenario Briefings across all 13 categories', () => {
     const validation = validateAllScenarioStepGuides(ATTACK_SCENARIOS);
-    assert.equal(validation.totalScenarios, 178);
+    assert.equal(validation.totalScenarios, 188);
     assert.deepEqual(validation.missingScenarioIds, []);
     assert.deepEqual(validation.stageCountMismatches, []);
     assert.equal(validation.valid, true);
-    assert.equal(validation.totalSteps, 537);
+    assert.equal(validation.totalSteps, 567);
   });
 
   it('ensures every scenario has rich plain-language Scenario Briefings and numbered steps grounded in documentation with zero Persian characters', () => {

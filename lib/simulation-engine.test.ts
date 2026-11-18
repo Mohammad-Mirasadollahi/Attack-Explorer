@@ -19,20 +19,45 @@ import {
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 178 scenarios organized into 13 specialized categories', () => {
+  it('filterScenarios filters by category and search query accurately across all 188 scenarios organized into 13 specialized categories', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 178);
+    assert.equal(all.length, 188);
 
     const zeroDayAppliances = filterScenarios(
       ATTACK_SCENARIOS,
       'ZERO_DAY_APPLIANCES',
       ''
     );
+    assert.ok(zeroDayAppliances.length >= 9);
     assert.ok(
       zeroDayAppliances.some(
         (s) => s.id === 'vulncheck-cwp-preauth-module-dispatch-rce'
       )
     );
+
+    const icsOt = filterScenarios(ATTACK_SCENARIOS, 'ICS_OT_SCADA', '');
+    assert.ok(icsOt.length >= 5);
+
+    const mobileTelecom = filterScenarios(
+      ATTACK_SCENARIOS,
+      'MOBILE_TELECOM_SPYWARE',
+      ''
+    );
+    assert.ok(mobileTelecom.length >= 5);
+
+    const databasePlatforms = filterScenarios(
+      ATTACK_SCENARIOS,
+      'DATABASE_DATA_PLATFORMS',
+      ''
+    );
+    assert.ok(databasePlatforms.length >= 5);
+
+    const aiLlmMlops = filterScenarios(
+      ATTACK_SCENARIOS,
+      'AI_LLM_MLOPS_SECURITY',
+      ''
+    );
+    assert.ok(aiLlmMlops.length >= 6);
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
     assert.ok(malwareOnly.length >= 25);
@@ -145,7 +170,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary();
-    assert.equal(fullLib.totalCount, 178);
+    assert.equal(fullLib.totalCount, 188);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass

@@ -316,6 +316,29 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
         `Expected /scenarios/${id} in XML sitemap`
       );
     }
+
+    const batch8SpecializedExpected: Array<{ id: string; category: string }> = [
+      { id: 'ics-frostygoop-modbus-tcp-district-heating-controller-audit', category: 'ICS_OT_SCADA' },
+      { id: 'ics-stuxnet-step7-s7comm-plc-ob1-ob35-block-injection-audit', category: 'ICS_OT_SCADA' },
+      { id: 'mobile-pegasus-forcedentry-imessage-jbigh2-blastdoor-forensics', category: 'MOBILE_TELECOM_SPYWARE' },
+      { id: 'telecom-salt-typhoon-diameter-5g-http2-sbi-core-network-audit', category: 'MOBILE_TELECOM_SPYWARE' },
+      { id: 'db-snowflake-unc5537-single-factor-auth-data-egress-audit', category: 'DATABASE_DATA_PLATFORMS' },
+      { id: 'db-mongodb-mongobleed-unauthenticated-replication-oplog-audit', category: 'DATABASE_DATA_PLATFORMS' },
+      { id: 'ai-mlflow-unauthenticated-tracking-server-artifact-lfi-cve-2024-2928', category: 'AI_LLM_MLOPS_SECURITY' },
+      { id: 'ai-ollama-vllm-inference-server-model-poisoning-ssrf-audit', category: 'AI_LLM_MLOPS_SECURITY' },
+      { id: 'ivanti-vtm-apache-ofbiz-auth-bypass-cve-2024-7593-audit', category: 'ZERO_DAY_APPLIANCES' },
+      { id: 'versa-director-sdwan-guiclient-jar-upload-cve-2024-39717-audit', category: 'ZERO_DAY_APPLIANCES' },
+    ];
+
+    for (const item of batch8SpecializedExpected) {
+      const scenario = ATTACK_SCENARIOS.find((s) => s.id === item.id);
+      assert.ok(scenario, `Expected specialized scenario ${item.id} in ATTACK_SCENARIOS`);
+      assert.equal(scenario.category, item.category);
+      assert.ok(
+        sitemapUrls.some((u) => u.endsWith(`/scenarios/${item.id}`)),
+        `Expected /scenarios/${item.id} in XML sitemap`
+      );
+    }
   });
 
   it('enforces the Mandatory New Scenario & Article Ingestion + SEO/GEO Synchronization Standard across every scenario in ATTACK_SCENARIOS', () => {

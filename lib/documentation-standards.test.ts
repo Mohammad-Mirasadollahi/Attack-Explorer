@@ -89,8 +89,8 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-07)',
     assert.ok(invalidCheck.violations.length >= 3);
   });
 
-  it('validates all 178 scenarios in ATTACK_SCENARIOS against the full modular standard suite (MOD-01 .. MOD-06) and ensures PikeRed and Jeffrey Appel ARTEX exist without duplicates', () => {
-    assert.equal(ATTACK_SCENARIOS.length, 178);
+  it('validates all 188 scenarios in ATTACK_SCENARIOS against the full modular standard suite (MOD-01 .. MOD-06) and ensures PikeRed and Jeffrey Appel ARTEX exist without duplicates', () => {
+    assert.equal(ATTACK_SCENARIOS.length, 188);
     const seenIds = new Set<string>();
     for (const scenario of ATTACK_SCENARIOS) {
       assert.equal(
