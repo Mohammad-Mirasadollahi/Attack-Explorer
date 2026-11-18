@@ -26,6 +26,8 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
+import ProcessHollowingScrollytellingView from '@/components/ProcessHollowingScrollytellingView';
+import { PROCESS_HOLLOWING_SCENARIO_ID } from '@/lib/process-hollowing-scrollytelling';
 
 interface ScenarioPageProps {
   params: Promise<{ id: string }>;
@@ -195,11 +197,15 @@ export default async function ScenarioLandingPage({
           </p>
         </header>
 
-        <section
-          id="forensic-fact-sheet"
-          aria-label="Forensic Fact Sheet and Threat Intelligence"
-          className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4 scroll-mt-6"
-        >
+        {(() => {
+          const coreScenarioSections = (
+            <>
+              <section
+                id="forensic-fact-sheet"
+                data-scrolly-stage={0}
+                aria-label="Forensic Fact Sheet and Threat Intelligence"
+                className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4 scroll-mt-6"
+              >
           <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-rose-600" />
             <a href="#forensic-fact-sheet" className="hover:underline">
@@ -261,7 +267,7 @@ export default async function ScenarioLandingPage({
               </ul>
             </div>
           </div>
-        </section>
+              </section>
 
         <section
           id="kill-chain-stages"
@@ -285,6 +291,7 @@ export default async function ScenarioLandingPage({
                 <article
                   key={st.index}
                   id={`stage-${st.index}`}
+                  data-scrolly-stage={st.index}
                   className="p-4 sm:p-5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2.5 scroll-mt-6"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -356,6 +363,17 @@ export default async function ScenarioLandingPage({
             })}
           </div>
         </section>
+            </>
+          );
+
+          return scenario.id === PROCESS_HOLLOWING_SCENARIO_ID ? (
+            <ProcessHollowingScrollytellingView activeStageIndex={0}>
+              {coreScenarioSections}
+            </ProcessHollowingScrollytellingView>
+          ) : (
+            coreScenarioSections
+          );
+        })()}
 
         <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4">
           <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">

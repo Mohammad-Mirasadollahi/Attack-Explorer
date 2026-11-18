@@ -28,6 +28,10 @@ import {
   ProcessCommandLineInlineExplanation,
   SingleCommandExplanationCard,
 } from './CommandBreakdownList';
+import ProcessHollowingScrollytellingView, {
+  ProcessHollowingSyncedSubStepsList,
+} from './ProcessHollowingScrollytellingView';
+import { PROCESS_HOLLOWING_SCENARIO_ID } from '@/lib/process-hollowing-scrollytelling';
 import {
   ArrowLeft,
   ArrowRight,
@@ -86,6 +90,7 @@ function StructuredClausesList({
             key={`${clause.clauseCode}-${idx}`}
             id={clauseAnchorId}
             data-testid={`step-clause-${clause.clauseCode}`}
+            data-scrolly-clause={clause.clauseCode}
             onClick={() => {
               if (typeof window !== 'undefined') {
                 const nextUrl = `${window.location.pathname}${window.location.search}#${clauseAnchorId}`;
@@ -166,9 +171,9 @@ export function StepByStepGuidePanel({
       scopedGuideModel
   );
 
-  // Automatically scroll the active section into view during Auto-Play or stage changes
+  // Automatically scroll the active section into view ONLY during active Auto-Play
   useEffect(() => {
-    if (isExpandedScope) {
+    if (isExpandedScope || !isPlaying) {
       return;
     }
     if (
@@ -792,6 +797,7 @@ export function StepByStepGuidePanel({
       dir="ltr"
       className="space-y-4"
     >
+
       {/* Top Auto-Play Sync, Visual Legend & Quick Step Selector Bar */}
       <div
         data-testid="step-guide-autoplay-bar"
@@ -959,7 +965,13 @@ export function StepByStepGuidePanel({
             <button
               type="button"
               data-testid="step-guide-pill-0"
-              onClick={() => onSelectStage?.(0)}
+              onClick={() => {
+                onSelectStage?.(0);
+                briefingRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start',
+                });
+              }}
               title="Step #0: Scenario & Sequence Briefing"
               className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer ${
                 briefing.isActiveBriefing
@@ -974,7 +986,13 @@ export function StepByStepGuidePanel({
                 key={st.stepNumber}
                 type="button"
                 data-testid={`step-guide-pill-${st.stepNumber}`}
-                onClick={() => onSelectStage?.(st.stepNumber)}
+                onClick={() => {
+                  onSelectStage?.(st.stepNumber);
+                  stepCardRefs.current[st.stepNumber]?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }}
                 title={`Step #${st.stepNumber}: ${st.plainTitle}`}
                 className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer ${
                   activeStageIndex === st.stepNumber && !briefing.isActiveBriefing
@@ -991,19 +1009,23 @@ export function StepByStepGuidePanel({
         </div>
       </div>
 
-      {/* 0. SCENARIO & SEQUENCE BRIEFING CARD (With Visual Participating Nodes & Cascading Sequence Waterfall) */}
-      <div
-        id="step-0"
-        ref={briefingRef}
-        data-testid="step-guide-scenario-briefing"
-        data-briefing-active={briefing.isActiveBriefing ? 'true' : 'false'}
-        onClick={() => onSelectStage?.(0)}
-        className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
-          briefing.isActiveBriefing
-            ? 'border-amber-500/80 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm ring-1 ring-amber-500/30'
-            : 'border-zinc-200/90 dark:border-zinc-800/90 bg-zinc-50/70 dark:bg-zinc-900/50 hover:border-amber-500/50'
-        }`}
-      >
+      {(() => {
+        const cardsContent = (
+          <>
+            {/* 0. SCENARIO & SEQUENCE BRIEFING CARD (With Visual Participating Nodes & Cascading Sequence Waterfall) */}
+            <div
+              id="step-0"
+              ref={briefingRef}
+              data-testid="step-guide-scenario-briefing"
+              data-scrolly-stage={0}
+              data-briefing-active={briefing.isActiveBriefing ? 'true' : 'false'}
+              onClick={() => onSelectStage?.(0)}
+              className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
+                briefing.isActiveBriefing
+                  ? 'border-amber-500/80 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm ring-1 ring-amber-500/30'
+                  : 'border-zinc-200/90 dark:border-zinc-800/90 bg-zinc-50/70 dark:bg-zinc-900/50 hover:border-amber-500/50'
+              }`}
+            >
         {/* Briefing Header Strip */}
         <div className="px-3.5 py-2.5 bg-slate-950 text-white flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
           <div className="inline-flex items-center gap-1.5 text-[10.5px] font-mono font-bold text-amber-400 uppercase tracking-wider min-w-0">
@@ -1072,6 +1094,10 @@ export function StepByStepGuidePanel({
             </div>
             <StructuredClausesList clauses={briefing.structuredSummaryClauses} />
           </div>
+
+          {scenario.id === PROCESS_HOLLOWING_SCENARIO_ID && (
+            <ProcessHollowingSyncedSubStepsList stageNumber={0} />
+          )}
 
           {/* Layer 3: Visual Participating Topology Nodes Grid (①..⑥ with Node Icons) */}
           <div
@@ -1255,6 +1281,7 @@ export function StepByStepGuidePanel({
                 stepCardRefs.current[step.stepNumber] = el;
               }}
               data-testid={`step-guide-card-${step.stepNumber}`}
+              data-scrolly-stage={step.stepNumber}
               data-step-number={step.stepNumber}
               data-step-status={step.status}
               initial={{ opacity: 0, y: 6 }}
@@ -1496,6 +1523,12 @@ export function StepByStepGuidePanel({
                   <StructuredClausesList clauses={step.structuredClauses} />
                 </div>
 
+                {scenario.id === PROCESS_HOLLOWING_SCENARIO_ID && (
+                  <ProcessHollowingSyncedSubStepsList
+                    stageNumber={step.stepNumber}
+                  />
+                )}
+
                 {/* 3/4. Practical Under-the-Hood Mechanism & Specs */}
                 <div
                   data-testid={`step-guide-under-the-hood-${step.stepNumber}`}
@@ -1680,6 +1713,17 @@ export function StepByStepGuidePanel({
           );
         })}
       </div>
+          </>
+        );
+
+        return scenario.id === PROCESS_HOLLOWING_SCENARIO_ID ? (
+          <ProcessHollowingScrollytellingView activeStageIndex={activeStageIndex}>
+            {cardsContent}
+          </ProcessHollowingScrollytellingView>
+        ) : (
+          cardsContent
+        );
+      })()}
 
       {/* OUTRO COMPLETE CARD when walkthrough finishes */}
       {briefing.isOutroComplete && (

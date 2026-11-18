@@ -903,17 +903,19 @@ export function AttackExplorerWorkbench() {
                 /* Main Active Workbench View + Floating Hover Inspector Option */
                 <div className="relative flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto sm:overflow-hidden">
                   {/* Floating Hover Inspector Trigger on the Active Page */}
-                  <FloatingHoverInspectorTrigger
-                    scenario={activeScenario}
-                    currentStage={stageView.currentStage}
-                    scopeContext={inspectorScopeContext}
-                    selectedTelemetry={selectedTelemetry}
-                    onOpenInspectorPage={() => {
-                      setInspectorScopeOverride(null);
-                      setSidebarOpen(true);
-                      setInspectorOpen(true);
-                    }}
-                  />
+                  {viewMode !== 'SCROLLYTELLING' && (
+                    <FloatingHoverInspectorTrigger
+                      scenario={activeScenario}
+                      currentStage={stageView.currentStage}
+                      scopeContext={inspectorScopeContext}
+                      selectedTelemetry={selectedTelemetry}
+                      onOpenInspectorPage={() => {
+                        setInspectorScopeOverride(null);
+                        setSidebarOpen(true);
+                        setInspectorOpen(true);
+                      }}
+                    />
+                  )}
 
                   <DiagramCanvas
                     scenario={activeScenario}
@@ -922,6 +924,8 @@ export function AttackExplorerWorkbench() {
                     tacticalMode={tacticalMode}
                     onToggleTacticalMode={() => setTacticalMode((prev) => !prev)}
                     viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    onSelectStage={handleSelectStage}
                     selectedTelemetryId={selectedTelemetryId}
                     onSelectTelemetry={handleSelectTelemetry}
                     selectedNodeId={selectedNodeId}

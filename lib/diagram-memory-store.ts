@@ -10,7 +10,8 @@ export type PersistedCanvasViewMode =
   | 'TOPOLOGY'
   | 'SEQUENCE'
   | 'PROCESS_MEMORY'
-  | 'RAW_TABLES';
+  | 'RAW_TABLES'
+  | 'SCROLLYTELLING';
 
 export type PersistedInspectorTab =
   | 'OVERVIEW'
@@ -73,7 +74,8 @@ function isValidViewMode(value: unknown): value is PersistedCanvasViewMode {
     value === 'TOPOLOGY' ||
     value === 'SEQUENCE' ||
     value === 'PROCESS_MEMORY' ||
-    value === 'RAW_TABLES'
+    value === 'RAW_TABLES' ||
+    value === 'SCROLLYTELLING'
   );
 }
 
