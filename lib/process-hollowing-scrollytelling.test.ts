@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ALL_PROCESS_HOLLOWING_SUBSTEPS,
+  PROCESS_HOLLOWING_CINEMATIC_SPECS,
   PROCESS_HOLLOWING_SCROLL_CHAPTERS,
   computeProcessHollowingVisualState,
   getChapterByStage,
+  getProcessHollowingSubStepCinematicSpec,
   getSubStepById,
 } from './process-hollowing-scrollytelling';
 
@@ -170,6 +172,50 @@ test('Step 5 transitions across 5A (Edge Firewall PASS) -> 5B (Malleable Profile
   assert.match(state5D.activeSysmonBadge, /FFT PERIODICITY MATCH/);
 });
 
+test('Every sub-step 0A..5D defines 3 micro-beats (72 total beats), extracted tokens bound to anatomical shapes, and deterministic intra-step beat progression', () => {
+  const allSpecs = Object.values(PROCESS_HOLLOWING_CINEMATIC_SPECS);
+  assert.equal(allSpecs.length, 24);
+
+  const persianRegex = /[\u0600-\u06FF]/;
+  for (const spec of allSpecs) {
+    assert.equal(spec.microBeats.length, 3);
+    assert.deepEqual(
+      spec.microBeats.map((b) => b.code),
+      ['MOTION ①', 'MOTION ②', 'MOTION ③']
+    );
+    assert.ok(spec.extractedTokens.length >= 3);
+    for (const token of spec.extractedTokens) {
+      assert.equal(persianRegex.test(token.token), false);
+      assert.equal(persianRegex.test(token.motionCue), false);
+    }
+    for (const beat of spec.microBeats) {
+      assert.equal(persianRegex.test(beat.title), false);
+      assert.equal(persianRegex.test(beat.mutationSummary), false);
+    }
+  }
+
+  // Verify intra-substep micro-beat progression within sub-step 4B (0.25 .. 0.50 of Stage 4)
+  const beat0 = computeProcessHollowingVisualState(4, 0.27);
+  assert.equal(beat0.activeSubStepId, '4B');
+  assert.equal(beat0.activeMicroBeatIndex, 0);
+  assert.equal(beat0.activeMicroBeat.code, 'MOTION ①');
+
+  const beat1 = computeProcessHollowingVisualState(4, 0.36);
+  assert.equal(beat1.activeSubStepId, '4B');
+  assert.equal(beat1.activeMicroBeatIndex, 1);
+  assert.equal(beat1.activeMicroBeat.code, 'MOTION ②');
+
+  const beat2 = computeProcessHollowingVisualState(4, 0.47);
+  assert.equal(beat2.activeSubStepId, '4B');
+  assert.equal(beat2.activeMicroBeatIndex, 2);
+  assert.equal(beat2.activeMicroBeat.code, 'MOTION ③');
+
+  assert.equal(
+    getProcessHollowingSubStepCinematicSpec('3B').primaryShapeId,
+    'shape-ram-0x00400000'
+  );
+});
+
 test('All chapter and sub-step strings are strictly English with zero Persian characters', () => {
   const persianRegex = /[\u0600-\u06FF]/;
   for (const chapter of PROCESS_HOLLOWING_SCROLL_CHAPTERS) {
@@ -184,3 +230,4 @@ test('All chapter and sub-step strings are strictly English with zero Persian ch
   assert.equal(getChapterByStage(99).stageNumber, 0);
   assert.equal(getSubStepById('1D').stageNumber, 1);
 });
+

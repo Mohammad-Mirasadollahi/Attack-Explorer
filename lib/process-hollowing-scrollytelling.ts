@@ -56,12 +56,76 @@ export interface ProcessHollowingChapterSpec {
   subSteps: ProcessHollowingSubStepSpec[];
 }
 
+export type ProcessHollowingTargetShapeId =
+  | 'shape-dropper-pid3104'
+  | 'shape-kernel-ring0-bridge'
+  | 'shape-svchost-outer-shell'
+  | 'shape-peb-0x7ffdf000'
+  | 'shape-ram-0x00400000'
+  | 'shape-vad-tree-monitor'
+  | 'shape-thread-tid4896'
+  | 'shape-firewall-gate'
+  | 'shape-c2-malleable-stream'
+  | 'shape-fft-spectrum-panel'
+  | 'shape-sysmon-sensor-hud';
+
+export type ProcessHollowingCameraMode =
+  | 'WIDE_KILLCHAIN_OVERVIEW'
+  | 'KERNEL_SPAWN_TWO_SHOT'
+  | 'PEB_UNMAP_MACRO'
+  | 'RWX_HEX_INJECTION_MACRO'
+  | 'CPU_REGISTER_SWITCHBOARD'
+  | 'DMZ_FIREWALL_FFT_ANALYZER';
+
+export interface ProcessHollowingExtractedToken {
+  token: string;
+  category:
+    | 'PROCESS'
+    | 'SYSCALL'
+    | 'HANDLE'
+    | 'MEMORY'
+    | 'REGISTER'
+    | 'NETWORK'
+    | 'DETECTION';
+  targetShapeId: ProcessHollowingTargetShapeId;
+  motionCue: string;
+}
+
+export interface ProcessHollowingMicroBeat {
+  beatIndex: 0 | 1 | 2;
+  code: 'MOTION ①' | 'MOTION ②' | 'MOTION ③';
+  title: string;
+  actorFrom: string;
+  actorTo: string;
+  vectorToken: string;
+  targetShapeId: ProcessHollowingTargetShapeId;
+  mutationSummary: string;
+}
+
+export interface ProcessHollowingSubStepCinematicSpec {
+  subStepId: ProcessHollowingSubStepId;
+  cameraMode: ProcessHollowingCameraMode;
+  cameraLabel: string;
+  primaryShapeId: ProcessHollowingTargetShapeId;
+  secondaryShapeIds: ProcessHollowingTargetShapeId[];
+  extractedTokens: ProcessHollowingExtractedToken[];
+  microBeats: [
+    ProcessHollowingMicroBeat,
+    ProcessHollowingMicroBeat,
+    ProcessHollowingMicroBeat,
+  ];
+}
+
 export interface ProcessHollowingStageVisualState {
   stageNumber: number;
   activeSubStepId: ProcessHollowingSubStepId;
   subStepIndex: number; // 0..3
   stageProgress: number; // 0..1 within the stage
   overallProgress: number; // 0..1 across all 24 sub-steps
+  subStepInternalProgress: number; // 0..1 within current sub-step
+  activeMicroBeatIndex: 0 | 1 | 2;
+  activeMicroBeat: ProcessHollowingMicroBeat;
+  cinematicSpec: ProcessHollowingSubStepCinematicSpec;
   loaderHandlesText: string;
   kernelEprocessCreated: boolean;
   hasProcessHandle: boolean;
@@ -642,6 +706,1458 @@ export function getSubStepById(
   return found ?? ALL_PROCESS_HOLLOWING_SUBSTEPS[0];
 }
 
+export const PROCESS_HOLLOWING_CINEMATIC_SPECS: Record<
+  ProcessHollowingSubStepId,
+  ProcessHollowingSubStepCinematicSpec
+> = {
+  '0A': {
+    subStepId: '0A',
+    cameraMode: 'WIDE_KILLCHAIN_OVERVIEW',
+    cameraLabel: 'CAM 00 · ENDPOINT TRUST BOUNDARY',
+    primaryShapeId: 'shape-dropper-pid3104',
+    secondaryShapeIds: ['shape-firewall-gate'],
+    extractedTokens: [
+      {
+        token: 'Invoice_Q4.exe (PID 3104)',
+        category: 'PROCESS',
+        targetShapeId: 'shape-dropper-pid3104',
+        motionCue: 'Untrusted user-mode loader executing from Downloads folder',
+      },
+      {
+        token: 'No Authenticode Signature',
+        category: 'DETECTION',
+        targetShapeId: 'shape-dropper-pid3104',
+        motionCue: 'Missing Microsoft catalog signature triggers EDR scrutiny',
+      },
+      {
+        token: 'Edge Firewall BLOCK (TCP/443)',
+        category: 'NETWORK',
+        targetShapeId: 'shape-firewall-gate',
+        motionCue: 'Direct outbound C2 socket rejected by application firewall',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Untrusted Loader Spawn',
+        actorFrom: 'C:\\Users\\jdoe\\Downloads\\',
+        actorTo: 'Invoice_Q4.exe (PID 3104)',
+        vectorToken: 'Unsigned PE64 Execution',
+        targetShapeId: 'shape-dropper-pid3104',
+        mutationSummary: 'PID 3104 initializes in user space with UNTRUSTED integrity badge',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Direct Socket Probe Blocked',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'Edge Firewall Gate',
+        vectorToken: 'connect(185.220.101.42:443) ──✕──▶ BLOCK',
+        targetShapeId: 'shape-firewall-gate',
+        mutationSummary: 'Host firewall rejects unsigned binary attempting outbound TLS 1.3',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Pivot to Process Hollowing',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'Internal Beacon Buffer (264 KB)',
+        vectorToken: 'Stage T1055.012 Hollowing Plan',
+        targetShapeId: 'shape-dropper-pid3104',
+        mutationSummary: 'Loader locks 270,336-byte Cobalt Strike PE in local buffer for injection',
+      },
+    ],
+  },
+  '0B': {
+    subStepId: '0B',
+    cameraMode: 'WIDE_KILLCHAIN_OVERVIEW',
+    cameraLabel: 'CAM 00 · TRUSTED VESSEL SELECTION',
+    primaryShapeId: 'shape-svchost-outer-shell',
+    secondaryShapeIds: ['shape-firewall-gate'],
+    extractedTokens: [
+      {
+        token: 'C:\\Windows\\System32\\svchost.exe',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'Legitimate Windows Service Host binary chosen as outer container',
+      },
+      {
+        token: 'Microsoft Windows PCA Signed',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'Emerald Authenticode trust shield verified on disk',
+      },
+      {
+        token: 'Firewall Allowlisted Binary',
+        category: 'NETWORK',
+        targetShapeId: 'shape-firewall-gate',
+        motionCue: 'Perimeter firewall permits outbound HTTPS from System32 svchost.exe',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Target Binary Selection',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'System32\\svchost.exe',
+        vectorToken: 'Select Host Vessel: svchost.exe',
+        targetShapeId: 'shape-svchost-outer-shell',
+        mutationSummary: 'Target blueprint locks onto C:\\Windows\\System32\\svchost.exe',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Authenticode Shield Verification',
+        actorFrom: 'Windows Catalog Verifier',
+        actorTo: 'svchost.exe Outer Shell',
+        vectorToken: 'Publisher: Microsoft Windows [VERIFIED]',
+        targetShapeId: 'shape-svchost-outer-shell',
+        mutationSummary: 'Outer container illuminates with emerald Microsoft Authenticode shield',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Firewall Trust Preview',
+        actorFrom: 'svchost.exe Outer Shell',
+        actorTo: 'Edge Firewall Gate',
+        vectorToken: 'Policy Check: ALLOW TCP/443',
+        targetShapeId: 'shape-firewall-gate',
+        mutationSummary: 'Firewall checkpoint pre-approves traffic originating from signed svchost.exe',
+      },
+    ],
+  },
+  '0C': {
+    subStepId: '0C',
+    cameraMode: 'WIDE_KILLCHAIN_OVERVIEW',
+    cameraLabel: 'CAM 00 · DISK VS. RAM DUALITY',
+    primaryShapeId: 'shape-ram-0x00400000',
+    secondaryShapeIds: ['shape-svchost-outer-shell', 'shape-vad-tree-monitor'],
+    extractedTokens: [
+      {
+        token: 'NTFS Disk: Clean svchost.exe',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'On-disk executable in System32 is never altered',
+      },
+      {
+        token: 'Volatile RAM @ 0x00400000',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'In-memory virtual address space where legitimate code is swapped',
+      },
+      {
+        token: 'SEC_IMAGE -> MEM_PRIVATE RWX',
+        category: 'DETECTION',
+        targetShapeId: 'shape-vad-tree-monitor',
+        motionCue: 'Kernel VAD tree divergence between disk image and private RAM',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'On-Disk File Integrity Preserved',
+        actorFrom: 'NTFS C:\\Windows\\System32\\',
+        actorTo: 'svchost.exe Outer Shell',
+        vectorToken: 'SHA-256 Clean · Disk Untouched',
+        targetShapeId: 'shape-svchost-outer-shell',
+        mutationSummary: 'Static antivirus file scan sees 100% genuine Microsoft binary on disk',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'In-Memory Cavity Swap Preview',
+        actorFrom: 'svchost.exe RAM (0x00400000)',
+        actorTo: 'Cobalt Strike Beacon (264 KB)',
+        vectorToken: 'Eject SEC_IMAGE -> Inject Beacon PE',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Inner 0x00400000 rack lifts out legitimate code and slots in crimson Beacon PE',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'VAD Divergence Exposed',
+        actorFrom: '0x00400000 RAM Rack',
+        actorTo: 'Kernel VAD Tree Monitor',
+        vectorToken: 'Disk !== RAM Divergence',
+        targetShapeId: 'shape-vad-tree-monitor',
+        mutationSummary: 'VAD Inspector highlights mismatch between signed outer shell and RWX inner core',
+      },
+    ],
+  },
+  '0D': {
+    subStepId: '0D',
+    cameraMode: 'WIDE_KILLCHAIN_OVERVIEW',
+    cameraLabel: 'CAM 00 · 5-STAGE KILL-CHAIN & TELEMETRY MAP',
+    primaryShapeId: 'shape-sysmon-sensor-hud',
+    secondaryShapeIds: [
+      'shape-kernel-ring0-bridge',
+      'shape-ram-0x00400000',
+      'shape-thread-tid4896',
+      'shape-fft-spectrum-panel',
+    ],
+    extractedTokens: [
+      {
+        token: 'CreateProcessW -> NtUnmapViewOfSection',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Stages 1 & 2: Spawn suspended container and unmap 0x00400000',
+      },
+      {
+        token: 'VirtualAllocEx -> WriteProcessMemory',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Stage 3: Allocate RWX buffer and stream 270,336-byte Beacon PE',
+      },
+      {
+        token: 'SetThreadContext (RCX -> 0x004014A0)',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Stage 4: Redirect suspended thread entry point and resume execution',
+      },
+      {
+        token: 'Sysmon EID 1 + 10 + 25 + 3 + FFT',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Full deterministic defender telemetry correlation chain',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Stages 1–3 Syscall Pipeline',
+        actorFrom: 'PID 3104 Loader',
+        actorTo: '0x00400000 RAM Rack',
+        vectorToken: 'Spawn (0x4) -> Unmap -> Write 264 KB',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Kill-chain stations ①, ②, and ③ illuminate along the top architecture bus',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Stages 4–5 Execution & C2 Pipeline',
+        actorFrom: 'TID 4896 RCX Register',
+        actorTo: '185.220.101.42:443 C2',
+        vectorToken: 'RCX=0x004014A0 -> Resume -> TLS 1.3',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Stations ④ and ⑤ link CPU register hijack to outbound Malleable HTTPS stream',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: '4-Sensor Telemetry Lock',
+        actorFrom: 'Kernel & Network Sensors',
+        actorTo: 'Sysmon & SIEM FFT HUD',
+        vectorToken: 'EID 1 -> EID 10 -> EID 25 -> EID 3 + FFT',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'All 4 Sysmon Event IDs and the 0.0167 Hz FFT detector arm across the timeline',
+      },
+    ],
+  },
+  '1A': {
+    subStepId: '1A',
+    cameraMode: 'KERNEL_SPAWN_TWO_SHOT',
+    cameraLabel: 'CAM 01 · WIN32 CREATEPROCESSW DISPATCH',
+    primaryShapeId: 'shape-dropper-pid3104',
+    secondaryShapeIds: ['shape-kernel-ring0-bridge'],
+    extractedTokens: [
+      {
+        token: 'Invoice_Q4.exe (PID 3104)',
+        category: 'PROCESS',
+        targetShapeId: 'shape-dropper-pid3104',
+        motionCue: 'Non-services parent initiating child process creation',
+      },
+      {
+        token: 'CreateProcessW("...\\svchost.exe")',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Win32 API call crossing Ring-3 into ntdll.dll',
+      },
+      {
+        token: 'Parent != services.exe (PID 628)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Process lineage anomaly: user dropper spawning system service host',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Prepare STARTUPINFOW & Structs',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'Local Stack Frame',
+        vectorToken: 'ZeroMemory(&si, &pi)',
+        targetShapeId: 'shape-dropper-pid3104',
+        mutationSummary: 'Loader prepares STARTUPINFOW and empty PROCESS_INFORMATION receiver slots',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Dispatch CreateProcessW()',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'Ring-3 / Ring-0 Syscall Gate',
+        vectorToken: 'CreateProcessW("C:\\Windows\\System32\\svchost.exe")',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        mutationSummary: 'Amber syscall packet travels along the upper conduit into kernel32/ntdll',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Lineage Sensor Observation',
+        actorFrom: 'Ring-0 Process Manager',
+        actorTo: 'Sysmon Lineage Tracker',
+        vectorToken: 'ParentPID=3104 -> Target=svchost.exe',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Sensor flags anomalous parent Invoice_Q4.exe instead of services.exe',
+      },
+    ],
+  },
+  '1B': {
+    subStepId: '1B',
+    cameraMode: 'KERNEL_SPAWN_TWO_SHOT',
+    cameraLabel: 'CAM 01 · RING-0 EPROCESS & PEB ALLOCATION',
+    primaryShapeId: 'shape-svchost-outer-shell',
+    secondaryShapeIds: [
+      'shape-kernel-ring0-bridge',
+      'shape-peb-0x7ffdf000',
+      'shape-ram-0x00400000',
+    ],
+    extractedTokens: [
+      {
+        token: 'ntdll!NtCreateUserProcess',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Ring-0 executive syscall instantiating child process object',
+      },
+      {
+        token: 'EPROCESS [PID 4892]',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'Kernel executive process block allocated for svchost.exe',
+      },
+      {
+        token: 'PEB @ 0x7FFDF000',
+        category: 'MEMORY',
+        targetShapeId: 'shape-peb-0x7ffdf000',
+        motionCue: 'Process Environment Block initialized with ImageBaseAddress',
+      },
+      {
+        token: '0x00400000 [SEC_IMAGE]',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Legitimate signed svchost.exe sections mapped into base memory',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Ring-0 Executive Transition',
+        actorFrom: 'ntdll.dll (Ring-3)',
+        actorTo: 'ntoskrnl.exe (Ring-0)',
+        vectorToken: 'syscall -> NtCreateUserProcess',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        mutationSummary: 'CPU transitions to Ring-0 to construct the new process address space',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Allocate EPROCESS & PEB',
+        actorFrom: 'Windows Kernel Executive',
+        actorTo: 'svchost.exe (PID 4892)',
+        vectorToken: 'EPROCESS [PID 4892] + PEB [0x7FFDF000]',
+        targetShapeId: 'shape-peb-0x7ffdf000',
+        mutationSummary: 'PID 4892 container and PEB control block materialize with emerald trust border',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Map Signed svchost.exe Sections',
+        actorFrom: 'System32\\svchost.exe FileObject',
+        actorTo: '0x00400000 Virtual Memory',
+        vectorToken: 'MapViewOfSection(0x00400000, SEC_IMAGE)',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Clean Microsoft .text (RX), .rdata (R), and .data (RW) map into 0x00400000',
+      },
+    ],
+  },
+  '1C': {
+    subStepId: '1C',
+    cameraMode: 'KERNEL_SPAWN_TWO_SHOT',
+    cameraLabel: 'CAM 01 · PRE-ENTRY THREAD FREEZE (0x4)',
+    primaryShapeId: 'shape-thread-tid4896',
+    secondaryShapeIds: ['shape-svchost-outer-shell', 'shape-sysmon-sensor-hud'],
+    extractedTokens: [
+      {
+        token: 'CREATE_SUSPENDED (0x00000004)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Creation flag instructing kernel to freeze primary thread before entry',
+      },
+      {
+        token: 'TID 4896 (KTHREAD.SuspendCount = 1)',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Primary thread parked inside ntdll!RtlUserThreadStart',
+      },
+      {
+        token: 'RCX = 0x00412000 (Original Entry)',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Legitimate svchost.exe entry point loaded in RCX but not yet executed',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Apply CREATE_SUSPENDED Bitmask',
+        actorFrom: 'CreateProcessW Flags',
+        actorTo: 'KTHREAD (TID 4896)',
+        vectorToken: 'dwCreationFlags = 0x00000004',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Kernel intercepts thread startup before user-mode entry point execution',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Lock Thread at SuspendCount = 1',
+        actorFrom: 'Kernel Scheduler',
+        actorTo: 'TID 4896 Register Block',
+        vectorToken: 'SuspendCount = 1 | RCX = 0x00412000',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'TID 4896 freezes in cyan frost state at RtlUserThreadStart with RCX=0x00412000',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Flag Missing -k Service Group',
+        actorFrom: 'PEB CommandLine',
+        actorTo: 'Sysmon Sensor HUD',
+        vectorToken: 'CmdLine: "svchost.exe" (No -k flag)',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Telemetry notes orphan svchost.exe spawned without -k <service_group>',
+      },
+    ],
+  },
+  '1D': {
+    subStepId: '1D',
+    cameraMode: 'KERNEL_SPAWN_TWO_SHOT',
+    cameraLabel: 'CAM 01 · HANDLE RETURN & SYSMON EID 1',
+    primaryShapeId: 'shape-dropper-pid3104',
+    secondaryShapeIds: ['shape-svchost-outer-shell', 'shape-sysmon-sensor-hud'],
+    extractedTokens: [
+      {
+        token: 'hProcess = 0x01C4 (0x1FFFFF)',
+        category: 'HANDLE',
+        targetShapeId: 'shape-dropper-pid3104',
+        motionCue: 'PROCESS_ALL_ACCESS kernel handle returned to Invoice_Q4.exe',
+      },
+      {
+        token: 'hThread = 0x01C8 (Full Control)',
+        category: 'HANDLE',
+        targetShapeId: 'shape-dropper-pid3104',
+        motionCue: 'THREAD_ALL_ACCESS kernel handle enabling remote register rewrite',
+      },
+      {
+        token: 'Sysmon EID 1 (ProcessCreate)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Kernel process creation event logged with ParentImage=Invoice_Q4.exe',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Populate PROCESS_INFORMATION',
+        actorFrom: 'Ring-0 Object Manager',
+        actorTo: 'Return Conduit',
+        vectorToken: '{ hProcess: 0x01C4, hThread: 0x01C8 }',
+        targetShapeId: 'shape-svchost-outer-shell',
+        mutationSummary: 'Kernel mints privileged handle descriptors 0x01C4 and 0x01C8 for PID 4892',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Return Master Keys to Loader',
+        actorFrom: 'svchost.exe (PID 4892)',
+        actorTo: 'Invoice_Q4.exe (PID 3104)',
+        vectorToken: 'Return hProcess=0x01C4 | hThread=0x01C8',
+        targetShapeId: 'shape-dropper-pid3104',
+        mutationSummary: 'Cyan return pulses lock into Invoice_Q4.exe’s Acquired Kernel Handles vault',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Emit Sysmon Event ID 1',
+        actorFrom: 'PsSetCreateProcessNotifyRoutineEx',
+        actorTo: 'Sysmon Telemetry HUD',
+        vectorToken: 'SYSMON EID 1: 3104 -> 4892',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Sysmon Event ID 1 badge latches active in the bottom forensic status bar',
+      },
+    ],
+  },
+  '2A': {
+    subStepId: '2A',
+    cameraMode: 'PEB_UNMAP_MACRO',
+    cameraLabel: 'CAM 02 · REMOTE PEB+0x10 BASE DISCOVERY',
+    primaryShapeId: 'shape-peb-0x7ffdf000',
+    secondaryShapeIds: ['shape-dropper-pid3104', 'shape-ram-0x00400000'],
+    extractedTokens: [
+      {
+        token: 'NtQueryInformationProcess(0x01C4)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Queries ProcessBasicInformation to locate remote PebBaseAddress',
+      },
+      {
+        token: 'PEB+0x10 (0x7FFDF010)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-peb-0x7ffdf000',
+        motionCue: '8-byte pointer inside PEB holding target ImageBaseAddress',
+      },
+      {
+        token: 'ImageBaseAddress = 0x00400000',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Resolved starting virtual address of svchost.exe in RAM',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Query Remote PebBaseAddress',
+        actorFrom: 'Invoice_Q4.exe (0x01C4)',
+        actorTo: 'PEB @ 0x7FFDF000',
+        vectorToken: 'NtQueryInformationProcess(ProcessBasicInformation)',
+        targetShapeId: 'shape-peb-0x7ffdf000',
+        mutationSummary: 'Loader uses handle 0x01C4 to locate PID 4892’s PEB at 0x7FFDF000',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Read 8 Bytes at PEB+0x10',
+        actorFrom: 'PEB @ 0x7FFDF000',
+        actorTo: 'PEB+0x10 Slot',
+        vectorToken: 'ReadProcessMemory(0x01C4, PEB+0x10, 8)',
+        targetShapeId: 'shape-peb-0x7ffdf000',
+        mutationSummary: 'Scanner beam illuminates offset +0x10 inside the PEB structure',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Lock Target Base 0x00400000',
+        actorFrom: 'PEB+0x10 Slot',
+        actorTo: '0x00400000 RAM Rack',
+        vectorToken: 'Resolved Base = 0x00400000',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Base coordinate 0x00400000 locks into the unmapping targeting reticle',
+      },
+    ],
+  },
+  '2B': {
+    subStepId: '2B',
+    cameraMode: 'PEB_UNMAP_MACRO',
+    cameraLabel: 'CAM 02 · LEGITIMATE SEC_IMAGE PE LAYOUT',
+    primaryShapeId: 'shape-ram-0x00400000',
+    secondaryShapeIds: ['shape-vad-tree-monitor', 'shape-svchost-outer-shell'],
+    extractedTokens: [
+      {
+        token: '.text (RX) / .rdata (R) / .data (RW)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Legitimate Microsoft-signed svchost.exe code and data sections',
+      },
+      {
+        token: 'SEC_IMAGE (File-Backed VAD)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-vad-tree-monitor',
+        motionCue: 'Kernel VAD node backed by C:\\Windows\\System32\\svchost.exe',
+      },
+      {
+        token: '0x00400000 – 0x00442000',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Virtual address range currently occupied by clean svchost.exe',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Zoom into 0x00400000 Memory Rack',
+        actorFrom: 'Camera Lens',
+        actorTo: '0x00400000 Virtual Address Space',
+        vectorToken: 'Inspect VAD 0x00400000..0x00442000',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Macro lens reveals the internal section anatomy of suspended svchost.exe',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Verify Signed Section Protections',
+        actorFrom: '0x00400000 Memory Rack',
+        actorTo: 'Section Slots (.text, .rdata, .data)',
+        vectorToken: 'PE Header + .text [RX] + .rdata [R] + .data [RW]',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Each legitimate section block glows emerald under W^X SEC_IMAGE protection',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Confirm FILE_OBJECT Backing',
+        actorFrom: 'MMVAD Node',
+        actorTo: 'System32\\svchost.exe Disk Image',
+        vectorToken: 'VAD Type: SEC_IMAGE (Catalog Verified)',
+        targetShapeId: 'shape-vad-tree-monitor',
+        mutationSummary: 'VAD Monitor shows clean file-backed mapping prior to unmapping syscall',
+      },
+    ],
+  },
+  '2C': {
+    subStepId: '2C',
+    cameraMode: 'PEB_UNMAP_MACRO',
+    cameraLabel: 'CAM 02 · NTDLL!NTUNMAPVIEWOFSECTION SYSCALL',
+    primaryShapeId: 'shape-kernel-ring0-bridge',
+    secondaryShapeIds: ['shape-ram-0x00400000', 'shape-dropper-pid3104'],
+    extractedTokens: [
+      {
+        token: 'ntdll!NtUnmapViewOfSection',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Native syscall tearing down mapped section view in remote process',
+      },
+      {
+        token: 'hProcess = 0x01C4, Base = 0x00400000',
+        category: 'HANDLE',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Target process handle and base coordinate passed to MiUnmapViewOfSection',
+      },
+      {
+        token: 'Ejecting .text / .rdata / .data',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Page Table Entries (PTEs) for legitimate svchost.exe stripped from RAM',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Invoke NtUnmapViewOfSection',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'ntdll.dll Syscall Bridge',
+        vectorToken: 'NtUnmapViewOfSection(0x01C4, 0x00400000)',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        mutationSummary: 'Loader fires high-priority unmap syscall targeting PID 4892 base address',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Ring-0 MiUnmapViewOfSection Tear-Down',
+        actorFrom: 'Windows Memory Manager',
+        actorTo: '0x00400000 Page Tables',
+        vectorToken: 'Unlink SEC_IMAGE VAD & Flush PTEs',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Kernel severs the FILE_OBJECT link and invalidates 0x00400000 page entries',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Eject Legitimate PE Sections',
+        actorFrom: '0x00400000 RAM Rack',
+        actorTo: 'Unmapped Page Pool',
+        vectorToken: 'Strip .text, .rdata, .data Pages',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Legitimate Microsoft code blocks dissolve and eject out of the memory rack',
+      },
+    ],
+  },
+  '2D': {
+    subStepId: '2D',
+    cameraMode: 'PEB_UNMAP_MACRO',
+    cameraLabel: 'CAM 02 · HOLLOWED VIRTUAL ADDRESS CAVITY',
+    primaryShapeId: 'shape-ram-0x00400000',
+    secondaryShapeIds: ['shape-svchost-outer-shell', 'shape-vad-tree-monitor'],
+    extractedTokens: [
+      {
+        token: 'STATUS_SUCCESS (0x00000000)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Kernel confirms complete unmapping of primary image section',
+      },
+      {
+        token: '0x00400000 [UNMAPPED MEMORY VOID]',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Vacated hollow cavity inside PID 4892 awaiting replacement payload',
+      },
+      {
+        token: 'Outer svchost.exe Shell Alive',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'Process container retains PID 4892 and Microsoft identity despite empty RAM',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Return STATUS_SUCCESS (0x0)',
+        actorFrom: 'ntdll!NtUnmapViewOfSection',
+        actorTo: 'Invoice_Q4.exe (PID 3104)',
+        vectorToken: 'NTSTATUS = 0x00000000 (STATUS_SUCCESS)',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        mutationSummary: 'Syscall returns success confirming 0x00400000 is now completely unmapped',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Hollow Cavity Formed at 0x00400000',
+        actorFrom: '0x00400000 Memory Rack',
+        actorTo: 'MEM_FREE Void',
+        vectorToken: '[ UNMAPPED MEMORY VOID · 0x00400000 ]',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: '0x00400000 turns into a dark dashed wireframe cavity with zero mapped pages',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Dual-Layer Hollow Vessel Ready',
+        actorFrom: 'svchost.exe Outer Shell',
+        actorTo: 'Kernel VAD Monitor',
+        vectorToken: 'Outer Shell: SIGNED | Inner Core: VOID',
+        targetShapeId: 'shape-svchost-outer-shell',
+        mutationSummary: 'PID 4892 stands as an authentic Microsoft shell wrapping an empty memory void',
+      },
+    ],
+  },
+  '3A': {
+    subStepId: '3A',
+    cameraMode: 'RWX_HEX_INJECTION_MACRO',
+    cameraLabel: 'CAM 03 · VIRTUALALLOCEX RWX COMMITMENT',
+    primaryShapeId: 'shape-ram-0x00400000',
+    secondaryShapeIds: ['shape-vad-tree-monitor', 'shape-dropper-pid3104'],
+    extractedTokens: [
+      {
+        token: 'VirtualAllocEx(0x01C4, 0x00400000, 264KB)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Allocates 270,336 bytes (0x42000) at the vacated 0x00400000 base',
+      },
+      {
+        token: 'MEM_COMMIT | MEM_RESERVE (0x3000)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Commits private physical RAM pages into the hollowed cavity',
+      },
+      {
+        token: 'PAGE_EXECUTE_READWRITE (0x40 / RWX)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-vad-tree-monitor',
+        motionCue: 'Grants simultaneous Read, Write, and Execute permissions',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Dispatch VirtualAllocEx()',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: '0x00400000 Hollow Void',
+        vectorToken: 'VirtualAllocEx(0x01C4, 0x00400000, 0x42000, 0x3000, 0x40)',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        mutationSummary: 'Loader requests 264 KB of private memory at exact base 0x00400000',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Ignite Crimson RWX Buffer',
+        actorFrom: 'Windows Memory Manager',
+        actorTo: '0x00400000 RAM Rack',
+        vectorToken: 'Commit 270,336 Bytes [PAGE_EXECUTE_READWRITE]',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Hollow cavity illuminates with crimson RWX border ready for raw PE injection',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Create MEM_PRIVATE VAD Node',
+        actorFrom: '0x00400000 RAM Rack',
+        actorTo: 'Kernel VAD Monitor',
+        vectorToken: 'MMVAD: MEM_PRIVATE | RWX (0x40)',
+        targetShapeId: 'shape-vad-tree-monitor',
+        mutationSummary: 'Kernel links new private unbacked VAD node at 0x00400000',
+      },
+    ],
+  },
+  '3B': {
+    subStepId: '3B',
+    cameraMode: 'RWX_HEX_INJECTION_MACRO',
+    cameraLabel: 'CAM 03 · WRITEPROCESSMEMORY MZ/PE HEADERS',
+    primaryShapeId: 'shape-ram-0x00400000',
+    secondaryShapeIds: ['shape-dropper-pid3104'],
+    extractedTokens: [
+      {
+        token: 'WriteProcessMemory(0x01C4, 0x00400000)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Streams raw Cobalt Strike PE bytes across process boundary',
+      },
+      {
+        token: '4D 5A 90 00 ("MZ" DOS Header)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Executable magic bytes written to base 0x00400000',
+      },
+      {
+        token: '50 45 00 00 ("PE\\0\\0" NT Header)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: '64-bit PE header defining AddressOfEntryPoint = 0x14A0',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Stream First 4 KB Header Packet',
+        actorFrom: 'Invoice_Q4.exe Payload Buffer',
+        actorTo: '0x00400000 Base Header Slot',
+        vectorToken: 'WriteProcessMemory(0x01C4, 0x00400000, pHeaders, 4096)',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'First burst of crimson hex packets crosses the conduit into PID 4892',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Commit 4D 5A 90 00 & PE64 Headers',
+        actorFrom: 'WriteProcessMemory Stream',
+        actorTo: '0x00400000 Hex Matrix',
+        vectorToken: '4D 5A 90 00 03 00 ... 50 45 00 00',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Live hex matrix populates with MZ and PE64 headers (94,618 / 270,336 bytes)',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Define Entry RVA 0x000014A0',
+        actorFrom: 'IMAGE_OPTIONAL_HEADER64',
+        actorTo: '0x004014A0 Entry Slot',
+        vectorToken: 'AddressOfEntryPoint = 0x14A0 -> 0x004014A0',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'PE header establishes new Beacon entry point at virtual address 0x004014A0',
+      },
+    ],
+  },
+  '3C': {
+    subStepId: '3C',
+    cameraMode: 'RWX_HEX_INJECTION_MACRO',
+    cameraLabel: 'CAM 03 · 264 KB BEACON SECTION POPULATION',
+    primaryShapeId: 'shape-ram-0x00400000',
+    secondaryShapeIds: ['shape-dropper-pid3104'],
+    extractedTokens: [
+      {
+        token: '270,336 Bytes / 264 KB (100%)',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Complete Cobalt Strike Beacon image committed into volatile RAM',
+      },
+      {
+        token: '.text Shellcode @ 0x00401000',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Executable Beacon reflective loader and C2 tasking engine',
+      },
+      {
+        token: '.rdata & .data C2 Config',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Embedded Malleable C2 profile and target IP 185.220.101.42:443',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Stream .text Beacon Code',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: '0x00401000 (.text Section)',
+        vectorToken: 'WriteProcessMemory(.text: FC 48 83 E4 F0 E8 C0)',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Executable Cobalt Strike shellcode fills the .text section slot',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Stream .rdata & .data C2 Tables',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: '0x0042D000 (.rdata & .data)',
+        vectorToken: 'WriteProcessMemory(270,336 / 270,336 Bytes · 100%)',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Malleable C2 profile and encrypted sleep configuration reach 100% commitment',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Arm BeaconStart @ 0x004014A0',
+        actorFrom: '0x00400000 RAM Rack',
+        actorTo: '0x004014A0 Entry Point',
+        vectorToken: 'Beacon Entry Armed @ 0x004014A0',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'All 264 KB of Cobalt Strike Beacon reside in RAM with zero disk footprint',
+      },
+    ],
+  },
+  '3D': {
+    subStepId: '3D',
+    cameraMode: 'RWX_HEX_INJECTION_MACRO',
+    cameraLabel: 'CAM 03 · SYSMON EID 10 & VAD RWX ANOMALY',
+    primaryShapeId: 'shape-vad-tree-monitor',
+    secondaryShapeIds: ['shape-sysmon-sensor-hud', 'shape-ram-0x00400000'],
+    extractedTokens: [
+      {
+        token: 'Sysmon EID 10 (GrantedAccess 0x1FFFFF)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Cross-process full-access handle logged from PID 3104 to PID 4892',
+      },
+      {
+        token: 'MEM_PRIVATE | RWX (Unbacked PE)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-vad-tree-monitor',
+        motionCue: 'MZ header inside private RWX memory without backing FILE_OBJECT',
+      },
+      {
+        token: 'Volatility malfind / Moneta Match',
+        category: 'DETECTION',
+        targetShapeId: 'shape-vad-tree-monitor',
+        motionCue: 'Memory forensics signature for hollowed primary image base',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Inspect Kernel MMVAD Node',
+        actorFrom: 'Memory Forensics Scanner',
+        actorTo: 'Kernel VAD Tree Monitor',
+        vectorToken: 'Scan VAD @ 0x00400000 (PID 4892)',
+        targetShapeId: 'shape-vad-tree-monitor',
+        mutationSummary: 'Scanner compares PID 4892’s 0x00400000 VAD attributes against System32 disk file',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Flag Unbacked MEM_PRIVATE RWX',
+        actorFrom: 'Kernel VAD Tree Monitor',
+        actorTo: '0x00400000 RAM Rack',
+        vectorToken: 'ALERT: MZ Header in MEM_PRIVATE | RWX (0x40)',
+        targetShapeId: 'shape-vad-tree-monitor',
+        mutationSummary: 'VAD Monitor flashes crimson: executable PE in private RWX memory has no disk backing',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Emit Sysmon Event ID 10',
+        actorFrom: 'ObRegisterCallbacks Sensor',
+        actorTo: 'Sysmon Telemetry HUD',
+        vectorToken: 'SYSMON EID 10: GrantedAccess=0x1FFFFF',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Sysmon Event ID 10 latches onto the cross-process memory write handle',
+      },
+    ],
+  },
+  '4A': {
+    subStepId: '4A',
+    cameraMode: 'CPU_REGISTER_SWITCHBOARD',
+    cameraLabel: 'CAM 04 · GETTHREADCONTEXT (TID 4896 SNAPSHOT)',
+    primaryShapeId: 'shape-thread-tid4896',
+    secondaryShapeIds: ['shape-dropper-pid3104', 'shape-ram-0x00400000'],
+    extractedTokens: [
+      {
+        token: 'GetThreadContext(hThread: 0x01C8)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Reads x64 CONTEXT_FULL register block of frozen thread TID 4896',
+      },
+      {
+        token: 'RCX = 0x00412000 (Stale Unmapped Entry)',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Register RCX still points to the old unmapped svchost.exe entry point',
+      },
+      {
+        token: 'SuspendCount = 1 (FROZEN)',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Thread remains halted inside ntdll!RtlUserThreadStart',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Request CONTEXT_FULL via 0x01C8',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'TID 4896 Register Switchboard',
+        vectorToken: 'GetThreadContext(0x01C8, CONTEXT_FULL)',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Loader queries the frozen CPU register state of primary thread TID 4896',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Inspect Stale RCX Pointer (0x00412000)',
+        actorFrom: 'TID 4896 RCX Register',
+        actorTo: 'Unmapped Old Entry (0x00412000)',
+        vectorToken: 'RCX = 0x00412000 ──▶ [UNMAPPED MEMORY]',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Switchboard shows RCX pointing to dead address 0x00412000 from original svchost.exe',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Prepare Context Struct in Loader',
+        actorFrom: 'TID 4896 Register Block',
+        actorTo: 'Invoice_Q4.exe (PID 3104)',
+        vectorToken: 'Copy CONTEXT_FULL Struct -> Local Buffer',
+        targetShapeId: 'shape-dropper-pid3104',
+        mutationSummary: 'Loader receives the register snapshot to overwrite ctx.Rcx in memory',
+      },
+    ],
+  },
+  '4B': {
+    subStepId: '4B',
+    cameraMode: 'CPU_REGISTER_SWITCHBOARD',
+    cameraLabel: 'CAM 04 · SETTHREADCONTEXT RCX REDIRECT',
+    primaryShapeId: 'shape-thread-tid4896',
+    secondaryShapeIds: ['shape-ram-0x00400000', 'shape-kernel-ring0-bridge'],
+    extractedTokens: [
+      {
+        token: 'SetThreadContext(hThread: 0x01C8)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Commits modified CPU register structure back into kernel KTHREAD',
+      },
+      {
+        token: 'ctx.Rcx = 0x004014A0 (Beacon Entry)',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Overwrites RCX from 0x00412000 to Cobalt Strike entry point 0x004014A0',
+      },
+      {
+        token: '0x00400000 + RVA 0x14A0',
+        category: 'MEMORY',
+        targetShapeId: 'shape-ram-0x00400000',
+        motionCue: 'Execution vector locks onto injected Cobalt Strike .text stager',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Mutate ctx.Rcx = 0x004014A0',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'TID 4896 Register Switchboard',
+        vectorToken: 'SetThreadContext(0x01C8, ctx.Rcx = 0x004014A0)',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Loader transmits modified CONTEXT struct across the kernel bridge',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Flip RCX Register Dial',
+        actorFrom: 'RCX = 0x00412000 (Old)',
+        actorTo: 'RCX = 0x004014A0 (New)',
+        vectorToken: 'RCX: 0x00412000 ──▶ 0x004014A0',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'RCX register dial physically flips from 0x00412000 to crimson 0x004014A0',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Lock Pointer Laser onto Beacon .text',
+        actorFrom: 'TID 4896 RCX Register',
+        actorTo: '0x004014A0 (Cobalt Strike .text)',
+        vectorToken: 'Target Locked: Cobalt Strike EntryPoint',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'Execution pointer beam disconnects from dead void and locks onto 0x004014A0',
+      },
+    ],
+  },
+  '4C': {
+    subStepId: '4C',
+    cameraMode: 'CPU_REGISTER_SWITCHBOARD',
+    cameraLabel: 'CAM 04 · RESUMETHREAD & SCHEDULER RELEASE',
+    primaryShapeId: 'shape-thread-tid4896',
+    secondaryShapeIds: ['shape-ram-0x00400000', 'shape-svchost-outer-shell'],
+    extractedTokens: [
+      {
+        token: 'ResumeThread(hThread: 0x01C8)',
+        category: 'SYSCALL',
+        targetShapeId: 'shape-kernel-ring0-bridge',
+        motionCue: 'Releases frozen primary thread onto the Windows CPU scheduler',
+      },
+      {
+        token: 'SuspendCount: 1 -> 0',
+        category: 'REGISTER',
+        targetShapeId: 'shape-thread-tid4896',
+        motionCue: 'Kernel decrements suspension counter, waking TID 4896',
+      },
+      {
+        token: 'STATUS: HIJACKED & EXECUTING',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'Cobalt Strike Beacon runs live inside signed svchost.exe (PID 4892)',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Invoke ResumeThread(0x01C8)',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'KTHREAD (TID 4896)',
+        vectorToken: 'ResumeThread(hThread: 0x01C8)',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Wake pulse travels from loader to PID 4892’s primary thread',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Decrement SuspendCount 1 -> 0',
+        actorFrom: 'KTHREAD.SuspendCount',
+        actorTo: 'CPU Scheduler Queue',
+        vectorToken: 'SuspendCount: 1 ──▶ 0 [RUNNING]',
+        targetShapeId: 'shape-thread-tid4896',
+        mutationSummary: 'Mechanical SuspendCount gauge drops to 0 and cyan freeze lock shatters',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Execute Beacon @ 0x004014A0',
+        actorFrom: 'TID 4896 (RIP/RCX)',
+        actorTo: '0x004014A0 Beacon Stager',
+        vectorToken: 'jmp RCX (0x004014A0) -> Beacon Active',
+        targetShapeId: 'shape-ram-0x00400000',
+        mutationSummary: 'TID 4896 begins executing Cobalt Strike Beacon inside trusted svchost.exe',
+      },
+    ],
+  },
+  '4D': {
+    subStepId: '4D',
+    cameraMode: 'CPU_REGISTER_SWITCHBOARD',
+    cameraLabel: 'CAM 04 · SYSMON EVENT ID 25 (PROCESS TAMPERING)',
+    primaryShapeId: 'shape-sysmon-sensor-hud',
+    secondaryShapeIds: ['shape-svchost-outer-shell', 'shape-thread-tid4896'],
+    extractedTokens: [
+      {
+        token: 'Sysmon Event ID 25 (ProcessTampering)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'High-confidence kernel alert fired when hollowed thread resumes',
+      },
+      {
+        token: 'Type: "Image is replaced"',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Kernel verifies primary image mapping no longer matches disk binary',
+      },
+      {
+        token: 'svchost.exe [PID 4892] Compromised',
+        category: 'PROCESS',
+        targetShapeId: 'shape-svchost-outer-shell',
+        motionCue: 'Outer identity remains svchost.exe while inner thread runs Beacon',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Kernel Image Verification Hook',
+        actorFrom: 'TID 4896 Execution Start',
+        actorTo: 'Windows Kernel Tampering Sensor',
+        vectorToken: 'Verify Primary Image Mapping @ 0x00400000',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Kernel checks PID 4892 image backing as first user instruction dispatches',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Fire Sysmon EID 25 Alert',
+        actorFrom: 'Sysmon Driver (SysmonDrv)',
+        actorTo: 'Sysmon Telemetry HUD',
+        vectorToken: 'SYSMON EID 25: Type="Image is replaced"',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Crimson Sysmon Event ID 25 badge locks into the forensic detection bar',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Dropper Cleanup & Autonomous Beacon',
+        actorFrom: 'Invoice_Q4.exe (PID 3104)',
+        actorTo: 'svchost.exe (PID 4892)',
+        vectorToken: 'CloseHandle(0x01C4, 0x01C8) -> Autonomous C2',
+        targetShapeId: 'shape-svchost-outer-shell',
+        mutationSummary: 'Loader closes handles while hollowed svchost.exe continues running Beacon',
+      },
+    ],
+  },
+  '5A': {
+    subStepId: '5A',
+    cameraMode: 'DMZ_FIREWALL_FFT_ANALYZER',
+    cameraLabel: 'CAM 05 · FIREWALL MASQUERADING BYPASS',
+    primaryShapeId: 'shape-firewall-gate',
+    secondaryShapeIds: ['shape-svchost-outer-shell', 'shape-sysmon-sensor-hud'],
+    extractedTokens: [
+      {
+        token: 'svchost.exe [TRUSTED] -> PASS',
+        category: 'NETWORK',
+        targetShapeId: 'shape-firewall-gate',
+        motionCue: 'Firewall inspects outer process path and approves outbound socket',
+      },
+      {
+        token: '10.10.4.15:52844 -> 185.220.101.42:443',
+        category: 'NETWORK',
+        targetShapeId: 'shape-c2-malleable-stream',
+        motionCue: 'Encrypted TLS 1.3 connection traversing edge DMZ firewall',
+      },
+      {
+        token: 'Sysmon EID 3 (NetworkConnect)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Logs svchost.exe initiating external connection to 185.220.101.42',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Initiate WinHTTP TLS 1.3 Socket',
+        actorFrom: 'svchost.exe (PID 4892)',
+        actorTo: 'Edge Firewall Gate',
+        vectorToken: 'TCP SYN / TLS 1.3 ClientHello (:443)',
+        targetShapeId: 'shape-firewall-gate',
+        mutationSummary: 'Hollowed svchost.exe opens outbound HTTPS socket from 10.10.4.15:52844',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Firewall Verifies Outer Trust Shell',
+        actorFrom: 'Edge Firewall Gate',
+        actorTo: 'svchost.exe Outer Shell',
+        vectorToken: 'Path: System32\\svchost.exe [TRUSTED] -> PASS',
+        targetShapeId: 'shape-firewall-gate',
+        mutationSummary: 'Firewall sees Microsoft-signed svchost.exe wrapper and opens outbound gate',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Log Sysmon Event ID 3',
+        actorFrom: 'WFP Network Filter',
+        actorTo: 'Sysmon Telemetry HUD',
+        vectorToken: 'SYSMON EID 3: PID 4892 -> 185.220.101.42:443',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Sysmon Event ID 3 records outbound socket from PID 4892 to external IP',
+      },
+    ],
+  },
+  '5B': {
+    subStepId: '5B',
+    cameraMode: 'DMZ_FIREWALL_FFT_ANALYZER',
+    cameraLabel: 'CAM 05 · MALLEABLE C2 HTTP PROFILE',
+    primaryShapeId: 'shape-c2-malleable-stream',
+    secondaryShapeIds: ['shape-firewall-gate', 'shape-svchost-outer-shell'],
+    extractedTokens: [
+      {
+        token: 'GET /jquery-3.3.1.min.js',
+        category: 'NETWORK',
+        targetShapeId: 'shape-c2-malleable-stream',
+        motionCue: 'Malleable C2 URI disguised as benign static jQuery CDN asset',
+      },
+      {
+        token: 'TLS 1.3 (185.220.101.42:443)',
+        category: 'NETWORK',
+        targetShapeId: 'shape-c2-malleable-stream',
+        motionCue: 'Encrypted transport channel hiding C2 tasking payloads',
+      },
+      {
+        token: 'JA3: 72a589da586844d7f0818ce684948eea',
+        category: 'DETECTION',
+        targetShapeId: 'shape-c2-malleable-stream',
+        motionCue: 'Characteristic WinHTTP TLS client fingerprint on non-Microsoft ASN',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Wrap Metadata in Malleable Profile',
+        actorFrom: 'Beacon C2 Engine',
+        actorTo: 'HTTPS Request Envelope',
+        vectorToken: 'GET /jquery-3.3.1.min.js (Cookie: Base64 Meta)',
+        targetShapeId: 'shape-c2-malleable-stream',
+        mutationSummary: 'Beacon encodes host metadata inside a fake jQuery CDN GET request',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Traverse DMZ to 185.220.101.42:443',
+        actorFrom: 'Edge Firewall [PASS]',
+        actorTo: 'C2 Server (185.220.101.42:443)',
+        vectorToken: 'TLS 1.3 Application Data Stream',
+        targetShapeId: 'shape-c2-malleable-stream',
+        mutationSummary: 'Encrypted packet capsules stream through the approved firewall conduit',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Flag JA3 & Destination ASN Mismatch',
+        actorFrom: 'NDR TLS Inspector',
+        actorTo: 'C2 Conduit HUD',
+        vectorToken: 'JA3: 72a589da... -> Non-Microsoft IP',
+        targetShapeId: 'shape-c2-malleable-stream',
+        mutationSummary: 'Network telemetry notes svchost.exe contacting uncategorized external IP',
+      },
+    ],
+  },
+  '5C': {
+    subStepId: '5C',
+    cameraMode: 'DMZ_FIREWALL_FFT_ANALYZER',
+    cameraLabel: 'CAM 05 · 60-SECOND HEARTBEAT CADENCE',
+    primaryShapeId: 'shape-fft-spectrum-panel',
+    secondaryShapeIds: ['shape-c2-malleable-stream'],
+    extractedTokens: [
+      {
+        token: 'Δt = 60s ± 20% Jitter',
+        category: 'NETWORK',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        motionCue: 'Beacon sleep timer polling C2 server roughly once per minute',
+      },
+      {
+        token: 't = 60s, 120s, 180s, 240s',
+        category: 'NETWORK',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        motionCue: 'Consecutive outbound TLS bursts plotted on the time-domain axis',
+      },
+      {
+        token: 'Rhythmic Callback Train',
+        category: 'DETECTION',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        motionCue: 'Low inter-arrival variance despite random sleep jitter',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Emit Periodic 60s Heartbeats',
+        actorFrom: 'svchost.exe (PID 4892)',
+        actorTo: '185.220.101.42:443',
+        vectorToken: 'Pulse Train: t=60s, 120s, 180s, 240s',
+        targetShapeId: 'shape-c2-malleable-stream',
+        mutationSummary: 'Four consecutive TLS beacon pulses travel across the C2 conduit',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Plot Time-Domain Spike Train',
+        actorFrom: 'NetFlow Timestamp Buffer',
+        actorTo: 'SIEM Time-Series Chart',
+        vectorToken: 'Δt ≈ 60.0s (±20% Jitter Window)',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        mutationSummary: 'Time-series analyzer records rhythmic amplitude spikes at 60s intervals',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Feed Timestamps into FFT Pipeline',
+        actorFrom: 'Time-Domain Signal x(t)',
+        actorTo: 'Discrete Fourier Transform F(ω)',
+        vectorToken: 'Compute F(ω) = ∑ x(t)·e^{-i2πft}',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        mutationSummary: 'SIEM transforms jittered time timestamps into frequency-domain spectrum',
+      },
+    ],
+  },
+  '5D': {
+    subStepId: '5D',
+    cameraMode: 'DMZ_FIREWALL_FFT_ANALYZER',
+    cameraLabel: 'CAM 05 · SIEM FFT SPECTRUM LOCK (0.0167 HZ)',
+    primaryShapeId: 'shape-fft-spectrum-panel',
+    secondaryShapeIds: ['shape-sysmon-sensor-hud', 'shape-c2-malleable-stream'],
+    extractedTokens: [
+      {
+        token: 'FFT Peak: f₀ = 0.0167 Hz (T = 60s)',
+        category: 'DETECTION',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        motionCue: 'Fundamental harmonic frequency spike stripping away sleep jitter',
+      },
+      {
+        token: 'SNR = +18.4 dB [CRITICAL LOCK]',
+        category: 'DETECTION',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        motionCue: 'High signal-to-noise ratio above background traffic noise floor',
+      },
+      {
+        token: 'Correlated EID 1 + 10 + 25 + 3',
+        category: 'DETECTION',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        motionCue: 'Complete 5-stage Process Hollowing incident locked by SOC',
+      },
+    ],
+    microBeats: [
+      {
+        beatIndex: 0,
+        code: 'MOTION ①',
+        title: 'Isolate Fundamental Frequency Peak',
+        actorFrom: 'FFT Spectrum Analyzer',
+        actorTo: 'f₀ = 0.0167 Hz Bin',
+        vectorToken: 'Peak Locked @ f₀ = 1/60s = 0.0167 Hz',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        mutationSummary: 'Sharp spectral spike rises at 0.0167 Hz (+18.4 dB above noise floor)',
+      },
+      {
+        beatIndex: 1,
+        code: 'MOTION ②',
+        title: 'Confirm Periodic C2 Beaconing',
+        actorFrom: 'FFT Detector',
+        actorTo: 'SIEM Incident Engine',
+        vectorToken: 'FFT PERIODICITY MATCH @ t=60s,120s,180s,240s',
+        targetShapeId: 'shape-fft-spectrum-panel',
+        mutationSummary: 'SIEM status banner switches to crimson FFT PERIODICITY MATCH',
+      },
+      {
+        beatIndex: 2,
+        code: 'MOTION ③',
+        title: 'Correlate Full Kill-Chain Telemetry',
+        actorFrom: 'SIEM Correlation Engine',
+        actorTo: 'Sysmon Telemetry HUD',
+        vectorToken: 'EID 1 + EID 10 + EID 25 + EID 3 + FFT',
+        targetShapeId: 'shape-sysmon-sensor-hud',
+        mutationSummary: 'Full Process Hollowing & Cobalt Strike C2 kill-chain verified and contained',
+      },
+    ],
+  },
+};
+
+export function getProcessHollowingSubStepCinematicSpec(
+  subStepId: ProcessHollowingSubStepId
+): ProcessHollowingSubStepCinematicSpec {
+  return (
+    PROCESS_HOLLOWING_CINEMATIC_SPECS[subStepId] ??
+    PROCESS_HOLLOWING_CINEMATIC_SPECS['0A']
+  );
+}
+
 /**
  * Given a stage number (0..5) and a normalized progress within that stage (0..1),
  * computes the exact deterministic visual state for the sticky animated diagram.
@@ -653,17 +2169,31 @@ export function computeProcessHollowingVisualState(
   const chapter = getChapterByStage(stageNumber);
   const stageProgress = clampUnitProgress(rawStageProgress);
   const subStepCount = chapter.subSteps.length;
+  const scaledSubStep = stageProgress * subStepCount;
   const subStepIndex = Math.min(
     subStepCount - 1,
-    Math.floor(stageProgress * subStepCount)
+    Math.floor(scaledSubStep)
   );
   const activeSubStep = chapter.subSteps[subStepIndex] ?? chapter.subSteps[0];
+  const subStepInternalProgress = clampUnitProgress(
+    scaledSubStep - subStepIndex
+  );
+  const activeMicroBeatIndex = Math.min(
+    2,
+    Math.floor(subStepInternalProgress * 3)
+  ) as 0 | 1 | 2;
+  const cinematicSpec = getProcessHollowingSubStepCinematicSpec(
+    activeSubStep.id
+  );
+  const activeMicroBeat =
+    cinematicSpec.microBeats[activeMicroBeatIndex] ??
+    cinematicSpec.microBeats[0];
 
   const globalIndex = ALL_PROCESS_HOLLOWING_SUBSTEPS.findIndex(
     (s) => s.id === activeSubStep.id
   );
   const overallProgress = clampUnitProgress(
-    (globalIndex + (stageProgress * subStepCount - subStepIndex)) /
+    (globalIndex + subStepInternalProgress) /
       ALL_PROCESS_HOLLOWING_SUBSTEPS.length
   );
 
@@ -784,6 +2314,10 @@ export function computeProcessHollowingVisualState(
     subStepIndex,
     stageProgress,
     overallProgress,
+    subStepInternalProgress,
+    activeMicroBeatIndex,
+    activeMicroBeat,
+    cinematicSpec,
     loaderHandlesText,
     kernelEprocessCreated: isAtLeast1B,
     hasProcessHandle: isAtLeast1D,
@@ -809,3 +2343,4 @@ export function computeProcessHollowingVisualState(
     activeSysmonBadge,
   };
 }
+

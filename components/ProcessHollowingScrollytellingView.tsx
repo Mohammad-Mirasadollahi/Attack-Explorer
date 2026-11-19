@@ -45,9 +45,13 @@ import {
 import { AttackScenario } from '@/lib/scenarios/types';
 import { PROCESS_HOLLOWING_SCENARIO } from '@/lib/scenarios/process-hollowing';
 import {
+  ALL_PROCESS_HOLLOWING_SUBSTEPS,
+  ProcessHollowingExtractedToken,
   ProcessHollowingStageVisualState,
   ProcessHollowingSubStepId,
+  ProcessHollowingTargetShapeId,
   clampUnitProgress,
+  getProcessHollowingSubStepCinematicSpec,
 } from '@/lib/process-hollowing-scrollytelling';
 import {
   UniversalExplanationLayerKind,
@@ -104,8 +108,16 @@ interface UniversalScrollyContextValue {
   scenario: AttackScenario;
   visualState: UniversalScrollyVisualState;
   focusedMotionIndex: 0 | 1 | 2;
+  highlightedShapeId: ProcessHollowingTargetShapeId | null;
+  activeTokenCue: ProcessHollowingExtractedToken | null;
+  isAutoPlaying: boolean;
   onSelectSubStep: (subStepId: string) => void;
   onSelectMotion: (subStepId: string, motionIndex: 0 | 1 | 2) => void;
+  onHighlightShape: (
+    shapeId: ProcessHollowingTargetShapeId | null,
+    token?: ProcessHollowingExtractedToken | null
+  ) => void;
+  onToggleAutoPlay: () => void;
 }
 
 const ProcessHollowingScrollyContext =
@@ -184,8 +196,8 @@ function getLayerStyleTokens(layerKind: UniversalExplanationLayerKind): {
  * (`A -> B -> C -> D`) inside each stage card in the right-hand explanation column.
  * Includes the synchronized Right-Column Active Scroll Marker ("Mark") so as the user scrolls,
  * the active section on the right is visually marked and locked 1-to-1 with the left sticky stage,
- * and each card exposes clickable MOTION ① / MOTION ② / MOTION ③ pills that describe and trigger
- * the exact shape-to-shape & internal shape animations on the left NotebookLM canvas.
+ * and each card exposes clickable MOTION ① / MOTION ② / MOTION ③ pills AND interactive extracted
+ * tokens that spotlight the corresponding anatomical shape on the left NotebookLM canvas.
  */
 export function ProcessHollowingSyncedSubStepsList({
   stageNumber,
@@ -197,6 +209,7 @@ export function ProcessHollowingSyncedSubStepsList({
   const ctx = useContext(ProcessHollowingScrollyContext);
   const effectiveScenario =
     propScenario || ctx?.scenario || PROCESS_HOLLOWING_SCENARIO;
+  const isProcessHollowing = effectiveScenario.id === 'process-hollowing';
 
   const spec = useMemo(
     () => getUniversalScenarioScrollySpec(effectiveScenario),
@@ -240,7 +253,7 @@ export function ProcessHollowingSyncedSubStepsList({
             </span>
           )}
           <span className="text-[9.5px] font-mono font-semibold text-zinc-500 dark:text-zinc-400">
-            Scroll or click any phase / motion cue to animate shapes on the left stage
+            Hover tokens or click MOTION ①/②/③ to spotlight shapes on the left stage
           </span>
         </div>
       </div>
@@ -269,6 +282,11 @@ export function ProcessHollowingSyncedSubStepsList({
             Boolean(isCurrentSubStep)
           );
           const layerTokens = getLayerStyleTokens(sub.layerKind);
+          const phCinematic = isProcessHollowing
+            ? getProcessHollowingSubStepCinematicSpec(
+                sub.id as ProcessHollowingSubStepId
+              )
+            : null;
 
           return (
             <motion.div
@@ -287,7 +305,7 @@ export function ProcessHollowingSyncedSubStepsList({
                 e.stopPropagation();
                 ctx?.onSelectSubStep(sub.id);
               }}
-              className={`relative p-3 rounded-xl border-2 transition-colors cursor-pointer space-y-1.5 ${
+              className={`relative p-3 rounded-xl border-2 transition-colors cursor-pointer space-y-2 ${
                 isCurrentSubStep
                   ? `${layerTokens.cardActiveBg} ${layerTokens.cardActiveBorder}`
                   : isCompletedSubStep
@@ -295,7 +313,7 @@ export function ProcessHollowingSyncedSubStepsList({
                     : layerTokens.cardIdleBg
               }`}
             >
-              {/* RIGHT-COLUMN SYNCHRONIZED ACTIVE SCROLL MARKER ("نشانگر کنار بخش فعال") */}
+              {/* RIGHT-COLUMN SYNCHRONIZED ACTIVE SCROLL MARKER */}
               <div
                 aria-hidden="true"
                 className="absolute -left-4 sm:-left-5 top-0 bottom-0 w-4 sm:w-5 flex flex-col items-center justify-center pointer-events-none"
@@ -308,11 +326,9 @@ export function ProcessHollowingSyncedSubStepsList({
                     transition={{ type: 'spring', stiffness: 360, damping: 28 }}
                     className="relative flex items-center justify-center"
                   >
-                    {/* Vertical Glowing Bar along active explanation section */}
                     <div
                       className={`w-1.5 h-12 rounded-full ${layerTokens.markerBgClass} shadow-sm`}
                     />
-                    {/* Morphing SVG Pointer Badge pointing left to the synchronized stage */}
                     <div className="absolute -left-1.5 w-5 h-5 rounded-full bg-white dark:bg-zinc-900 border-2 border-rose-500 shadow-sm flex items-center justify-center">
                       <svg
                         viewBox="0 0 28 28"
@@ -363,6 +379,11 @@ export function ProcessHollowingSyncedSubStepsList({
                   <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[9.5px] font-bold">
                     {sub.timestampRef}
                   </span>
+                  {phCinematic && (
+                    <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-500/30 font-mono text-[8.5px] font-extrabold">
+                      {phCinematic.cameraLabel}
+                    </span>
+                  )}
                   <span className="font-mono text-[10.5px] font-extrabold text-zinc-800 dark:text-zinc-200">
                     {sub.clauseTitle}
                   </span>
@@ -401,6 +422,96 @@ export function ProcessHollowingSyncedSubStepsList({
               >
                 {sub.explanation}
               </motion.p>
+
+              {/* Process Hollowing Extracted Technical Tokens -> Bi-Directional Shape Spotlights */}
+              {phCinematic && (
+                <div className="pt-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="font-mono text-[8.5px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mr-1">
+                      Extracted Canvas Tokens:
+                    </span>
+                    {phCinematic.extractedTokens.map((tok, tokIdx) => {
+                      const isShapeHighlighted =
+                        ctx?.highlightedShapeId === tok.targetShapeId;
+                      return (
+                        <button
+                          key={`${sub.id}-tok-${tokIdx}`}
+                          type="button"
+                          data-testid={`scrolly-token-chip-${sub.id}-${tokIdx}`}
+                          onMouseEnter={() =>
+                            ctx?.onHighlightShape(tok.targetShapeId, tok)
+                          }
+                          onMouseLeave={() =>
+                            ctx?.onHighlightShape(null, null)
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            ctx?.onSelectSubStep(sub.id);
+                            ctx?.onHighlightShape(tok.targetShapeId, tok);
+                          }}
+                          title={tok.motionCue}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono text-[9px] font-bold transition-all cursor-pointer ${
+                            isShapeHighlighted
+                              ? 'bg-cyan-500 text-zinc-950 border-cyan-400 shadow-xs scale-102'
+                              : 'bg-white/90 dark:bg-zinc-950/90 border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:border-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300'
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
+                          <span>{tok.token}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 3 Intra-SubStep Micro-Beat Choreography Triggers (MOTION ① -> MOTION ② -> MOTION ③) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
+                    {phCinematic.microBeats.map((beat) => {
+                      const isBeatActive =
+                        isCurrentSubStep &&
+                        ctx?.focusedMotionIndex === beat.beatIndex;
+                      return (
+                        <button
+                          key={`${sub.id}-beat-${beat.beatIndex}`}
+                          type="button"
+                          data-testid={`scrolly-card-motion-btn-${sub.id}-${beat.beatIndex}`}
+                          onMouseEnter={() =>
+                            ctx?.onHighlightShape(beat.targetShapeId, null)
+                          }
+                          onMouseLeave={() =>
+                            ctx?.onHighlightShape(null, null)
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            ctx?.onSelectMotion(sub.id, beat.beatIndex);
+                            ctx?.onHighlightShape(beat.targetShapeId, null);
+                          }}
+                          className={`px-2 py-1 rounded-lg border text-left font-mono transition-all cursor-pointer ${
+                            isBeatActive
+                              ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
+                              : 'bg-zinc-100/85 dark:bg-zinc-950/80 border-zinc-200/90 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-indigo-400'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1 text-[8.5px] font-extrabold">
+                            <span>{beat.code}</span>
+                            <span className="truncate opacity-85">
+                              {beat.title}
+                            </span>
+                          </div>
+                          <div
+                            className={`text-[8px] truncate mt-0.5 ${
+                              isBeatActive
+                                ? 'text-indigo-100'
+                                : 'text-zinc-500 dark:text-zinc-400'
+                            }`}
+                          >
+                            {beat.vectorToken}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Layer-Specific Technical / Story / Forensic Footer Strip */}
               <div className="pt-1.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-zinc-200/70 dark:border-zinc-800/80 font-mono text-[10px]">
@@ -453,6 +564,13 @@ export default function ProcessHollowingScrollytellingView({
     subStepId: string;
     motionIndex: 0 | 1 | 2;
   } | null>(null);
+
+  const [highlightedShapeId, setHighlightedShapeId] =
+    useState<ProcessHollowingTargetShapeId | null>(null);
+  const [activeTokenCue, setActiveTokenCue] =
+    useState<ProcessHollowingExtractedToken | null>(null);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 1.5>(1);
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScrollRef = useRef(false);
@@ -719,24 +837,117 @@ export default function ProcessHollowingScrollytellingView({
       if (visualState.activeSubStepId !== subStepId) {
         handleSelectSubStep(subStepId);
       }
+      if (scenario.id === 'process-hollowing') {
+        const spec = getProcessHollowingSubStepCinematicSpec(
+          subStepId as ProcessHollowingSubStepId
+        );
+        const beat = spec.microBeats[motionIndex];
+        if (beat) {
+          setHighlightedShapeId(beat.targetShapeId);
+        }
+      }
     },
-    [visualState.activeSubStepId, handleSelectSubStep]
+    [visualState.activeSubStepId, handleSelectSubStep, scenario.id]
   );
+
+  const handleHighlightShape = useCallback(
+    (
+      shapeId: ProcessHollowingTargetShapeId | null,
+      token: ProcessHollowingExtractedToken | null = null
+    ) => {
+      setHighlightedShapeId(shapeId);
+      setActiveTokenCue(token);
+    },
+    []
+  );
+
+  const handleToggleAutoPlay = useCallback(() => {
+    setIsAutoPlaying((prev) => !prev);
+  }, []);
+
+  // Video-Style Continuous 72-Beat Auto-Play Director (24 Sub-Steps × 3 Micro-Beats)
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    const intervalMs = playbackSpeed === 1.5 ? 1250 : 1850;
+    const timer = window.setInterval(() => {
+      const currentSubId = visualState.activeSubStepId;
+      const currentBeat = focusedMotionIndex;
+
+      if (currentBeat < 2) {
+        const nextBeat = (currentBeat + 1) as 0 | 1 | 2;
+        setManualMotionOverride({
+          subStepId: currentSubId,
+          motionIndex: nextBeat,
+        });
+        if (scenario.id === 'process-hollowing') {
+          const spec = getProcessHollowingSubStepCinematicSpec(
+            currentSubId as ProcessHollowingSubStepId
+          );
+          setHighlightedShapeId(spec.microBeats[nextBeat]?.targetShapeId ?? null);
+        }
+        return;
+      }
+
+      // Advance to the next sub-step at Beat 0
+      const allSubs = visualState.allSubSteps;
+      const currIdx = allSubs.findIndex((s) => s.id === currentSubId);
+      const nextSub =
+        currIdx >= 0 && currIdx < allSubs.length - 1
+          ? allSubs[currIdx + 1]
+          : allSubs[0];
+
+      if (nextSub) {
+        setManualMotionOverride({
+          subStepId: nextSub.id,
+          motionIndex: 0,
+        });
+        handleSelectSubStep(nextSub.id);
+        if (scenario.id === 'process-hollowing') {
+          const spec = getProcessHollowingSubStepCinematicSpec(
+            nextSub.id as ProcessHollowingSubStepId
+          );
+          setHighlightedShapeId(spec.microBeats[0]?.targetShapeId ?? null);
+        }
+      }
+    }, intervalMs);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [
+    isAutoPlaying,
+    playbackSpeed,
+    visualState.activeSubStepId,
+    visualState.allSubSteps,
+    focusedMotionIndex,
+    handleSelectSubStep,
+    scenario.id,
+  ]);
 
   const contextValue = useMemo<UniversalScrollyContextValue>(
     () => ({
       scenario,
       visualState,
       focusedMotionIndex,
+      highlightedShapeId,
+      activeTokenCue,
+      isAutoPlaying,
       onSelectSubStep: handleSelectSubStep,
       onSelectMotion: handleSelectMotion,
+      onHighlightShape: handleHighlightShape,
+      onToggleAutoPlay: handleToggleAutoPlay,
     }),
     [
       scenario,
       visualState,
       focusedMotionIndex,
+      highlightedShapeId,
+      activeTokenCue,
+      isAutoPlaying,
       handleSelectSubStep,
       handleSelectMotion,
+      handleHighlightShape,
+      handleToggleAutoPlay,
     ]
   );
 
@@ -757,6 +968,15 @@ export default function ProcessHollowingScrollytellingView({
               visualState={visualState}
               smoothScrollProgress={smoothScrollProgress}
               focusedMotionIndex={focusedMotionIndex}
+              highlightedShapeId={highlightedShapeId}
+              activeTokenCue={activeTokenCue}
+              isAutoPlaying={isAutoPlaying}
+              playbackSpeed={playbackSpeed}
+              onToggleAutoPlay={handleToggleAutoPlay}
+              onTogglePlaybackSpeed={() =>
+                setPlaybackSpeed((prev) => (prev === 1 ? 1.5 : 1))
+              }
+              onHighlightShape={handleHighlightShape}
               onSelectSubStep={handleSelectSubStep}
               onSelectMotion={(motionIdx) =>
                 handleSelectMotion(visualState.activeSubStepId, motionIdx)
@@ -776,6 +996,16 @@ interface ProcessHollowingStickyStageProps {
   visualState: UniversalScrollyVisualState;
   smoothScrollProgress?: ReturnType<typeof useSpring>;
   focusedMotionIndex?: 0 | 1 | 2;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
+  activeTokenCue?: ProcessHollowingExtractedToken | null;
+  isAutoPlaying?: boolean;
+  playbackSpeed?: 1 | 1.5;
+  onToggleAutoPlay?: () => void;
+  onTogglePlaybackSpeed?: () => void;
+  onHighlightShape?: (
+    shapeId: ProcessHollowingTargetShapeId | null,
+    token?: ProcessHollowingExtractedToken | null
+  ) => void;
   onSelectSubStep: (id: string) => void;
   onSelectMotion?: (motionIdx: 0 | 1 | 2) => void;
 }
@@ -783,6 +1013,13 @@ interface ProcessHollowingStickyStageProps {
 export function ProcessHollowingStickyStage({
   visualState,
   focusedMotionIndex,
+  highlightedShapeId = null,
+  activeTokenCue = null,
+  isAutoPlaying = false,
+  playbackSpeed = 1,
+  onToggleAutoPlay,
+  onTogglePlaybackSpeed,
+  onHighlightShape,
   onSelectSubStep,
   onSelectMotion,
 }: ProcessHollowingStickyStageProps) {
@@ -790,6 +1027,15 @@ export function ProcessHollowingStickyStage({
     visualState;
   const effectiveMotionIndex: 0 | 1 | 2 =
     focusedMotionIndex ?? visualState.activeMotionIndex;
+
+  const phState = visualState.processHollowingState;
+  const phCinematic = phState?.cinematicSpec ?? null;
+  const activePhBeat =
+    phCinematic?.microBeats[effectiveMotionIndex] ??
+    phCinematic?.microBeats[0] ??
+    null;
+  const effectiveHighlightedShapeId: ProcessHollowingTargetShapeId | null =
+    highlightedShapeId ?? activePhBeat?.targetShapeId ?? null;
 
   const currentGlobalIdx = allSubSteps.findIndex((s) => s.id === subStep.id);
   const prevSubStep =
@@ -806,24 +1052,68 @@ export function ProcessHollowingStickyStage({
       data-testid="process-hollowing-sticky-stage"
       data-active-substep={subStep.id}
       data-active-choreography={subStep.visualChoreography}
+      data-highlighted-shape={effectiveHighlightedShapeId ?? 'none'}
       className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-sm overflow-hidden text-zinc-900 dark:text-zinc-100"
     >
-      {/* 1. Compact Top Header Strip with Scenario Archetype Identity & Phase Scrubber */}
+      {/* 1. Compact Top Header Strip with Scenario Archetype Identity, Video Auto-Play & Phase Scrubber */}
       <div className="px-3 py-2 bg-zinc-100/95 dark:bg-zinc-950 border-b border-zinc-200/80 dark:border-zinc-800 space-y-1.5">
-        <div className="flex flex-wrap items-center justify-between gap-1">
+        <div
+          data-testid="scrolly-cinematic-player-bar"
+          className="flex flex-wrap items-center justify-between gap-1"
+        >
           <div className="inline-flex items-center gap-1 flex-wrap">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9px] font-extrabold">
               <Sparkles className="w-2.5 h-2.5 shrink-0" />
               <span>LIVE SCROLL</span>
             </span>
+            {onToggleAutoPlay && (
+              <button
+                type="button"
+                data-testid="scrolly-autoplay-toggle-btn"
+                onClick={onToggleAutoPlay}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-[9px] font-extrabold transition-colors cursor-pointer ${
+                  isAutoPlaying
+                    ? 'bg-rose-600 text-white shadow-xs animate-pulse'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs'
+                }`}
+              >
+                {isAutoPlaying ? (
+                  <>
+                    <PauseCircle className="w-3 h-3 shrink-0" />
+                    <span>PAUSE MOVIE</span>
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle className="w-3 h-3 shrink-0" />
+                    <span>PLAY MOVIE (72 BEATS)</span>
+                  </>
+                )}
+              </button>
+            )}
+            {onTogglePlaybackSpeed && (
+              <button
+                type="button"
+                data-testid="scrolly-playback-speed-btn"
+                onClick={onTogglePlaybackSpeed}
+                title="Toggle cinematic auto-play speed"
+                className="px-1.5 py-0.5 rounded bg-zinc-200/90 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 font-mono text-[8.5px] font-extrabold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+              >
+                {playbackSpeed}x
+              </button>
+            )}
             <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25 font-mono text-[9px] font-bold">
               {chapter.stageNumber === 0
                 ? 'STAGE #0 · BRIEFING'
                 : `STAGE #${chapter.stageNumber} · ${chapter.mitreCode.split('·')[0]?.trim()}`}
             </span>
-            <span className="hidden xl:inline-block px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[8.5px] font-bold">
-              {palette.themeLabel}
-            </span>
+            {phCinematic && (
+              <span
+                data-testid="scrolly-camera-mode-badge"
+                className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-500/30 font-mono text-[8.5px] font-extrabold"
+              >
+                {phCinematic.cameraLabel}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1">
@@ -1064,6 +1354,248 @@ export function ProcessHollowingStickyStage({
         </div>
       </motion.div>
 
+      {/* 2B. Process Hollowing Persistent 4-Station Anatomical X-Ray Strip & Live 3-Beat Micro-Motion Sequencer */}
+      {phState && phCinematic && (
+        <div
+          data-testid="scrolly-anatomical-xray-strip"
+          className="px-2.5 py-2 bg-zinc-900 text-zinc-100 border-b border-zinc-800 space-y-1.5 font-mono"
+        >
+          {/* Persistent 4-Station Anatomical Subsystem Monitor */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+            {/* Station 1: Dropper PID 3104 & Handle Vault */}
+            <button
+              type="button"
+              data-testid="xray-station-dropper"
+              onMouseEnter={() =>
+                onHighlightShape?.('shape-dropper-pid3104', null)
+              }
+              onMouseLeave={() => onHighlightShape?.(null, null)}
+              onClick={() => onHighlightShape?.('shape-dropper-pid3104', null)}
+              className={`p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                effectiveHighlightedShapeId === 'shape-dropper-pid3104' ||
+                effectiveHighlightedShapeId === 'shape-kernel-ring0-bridge'
+                  ? 'bg-rose-950/90 border-cyan-400 ring-2 ring-cyan-400/50 shadow-xs'
+                  : 'bg-zinc-950/90 border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[8px] text-rose-400 font-extrabold">
+                <span>① LOADER [3104]</span>
+                <span>{phState.hasProcessHandle ? '0x01C4/C8' : 'RING-3'}</span>
+              </div>
+              <div className="text-[8.5px] font-bold text-white truncate">
+                Invoice_Q4.exe
+              </div>
+              <div className="text-[7.5px] text-zinc-400 truncate">
+                {phState.payloadWritten
+                  ? '264KB Sent (100%)'
+                  : phState.hasProcessHandle
+                    ? 'Handles Locked'
+                    : 'Unsigned Dropper'}
+              </div>
+            </button>
+
+            {/* Station 2: Dual-Container svchost.exe (Outer Shield vs Inner 0x00400000 Cavity) */}
+            <button
+              type="button"
+              data-testid="xray-station-memory"
+              onMouseEnter={() =>
+                onHighlightShape?.('shape-ram-0x00400000', null)
+              }
+              onMouseLeave={() => onHighlightShape?.(null, null)}
+              onClick={() => onHighlightShape?.('shape-ram-0x00400000', null)}
+              className={`p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                effectiveHighlightedShapeId === 'shape-ram-0x00400000' ||
+                effectiveHighlightedShapeId === 'shape-svchost-outer-shell' ||
+                effectiveHighlightedShapeId === 'shape-peb-0x7ffdf000' ||
+                effectiveHighlightedShapeId === 'shape-vad-tree-monitor'
+                  ? 'bg-indigo-950/90 border-cyan-400 ring-2 ring-cyan-400/50 shadow-xs'
+                  : 'bg-zinc-950/90 border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[8px] font-extrabold">
+                <span className="text-emerald-400">② RAM 0x00400000</span>
+                <span
+                  className={
+                    phState.rwxAllocated
+                      ? 'text-rose-400'
+                      : phState.memoryUnmapped
+                        ? 'text-amber-400'
+                        : 'text-sky-400'
+                  }
+                >
+                  {phState.rwxAllocated
+                    ? 'RWX 0x40'
+                    : phState.memoryUnmapped
+                      ? 'VOID'
+                      : 'SEC_IMAGE'}
+                </span>
+              </div>
+              <div className="text-[8.5px] font-bold text-white truncate">
+                {phState.payloadWritten
+                  ? 'Beacon PE (4D 5A)'
+                  : phState.memoryUnmapped
+                    ? 'Hollowed Cavity'
+                    : 'Signed svchost.exe'}
+              </div>
+              <div className="text-[7.5px] text-emerald-400 truncate">
+                Outer Shell: MS Signed
+              </div>
+            </button>
+
+            {/* Station 3: TID 4896 CPU Register Switchboard (RCX & SuspendCount) */}
+            <button
+              type="button"
+              data-testid="xray-station-thread"
+              onMouseEnter={() =>
+                onHighlightShape?.('shape-thread-tid4896', null)
+              }
+              onMouseLeave={() => onHighlightShape?.(null, null)}
+              onClick={() => onHighlightShape?.('shape-thread-tid4896', null)}
+              className={`p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                effectiveHighlightedShapeId === 'shape-thread-tid4896'
+                  ? 'bg-amber-950/90 border-cyan-400 ring-2 ring-cyan-400/50 shadow-xs'
+                  : 'bg-zinc-950/90 border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[8px] text-amber-400 font-extrabold">
+                <span>③ TID 4896 CPU</span>
+                <span>SC={phState.suspendCount}</span>
+              </div>
+              <div className="text-[8.5px] font-bold text-white truncate">
+                RCX: {phState.rcxEntryPoint}
+              </div>
+              <div
+                className={`text-[7.5px] font-bold truncate ${
+                  phState.svchostThreadState === 'HIJACKED_RUNNING'
+                    ? 'text-rose-400'
+                    : phState.svchostThreadState === 'FROZEN'
+                      ? 'text-sky-400'
+                      : 'text-zinc-400'
+                }`}
+              >
+                State: {phState.svchostThreadState}
+              </div>
+            </button>
+
+            {/* Station 4: Firewall, C2 Stream & SIEM FFT Sensor Radar */}
+            <button
+              type="button"
+              data-testid="xray-station-sensors"
+              onMouseEnter={() =>
+                onHighlightShape?.('shape-sysmon-sensor-hud', null)
+              }
+              onMouseLeave={() => onHighlightShape?.(null, null)}
+              onClick={() =>
+                onHighlightShape?.('shape-sysmon-sensor-hud', null)
+              }
+              className={`p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
+                effectiveHighlightedShapeId === 'shape-sysmon-sensor-hud' ||
+                effectiveHighlightedShapeId === 'shape-firewall-gate' ||
+                effectiveHighlightedShapeId === 'shape-c2-malleable-stream' ||
+                effectiveHighlightedShapeId === 'shape-fft-spectrum-panel'
+                  ? 'bg-emerald-950/90 border-cyan-400 ring-2 ring-cyan-400/50 shadow-xs'
+                  : 'bg-zinc-950/90 border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[8px] text-emerald-400 font-extrabold">
+                <span>④ SIEM &amp; FFT</span>
+                <span>{phState.fftSpectrumLocked ? '0.0167Hz' : 'ARMED'}</span>
+              </div>
+              <div className="flex items-center gap-0.5 my-0.5">
+                {[
+                  { label: 'E1', on: phState.hasProcessHandle },
+                  { label: 'E10', on: phState.vadAnomalyFlagged },
+                  { label: 'E25', on: phState.tamperingEventFired },
+                  { label: 'E3', on: phState.firewallPassed },
+                  { label: 'FFT', on: phState.fftSpectrumLocked },
+                ].map((sensor) => (
+                  <span
+                    key={sensor.label}
+                    className={`px-1 py-0.2 rounded text-[7px] font-extrabold ${
+                      sensor.on
+                        ? 'bg-rose-600 text-white'
+                        : 'bg-zinc-800 text-zinc-500'
+                    }`}
+                  >
+                    {sensor.label}
+                  </span>
+                ))}
+              </div>
+              <div className="text-[7.5px] text-zinc-400 truncate">
+                {phState.fftSpectrumLocked
+                  ? 'C2 Periodicity Locked'
+                  : phState.firewallPassed
+                    ? 'Edge FW: SIGNED PASS'
+                    : 'Kernel ETW Active'}
+              </div>
+            </button>
+          </div>
+
+          {/* Live 3-Beat Micro-Motion Sequencer (MOTION ① -> MOTION ② -> MOTION ③) */}
+          <div
+            data-testid="scrolly-live-microbeat-sequencer"
+            className="p-1.5 rounded-lg bg-zinc-950 border border-zinc-800 space-y-1"
+          >
+            <div className="grid grid-cols-3 gap-1">
+              {phCinematic.microBeats.map((beat) => {
+                const isCurrentBeat = effectiveMotionIndex === beat.beatIndex;
+                return (
+                  <button
+                    key={`stage-beat-${beat.beatIndex}`}
+                    type="button"
+                    data-testid={`scrolly-microbeat-btn-${beat.beatIndex}`}
+                    onClick={() => {
+                      onSelectMotion?.(beat.beatIndex);
+                      onHighlightShape?.(beat.targetShapeId, null);
+                    }}
+                    className={`px-1.5 py-1 rounded border text-left transition-all cursor-pointer ${
+                      isCurrentBeat
+                        ? 'bg-indigo-600 text-white border-cyan-400 shadow-2xs'
+                        : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[8px] font-extrabold">
+                      <span>{beat.code}</span>
+                      <span className="truncate ml-1">{beat.title}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Micro-Beat Vector & Token Spotlight Callout */}
+            {activeTokenCue ? (
+              <div
+                data-testid="scrolly-active-token-callout"
+                className="px-2 py-1 rounded bg-cyan-950/80 border border-cyan-500/60 flex items-center justify-between gap-2 text-[8.5px]"
+              >
+                <span className="font-extrabold text-cyan-300 truncate">
+                  TOKEN SPOTLIGHT: {activeTokenCue.token}
+                </span>
+                <span className="text-cyan-100 truncate">
+                  {activeTokenCue.motionCue}
+                </span>
+              </div>
+            ) : (
+              activePhBeat && (
+                <div
+                  data-testid="scrolly-active-beat- readout"
+                  className="px-2 py-1 rounded bg-zinc-900/90 border border-zinc-800 flex flex-wrap items-center justify-between gap-1 text-[8.5px]"
+                >
+                  <span className="text-indigo-300 font-extrabold truncate">
+                    {activePhBeat.code}: {activePhBeat.actorFrom} →{' '}
+                    {activePhBeat.actorTo}
+                  </span>
+                  <span className="text-amber-300 font-bold truncate">
+                    {activePhBeat.vectorToken}
+                  </span>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 3. Main Interactive Animated Graphic Area Tailored to Scenario Archetype & Explanation Layer */}
       <div className="p-2.5 bg-[#FAFAFA] dark:bg-zinc-950/80 flex flex-col justify-between">
         <motion.div
@@ -1078,32 +1610,38 @@ export function ProcessHollowingStickyStage({
               {visualState.stageNumber === 0 && (
                 <Stage0BriefingScene
                   visualState={visualState.processHollowingState}
+                  highlightedShapeId={effectiveHighlightedShapeId}
                   onSelectSubStep={(id) => onSelectSubStep(id)}
                 />
               )}
               {visualState.stageNumber === 1 && (
                 <Stage1SuspendedSpawnScene
                   visualState={visualState.processHollowingState}
+                  highlightedShapeId={effectiveHighlightedShapeId}
                 />
               )}
               {visualState.stageNumber === 2 && (
                 <Stage2MemoryUnmapScene
                   visualState={visualState.processHollowingState}
+                  highlightedShapeId={effectiveHighlightedShapeId}
                 />
               )}
               {visualState.stageNumber === 3 && (
                 <Stage3AllocationInjectionScene
                   visualState={visualState.processHollowingState}
+                  highlightedShapeId={effectiveHighlightedShapeId}
                 />
               )}
               {visualState.stageNumber === 4 && (
                 <Stage4ThreadHijackScene
                   visualState={visualState.processHollowingState}
+                  highlightedShapeId={effectiveHighlightedShapeId}
                 />
               )}
               {visualState.stageNumber === 5 && (
                 <Stage5C2BeaconFftScene
                   visualState={visualState.processHollowingState}
+                  highlightedShapeId={effectiveHighlightedShapeId}
                 />
               )}
             </>
@@ -1200,11 +1738,23 @@ export function ProcessHollowingStickyStage({
  * - 0C: Disk vs. Volatile RAM Split Diagram (Animated memory swap inside RAM while Disk stays green)
  * - 0D: Complete 5-Stage Kill-Chain Architecture Map with traveling motion pulse
  */
+function getShapeSpotlightClass(
+  highlightedShapeId: ProcessHollowingTargetShapeId | null | undefined,
+  ...targetIds: ProcessHollowingTargetShapeId[]
+): string {
+  if (!highlightedShapeId) return '';
+  return targetIds.includes(highlightedShapeId)
+    ? 'ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.45)]'
+    : '';
+}
+
 function Stage0BriefingScene({
   visualState,
+  highlightedShapeId,
   onSelectSubStep,
 }: {
   visualState: ProcessHollowingStageVisualState;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
   onSelectSubStep: (id: ProcessHollowingSubStepId) => void;
 }) {
   const { activeSubStepId, subStepIndex } = visualState;
@@ -1215,12 +1765,20 @@ function Stage0BriefingScene({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {/* Card A: Untrusted Dropper (0A Focus) */}
         <motion.div
+          data-shape-id="shape-dropper-pid3104"
           animate={{
-            scale: activeSubStepId === '0A' ? 1.015 : 0.99,
+            scale:
+              activeSubStepId === '0A' ||
+              highlightedShapeId === 'shape-dropper-pid3104'
+                ? 1.015
+                : 0.99,
             opacity: activeSubStepId === '0A' || activeSubStepId === '0D' ? 1 : 0.85,
           }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2 shadow-2xs space-y-1"
+          className={`relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2 shadow-2xs space-y-1 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-dropper-pid3104'
+          )}`}
         >
           {activeSubStepId === '0A' && (
             <motion.div
@@ -1252,7 +1810,10 @@ function Stage0BriefingScene({
           </div>
 
           {/* Animated Blocked Socket Path */}
-          <div className="px-1.5 py-1 rounded-lg bg-rose-50/90 dark:bg-rose-950/35 border border-rose-200 dark:border-rose-800 font-mono text-[9px] space-y-0.5">
+          <div
+            data-shape-id="shape-firewall-gate"
+            className="px-1.5 py-1 rounded-lg bg-rose-50/90 dark:bg-rose-950/35 border border-rose-200 dark:border-rose-800 font-mono text-[9px] space-y-0.5"
+          >
             <div className="flex items-center justify-between text-rose-800 dark:text-rose-200 font-bold">
               <span>Direct TCP/443</span>
               <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
@@ -1299,12 +1860,21 @@ function Stage0BriefingScene({
 
         {/* Card B: Trusted svchost.exe Container (0B Focus) */}
         <motion.div
+          data-shape-id="shape-svchost-outer-shell"
           animate={{
-            scale: activeSubStepId === '0B' ? 1.015 : 0.99,
+            scale:
+              activeSubStepId === '0B' ||
+              highlightedShapeId === 'shape-svchost-outer-shell'
+                ? 1.015
+                : 0.99,
             opacity: activeSubStepId !== '0A' ? 1 : 0.85,
           }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2 shadow-2xs space-y-1"
+          className={`relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2 shadow-2xs space-y-1 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-svchost-outer-shell',
+            'shape-firewall-gate'
+          )}`}
         >
           {activeSubStepId === '0B' && (
             <motion.div
@@ -1384,15 +1954,24 @@ function Stage0BriefingScene({
 
       {/* MIDDLE SHAPE (0C Focus): NTFS Disk vs. Volatile RAM Split Architecture */}
       <motion.div
+        data-shape-id="shape-ram-0x00400000"
         animate={{
-          scale: activeSubStepId === '0C' ? 1.01 : 0.995,
+          scale:
+            activeSubStepId === '0C' ||
+            highlightedShapeId === 'shape-ram-0x00400000'
+              ? 1.01
+              : 0.995,
         }}
         transition={{ type: 'spring', stiffness: 250, damping: 24 }}
         className={`relative rounded-xl border p-2 font-mono space-y-1.5 ${
           activeSubStepId === '0C'
             ? 'bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-500 shadow-xs'
             : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800'
-        }`}
+        } ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-ram-0x00400000',
+          'shape-vad-tree-monitor'
+        )}`}
       >
         <div className="flex items-center justify-between text-[9.5px]">
           <span className="font-extrabold uppercase text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
@@ -1443,11 +2022,17 @@ function Stage0BriefingScene({
 
       {/* BOTTOM SHAPE (0D Focus): 5-Stage Kill-Chain Pipeline with Animated Pulse */}
       <motion.div
+        data-shape-id="shape-sysmon-sensor-hud"
         className={`rounded-xl border p-2 space-y-1.5 ${
           activeSubStepId === '0D'
             ? 'bg-amber-50/60 dark:bg-amber-950/25 border-amber-500 shadow-xs'
             : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800'
-        }`}
+        } ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-sysmon-sensor-hud',
+          'shape-kernel-ring0-bridge',
+          'shape-thread-tid4896'
+        )}`}
       >
         <div className="flex items-center justify-between font-mono text-[9.5px]">
           <span className="font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
@@ -1533,8 +2118,10 @@ function Stage0BriefingScene({
  */
 function Stage1SuspendedSpawnScene({
   visualState,
+  highlightedShapeId,
 }: {
   visualState: ProcessHollowingStageVisualState;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
 }) {
   const {
     activeSubStepId,
@@ -1551,8 +2138,12 @@ function Stage1SuspendedSpawnScene({
     >
       {/* TOP NODE: Invoice_Q4.exe PID: 3104 + Lineage Comparison Strip */}
       <motion.div
+        data-shape-id="shape-dropper-pid3104"
         transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-        className="w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 p-2 shadow-xs space-y-1.5 z-10"
+        className={`w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 p-2 shadow-xs space-y-1.5 z-10 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-dropper-pid3104'
+        )}`}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -1617,7 +2208,14 @@ function Stage1SuspendedSpawnScene({
       </motion.div>
 
       {/* MIDDLE CHOREOGRAPHY: Ring-3 -> Ring-0 Syscall Bridge + Curved Handle Return Paths */}
-      <div className="relative w-full min-h-[108px] flex flex-col items-center justify-center py-0.5">
+      <div
+        data-shape-id="shape-kernel-ring0-bridge"
+        className={`relative w-full min-h-[108px] flex flex-col items-center justify-center py-0.5 rounded-xl ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-kernel-ring0-bridge',
+          'shape-peb-0x7ffdf000'
+        )}`}
+      >
         <svg
           viewBox="0 0 560 116"
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
@@ -1799,8 +2397,14 @@ function Stage1SuspendedSpawnScene({
 
       {/* BOTTOM NODE: svchost.exe PID: 4892 + KTHREAD TID 4896 State */}
       <motion.div
+        data-shape-id="shape-svchost-outer-shell"
         transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-        className="w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-500/80 p-2 shadow-xs space-y-1.5 z-10"
+        className={`w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-500/80 p-2 shadow-xs space-y-1.5 z-10 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-svchost-outer-shell',
+          'shape-ram-0x00400000',
+          'shape-thread-tid4896'
+        )}`}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -1835,6 +2439,7 @@ function Stage1SuspendedSpawnScene({
 
         {/* Primary Thread TID 4896 Status Bar with Motion Lock */}
         <motion.div
+          data-shape-id="shape-thread-tid4896"
           key={createSuspendedFlagActive ? 'tid-frozen' : 'tid-standby'}
           initial={{ scale: 0.96, opacity: 0.5 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -1877,8 +2482,10 @@ function Stage1SuspendedSpawnScene({
  */
 function Stage2MemoryUnmapScene({
   visualState,
+  highlightedShapeId,
 }: {
   visualState: ProcessHollowingStageVisualState;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
 }) {
   const {
     activeSubStepId,
@@ -1895,7 +2502,13 @@ function Stage2MemoryUnmapScene({
       {/* Left Column: Handle + PEB Struct Table + NtUnmapViewOfSection Syscall */}
       <div className="sm:col-span-5 flex flex-col justify-between gap-1.5">
         {/* PEB Structure Inspector Shape (2A) */}
-        <motion.div className="rounded-xl bg-white dark:bg-zinc-900 border-2 border-indigo-400 dark:border-indigo-700 p-2 space-y-1">
+        <motion.div
+          data-shape-id="shape-peb-0x7ffdf000"
+          className={`rounded-xl bg-white dark:bg-zinc-900 border-2 border-indigo-400 dark:border-indigo-700 p-2 space-y-1 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-peb-0x7ffdf000'
+          )}`}
+        >
           <div className="flex items-center justify-between font-mono text-[9.5px]">
             <span className="font-extrabold text-indigo-700 dark:text-indigo-300">
               2A · PEB Struct (0x7FFDF000)
@@ -1929,10 +2542,14 @@ function Stage2MemoryUnmapScene({
 
         {/* VAD & FILE_OBJECT Link Shape (2B) */}
         <motion.div
+          data-shape-id="shape-vad-tree-monitor"
           animate={{
             opacity: peSectionsInspected ? 1 : 0.55,
           }}
-          className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2 font-mono text-[9px] space-y-0.5"
+          className={`rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2 font-mono text-[9px] space-y-0.5 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-vad-tree-monitor'
+          )}`}
         >
           <div className="font-extrabold text-zinc-800 dark:text-zinc-200">
             2B · Kernel VAD Node
@@ -1953,6 +2570,7 @@ function Stage2MemoryUnmapScene({
 
         {/* Native Syscall Card (2C & 2D) */}
         <motion.div
+          data-shape-id="shape-kernel-ring0-bridge"
           animate={{
             opacity: unmapSyscallActive || memoryUnmapped ? 1 : 0.45,
             scale: unmapSyscallActive || memoryUnmapped ? 1.01 : 0.98,
@@ -1965,7 +2583,10 @@ function Stage2MemoryUnmapScene({
               : unmapSyscallActive
                 ? 'bg-amber-50/90 dark:bg-amber-950/35 border-amber-500'
                 : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
-          }`}
+          } ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-kernel-ring0-bridge'
+          )}`}
         >
           <div className="text-[9.5px] font-extrabold text-rose-700 dark:text-rose-300">
             2C/2D · Native Syscall
@@ -1984,7 +2605,13 @@ function Stage2MemoryUnmapScene({
       </div>
 
       {/* Right Column: svchost.exe Virtual Memory Space with Animated Section Ejection */}
-      <div className="sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5">
+      <div
+        data-shape-id="shape-svchost-outer-shell"
+        className={`sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-svchost-outer-shell'
+        )}`}
+      >
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-1 font-mono">
           <span className="text-[11px] font-extrabold text-zinc-900 dark:text-white">
             svchost.exe — Virtual Memory (PID 4892)
@@ -2000,6 +2627,7 @@ function Stage2MemoryUnmapScene({
 
         {/* 0x00400000 Primary ImageBase Box with Motion Ejection */}
         <motion.div
+          data-shape-id="shape-ram-0x00400000"
           data-testid="stage2-base-memory-block"
           className={`p-2 rounded-xl border-2 border-dashed space-y-1 min-h-[132px] flex flex-col justify-center overflow-hidden transition-colors ${
             memoryUnmapped
@@ -2007,7 +2635,7 @@ function Stage2MemoryUnmapScene({
               : unmapSyscallActive
                 ? 'bg-amber-50/75 dark:bg-amber-950/30 border-amber-500'
                 : 'bg-sky-50/75 dark:bg-sky-950/30 border-sky-500'
-          }`}
+          } ${getShapeSpotlightClass(highlightedShapeId, 'shape-ram-0x00400000')}`}
         >
           {!memoryUnmapped ? (
             <>
@@ -2103,8 +2731,10 @@ function Stage2MemoryUnmapScene({
  */
 function Stage3AllocationInjectionScene({
   visualState,
+  highlightedShapeId,
 }: {
   visualState: ProcessHollowingStageVisualState;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
 }) {
   const {
     activeSubStepId,
@@ -2122,7 +2752,13 @@ function Stage3AllocationInjectionScene({
       className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-stretch"
     >
       {/* Left Column: Attacker Loader + Animated Byte Stream + VAD Forensics */}
-      <div className="sm:col-span-5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2 flex flex-col justify-between space-y-1.5">
+      <div
+        data-shape-id="shape-dropper-pid3104"
+        className={`sm:col-span-5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2 flex flex-col justify-between space-y-1.5 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-dropper-pid3104'
+        )}`}
+      >
         <div className="flex items-center gap-1.5">
           <div className="w-7 h-6 rounded-md bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
             <SketchNodeIcon
@@ -2142,7 +2778,13 @@ function Stage3AllocationInjectionScene({
         </div>
 
         {/* Animated Cross-Process Byte Pipe */}
-        <div className="p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono text-[9px] space-y-1">
+        <div
+          data-shape-id="shape-kernel-ring0-bridge"
+          className={`p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono text-[9px] space-y-1 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-kernel-ring0-bridge'
+          )}`}
+        >
           <div className="flex justify-between">
             <span className="text-zinc-500">hProcess:</span>
             <span className="font-bold text-zinc-900 dark:text-white">
@@ -2197,6 +2839,7 @@ function Stage3AllocationInjectionScene({
 
         {/* 3D VAD Anomaly Comparison Card */}
         <motion.div
+          data-shape-id="shape-vad-tree-monitor"
           animate={{
             scale: vadAnomalyFlagged ? 1.02 : 0.98,
           }}
@@ -2204,7 +2847,11 @@ function Stage3AllocationInjectionScene({
             vadAnomalyFlagged
               ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
               : 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-zinc-800 dark:text-zinc-200'
-          }`}
+          } ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-vad-tree-monitor',
+            'shape-sysmon-sensor-hud'
+          )}`}
         >
           <div className="font-extrabold flex items-center justify-between">
             <span>3D · VAD Forensics</span>
@@ -2219,7 +2866,13 @@ function Stage3AllocationInjectionScene({
       </div>
 
       {/* Right Column: Hollowed Target svchost.exe Memory Inspector */}
-      <div className="sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2 flex flex-col justify-between space-y-1.5">
+      <div
+        data-shape-id="shape-ram-0x00400000"
+        className={`sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2 flex flex-col justify-between space-y-1.5 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-ram-0x00400000'
+        )}`}
+      >
         <div className="flex items-center justify-between gap-2 font-mono">
           <div>
             <div className="text-[8.5px] font-bold uppercase text-sky-600 dark:text-sky-400">
@@ -2323,8 +2976,10 @@ function Stage3AllocationInjectionScene({
  */
 function Stage4ThreadHijackScene({
   visualState,
+  highlightedShapeId,
 }: {
   visualState: ProcessHollowingStageVisualState;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
 }) {
   const isRcxHijacked = visualState.rcxEntryPoint === '0x004014A0';
   const isRunning = visualState.suspendCount === 0;
@@ -2336,7 +2991,14 @@ function Stage4ThreadHijackScene({
       className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-stretch"
     >
       {/* Left Column: Address Space with Sliding TID 4896 Pointer */}
-      <div className="sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5 relative">
+      <div
+        data-shape-id="shape-ram-0x00400000"
+        className={`sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5 relative ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-ram-0x00400000',
+          'shape-svchost-outer-shell'
+        )}`}
+      >
         <div className="font-mono text-[9.5px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-zinc-200 dark:border-zinc-800 pb-1">
           PROCESS ADDRESS SPACE (PID 4892)
         </div>
@@ -2409,6 +3071,7 @@ function Stage4ThreadHijackScene({
 
         {/* 4D: Sysmon Event ID 25 Sensor Alert */}
         <motion.div
+          data-shape-id="shape-sysmon-sensor-hud"
           animate={{
             opacity: tamperingEventFired ? 1 : 0.45,
             scale: tamperingEventFired ? 1.01 : 0.99,
@@ -2417,7 +3080,10 @@ function Stage4ThreadHijackScene({
             tamperingEventFired
               ? 'bg-rose-600 text-white border-rose-700'
               : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500'
-          }`}
+          } ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-sysmon-sensor-hud'
+          )}`}
         >
           <span>4D · SYSMON EVENT ID 25</span>
           <span>Type: &ldquo;Image is replaced&rdquo;</span>
@@ -2425,7 +3091,14 @@ function Stage4ThreadHijackScene({
       </div>
 
       {/* Right Column: 64-Bit CPU Register File & Scheduler Controller (TID 4896) */}
-      <div className="sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5">
+      <div
+        data-shape-id="shape-thread-tid4896"
+        className={`sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-thread-tid4896',
+          'shape-kernel-ring0-bridge'
+        )}`}
+      >
         <div className="font-mono text-[9.5px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-zinc-200 dark:border-zinc-800 pb-1">
           CPU CONTEXT_FULL (TID: 4896)
         </div>
@@ -2528,8 +3201,10 @@ function Stage4ThreadHijackScene({
  */
 function Stage5C2BeaconFftScene({
   visualState,
+  highlightedShapeId,
 }: {
   visualState: ProcessHollowingStageVisualState;
+  highlightedShapeId?: ProcessHollowingTargetShapeId | null;
 }) {
   const { malleableProfileActive, c2BeaconActive, fftSpectrumLocked } =
     visualState;
@@ -2538,7 +3213,13 @@ function Stage5C2BeaconFftScene({
     <div data-testid="stage-5-c2-beacon-scene" className="space-y-2">
       {/* Top 3-Node Pipeline with Animated TLS Packet Stream */}
       <div className="grid grid-cols-3 gap-1.5 items-stretch">
-        <div className="p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 font-mono space-y-0.5">
+        <div
+          data-shape-id="shape-svchost-outer-shell"
+          className={`p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 font-mono space-y-0.5 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-svchost-outer-shell'
+          )}`}
+        >
           <div className="flex items-center gap-1.5">
             <div className="w-6 h-5 rounded bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
@@ -2556,7 +3237,13 @@ function Stage5C2BeaconFftScene({
           </div>
         </div>
 
-        <div className="p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-emerald-500/80 font-mono space-y-0.5">
+        <div
+          data-shape-id="shape-firewall-gate"
+          className={`p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-emerald-500/80 font-mono space-y-0.5 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-firewall-gate'
+          )}`}
+        >
           <div className="flex items-center gap-1.5">
             <div className="w-6 h-5 rounded bg-emerald-50 dark:bg-zinc-950 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
@@ -2574,7 +3261,13 @@ function Stage5C2BeaconFftScene({
           </div>
         </div>
 
-        <div className="p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 font-mono space-y-0.5">
+        <div
+          data-shape-id="shape-c2-malleable-stream"
+          className={`p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 font-mono space-y-0.5 ${getShapeSpotlightClass(
+            highlightedShapeId,
+            'shape-c2-malleable-stream'
+          )}`}
+        >
           <div className="flex items-center gap-1.5">
             <div className="w-6 h-5 rounded bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
@@ -2595,12 +3288,16 @@ function Stage5C2BeaconFftScene({
 
       {/* 5B: Malleable C2 HTTP Profile & JA3 Inspector */}
       <motion.div
+        data-shape-id="shape-c2-malleable-stream"
         layout
         animate={{
           opacity: malleableProfileActive ? 1 : 0.65,
           scale: malleableProfileActive && !c2BeaconActive ? 1.01 : 1,
         }}
-        className="px-2 py-1 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-800 font-mono text-[8.5px] flex flex-wrap items-center justify-between gap-1"
+        className={`px-2 py-1 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-800 font-mono text-[8.5px] flex flex-wrap items-center justify-between gap-1 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-c2-malleable-stream'
+        )}`}
       >
         <div>
           <span className="font-extrabold text-indigo-700 dark:text-indigo-300">
@@ -2616,7 +3313,14 @@ function Stage5C2BeaconFftScene({
       </motion.div>
 
       {/* 5C & 5D: Dual Time-Domain Heartbeat + Frequency-Domain FFT Spectrum */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2 space-y-1.5">
+      <div
+        data-shape-id="shape-fft-spectrum-panel"
+        className={`rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2 space-y-1.5 ${getShapeSpotlightClass(
+          highlightedShapeId,
+          'shape-fft-spectrum-panel',
+          'shape-sysmon-sensor-hud'
+        )}`}
+      >
         <div className="flex flex-wrap items-center justify-between gap-1">
           <span className="font-mono text-[9.5px] font-extrabold text-zinc-900 dark:text-white">
             {fftSpectrumLocked
