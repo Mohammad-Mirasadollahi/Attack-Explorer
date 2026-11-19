@@ -177,7 +177,6 @@
  */
 html.layout-force-desktop,
 html.layout-force-desktop body {
-  overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y pinch-zoom;
@@ -208,8 +207,6 @@ html.layout-force-desktop [role="dialog"] {
 
 html.layout-responsive,
 html.layout-responsive body {
-  overflow: hidden;
-  overscroll-behavior: none;
   touch-action: manipulation;
 }
 

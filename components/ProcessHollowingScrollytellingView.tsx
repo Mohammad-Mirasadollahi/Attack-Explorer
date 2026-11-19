@@ -9,7 +9,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { motion } from 'motion/react';
+import {
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useScroll,
+  useSpring,
+} from 'framer-motion';
 import {
   Activity,
   ArrowDown,
@@ -18,109 +24,235 @@ import {
   BookOpen,
   CheckCircle2,
   Cpu,
+  Database,
+  FileCode2,
+  GitBranch,
   HardDrive,
+  KeyRound,
   Layers,
   Lock,
+  Network,
   PauseCircle,
   PlayCircle,
+  Radar,
   Radio,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Terminal,
   Unlock,
 } from 'lucide-react';
+import { AttackScenario } from '@/lib/scenarios/types';
+import { PROCESS_HOLLOWING_SCENARIO } from '@/lib/scenarios/process-hollowing';
 import {
-  ALL_PROCESS_HOLLOWING_SUBSTEPS,
-  ProcessHollowingChapterSpec,
   ProcessHollowingStageVisualState,
   ProcessHollowingSubStepId,
-  ProcessHollowingSubStepSpec,
   clampUnitProgress,
-  computeProcessHollowingVisualState,
-  getChapterByStage,
-  getSubStepById,
 } from '@/lib/process-hollowing-scrollytelling';
+import {
+  UniversalExplanationLayerKind,
+  UniversalScrollyChapterSpec,
+  UniversalScrollySubStepSpec,
+  UniversalScrollyVisualState,
+  computeSubStepScrollThresholdEffect,
+  computeUniversalScrollyVisualState,
+  getUniversalScenarioScrollySpec,
+} from '@/lib/universal-scrollytelling';
 import { SketchNodeIcon } from './SketchNodeIcons';
+import { NotebookLmInteractiveShapeCanvas } from './NotebookLmInteractiveShapeCanvas';
 
 export interface ProcessHollowingScrollytellingViewProps {
   /**
-   * The existing explanation cards (#0 Briefing and Stages #1..#5) rendered
+   * Scenario to render in synchronized cinematic scrollytelling mode.
+   * Defaults to PROCESS_HOLLOWING_SCENARIO if omitted for backward compatibility.
+   */
+  scenario?: AttackScenario;
+  /**
+   * The explanation cards (#0 Briefing and Stages #1..#N) rendered
    * in the right column alongside the sticky animated diagram on the left.
-   * Each stage card inside children carries `data-scrolly-stage="0..5"`,
-   * and each granular sub-step card carries `data-scrolly-substep="0A..5D"`.
+   * Each stage card inside children carries `data-scrolly-stage="0..N"`,
+   * and each granular sub-step card carries `data-scrolly-substep="0A..ND"`.
    */
   children?: React.ReactNode;
   activeStageIndex?: number;
 }
 
-const SUBSTEP_TARGET_PROGRESS: Record<ProcessHollowingSubStepId, number> = {
-  '0A': 0.12,
-  '0B': 0.37,
-  '0C': 0.62,
-  '0D': 0.88,
-  '1A': 0.12,
-  '1B': 0.37,
-  '1C': 0.62,
-  '1D': 0.88,
-  '2A': 0.12,
-  '2B': 0.37,
-  '2C': 0.62,
-  '2D': 0.88,
-  '3A': 0.12,
-  '3B': 0.37,
-  '3C': 0.62,
-  '3D': 0.88,
-  '4A': 0.12,
-  '4B': 0.37,
-  '4C': 0.62,
-  '4D': 0.88,
-  '5A': 0.12,
-  '5B': 0.37,
-  '5C': 0.62,
-  '5D': 0.88,
+const LETTER_TO_STAGE_PROGRESS: Record<string, number> = {
+  A: 0.12,
+  B: 0.37,
+  C: 0.62,
+  D: 0.88,
 };
 
-interface ProcessHollowingScrollyContextValue {
-  visualState: ProcessHollowingStageVisualState;
-  onSelectSubStep: (subStepId: ProcessHollowingSubStepId) => void;
+function parseSubStepIdToStageAndProgress(subStepId: string): {
+  stageNumber: number;
+  stageProgress: number;
+} {
+  const match = /^(\d+)([A-D])$/i.exec(subStepId.trim());
+  if (!match) {
+    return { stageNumber: 0, stageProgress: 0.12 };
+  }
+  const stageNumber = Number.parseInt(match[1], 10);
+  const letter = match[2].toUpperCase();
+  return {
+    stageNumber: Number.isFinite(stageNumber) ? stageNumber : 0,
+    stageProgress: LETTER_TO_STAGE_PROGRESS[letter] ?? 0.12,
+  };
+}
+
+interface UniversalScrollyContextValue {
+  scenario: AttackScenario;
+  visualState: UniversalScrollyVisualState;
+  focusedMotionIndex: 0 | 1 | 2;
+  onSelectSubStep: (subStepId: string) => void;
+  onSelectMotion: (subStepId: string, motionIndex: 0 | 1 | 2) => void;
 }
 
 const ProcessHollowingScrollyContext =
-  createContext<ProcessHollowingScrollyContextValue | null>(null);
+  createContext<UniversalScrollyContextValue | null>(null);
+
+/**
+ * Distinct styling themes per explanation layer (Non-Technical Analogy vs. Sequence Bridge vs. Technical Deep-Dive vs. Forensic SIEM Catch)
+ * so every explanation card and its active right-column scroll marker have a customized visual identity.
+ */
+function getLayerStyleTokens(layerKind: UniversalExplanationLayerKind): {
+  cardIdleBg: string;
+  cardActiveBg: string;
+  cardActiveBorder: string;
+  badgeBg: string;
+  layerPillClass: string;
+  markerAccentHex: string;
+  markerBgClass: string;
+} {
+  switch (layerKind) {
+    case 'ANALOGY_NARRATIVE':
+      return {
+        cardIdleBg:
+          'bg-amber-50/35 dark:bg-amber-950/15 border-amber-200/80 dark:border-amber-800/60 hover:border-amber-400',
+        cardActiveBg: 'bg-amber-50/85 dark:bg-zinc-900',
+        cardActiveBorder:
+          'border-amber-500 shadow-sm ring-1 ring-amber-500/35',
+        badgeBg: 'bg-amber-600 text-white',
+        layerPillClass:
+          'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30',
+        markerAccentHex: '#d97706',
+        markerBgClass: 'bg-amber-500',
+      };
+    case 'CONCEPT_BRIDGE':
+      return {
+        cardIdleBg:
+          'bg-indigo-50/35 dark:bg-indigo-950/15 border-indigo-200/80 dark:border-indigo-800/60 hover:border-indigo-400',
+        cardActiveBg: 'bg-indigo-50/80 dark:bg-zinc-900',
+        cardActiveBorder:
+          'border-indigo-500 shadow-sm ring-1 ring-indigo-500/35',
+        badgeBg: 'bg-indigo-600 text-white',
+        layerPillClass:
+          'bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border-indigo-500/30',
+        markerAccentHex: '#4f46e5',
+        markerBgClass: 'bg-indigo-600',
+      };
+    case 'TECHNICAL_DEEP_DIVE':
+      return {
+        cardIdleBg:
+          'bg-rose-50/30 dark:bg-rose-950/15 border-rose-200/80 dark:border-rose-800/60 hover:border-rose-400',
+        cardActiveBg: 'bg-rose-50/80 dark:bg-zinc-900',
+        cardActiveBorder: 'border-rose-500 shadow-sm ring-1 ring-rose-500/35',
+        badgeBg: 'bg-rose-600 text-white',
+        layerPillClass:
+          'bg-rose-500/15 text-rose-800 dark:text-rose-300 border-rose-500/30',
+        markerAccentHex: '#e11d48',
+        markerBgClass: 'bg-rose-600',
+      };
+    case 'FORENSIC_DETECTION':
+      return {
+        cardIdleBg:
+          'bg-emerald-50/35 dark:bg-emerald-950/15 border-emerald-200/80 dark:border-emerald-800/60 hover:border-emerald-400',
+        cardActiveBg: 'bg-emerald-50/80 dark:bg-zinc-900',
+        cardActiveBorder:
+          'border-emerald-500 shadow-sm ring-1 ring-emerald-500/35',
+        badgeBg: 'bg-emerald-600 text-white',
+        layerPillClass:
+          'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
+        markerAccentHex: '#059669',
+        markerBgClass: 'bg-emerald-600',
+      };
+  }
+}
 
 /**
  * Renders the 4 synchronized Cinematic Storyboard & Technical Explanation sub-cards
  * (`A -> B -> C -> D`) inside each stage card in the right-hand explanation column.
- * Each card carries `data-scrolly-substep="0A..5D"` so scrolling through the right
- * column drives the exact matching Motion animation on the left sticky stage 1-to-1.
+ * Includes the synchronized Right-Column Active Scroll Marker ("Mark") so as the user scrolls,
+ * the active section on the right is visually marked and locked 1-to-1 with the left sticky stage,
+ * and each card exposes clickable MOTION ① / MOTION ② / MOTION ③ pills that describe and trigger
+ * the exact shape-to-shape & internal shape animations on the left NotebookLM canvas.
  */
 export function ProcessHollowingSyncedSubStepsList({
   stageNumber,
+  scenario: propScenario,
 }: {
   stageNumber: number;
+  scenario?: AttackScenario;
 }) {
   const ctx = useContext(ProcessHollowingScrollyContext);
-  const chapter = useMemo(() => getChapterByStage(stageNumber), [stageNumber]);
+  const effectiveScenario =
+    propScenario || ctx?.scenario || PROCESS_HOLLOWING_SCENARIO;
+
+  const spec = useMemo(
+    () => getUniversalScenarioScrollySpec(effectiveScenario),
+    [effectiveScenario]
+  );
+
+  const chapter = useMemo(
+    () =>
+      spec.chapters.find((c) => c.stageNumber === stageNumber) ||
+      spec.chapters[0],
+    [spec.chapters, stageNumber]
+  );
+
+  const isActiveStage = ctx?.visualState.stageNumber === chapter.stageNumber;
 
   return (
     <div
       data-testid={`scrolly-synced-substeps-stage-${stageNumber}`}
-      className="p-3 rounded-xl bg-indigo-50/45 dark:bg-indigo-950/25 border border-indigo-200/85 dark:border-indigo-800/70 space-y-2.5"
+      className={`relative p-3 rounded-xl border transition-colors space-y-2.5 ${
+        isActiveStage
+          ? 'bg-indigo-50/60 dark:bg-indigo-950/35 border-indigo-400/90 dark:border-indigo-600/80 shadow-xs'
+          : 'bg-indigo-50/35 dark:bg-indigo-950/20 border-indigo-200/80 dark:border-indigo-800/60'
+      }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
           <Sparkles className="w-3.5 h-3.5 shrink-0" />
           <span>
             Synchronized Cinematic Motion Breakdown ({chapter.subSteps.length}{' '}
-            Phases · {chapter.videoTimestampRange})
+            Phases · {chapter.timeRangeRef})
           </span>
         </span>
-        <span className="text-[9.5px] font-mono font-semibold text-zinc-500 dark:text-zinc-400">
-          Scroll or click any phase to animate on the left stage
-        </span>
+        <div className="flex items-center gap-1.5">
+          {isActiveStage && (
+            <span
+              data-testid={`scrolly-stage-active-indicator-${stageNumber}`}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-600 text-white font-mono text-[9px] font-extrabold shadow-2xs"
+            >
+              <ArrowLeft className="w-2.5 h-2.5 shrink-0" />
+              <span>SYNCED WITH LEFT STAGE</span>
+            </span>
+          )}
+          <span className="text-[9.5px] font-mono font-semibold text-zinc-500 dark:text-zinc-400">
+            Scroll or click any phase / motion cue to animate shapes on the left stage
+          </span>
+        </div>
       </div>
 
-      <div className="space-y-2">
+      {/* Synchronized Right-Column Sub-Step Explanation Cards with Left-Side Scroll Match Rail & Marker */}
+      <div className="relative pl-4 sm:pl-5 space-y-2.5">
+        {/* Continuous Left-Edge Scroll Synchronization Track Rail */}
+        <div
+          aria-hidden="true"
+          className="absolute left-1.5 top-2 bottom-2 w-1 rounded-full bg-zinc-200/90 dark:bg-zinc-800 overflow-hidden"
+        />
+
         {chapter.subSteps.map((sub) => {
           const isCurrentSubStep = ctx?.visualState.activeSubStepId === sub.id;
           const isCompletedSubStep = Boolean(
@@ -130,70 +262,162 @@ export function ProcessHollowingSyncedSubStepsList({
                   ctx.visualState.subStepIndex > sub.subStepIndex))
           );
 
+          const overallProgress = ctx?.visualState.overallProgress ?? 0;
+          const thresholdEffect = computeSubStepScrollThresholdEffect(
+            overallProgress,
+            sub,
+            Boolean(isCurrentSubStep)
+          );
+          const layerTokens = getLayerStyleTokens(sub.layerKind);
+
           return (
             <motion.div
               key={sub.id}
               data-scrolly-substep={sub.id}
               data-testid={`scrolly-explanation-card-${sub.id}`}
+              data-active-match={isCurrentSubStep ? 'true' : 'false'}
+              data-mechanism-kind={sub.shapeChoreography.mechanismKind}
               animate={{
-                scale: isCurrentSubStep ? 1.008 : 1,
+                opacity: thresholdEffect.opacity,
+                y: thresholdEffect.translateY,
+                scale: thresholdEffect.scale,
               }}
-              transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 26 }}
               onClick={(e) => {
                 e.stopPropagation();
                 ctx?.onSelectSubStep(sub.id);
               }}
-              className={`p-3 rounded-xl border-2 transition-colors cursor-pointer space-y-1.5 ${
+              className={`relative p-3 rounded-xl border-2 transition-colors cursor-pointer space-y-1.5 ${
                 isCurrentSubStep
-                  ? 'bg-white dark:bg-zinc-900 border-rose-500 shadow-sm ring-1 ring-rose-500/30'
+                  ? `${layerTokens.cardActiveBg} ${layerTokens.cardActiveBorder}`
                   : isCompletedSubStep
                     ? 'bg-emerald-50/40 dark:bg-emerald-950/15 border-emerald-400/50 dark:border-emerald-800/60 hover:border-emerald-500'
-                    : 'bg-white/95 dark:bg-zinc-900/85 border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-400'
+                    : layerTokens.cardIdleBg
               }`}
             >
+              {/* RIGHT-COLUMN SYNCHRONIZED ACTIVE SCROLL MARKER ("نشانگر کنار بخش فعال") */}
+              <div
+                aria-hidden="true"
+                className="absolute -left-4 sm:-left-5 top-0 bottom-0 w-4 sm:w-5 flex flex-col items-center justify-center pointer-events-none"
+              >
+                {isCurrentSubStep ? (
+                  <motion.div
+                    layoutId={`scrolly-right-column-active-mark-${effectiveScenario.id}`}
+                    data-testid="scrolly-active-right-marker"
+                    data-active-substep-marker={sub.id}
+                    transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+                    className="relative flex items-center justify-center"
+                  >
+                    {/* Vertical Glowing Bar along active explanation section */}
+                    <div
+                      className={`w-1.5 h-12 rounded-full ${layerTokens.markerBgClass} shadow-sm`}
+                    />
+                    {/* Morphing SVG Pointer Badge pointing left to the synchronized stage */}
+                    <div className="absolute -left-1.5 w-5 h-5 rounded-full bg-white dark:bg-zinc-900 border-2 border-rose-500 shadow-sm flex items-center justify-center">
+                      <svg
+                        viewBox="0 0 28 28"
+                        className="w-3.5 h-3.5 overflow-visible"
+                      >
+                        <motion.path
+                          d={
+                            ctx?.visualState.interpolatedIndicatorPathD ||
+                            sub.morphConfig.indicatorMorphPathD
+                          }
+                          fill={layerTokens.markerAccentHex}
+                          stroke="#ffffff"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      isCompletedSubStep
+                        ? 'bg-emerald-500'
+                        : 'bg-zinc-300 dark:bg-zinc-700'
+                    }`}
+                  />
+                )}
+              </div>
+
+              {/* Top Row: Phase Code + Customized Layer Style Badge + Active Left-Stage Match Indicator */}
               <div className="flex flex-wrap items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span
                     className={`px-2 py-0.5 rounded font-mono text-[10px] font-extrabold ${
                       isCurrentSubStep
-                        ? 'bg-rose-600 text-white'
+                        ? layerTokens.badgeBg
                         : isCompletedSubStep
                           ? 'bg-emerald-600 text-white'
-                          : 'bg-indigo-600 text-white'
+                          : 'bg-zinc-800 dark:bg-zinc-700 text-white'
                     }`}
                   >
-                    PHASE {sub.id} · #{sub.clauseNumber}
+                    PHASE {sub.id} · {sub.clauseNumber}
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded border font-mono text-[9px] font-extrabold ${layerTokens.layerPillClass}`}
+                  >
+                    {sub.layerKindBadge}
                   </span>
                   <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[9.5px] font-bold">
-                    {sub.videoTimestampRef}
+                    {sub.timestampRef}
                   </span>
-                  <span className="font-mono text-[10.5px] font-extrabold text-indigo-700 dark:text-indigo-300">
+                  <span className="font-mono text-[10.5px] font-extrabold text-zinc-800 dark:text-zinc-200">
                     {sub.clauseTitle}
                   </span>
                 </div>
 
-                {isCurrentSubStep && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 font-mono text-[9px] font-extrabold">
-                    <Radio className="w-2.5 h-2.5 shrink-0" />
-                    <span>LIVE ON CINEMATIC STAGE</span>
+                {isCurrentSubStep ? (
+                  <span
+                    data-testid={`scrolly-live-match-badge-${sub.id}`}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-600 text-white font-mono text-[9px] font-extrabold shadow-2xs"
+                  >
+                    <ArrowLeft className="w-2.5 h-2.5 shrink-0" />
+                    <Radio className="w-2.5 h-2.5 shrink-0 animate-pulse" />
+                    <span>LIVE MATCH ON LEFT STAGE ({sub.id})</span>
+                  </span>
+                ) : (
+                  <span className="font-mono text-[9px] font-semibold text-zinc-400 dark:text-zinc-500">
+                    Scroll {Math.round(sub.scrollThresholdStart * 100)}%–
+                    {Math.round(sub.scrollThresholdEnd * 100)}%
                   </span>
                 )}
               </div>
 
+              {/* Headline & Scroll-Threshold Faded Explanation Text */}
               <div className="text-xs font-extrabold text-zinc-900 dark:text-white leading-snug break-words">
                 {sub.headline}
               </div>
 
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+              <motion.p
+                animate={{
+                  opacity: isCurrentSubStep
+                    ? 1
+                    : Math.max(0.68, thresholdEffect.opacity),
+                }}
+                transition={{ duration: 0.2 }}
+                className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words"
+              >
                 {sub.explanation}
-              </p>
+              </motion.p>
 
-              <div className="pt-1 flex flex-wrap items-center justify-between gap-1.5 border-t border-zinc-100 dark:border-zinc-800/80 font-mono text-[10px]">
+              {/* Layer-Specific Technical / Story / Forensic Footer Strip */}
+              <div className="pt-1.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-zinc-200/70 dark:border-zinc-800/80 font-mono text-[10px]">
                 <span className="text-amber-800 dark:text-amber-300 font-semibold break-words">
-                  <strong>Visual / Memory State:</strong> {sub.kernelAndMemoryDelta}
+                  <strong>
+                    {sub.layerKind === 'ANALOGY_NARRATIVE'
+                      ? 'Story Mapping:'
+                      : sub.layerKind === 'CONCEPT_BRIDGE'
+                        ? 'Sequence Exchange:'
+                        : sub.layerKind === 'FORENSIC_DETECTION'
+                          ? 'Sensor Correlation:'
+                          : 'Visual / Memory State:'}
+                  </strong>{' '}
+                  {sub.stateDeltaSummary}
                 </span>
                 <span className="text-emerald-700 dark:text-emerald-400 font-bold shrink-0">
-                  {sub.sysmonBadge}
+                  {sub.protocolBadge} · {sub.returnBadge}
                 </span>
               </div>
             </motion.div>
@@ -205,9 +429,13 @@ export function ProcessHollowingSyncedSubStepsList({
 }
 
 export default function ProcessHollowingScrollytellingView({
+  scenario: propScenario,
   children,
   activeStageIndex = 0,
 }: ProcessHollowingScrollytellingViewProps) {
+  const scenario = propScenario || PROCESS_HOLLOWING_SCENARIO;
+  const maxStageIndex = scenario.stages.length;
+
   const [scrollState, setScrollState] = useState<{
     stageNumber: number;
     stageProgress: number;
@@ -215,224 +443,194 @@ export default function ProcessHollowingScrollytellingView({
     stageNumber:
       typeof activeStageIndex === 'number' &&
       activeStageIndex >= 0 &&
-      activeStageIndex <= 5
+      activeStageIndex <= maxStageIndex
         ? activeStageIndex
         : 0,
     stageProgress: 0.12,
   }));
 
+  const [manualMotionOverride, setManualMotionOverride] = useState<{
+    subStepId: string;
+    motionIndex: 0 | 1 | 2;
+  } | null>(null);
+
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScrollRef = useRef(false);
   const programmaticTimeoutRef = useRef<number | null>(null);
 
+  // Framer Motion useScroll hook for window scroll tracking + custom MotionValue for inner overflow-y-auto containers
+  const { scrollYProgress: windowScrollYProgress } = useScroll({
+    target: wrapperRef,
+    offset: ['start start', 'end end'],
+  });
+  const containerScrollProgress = useMotionValue(0);
+  const smoothScrollProgress = useSpring(containerScrollProgress, {
+    stiffness: 210,
+    damping: 30,
+    mass: 0.35,
+  });
+
   const visualState = useMemo(
     () =>
-      computeProcessHollowingVisualState(
+      computeUniversalScrollyVisualState(
+        scenario,
         scrollState.stageNumber,
         scrollState.stageProgress
       ),
-    [scrollState.stageNumber, scrollState.stageProgress]
+    [scenario, scrollState.stageNumber, scrollState.stageProgress]
   );
 
-  const activeChapter = useMemo(
-    () => getChapterByStage(visualState.stageNumber),
-    [visualState.stageNumber]
-  );
-
-  const activeSubStep = useMemo(
-    () => getSubStepById(visualState.activeSubStepId),
-    [visualState.activeSubStepId]
-  );
-
-  // Jump to a specific sub-step when the user clicks a sub-step pill, Prev/Next, or explanation card
-  const handleSelectSubStep = useCallback(
-    (subStepId: ProcessHollowingSubStepId) => {
-      const targetSpec = getSubStepById(subStepId);
-      const targetProgress = SUBSTEP_TARGET_PROGRESS[subStepId] ?? 0.5;
-
-      setScrollState({
-        stageNumber: targetSpec.stageNumber,
-        stageProgress: targetProgress,
-      });
-
-      const wrapper = wrapperRef.current;
-      if (!wrapper) return;
-
-      // Prefer scrolling directly to the matching [data-scrolly-substep] explanation card
-      const subStepEl = wrapper.querySelector<HTMLElement>(
-        `[data-scrolly-substep="${subStepId}"]`
-      );
-      const stageEl = wrapper.querySelector<HTMLElement>(
-        `[data-scrolly-stage="${targetSpec.stageNumber}"]`
-      );
-      const targetEl = subStepEl ?? stageEl;
-      if (!targetEl) return;
-
-      const scroller = targetEl.closest(
-        '.overflow-y-auto'
-      ) as HTMLElement | null;
-      const targetRect = targetEl.getBoundingClientRect();
-      const targetPointViewportY = subStepEl
-        ? targetRect.top + Math.min(targetRect.height * 0.35, 90)
-        : targetRect.top + targetRect.height * targetProgress;
-
-      isProgrammaticScrollRef.current = true;
-      if (programmaticTimeoutRef.current !== null) {
-        window.clearTimeout(programmaticTimeoutRef.current);
-      }
-
-      if (scroller) {
-        const scrollerRect = scroller.getBoundingClientRect();
-        const desiredFocalY = scrollerRect.top + scroller.clientHeight * 0.38;
-        const deltaY = targetPointViewportY - desiredFocalY;
-        scroller.scrollTo({
-          top: Math.max(0, scroller.scrollTop + deltaY),
-          behavior: 'smooth',
-        });
-      } else {
-        const desiredFocalY = window.innerHeight * 0.38;
-        const deltaY = targetPointViewportY - desiredFocalY;
-        window.scrollTo({
-          top: Math.max(0, window.scrollY + deltaY),
-          behavior: 'smooth',
-        });
-      }
-
-      programmaticTimeoutRef.current = window.setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 950);
-    },
-    []
-  );
-
-  // Passive scroll listener: measures which [data-scrolly-substep="0A..5D"] card (or [data-scrolly-stage="0..5"])
-  // is at eye level so the left sticky cinematic stage and right explanation card stay 100% synced.
-  // NEVER mutates parent activeStageIndex or triggers auto-play!
+  // Keep smoothScrollProgress synchronized with visualState.overallProgress
   useEffect(() => {
-    let rafId: number | null = null;
+    containerScrollProgress.set(visualState.overallProgress);
+  }, [visualState.overallProgress, containerScrollProgress]);
 
-    const evaluateScroll = () => {
-      if (isProgrammaticScrollRef.current) return;
-      const wrapper = wrapperRef.current;
-      if (!wrapper) return;
+  // Core DOM measurement routine invoked by framer-motion's useScroll event AND inner container scroll events
+  const evaluateScrollPosition = useCallback(() => {
+    if (isProgrammaticScrollRef.current) return;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
 
-      const stageElements = Array.from(
-        wrapper.querySelectorAll<HTMLElement>('[data-scrolly-stage]')
-      );
-      if (stageElements.length === 0) return;
+    const stageElements = Array.from(
+      wrapper.querySelectorAll<HTMLElement>('[data-scrolly-stage]')
+    );
+    if (stageElements.length === 0) return;
 
-      const scroller = stageElements[0].closest(
-        '.overflow-y-auto'
-      ) as HTMLElement | null;
-      const viewportTop = scroller ? scroller.getBoundingClientRect().top : 0;
-      const viewportHeight = scroller
-        ? scroller.clientHeight
-        : window.innerHeight;
+    const scroller = stageElements[0].closest(
+      '.overflow-y-auto'
+    ) as HTMLElement | null;
+    const viewportTop = scroller ? scroller.getBoundingClientRect().top : 0;
+    const viewportHeight = scroller
+      ? scroller.clientHeight
+      : window.innerHeight;
 
-      // Reading focal line at 38% down the scroll viewport
-      const focalY = viewportTop + viewportHeight * 0.38;
+    // Reading focal line at 38% down the scroll viewport
+    const focalY = viewportTop + viewportHeight * 0.38;
 
-      // 1. Check granular [data-scrolly-substep] cards first for 1-to-1 paragraph sync
-      const subStepElements = Array.from(
-        wrapper.querySelectorAll<HTMLElement>('[data-scrolly-substep]')
-      );
-      if (subStepElements.length > 0) {
-        let bestSubId: ProcessHollowingSubStepId | null = null;
-        let bestSubDistance = Number.POSITIVE_INFINITY;
+    // 1. Check granular [data-scrolly-substep] cards first for continuous 1-to-1 paragraph & SVG morph sync
+    const subStepElements = Array.from(
+      wrapper.querySelectorAll<HTMLElement>('[data-scrolly-substep]')
+    );
+    if (subStepElements.length > 0) {
+      let bestSubEl: HTMLElement | null = null;
+      let bestSubId: string | null = null;
+      let bestSubDistance = Number.POSITIVE_INFINITY;
 
-        for (const subEl of subStepElements) {
-          const rawSubId = subEl.getAttribute(
-            'data-scrolly-substep'
-          ) as ProcessHollowingSubStepId | null;
-          if (!rawSubId || !(rawSubId in SUBSTEP_TARGET_PROGRESS)) continue;
+      for (const subEl of subStepElements) {
+        const rawSubId = subEl.getAttribute('data-scrolly-substep');
+        if (!rawSubId) continue;
 
-          const rect = subEl.getBoundingClientRect();
-          if (rect.height <= 0) continue;
-
-          if (focalY >= rect.top && focalY <= rect.bottom) {
-            bestSubId = rawSubId;
-            bestSubDistance = 0;
-            break;
-          }
-
-          const dist =
-            focalY < rect.top ? rect.top - focalY : focalY - rect.bottom;
-          if (dist < bestSubDistance) {
-            bestSubDistance = dist;
-            bestSubId = rawSubId;
-          }
-        }
-
-        // If the focal line is within or near a sub-step explanation card, lock directly to it
-        if (bestSubId && bestSubDistance < 260) {
-          const matchedSpec = getSubStepById(bestSubId);
-          const matchedProg = SUBSTEP_TARGET_PROGRESS[bestSubId];
-          setScrollState((prev) => {
-            if (
-              prev.stageNumber === matchedSpec.stageNumber &&
-              Math.abs(prev.stageProgress - matchedProg) < 0.01
-            ) {
-              return prev;
-            }
-            return {
-              stageNumber: matchedSpec.stageNumber,
-              stageProgress: matchedProg,
-            };
-          });
-          return;
-        }
-      }
-
-      // 2. Fallback: continuous progress within the active [data-scrolly-stage] card
-      let matchedStage = 0;
-      let matchedProgress = 0.12;
-      let bestDistance = Number.POSITIVE_INFINITY;
-
-      for (const el of stageElements) {
-        const rawStageAttr = el.getAttribute('data-scrolly-stage');
-        const stageNum = rawStageAttr ? Number.parseInt(rawStageAttr, 10) : 0;
-        if (!Number.isFinite(stageNum)) continue;
-
-        const rect = el.getBoundingClientRect();
+        const rect = subEl.getBoundingClientRect();
         if (rect.height <= 0) continue;
 
         if (focalY >= rect.top && focalY <= rect.bottom) {
-          matchedStage = stageNum;
-          matchedProgress = clampUnitProgress(
-            (focalY - rect.top) / Math.max(1, rect.height)
-          );
-          bestDistance = 0;
+          bestSubEl = subEl;
+          bestSubId = rawSubId;
+          bestSubDistance = 0;
           break;
         }
 
-        const distanceToCard =
+        const dist =
           focalY < rect.top ? rect.top - focalY : focalY - rect.bottom;
-        if (distanceToCard < bestDistance) {
-          bestDistance = distanceToCard;
-          matchedStage = stageNum;
-          matchedProgress = focalY < rect.top ? 0.08 : 0.92;
+        if (dist < bestSubDistance) {
+          bestSubDistance = dist;
+          bestSubId = rawSubId;
+          bestSubEl = subEl;
         }
       }
 
-      setScrollState((prev) => {
-        if (
-          prev.stageNumber === matchedStage &&
-          Math.abs(prev.stageProgress - matchedProgress) < 0.015
-        ) {
-          return prev;
-        }
-        return {
-          stageNumber: matchedStage,
-          stageProgress: matchedProgress,
-        };
-      });
-    };
+      if (bestSubId && bestSubEl && bestSubDistance < 280) {
+        const parsed = parseSubStepIdToStageAndProgress(bestSubId);
+        const rect = bestSubEl.getBoundingClientRect();
+        // Compute continuous intra-substep progress (0..1) so SVG paths morph smoothly as the user scrolls inside each card
+        const localRatio = clampUnitProgress(
+          (focalY - rect.top) / Math.max(1, rect.height)
+        );
+        const baseIndex = Math.floor(parsed.stageProgress * 4); // 0..3
+        const continuousStageProgress = clampUnitProgress(
+          (baseIndex + Math.min(0.96, Math.max(0.04, localRatio))) / 4
+        );
 
-    const onScroll = () => {
+        setScrollState((prev) => {
+          if (
+            prev.stageNumber === parsed.stageNumber &&
+            Math.abs(prev.stageProgress - continuousStageProgress) < 0.008
+          ) {
+            return prev;
+          }
+          return {
+            stageNumber: parsed.stageNumber,
+            stageProgress: continuousStageProgress,
+          };
+        });
+        return;
+      }
+    }
+
+    // 2. Fallback: continuous progress within the active [data-scrolly-stage] card
+    let matchedStage = 0;
+    let matchedProgress = 0.12;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (const el of stageElements) {
+      const rawStageAttr = el.getAttribute('data-scrolly-stage');
+      const stageNum = rawStageAttr ? Number.parseInt(rawStageAttr, 10) : 0;
+      if (!Number.isFinite(stageNum)) continue;
+
+      const rect = el.getBoundingClientRect();
+      if (rect.height <= 0) continue;
+
+      if (focalY >= rect.top && focalY <= rect.bottom) {
+        matchedStage = stageNum;
+        matchedProgress = clampUnitProgress(
+          (focalY - rect.top) / Math.max(1, rect.height)
+        );
+        bestDistance = 0;
+        break;
+      }
+
+      const distanceToCard =
+        focalY < rect.top ? rect.top - focalY : focalY - rect.bottom;
+      if (distanceToCard < bestDistance) {
+        bestDistance = distanceToCard;
+        matchedStage = stageNum;
+        matchedProgress = focalY < rect.top ? 0.08 : 0.92;
+      }
+    }
+
+    setScrollState((prev) => {
+      if (
+        prev.stageNumber === matchedStage &&
+        Math.abs(prev.stageProgress - matchedProgress) < 0.01
+      ) {
+        return prev;
+      }
+      return {
+        stageNumber: matchedStage,
+        stageProgress: matchedProgress,
+      };
+    });
+  }, []);
+
+  // Subscribe to framer-motion's useScroll motion value changes for window scroll synchronization
+  useMotionValueEvent(windowScrollYProgress, 'change', () => {
+    evaluateScrollPosition();
+  });
+
+  // Also bind passive scroll capture listener so inner .overflow-y-auto containers (e.g. InspectorPanel) trigger frame-accurate updates
+  useEffect(() => {
+    let rafId: number | null = null;
+    const onScroll = (e: Event) => {
+      if (
+        e.target instanceof Element &&
+        e.target.closest('[data-testid="process-hollowing-sticky-stage"]')
+      ) {
+        return;
+      }
       if (rafId !== null) return;
       rafId = window.requestAnimationFrame(() => {
         rafId = null;
-        evaluateScroll();
+        evaluateScrollPosition();
       });
     };
 
@@ -451,14 +649,95 @@ export default function ProcessHollowingScrollytellingView({
         window.clearTimeout(programmaticTimeoutRef.current);
       }
     };
+  }, [evaluateScrollPosition]);
+
+  // Jump to a specific sub-step when the user clicks a sub-step pill, Prev/Next, or explanation card
+  const handleSelectSubStep = useCallback((subStepId: string) => {
+    const parsed = parseSubStepIdToStageAndProgress(subStepId);
+
+    setScrollState({
+      stageNumber: parsed.stageNumber,
+      stageProgress: parsed.stageProgress,
+    });
+
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const subStepEl = wrapper.querySelector<HTMLElement>(
+      `[data-scrolly-substep="${subStepId}"]`
+    );
+    const stageEl = wrapper.querySelector<HTMLElement>(
+      `[data-scrolly-stage="${parsed.stageNumber}"]`
+    );
+    const targetEl = subStepEl ?? stageEl;
+    if (!targetEl) return;
+
+    const scroller = targetEl.closest(
+      '.overflow-y-auto'
+    ) as HTMLElement | null;
+    const targetRect = targetEl.getBoundingClientRect();
+    const targetPointViewportY = subStepEl
+      ? targetRect.top + Math.min(targetRect.height * 0.35, 90)
+      : targetRect.top + targetRect.height * parsed.stageProgress;
+
+    isProgrammaticScrollRef.current = true;
+    if (programmaticTimeoutRef.current !== null) {
+      window.clearTimeout(programmaticTimeoutRef.current);
+    }
+
+    if (scroller) {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const desiredFocalY = scrollerRect.top + scroller.clientHeight * 0.38;
+      const deltaY = targetPointViewportY - desiredFocalY;
+      scroller.scrollTo({
+        top: Math.max(0, scroller.scrollTop + deltaY),
+        behavior: 'smooth',
+      });
+    } else {
+      const desiredFocalY = window.innerHeight * 0.38;
+      const deltaY = targetPointViewportY - desiredFocalY;
+      window.scrollTo({
+        top: Math.max(0, window.scrollY + deltaY),
+        behavior: 'smooth',
+      });
+    }
+
+    programmaticTimeoutRef.current = window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 950);
   }, []);
 
-  const contextValue = useMemo<ProcessHollowingScrollyContextValue>(
+  const focusedMotionIndex: 0 | 1 | 2 =
+    manualMotionOverride &&
+    manualMotionOverride.subStepId === visualState.activeSubStepId
+      ? manualMotionOverride.motionIndex
+      : visualState.activeMotionIndex;
+
+  const handleSelectMotion = useCallback(
+    (subStepId: string, motionIndex: 0 | 1 | 2) => {
+      setManualMotionOverride({ subStepId, motionIndex });
+      if (visualState.activeSubStepId !== subStepId) {
+        handleSelectSubStep(subStepId);
+      }
+    },
+    [visualState.activeSubStepId, handleSelectSubStep]
+  );
+
+  const contextValue = useMemo<UniversalScrollyContextValue>(
     () => ({
+      scenario,
       visualState,
+      focusedMotionIndex,
       onSelectSubStep: handleSelectSubStep,
+      onSelectMotion: handleSelectMotion,
     }),
-    [visualState, handleSelectSubStep]
+    [
+      scenario,
+      visualState,
+      focusedMotionIndex,
+      handleSelectSubStep,
+      handleSelectMotion,
+    ]
   );
 
   return (
@@ -467,20 +746,25 @@ export default function ProcessHollowingScrollytellingView({
         ref={wrapperRef}
         dir="ltr"
         data-testid="process-hollowing-scrollytelling-view"
+        data-scenario-id={scenario.id}
+        data-archetype={visualState.archetype}
         className="w-full"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* LEFT COLUMN: Sticky Scroll-Driven Animated Diagram + Synchronized Narrator */}
+          {/* LEFT COLUMN: Sticky Scroll-Driven Animated Diagram + Morphing SVG Conduit + Synchronized Narrator */}
           <div className="lg:col-span-5 lg:sticky lg:top-3 z-20">
             <ProcessHollowingStickyStage
-              chapter={activeChapter}
-              subStep={activeSubStep}
               visualState={visualState}
+              smoothScrollProgress={smoothScrollProgress}
+              focusedMotionIndex={focusedMotionIndex}
               onSelectSubStep={handleSelectSubStep}
+              onSelectMotion={(motionIdx) =>
+                handleSelectMotion(visualState.activeSubStepId, motionIdx)
+              }
             />
           </div>
 
-          {/* RIGHT COLUMN: Synchronized Explanation Cards */}
+          {/* RIGHT COLUMN: Synchronized Explanation Cards with Active Scroll Marker */}
           <div className="lg:col-span-7 min-w-0 space-y-4">{children}</div>
         </div>
       </div>
@@ -489,72 +773,82 @@ export default function ProcessHollowingScrollytellingView({
 }
 
 interface ProcessHollowingStickyStageProps {
-  chapter: ProcessHollowingChapterSpec;
-  subStep: ProcessHollowingSubStepSpec;
-  visualState: ProcessHollowingStageVisualState;
-  onSelectSubStep: (id: ProcessHollowingSubStepId) => void;
+  visualState: UniversalScrollyVisualState;
+  smoothScrollProgress?: ReturnType<typeof useSpring>;
+  focusedMotionIndex?: 0 | 1 | 2;
+  onSelectSubStep: (id: string) => void;
+  onSelectMotion?: (motionIdx: 0 | 1 | 2) => void;
 }
 
 export function ProcessHollowingStickyStage({
-  chapter,
-  subStep,
   visualState,
+  focusedMotionIndex,
   onSelectSubStep,
+  onSelectMotion,
 }: ProcessHollowingStickyStageProps) {
-  const currentGlobalIdx = ALL_PROCESS_HOLLOWING_SUBSTEPS.findIndex(
-    (s) => s.id === subStep.id
-  );
+  const { activeChapter: chapter, activeSubStep: subStep, allSubSteps, palette } =
+    visualState;
+  const effectiveMotionIndex: 0 | 1 | 2 =
+    focusedMotionIndex ?? visualState.activeMotionIndex;
+
+  const currentGlobalIdx = allSubSteps.findIndex((s) => s.id === subStep.id);
   const prevSubStep =
-    currentGlobalIdx > 0
-      ? ALL_PROCESS_HOLLOWING_SUBSTEPS[currentGlobalIdx - 1]
-      : null;
+    currentGlobalIdx > 0 ? allSubSteps[currentGlobalIdx - 1] : null;
   const nextSubStep =
-    currentGlobalIdx >= 0 &&
-    currentGlobalIdx < ALL_PROCESS_HOLLOWING_SUBSTEPS.length - 1
-      ? ALL_PROCESS_HOLLOWING_SUBSTEPS[currentGlobalIdx + 1]
+    currentGlobalIdx >= 0 && currentGlobalIdx < allSubSteps.length - 1
+      ? allSubSteps[currentGlobalIdx + 1]
       : null;
+
+  const layerTokens = getLayerStyleTokens(subStep.layerKind);
 
   return (
     <motion.div
       data-testid="process-hollowing-sticky-stage"
       data-active-substep={subStep.id}
-      className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col text-zinc-900 dark:text-zinc-100"
+      data-active-choreography={subStep.visualChoreography}
+      className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-sm overflow-hidden text-zinc-900 dark:text-zinc-100"
     >
-      {/* 1. Top Header Strip (Matches Attack Explorer Card Headers) */}
-      <div className="px-3.5 py-2.5 bg-zinc-100/95 dark:bg-zinc-950 border-b border-zinc-200/80 dark:border-zinc-800 space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-1.5">
-          <div className="inline-flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-600 text-white font-mono text-[10px] font-extrabold">
-              <Sparkles className="w-3 h-3 shrink-0" />
-              <span>LIVE SCROLL MOTION</span>
+      {/* 1. Compact Top Header Strip with Scenario Archetype Identity & Phase Scrubber */}
+      <div className="px-3 py-2 bg-zinc-100/95 dark:bg-zinc-950 border-b border-zinc-200/80 dark:border-zinc-800 space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-1">
+          <div className="inline-flex items-center gap-1 flex-wrap">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9px] font-extrabold">
+              <Sparkles className="w-2.5 h-2.5 shrink-0" />
+              <span>LIVE SCROLL</span>
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25 font-mono text-[10px] font-bold">
+            <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/25 font-mono text-[9px] font-bold">
               {chapter.stageNumber === 0
-                ? 'STAGE #0 · BRIEFING (4 PHASES)'
-                : `STAGE #${chapter.stageNumber} · T1055.012 (4 PHASES)`}
+                ? 'STAGE #0 · BRIEFING'
+                : `STAGE #${chapter.stageNumber} · ${chapter.mitreCode.split('·')[0]?.trim()}`}
+            </span>
+            <span className="hidden xl:inline-block px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[8.5px] font-bold">
+              {palette.themeLabel}
             </span>
           </div>
 
           <div className="flex items-center gap-1">
+            <span className="font-mono text-[8.5px] font-extrabold text-rose-600 dark:text-rose-400 mr-0.5">
+              MATCH: {subStep.id} ({Math.round(visualState.overallProgress * 100)}%)
+            </span>
             <button
               type="button"
               disabled={!prevSubStep}
               data-testid="scrolly-prev-substep-btn"
               onClick={() => prevSubStep && onSelectSubStep(prevSubStep.id)}
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-mono text-[9.5px] font-bold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 hover:border-indigo-400 cursor-pointer disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-mono text-[9px] font-bold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 hover:border-indigo-400 cursor-pointer disabled:cursor-not-allowed"
             >
               <ArrowLeft className="w-2.5 h-2.5" />
               <span>Prev</span>
             </button>
-            <span className="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[9.5px] font-bold">
-              {subStep.videoTimestampRef}
+            <span className="px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[9px] font-bold">
+              {subStep.timestampRef}
             </span>
             <button
               type="button"
               disabled={!nextSubStep}
               data-testid="scrolly-next-substep-btn"
               onClick={() => nextSubStep && onSelectSubStep(nextSubStep.id)}
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-mono text-[9.5px] font-bold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 hover:border-indigo-400 cursor-pointer disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-mono text-[9px] font-bold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 hover:border-indigo-400 cursor-pointer disabled:cursor-not-allowed"
             >
               <span>Next</span>
               <ArrowRight className="w-2.5 h-2.5" />
@@ -562,13 +856,13 @@ export function ProcessHollowingStickyStage({
           </div>
         </div>
 
-        {/* 24 Sub-Step Scrubber Pills (0A..5D) with Motion Shared-Layout Indicator */}
+        {/* All Sub-Step Scrubber Pills (0A..ND) in Ultra-Compact Row */}
         <div
           role="tablist"
-          aria-label="Process Hollowing 24 Cinematic Sub-Steps"
-          className="flex items-center gap-1 flex-wrap"
+          aria-label={`${visualState.scenarioName} Cinematic Sub-Steps`}
+          className="flex items-center gap-0.5 flex-wrap"
         >
-          {ALL_PROCESS_HOLLOWING_SUBSTEPS.map((s) => {
+          {allSubSteps.map((s) => {
             const isCurrent = s.id === subStep.id;
             const isSameStage = s.stageNumber === visualState.stageNumber;
             return (
@@ -580,7 +874,7 @@ export function ProcessHollowingStickyStage({
                 data-testid={`scrolly-substep-btn-${s.id}`}
                 onClick={() => onSelectSubStep(s.id)}
                 title={`${s.badgeLabel}: ${s.headline}`}
-                className={`relative px-1.5 py-0.5 rounded font-mono text-[9.5px] font-bold transition-colors cursor-pointer ${
+                className={`relative px-1.5 py-0.5 rounded font-mono text-[8.5px] leading-none font-bold transition-colors cursor-pointer ${
                   isCurrent
                     ? 'text-white'
                     : isSameStage
@@ -590,9 +884,9 @@ export function ProcessHollowingStickyStage({
               >
                 {isCurrent && (
                   <motion.span
-                    layoutId="scrolly-active-substep-pill"
+                    layoutId={`scrolly-active-substep-pill-${visualState.scenarioId}`}
                     transition={{ type: 'spring', stiffness: 360, damping: 26 }}
-                    className="absolute inset-0 rounded bg-rose-600 shadow-2xs"
+                    className={`absolute inset-0 rounded ${palette.activeMarkerBgClass} shadow-2xs`}
                   />
                 )}
                 <span className="relative z-10">{s.id}</span>
@@ -601,8 +895,8 @@ export function ProcessHollowingStickyStage({
           })}
         </div>
 
-        {/* 4 Intra-Stage Cinematic Phase Cards (A -> B -> C -> D) */}
-        <div className="grid grid-cols-4 gap-1 pt-0.5">
+        {/* 4 Intra-Stage Cinematic Phase Pills (A -> B -> C -> D) + Integrated Progress Bar */}
+        <div className="grid grid-cols-4 gap-1">
           {chapter.subSteps.map((phaseSpec) => {
             const isActivePhase = phaseSpec.id === subStep.id;
             const isCompletedPhase =
@@ -612,7 +906,7 @@ export function ProcessHollowingStickyStage({
                 key={phaseSpec.id}
                 type="button"
                 onClick={() => onSelectSubStep(phaseSpec.id)}
-                className={`relative p-1.5 rounded-lg border text-left font-mono transition-colors cursor-pointer overflow-hidden ${
+                className={`relative px-1.5 py-1 rounded-md border text-left font-mono transition-colors cursor-pointer overflow-hidden flex items-center justify-between gap-1 ${
                   isActivePhase
                     ? 'bg-rose-50/90 dark:bg-rose-950/40 border-rose-500 text-rose-900 dark:text-rose-100'
                     : isCompletedPhase
@@ -620,22 +914,26 @@ export function ProcessHollowingStickyStage({
                       : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400'
                 }`}
               >
-                <div className="flex items-center justify-between text-[9px] font-extrabold">
-                  <span>PHASE {phaseSpec.id}</span>
-                  <span>{phaseSpec.clauseNumber}</span>
-                </div>
-                <div className="text-[9px] truncate mt-0.5 font-semibold">
-                  {phaseSpec.badgeLabel.replace(/^[0-5][A-D]\s*·\s*/, '')}
-                </div>
+                <span className="text-[8.5px] font-extrabold shrink-0">
+                  {phaseSpec.id}
+                </span>
+                <span className="text-[8px] truncate font-semibold">
+                  {phaseSpec.subStepLetter === 'A'
+                    ? 'STORY'
+                    : phaseSpec.subStepLetter === 'B'
+                      ? 'FLOW'
+                      : phaseSpec.subStepLetter === 'C'
+                        ? 'TECH'
+                        : 'SIEM'}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Continuous Scroll Progress Bar */}
-        <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-indigo-600 via-rose-600 to-amber-500"
+            className={`h-full bg-gradient-to-r ${palette.stageAccentClass}`}
             animate={{
               width: `${Math.max(5, Math.round(visualState.overallProgress * 100))}%`,
             }}
@@ -644,117 +942,251 @@ export function ProcessHollowingStickyStage({
         </div>
       </div>
 
-      {/* 2. Active Sub-Step Context Banner with Motion Transition */}
+      {/* 2. Compact Single-Row Active Sub-Step Context Banner + Inline Morphing SVG Telemetry Conduit */}
       <motion.div
         key={`banner-${subStep.id}`}
-        initial={{ opacity: 0.35, y: -5 }}
+        initial={{ opacity: 0.35, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-        className="px-3.5 py-2 bg-indigo-50/60 dark:bg-indigo-950/30 border-b border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2"
+        className="px-3 py-1.5 bg-indigo-50/60 dark:bg-indigo-950/30 border-b border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2"
       >
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[9.5px] font-extrabold">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <div className="flex items-center gap-1 flex-wrap">
+            <span
+              className={`px-1.5 py-0.5 rounded font-mono text-[8.5px] leading-none font-extrabold ${layerTokens.badgeBg}`}
+            >
               {subStep.badgeLabel}
             </span>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-600/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 font-mono text-[9.5px] font-bold">
-              Clause #{subStep.clauseNumber} · {subStep.clauseTitle}
+            <span
+              className={`px-1 py-0.5 rounded border font-mono text-[8px] leading-none font-extrabold ${layerTokens.layerPillClass}`}
+            >
+              {subStep.layerKindBadge}
+            </span>
+            <span className="font-mono text-[8.5px] font-bold text-indigo-700 dark:text-indigo-300 truncate">
+              {subStep.clauseNumber} · {subStep.clauseTitle}
             </span>
           </div>
-          <div className="text-xs font-extrabold text-zinc-900 dark:text-white leading-snug mt-1 break-words">
+          <div
+            title={subStep.headline}
+            className="text-[11px] font-extrabold text-zinc-900 dark:text-white leading-tight truncate"
+          >
             {subStep.headline}
           </div>
         </div>
+
+        {/* Inline Scroll-Driven Morphing SVG Waveform & Phase Conduit */}
+        <div
+          data-testid="scrolly-morphing-svg-conduit"
+          className="w-32 sm:w-40 shrink-0 rounded-md bg-white/90 dark:bg-zinc-950/85 border border-zinc-200/80 dark:border-zinc-800 px-2 py-1"
+        >
+          <div className="flex items-center justify-between font-mono text-[7.5px] text-zinc-500 dark:text-zinc-400 leading-none mb-0.5">
+            <span className="truncate max-w-[45%]">{subStep.protocolBadge}</span>
+            <span className="font-extrabold text-indigo-600 dark:text-indigo-400 truncate max-w-[50%]">
+              → {subStep.returnBadge}
+            </span>
+          </div>
+          <svg
+            viewBox="0 0 540 116"
+            className="w-full h-5 overflow-visible"
+            role="img"
+            aria-label={`Morphing telemetry path for phase ${subStep.id}`}
+          >
+            {/* Secondary Return / Envelope Morphing Path */}
+            <motion.path
+              data-testid="scrolly-morphing-secondary-path"
+              d={visualState.interpolatedSecondaryPathD}
+              fill="none"
+              stroke={subStep.morphConfig.accentFillHex}
+              strokeWidth="2.2"
+              strokeDasharray="4 3"
+              opacity={0.55}
+              animate={{ d: visualState.interpolatedSecondaryPathD }}
+              transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+            />
+            {/* Primary Forward Action Morphing Path */}
+            <motion.path
+              data-testid="scrolly-morphing-primary-path"
+              d={visualState.interpolatedPrimaryPathD}
+              fill="none"
+              stroke={subStep.morphConfig.strokeHex}
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              animate={{ d: visualState.interpolatedPrimaryPathD }}
+              transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+            />
+            <circle
+              cx="24"
+              cy="64"
+              r="7"
+              fill={subStep.morphConfig.strokeHex}
+            />
+            <circle
+              cx="270"
+              cy={
+                subStep.subStepLetter === 'C'
+                  ? 36
+                  : subStep.subStepLetter === 'D'
+                    ? 16
+                    : 64
+              }
+              r="7"
+              fill={subStep.morphConfig.accentFillHex}
+            />
+            <circle
+              cx="516"
+              cy={subStep.subStepLetter === 'C' ? 28 : 64}
+              r="7"
+              fill="#059669"
+            />
+            {/* Traveling Packet Marker driven by scroll progress */}
+            <motion.circle
+              cx={
+                24 +
+                492 *
+                  clampUnitProgress(
+                    subStep.morphConfig.packetProgress * 0.75 +
+                      visualState.intraSubStepProgress * 0.25
+                  )
+              }
+              cy={
+                subStep.subStepLetter === 'C'
+                  ? 42
+                  : subStep.subStepLetter === 'D'
+                    ? 34
+                    : 64
+              }
+              r="8.5"
+              fill={layerTokens.markerAccentHex}
+              stroke="#ffffff"
+              strokeWidth="2.5"
+            />
+          </svg>
+        </div>
       </motion.div>
 
-      {/* 3. Main Interactive Animated Graphic Area with Spring Motion Entry */}
-      <div className="p-3.5 sm:p-4 bg-[#FAFAFA] dark:bg-zinc-950/80 min-h-[410px] flex flex-col justify-between overflow-hidden">
+      {/* 3. Main Interactive Animated Graphic Area Tailored to Scenario Archetype & Explanation Layer */}
+      <div className="p-2.5 bg-[#FAFAFA] dark:bg-zinc-950/80 flex flex-col justify-between">
         <motion.div
-          key={`stage-scene-${visualState.stageNumber}`}
-          initial={{ opacity: 0, scale: 0.96, y: 10 }}
+          key={`stage-scene-${visualState.scenarioId}-${visualState.stageNumber}-${subStep.subStepLetter}`}
+          initial={{ opacity: 0, scale: 0.97, y: 6 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-          className="my-auto"
+          className="space-y-2"
         >
-          {visualState.stageNumber === 0 && (
-            <Stage0BriefingScene
+          {visualState.processHollowingState ? (
+            <>
+              {visualState.stageNumber === 0 && (
+                <Stage0BriefingScene
+                  visualState={visualState.processHollowingState}
+                  onSelectSubStep={(id) => onSelectSubStep(id)}
+                />
+              )}
+              {visualState.stageNumber === 1 && (
+                <Stage1SuspendedSpawnScene
+                  visualState={visualState.processHollowingState}
+                />
+              )}
+              {visualState.stageNumber === 2 && (
+                <Stage2MemoryUnmapScene
+                  visualState={visualState.processHollowingState}
+                />
+              )}
+              {visualState.stageNumber === 3 && (
+                <Stage3AllocationInjectionScene
+                  visualState={visualState.processHollowingState}
+                />
+              )}
+              {visualState.stageNumber === 4 && (
+                <Stage4ThreadHijackScene
+                  visualState={visualState.processHollowingState}
+                />
+              )}
+              {visualState.stageNumber === 5 && (
+                <Stage5C2BeaconFftScene
+                  visualState={visualState.processHollowingState}
+                />
+              )}
+            </>
+          ) : (
+            <NotebookLmInteractiveShapeCanvas
               visualState={visualState}
+              focusedMotionIndex={effectiveMotionIndex}
+              onSelectMotionIndex={(idx) => onSelectMotion?.(idx)}
               onSelectSubStep={onSelectSubStep}
             />
-          )}
-          {visualState.stageNumber === 1 && (
-            <Stage1SuspendedSpawnScene visualState={visualState} />
-          )}
-          {visualState.stageNumber === 2 && (
-            <Stage2MemoryUnmapScene visualState={visualState} />
-          )}
-          {visualState.stageNumber === 3 && (
-            <Stage3AllocationInjectionScene visualState={visualState} />
-          )}
-          {visualState.stageNumber === 4 && (
-            <Stage4ThreadHijackScene visualState={visualState} />
-          )}
-          {visualState.stageNumber === 5 && (
-            <Stage5C2BeaconFftScene visualState={visualState} />
           )}
         </motion.div>
       </div>
 
-      {/* 4. Synchronized Video Narrator Box + Bottom Telemetry Strip */}
+      {/* 4. Compact Synchronized Video Narrator Box + Bottom Telemetry Strip */}
       <motion.div
         key={`footer-${subStep.id}`}
         initial={{ opacity: 0.4, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 280, damping: 24 }}
-        className="px-3.5 py-2.5 bg-zinc-100/90 dark:bg-zinc-950 border-t border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
+        className="px-3 py-2 bg-zinc-100/90 dark:bg-zinc-950 border-t border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
       >
-        {/* Live Synchronized Scene Explanation ("Someone explaining from the video") */}
         <div
           data-testid="sticky-stage-narrator-box"
-          className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200/90 dark:border-indigo-800/80 space-y-1"
+          className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200/90 dark:border-indigo-800/80 space-y-0.5"
         >
-          <div className="flex items-center justify-between gap-1 font-mono text-[9.5px] font-extrabold text-indigo-700 dark:text-indigo-300">
-            <span className="inline-flex items-center gap-1">
-              <BookOpen className="w-3 h-3 shrink-0" />
-              <span>
-                SYNCED SCENE EXPLANATION · CLAUSE #{subStep.clauseNumber}
+          <div className="flex items-center justify-between gap-1 font-mono text-[9px] font-extrabold text-indigo-700 dark:text-indigo-300">
+            <span className="inline-flex items-center gap-1 truncate">
+              <BookOpen className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate">
+                SYNCED SCENE · CLAUSE {subStep.clauseNumber} ({subStep.layerKindBadge})
               </span>
             </span>
-            <span className="text-rose-600 dark:text-rose-400">
-              {subStep.videoTimestampRef}
+            <span className="text-rose-600 dark:text-rose-400 shrink-0">
+              {subStep.timestampRef}
             </span>
           </div>
-          <p className="text-[11px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+          <p
+            title={subStep.explanation}
+            className="text-[10.5px] text-zinc-800 dark:text-zinc-200 leading-snug line-clamp-2 break-words"
+          >
             {subStep.explanation}
           </p>
         </div>
 
-        <div className="p-2 rounded-lg bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/70 flex items-start gap-2 text-[10.5px] font-mono">
-          <Cpu className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <div className="min-w-0 flex-1">
-            <span className="font-bold text-amber-900 dark:text-amber-300">
-              API / State:{' '}
-            </span>
-            <span className="text-zinc-800 dark:text-zinc-200 break-words">
-              {subStep.kernelAndMemoryDelta}
-            </span>
-          </div>
-        </div>
-
-        <div className="p-2 rounded-lg bg-emerald-50/85 dark:bg-emerald-950/30 border border-emerald-200/90 dark:border-emerald-800/70 flex items-center gap-2 text-[10px] font-mono text-emerald-900 dark:text-emerald-200">
-          <div className="w-5 h-5 rounded bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center p-0.5 shrink-0">
-            <SketchNodeIcon
-              iconType="SIEM_SENSOR"
-              isActive={false}
-              isCompromised={false}
-            />
-          </div>
-          <span
-            data-testid="sticky-stage-sysmon-badge"
-            className="font-semibold leading-snug break-words"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <div
+            title={subStep.stateDeltaSummary}
+            className="px-2 py-1 rounded-lg bg-amber-50/85 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/70 flex items-center gap-1.5 text-[9.5px] font-mono min-w-0"
           >
-            {visualState.activeSysmonBadge}
-          </span>
+            <Cpu className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+            <div className="min-w-0 flex-1 truncate">
+              <span className="font-bold text-amber-900 dark:text-amber-300">
+                {subStep.layerKind === 'ANALOGY_NARRATIVE' ? 'Model: ' : 'State: '}
+              </span>
+              <span className="text-zinc-800 dark:text-zinc-200">
+                {subStep.stateDeltaSummary}
+              </span>
+            </div>
+          </div>
+
+          <div className="px-2 py-1 rounded-lg bg-emerald-50/85 dark:bg-emerald-950/30 border border-emerald-200/90 dark:border-emerald-800/70 flex items-center gap-1.5 text-[9.5px] font-mono text-emerald-900 dark:text-emerald-200 min-w-0">
+            <div className="w-4 h-4 rounded bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center p-0.5 shrink-0">
+              <SketchNodeIcon
+                iconType="SIEM_SENSOR"
+                isActive={false}
+                isCompromised={false}
+              />
+            </div>
+            <span
+              data-testid="sticky-stage-sysmon-badge"
+              title={
+                visualState.processHollowingState
+                  ? visualState.processHollowingState.activeSysmonBadge
+                  : subStep.detectionEvidence
+              }
+              className="font-semibold truncate"
+            >
+              {visualState.processHollowingState
+                ? visualState.processHollowingState.activeSysmonBadge
+                : subStep.detectionEvidence}
+            </span>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -778,17 +1210,17 @@ function Stage0BriefingScene({
   const { activeSubStepId, subStepIndex } = visualState;
 
   return (
-    <div className="space-y-2.5" data-testid="stage-0-briefing-scene">
+    <div className="space-y-2" data-testid="stage-0-briefing-scene">
       {/* TOP SHAPE: Untrusted Loader vs. Trusted Host Container with Animated Packet SVG */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {/* Card A: Untrusted Dropper (0A Focus) */}
         <motion.div
           animate={{
-            scale: activeSubStepId === '0A' ? 1.02 : 0.98,
-            opacity: activeSubStepId === '0A' || activeSubStepId === '0D' ? 1 : 0.82,
+            scale: activeSubStepId === '0A' ? 1.015 : 0.99,
+            opacity: activeSubStepId === '0A' || activeSubStepId === '0D' ? 1 : 0.85,
           }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2.5 shadow-2xs space-y-1.5"
+          className="relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2 shadow-2xs space-y-1"
         >
           {activeSubStepId === '0A' && (
             <motion.div
@@ -796,9 +1228,9 @@ function Stage0BriefingScene({
               className="absolute inset-0 rounded-xl ring-2 ring-rose-500/60 pointer-events-none"
             />
           )}
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-7 rounded-lg bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-7 h-6 rounded-md bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
                 <SketchNodeIcon
                   iconType="MALWARE_PAYLOAD"
                   isActive={false}
@@ -806,34 +1238,34 @@ function Stage0BriefingScene({
                 />
               </div>
               <div className="min-w-0">
-                <div className="font-mono text-[11px] font-extrabold text-zinc-900 dark:text-white truncate">
+                <div className="font-mono text-[10.5px] font-extrabold text-zinc-900 dark:text-white truncate">
                   Invoice_Q4.exe [3104]
                 </div>
-                <div className="font-mono text-[9.5px] text-zinc-500 truncate">
+                <div className="font-mono text-[8.5px] text-zinc-500 truncate">
                   ...\Downloads\Invoice_Q4.exe
                 </div>
               </div>
             </div>
-            <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[8.5px] font-extrabold shrink-0">
+            <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[8px] font-extrabold shrink-0">
               UNSIGNED
             </span>
           </div>
 
           {/* Animated Blocked Socket Path */}
-          <div className="p-1.5 rounded-lg bg-rose-50/90 dark:bg-rose-950/35 border border-rose-200 dark:border-rose-800 font-mono text-[9.5px] space-y-1">
+          <div className="px-1.5 py-1 rounded-lg bg-rose-50/90 dark:bg-rose-950/35 border border-rose-200 dark:border-rose-800 font-mono text-[9px] space-y-0.5">
             <div className="flex items-center justify-between text-rose-800 dark:text-rose-200 font-bold">
               <span>Direct TCP/443</span>
               <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                <ShieldAlert className="w-3 h-3" />
+                <ShieldAlert className="w-2.5 h-2.5" />
                 <span>EDR BLOCKED</span>
               </span>
             </div>
-            <svg viewBox="0 0 200 18" className="w-full h-4 overflow-visible">
+            <svg viewBox="0 0 200 16" className="w-full h-3.5 overflow-visible">
               <line
                 x1="8"
-                y1="9"
+                y1="8"
                 x2="155"
-                y2="9"
+                y2="8"
                 stroke="#f43f5e"
                 strokeWidth="1.8"
                 strokeDasharray="4 3"
@@ -841,14 +1273,14 @@ function Stage0BriefingScene({
               <motion.circle
                 key={`drop-pkt-${activeSubStepId}`}
                 cx="20"
-                cy="9"
-                r="4"
+                cy="8"
+                r="3.5"
                 fill="#e11d48"
                 initial={{ cx: 14 }}
                 animate={{ cx: [14, 148, 132] }}
                 transition={{ duration: 0.75, ease: 'easeOut' }}
               />
-              <g transform="translate(158, 2)">
+              <g transform="translate(158, 1)">
                 <rect width="34" height="14" rx="3" fill="#e11d48" />
                 <text
                   x="17"
@@ -868,11 +1300,11 @@ function Stage0BriefingScene({
         {/* Card B: Trusted svchost.exe Container (0B Focus) */}
         <motion.div
           animate={{
-            scale: activeSubStepId === '0B' ? 1.02 : 0.98,
-            opacity: activeSubStepId !== '0A' ? 1 : 0.82,
+            scale: activeSubStepId === '0B' ? 1.015 : 0.99,
+            opacity: activeSubStepId !== '0A' ? 1 : 0.85,
           }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2.5 shadow-2xs space-y-1.5"
+          className="relative rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2 shadow-2xs space-y-1"
         >
           {activeSubStepId === '0B' && (
             <motion.div
@@ -880,9 +1312,9 @@ function Stage0BriefingScene({
               className="absolute inset-0 rounded-xl ring-2 ring-sky-500/60 pointer-events-none"
             />
           )}
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-7 rounded-lg bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-7 h-6 rounded-md bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
                 <SketchNodeIcon
                   iconType="PROCESS_THREAD"
                   isActive={false}
@@ -890,34 +1322,34 @@ function Stage0BriefingScene({
                 />
               </div>
               <div className="min-w-0">
-                <div className="font-mono text-[11px] font-extrabold text-zinc-900 dark:text-white truncate">
+                <div className="font-mono text-[10.5px] font-extrabold text-zinc-900 dark:text-white truncate">
                   svchost.exe [4892]
                 </div>
-                <div className="font-mono text-[9.5px] text-zinc-500 truncate">
+                <div className="font-mono text-[8.5px] text-zinc-500 truncate">
                   C:\Windows\System32\svchost.exe
                 </div>
               </div>
             </div>
-            <span className="px-1.5 py-0.5 rounded bg-sky-600 text-white font-mono text-[8.5px] font-extrabold shrink-0">
+            <span className="px-1.5 py-0.5 rounded bg-sky-600 text-white font-mono text-[8px] font-extrabold shrink-0">
               MS SIGNED
             </span>
           </div>
 
           {/* Animated Allowed Socket Path */}
-          <div className="p-1.5 rounded-lg bg-emerald-50/90 dark:bg-emerald-950/35 border border-emerald-200 dark:border-emerald-800 font-mono text-[9.5px] space-y-1">
+          <div className="px-1.5 py-1 rounded-lg bg-emerald-50/90 dark:bg-emerald-950/35 border border-emerald-200 dark:border-emerald-800 font-mono text-[9px] space-y-0.5">
             <div className="flex items-center justify-between text-emerald-800 dark:text-emerald-200 font-bold">
               <span>Armored Host</span>
               <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                <ShieldCheck className="w-3 h-3" />
+                <ShieldCheck className="w-2.5 h-2.5" />
                 <span>FIREWALL PASS</span>
               </span>
             </div>
-            <svg viewBox="0 0 200 18" className="w-full h-4 overflow-visible">
+            <svg viewBox="0 0 200 16" className="w-full h-3.5 overflow-visible">
               <line
                 x1="8"
-                y1="9"
+                y1="8"
                 x2="155"
-                y2="9"
+                y2="8"
                 stroke="#10b981"
                 strokeWidth="1.8"
                 strokeDasharray="4 3"
@@ -925,14 +1357,14 @@ function Stage0BriefingScene({
               <motion.circle
                 key={`pass-pkt-${activeSubStepId}`}
                 cx="20"
-                cy="9"
-                r="4"
+                cy="8"
+                r="3.5"
                 fill="#059669"
                 initial={{ cx: 14 }}
                 animate={{ cx: 148 }}
                 transition={{ duration: 0.7, ease: 'easeOut' }}
               />
-              <g transform="translate(158, 2)">
+              <g transform="translate(158, 1)">
                 <rect width="34" height="14" rx="3" fill="#059669" />
                 <text
                   x="17"
@@ -953,39 +1385,39 @@ function Stage0BriefingScene({
       {/* MIDDLE SHAPE (0C Focus): NTFS Disk vs. Volatile RAM Split Architecture */}
       <motion.div
         animate={{
-          scale: activeSubStepId === '0C' ? 1.015 : 0.99,
+          scale: activeSubStepId === '0C' ? 1.01 : 0.995,
         }}
         transition={{ type: 'spring', stiffness: 250, damping: 24 }}
-        className={`relative rounded-xl border p-2.5 font-mono space-y-2 ${
+        className={`relative rounded-xl border p-2 font-mono space-y-1.5 ${
           activeSubStepId === '0C'
             ? 'bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-500 shadow-xs'
             : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800'
         }`}
       >
-        <div className="flex items-center justify-between text-[10px]">
+        <div className="flex items-center justify-between text-[9.5px]">
           <span className="font-extrabold uppercase text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
             <HardDrive className="w-3 h-3" />
             <span>Disk File vs. Volatile RAM Divergence (0x00400000)</span>
           </span>
-          <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400">
+          <span className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400">
             {subStepIndex >= 2 ? 'RAM HOLLOWED & SWAPPED' : 'BASELINE IMAGE'}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-[9.5px]">
+        <div className="grid grid-cols-2 gap-1.5 text-[9px]">
           {/* Left: C: Drive On-Disk File */}
-          <div className="p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-300 dark:border-emerald-800 space-y-1">
+          <div className="p-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-300 dark:border-emerald-800 space-y-0.5">
             <div className="flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-300">
               <span>NTFS Disk (System32)</span>
               <span>✓ CLEAN</span>
             </div>
-            <div className="p-1 rounded bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 text-zinc-700 dark:text-zinc-300">
+            <div className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 text-zinc-700 dark:text-zinc-300">
               svchost.exe (.text RX)
             </div>
           </div>
 
           {/* Right: Volatile RAM PID 4892 */}
-          <div className="p-2 rounded-lg bg-rose-50/70 dark:bg-rose-950/25 border border-rose-300 dark:border-rose-800 space-y-1 overflow-hidden">
+          <div className="p-1.5 rounded-lg bg-rose-50/70 dark:bg-rose-950/25 border border-rose-300 dark:border-rose-800 space-y-0.5 overflow-hidden">
             <div className="flex items-center justify-between font-bold text-rose-800 dark:text-rose-300">
               <span>RAM (PID 4892)</span>
               <span>{subStepIndex >= 2 ? 'RWX BEACON' : 'SEC_IMAGE'}</span>
@@ -995,7 +1427,7 @@ function Stage0BriefingScene({
               initial={{ x: 24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-              className={`p-1 rounded border font-bold ${
+              className={`px-1.5 py-0.5 rounded border font-bold ${
                 subStepIndex >= 2
                   ? 'bg-rose-600 text-white border-rose-700'
                   : 'bg-white dark:bg-zinc-900 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800'
@@ -1011,17 +1443,17 @@ function Stage0BriefingScene({
 
       {/* BOTTOM SHAPE (0D Focus): 5-Stage Kill-Chain Pipeline with Animated Pulse */}
       <motion.div
-        className={`rounded-xl border p-2.5 space-y-2 ${
+        className={`rounded-xl border p-2 space-y-1.5 ${
           activeSubStepId === '0D'
             ? 'bg-amber-50/60 dark:bg-amber-950/25 border-amber-500 shadow-xs'
             : 'bg-white dark:bg-zinc-900 border-zinc-200/90 dark:border-zinc-800'
         }`}
       >
-        <div className="flex items-center justify-between font-mono text-[10px]">
+        <div className="flex items-center justify-between font-mono text-[9.5px]">
           <span className="font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            5-Stage Kill-Chain Motion Map (Click Any Stage)
+            0D · 5-Stage Kill-Chain Motion Map (Click Any Stage)
           </span>
-          <span className="text-zinc-500">EID 1 → 10 → 25 → 3</span>
+          <span className="text-zinc-500 text-[8.5px]">EID 1 → 10 → 25 → 3</span>
         </div>
 
         <div className="grid grid-cols-5 gap-1">
@@ -1065,7 +1497,7 @@ function Stage0BriefingScene({
             <motion.button
               key={item.stage}
               type="button"
-              whileHover={{ y: -2, scale: 1.03 }}
+              whileHover={{ y: -1, scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               animate={{
                 borderColor:
@@ -1073,15 +1505,15 @@ function Stage0BriefingScene({
               }}
               transition={{ delay: idx * 0.05 }}
               onClick={() => onSelectSubStep(item.sub)}
-              className="p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border text-left transition-colors cursor-pointer"
+              className="p-1 rounded-lg bg-zinc-50 dark:bg-zinc-950 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border text-left transition-colors cursor-pointer"
             >
-              <div className="font-mono text-[9.5px] font-extrabold text-zinc-900 dark:text-white">
+              <div className="font-mono text-[9px] font-extrabold text-zinc-900 dark:text-white">
                 {item.title}
               </div>
-              <div className="font-mono text-[8.5px] text-indigo-600 dark:text-indigo-400 truncate">
+              <div className="font-mono text-[8px] text-indigo-600 dark:text-indigo-400 truncate">
                 {item.api}
               </div>
-              <div className="font-mono text-[8px] text-rose-600 dark:text-rose-400 font-bold mt-0.5">
+              <div className="font-mono text-[7.5px] text-rose-600 dark:text-rose-400 font-bold">
                 {item.eid}
               </div>
             </motion.button>
@@ -1115,16 +1547,16 @@ function Stage1SuspendedSpawnScene({
   return (
     <div
       data-testid="stage-1-suspended-spawn-scene"
-      className="flex flex-col items-center justify-between gap-2"
+      className="flex flex-col items-center justify-between gap-1.5"
     >
       {/* TOP NODE: Invoice_Q4.exe PID: 3104 + Lineage Comparison Strip */}
       <motion.div
         transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-        className="w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 p-2.5 shadow-xs space-y-2 z-10"
+        className="w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 p-2 shadow-xs space-y-1.5 z-10"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-7 rounded-lg bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
+            <div className="w-8 h-6 rounded-md bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
                 iconType="MALWARE_PAYLOAD"
                 isActive={false}
@@ -1133,19 +1565,19 @@ function Stage1SuspendedSpawnScene({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-mono text-xs font-extrabold text-zinc-900 dark:text-white">
+                <span className="font-mono text-[11px] font-extrabold text-zinc-900 dark:text-white">
                   Invoice_Q4.exe
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[9.5px] font-bold text-zinc-700 dark:text-zinc-300">
+                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[9px] font-bold text-zinc-700 dark:text-zinc-300">
                   PID: 3104
                 </span>
               </div>
-              <div className="font-mono text-[9.5px] text-zinc-500 dark:text-zinc-400">
+              <div className="font-mono text-[9px] text-zinc-500 dark:text-zinc-400">
                 Parent Anomaly: Spawns svchost.exe without services.exe or -k flag
               </div>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-[9px] font-extrabold shrink-0">
+          <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[8.5px] font-extrabold shrink-0">
             RING-3 LOADER
           </span>
         </div>
@@ -1156,7 +1588,7 @@ function Stage1SuspendedSpawnScene({
             scale: hasProcessHandle ? 1.01 : 1,
           }}
           transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-          className={`px-2.5 py-1.5 rounded-lg border font-mono text-[10.5px] flex flex-wrap items-center justify-between gap-1 transition-colors ${
+          className={`px-2 py-1 rounded-lg border font-mono text-[10px] flex flex-wrap items-center justify-between gap-1 transition-colors ${
             hasProcessHandle
               ? 'bg-amber-50/90 dark:bg-amber-950/35 border-amber-400 dark:border-amber-600 text-amber-950 dark:text-amber-200'
               : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400'
@@ -1185,9 +1617,9 @@ function Stage1SuspendedSpawnScene({
       </motion.div>
 
       {/* MIDDLE CHOREOGRAPHY: Ring-3 -> Ring-0 Syscall Bridge + Curved Handle Return Paths */}
-      <div className="relative w-full min-h-[140px] flex flex-col items-center justify-center py-1">
+      <div className="relative w-full min-h-[108px] flex flex-col items-center justify-center py-0.5">
         <svg
-          viewBox="0 0 560 140"
+          viewBox="0 0 560 116"
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
           aria-hidden="true"
         >
@@ -1219,7 +1651,7 @@ function Stage1SuspendedSpawnScene({
             x1="280"
             y1="6"
             x2="280"
-            y2="134"
+            y2="110"
             stroke="#6366f1"
             strokeWidth="2"
             strokeDasharray="4 4"
@@ -1227,17 +1659,17 @@ function Stage1SuspendedSpawnScene({
           <motion.circle
             key={`syscall-dot-${activeSubStepId}`}
             cx="280"
-            cy="20"
+            cy="18"
             r="4.5"
             fill="#4f46e5"
-            initial={{ cy: 12 }}
-            animate={{ cy: 124 }}
+            initial={{ cy: 10 }}
+            animate={{ cy: 104 }}
             transition={{ duration: 0.75, ease: 'easeOut' }}
           />
 
           {/* Left Curved Return Path: hProcess = 0x01C4 */}
           <motion.path
-            d="M 120 128 C 16 128, 16 12, 120 12"
+            d="M 120 108 C 16 108, 16 10, 120 10"
             fill="none"
             stroke="#e11d48"
             strokeWidth="2.4"
@@ -1254,10 +1686,10 @@ function Stage1SuspendedSpawnScene({
               key={`hproc-dot-${activeSubStepId}`}
               r="5"
               fill="#e11d48"
-              initial={{ cx: 120, cy: 128 }}
+              initial={{ cx: 120, cy: 108 }}
               animate={{
                 cx: [120, 42, 42, 120],
-                cy: [128, 95, 35, 12],
+                cy: [108, 80, 30, 10],
               }}
               transition={{ duration: 0.85, ease: 'easeInOut' }}
             />
@@ -1265,7 +1697,7 @@ function Stage1SuspendedSpawnScene({
 
           {/* Right Curved Return Path: hThread = 0x01C8 */}
           <motion.path
-            d="M 440 128 C 544 128, 544 12, 440 12"
+            d="M 440 108 C 544 108, 544 10, 440 10"
             fill="none"
             stroke="#d97706"
             strokeWidth="2.4"
@@ -1282,10 +1714,10 @@ function Stage1SuspendedSpawnScene({
               key={`hthr-dot-${activeSubStepId}`}
               r="5"
               fill="#d97706"
-              initial={{ cx: 440, cy: 128 }}
+              initial={{ cx: 440, cy: 108 }}
               animate={{
                 cx: [440, 518, 518, 440],
-                cy: [128, 95, 35, 12],
+                cy: [108, 80, 30, 10],
               }}
               transition={{ duration: 0.85, ease: 'easeInOut' }}
             />
@@ -1297,11 +1729,11 @@ function Stage1SuspendedSpawnScene({
           <motion.div
             animate={{
               opacity: hasProcessHandle ? 1 : 0.28,
-              scale: hasProcessHandle ? 1.05 : 0.92,
+              scale: hasProcessHandle ? 1.04 : 0.92,
               x: hasProcessHandle ? 0 : -8,
             }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/90 border border-rose-500 text-rose-700 dark:text-rose-200 font-mono text-[10px] font-extrabold shadow-xs"
+            className="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/90 border border-rose-500 text-rose-700 dark:text-rose-200 font-mono text-[9.5px] font-extrabold shadow-xs"
           >
             ⇠ hProcess = 0x01C4
           </motion.div>
@@ -1309,8 +1741,8 @@ function Stage1SuspendedSpawnScene({
           {/* Center Syscall & Kernel Objects Stack (1A -> 1B -> 1C) */}
           <div className="flex flex-col items-center gap-1">
             <motion.div
-              animate={{ scale: !kernelEprocessCreated ? 1.05 : 0.98 }}
-              className="px-2.5 py-0.5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-extrabold shadow-2xs"
+              animate={{ scale: !kernelEprocessCreated ? 1.04 : 0.98 }}
+              className="px-2 py-0.5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[9.5px] font-extrabold shadow-2xs"
             >
               1A · CreateProcessW(&quot;svchost.exe&quot;)
             </motion.div>
@@ -1319,11 +1751,11 @@ function Stage1SuspendedSpawnScene({
             <motion.div
               animate={{
                 opacity: kernelEprocessCreated ? 1 : 0.38,
-                scale: kernelEprocessCreated ? 1.03 : 0.94,
+                scale: kernelEprocessCreated ? 1.02 : 0.94,
               }}
               transition={{ type: 'spring', stiffness: 260, damping: 22 }}
               data-testid="stage1-kernel-eprocess-badge"
-              className={`px-2.5 py-0.5 rounded-md border font-mono text-[9.5px] font-bold ${
+              className={`px-2 py-0.5 rounded-md border font-mono text-[9px] font-bold ${
                 kernelEprocessCreated
                   ? 'bg-indigo-600 text-white border-indigo-700 shadow-2xs'
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-300 dark:border-zinc-700'
@@ -1336,11 +1768,11 @@ function Stage1SuspendedSpawnScene({
             <motion.div
               animate={{
                 opacity: createSuspendedFlagActive ? 1 : 0.38,
-                scale: createSuspendedFlagActive ? 1.05 : 0.94,
+                scale: createSuspendedFlagActive ? 1.04 : 0.94,
               }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
               data-testid="stage1-create-suspended-badge"
-              className={`px-2.5 py-0.5 rounded-md border font-mono text-[9.5px] font-extrabold ${
+              className={`px-2 py-0.5 rounded-md border font-mono text-[9px] font-extrabold ${
                 createSuspendedFlagActive
                   ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-300 dark:border-zinc-700'
@@ -1354,11 +1786,11 @@ function Stage1SuspendedSpawnScene({
           <motion.div
             animate={{
               opacity: hasThreadHandle ? 1 : 0.28,
-              scale: hasThreadHandle ? 1.05 : 0.92,
+              scale: hasThreadHandle ? 1.04 : 0.92,
               x: hasThreadHandle ? 0 : 8,
             }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/90 border border-amber-500 text-amber-800 dark:text-amber-200 font-mono text-[10px] font-extrabold shadow-xs"
+            className="px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/90 border border-amber-500 text-amber-800 dark:text-amber-200 font-mono text-[9.5px] font-extrabold shadow-xs"
           >
             hThread = 0x01C8 ⇠
           </motion.div>
@@ -1368,11 +1800,11 @@ function Stage1SuspendedSpawnScene({
       {/* BOTTOM NODE: svchost.exe PID: 4892 + KTHREAD TID 4896 State */}
       <motion.div
         transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-        className="w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-500/80 p-2.5 shadow-xs space-y-2 z-10"
+        className="w-full rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-500/80 p-2 shadow-xs space-y-1.5 z-10"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-7 rounded-lg bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
+            <div className="w-8 h-6 rounded-md bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
                 iconType="PROCESS_THREAD"
                 isActive={false}
@@ -1381,22 +1813,22 @@ function Stage1SuspendedSpawnScene({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-mono text-xs font-extrabold text-zinc-900 dark:text-white">
+                <span className="font-mono text-[11px] font-extrabold text-zinc-900 dark:text-white">
                   svchost.exe
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[9.5px] font-bold text-zinc-700 dark:text-zinc-300">
+                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[9px] font-bold text-zinc-700 dark:text-zinc-300">
                   PID: 4892
                 </span>
-                <span className="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono text-[9px] font-bold">
+                <span className="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono text-[8.5px] font-bold">
                   Base: 0x00400000
                 </span>
               </div>
-              <div className="font-mono text-[9.5px] text-zinc-500 dark:text-zinc-400">
+              <div className="font-mono text-[9px] text-zinc-500 dark:text-zinc-400">
                 C:\Windows\System32\svchost.exe (Child Host Container)
               </div>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded bg-sky-600 text-white font-mono text-[9px] font-extrabold shrink-0">
+          <span className="px-1.5 py-0.5 rounded bg-sky-600 text-white font-mono text-[8.5px] font-extrabold shrink-0">
             MICROSOFT SIGNED
           </span>
         </div>
@@ -1408,7 +1840,7 @@ function Stage1SuspendedSpawnScene({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 22 }}
           data-testid="stage1-thread-status-bar"
-          className={`px-2.5 py-1.5 rounded-lg border font-mono text-[10.5px] font-bold flex items-center justify-between gap-1.5 ${
+          className={`px-2 py-1 rounded-lg border font-mono text-[10px] font-bold flex items-center justify-between gap-1.5 ${
             createSuspendedFlagActive
               ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 dark:border-rose-700 text-rose-700 dark:text-rose-300'
               : 'bg-sky-50 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 text-sky-800 dark:text-sky-200'
@@ -1417,17 +1849,17 @@ function Stage1SuspendedSpawnScene({
           <div className="flex items-center gap-1.5">
             {createSuspendedFlagActive ? (
               <>
-                <Lock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                <Lock className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
                 <span>Primary Thread (TID 4896) : FROZEN / SUSPENDED</span>
               </>
             ) : (
               <>
-                <Unlock className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                <Unlock className="w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" />
                 <span>Primary Thread (TID 4896) : Initializing</span>
               </>
             )}
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-white/80 dark:bg-zinc-900 text-[9.5px] font-extrabold">
+          <span className="px-1.5 py-0.5 rounded bg-white/80 dark:bg-zinc-900 text-[9px] font-extrabold">
             {createSuspendedFlagActive ? 'SuspendCount = 1' : 'SuspendCount = 0'}
           </span>
         </motion.div>
@@ -1458,22 +1890,22 @@ function Stage2MemoryUnmapScene({
   return (
     <div
       data-testid="stage-2-memory-unmap-scene"
-      className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch"
+      className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-stretch"
     >
       {/* Left Column: Handle + PEB Struct Table + NtUnmapViewOfSection Syscall */}
-      <div className="sm:col-span-5 flex flex-col justify-between gap-2">
+      <div className="sm:col-span-5 flex flex-col justify-between gap-1.5">
         {/* PEB Structure Inspector Shape (2A) */}
-        <motion.div className="rounded-xl bg-white dark:bg-zinc-900 border-2 border-indigo-400 dark:border-indigo-700 p-2.5 space-y-1.5">
-          <div className="flex items-center justify-between font-mono text-[10px]">
+        <motion.div className="rounded-xl bg-white dark:bg-zinc-900 border-2 border-indigo-400 dark:border-indigo-700 p-2 space-y-1">
+          <div className="flex items-center justify-between font-mono text-[9.5px]">
             <span className="font-extrabold text-indigo-700 dark:text-indigo-300">
               2A · PEB Struct (0x7FFDF000)
             </span>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[8.5px] font-bold">
+            <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[8px] font-bold">
               hProcess 0x01C4
             </span>
           </div>
 
-          <div className="space-y-1 font-mono text-[9.5px]">
+          <div className="space-y-0.5 font-mono text-[9px]">
             <div className="px-1.5 py-0.5 rounded bg-zinc-50 dark:bg-zinc-950 text-zinc-500 flex justify-between">
               <span>+0x00 InheritedAddr</span>
               <span>0x00</span>
@@ -1487,7 +1919,7 @@ function Stage2MemoryUnmapScene({
               initial={{ scale: 0.96 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 280, damping: 20 }}
-              className="px-1.5 py-1 rounded bg-amber-50 dark:bg-amber-950/50 border border-amber-400 dark:border-amber-600 text-amber-950 dark:text-amber-200 font-extrabold flex justify-between"
+              className="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 border border-amber-400 dark:border-amber-600 text-amber-950 dark:text-amber-200 font-extrabold flex justify-between"
             >
               <span>+0x10 ImageBase</span>
               <span>0x00400000</span>
@@ -1500,7 +1932,7 @@ function Stage2MemoryUnmapScene({
           animate={{
             opacity: peSectionsInspected ? 1 : 0.55,
           }}
-          className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2.5 font-mono text-[9.5px] space-y-1"
+          className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2 font-mono text-[9px] space-y-0.5"
         >
           <div className="font-extrabold text-zinc-800 dark:text-zinc-200">
             2B · Kernel VAD Node
@@ -1523,11 +1955,11 @@ function Stage2MemoryUnmapScene({
         <motion.div
           animate={{
             opacity: unmapSyscallActive || memoryUnmapped ? 1 : 0.45,
-            scale: unmapSyscallActive || memoryUnmapped ? 1.02 : 0.97,
+            scale: unmapSyscallActive || memoryUnmapped ? 1.01 : 0.98,
           }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
           data-testid="stage2-ntunmap-card"
-          className={`rounded-xl border-2 p-2.5 space-y-1 font-mono ${
+          className={`rounded-xl border-2 p-2 space-y-0.5 font-mono ${
             memoryUnmapped
               ? 'bg-rose-50/90 dark:bg-rose-950/35 border-rose-500'
               : unmapSyscallActive
@@ -1535,13 +1967,13 @@ function Stage2MemoryUnmapScene({
                 : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
           }`}
         >
-          <div className="text-[10px] font-extrabold text-rose-700 dark:text-rose-300">
+          <div className="text-[9.5px] font-extrabold text-rose-700 dark:text-rose-300">
             2C/2D · Native Syscall
           </div>
-          <div className="text-[9.5px] font-bold text-zinc-900 dark:text-white break-all">
+          <div className="text-[9px] font-bold text-zinc-900 dark:text-white break-all">
             NtUnmapViewOfSection(0x01C4, 0x00400000)
           </div>
-          <div className="text-[9.5px] font-extrabold text-emerald-700 dark:text-emerald-400">
+          <div className="text-[9px] font-extrabold text-emerald-700 dark:text-emerald-400">
             {memoryUnmapped
               ? '✓ STATUS_SUCCESS (0x00000000)'
               : unmapSyscallActive
@@ -1552,14 +1984,14 @@ function Stage2MemoryUnmapScene({
       </div>
 
       {/* Right Column: svchost.exe Virtual Memory Space with Animated Section Ejection */}
-      <div className="sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-3 flex flex-col justify-between space-y-2">
-        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-1.5 font-mono">
-          <span className="text-xs font-extrabold text-zinc-900 dark:text-white">
+      <div className="sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-1 font-mono">
+          <span className="text-[11px] font-extrabold text-zinc-900 dark:text-white">
             svchost.exe — Virtual Memory (PID 4892)
           </span>
         </div>
 
-        <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between font-mono text-[9.5px]">
+        <div className="px-1.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between font-mono text-[9px]">
           <span className="text-zinc-500 font-bold">0x7FFE0000</span>
           <span className="text-zinc-800 dark:text-zinc-200 font-semibold">
             ntdll.dll (System Loader)
@@ -1569,7 +2001,7 @@ function Stage2MemoryUnmapScene({
         {/* 0x00400000 Primary ImageBase Box with Motion Ejection */}
         <motion.div
           data-testid="stage2-base-memory-block"
-          className={`p-2.5 rounded-xl border-2 border-dashed space-y-1.5 min-h-[165px] flex flex-col justify-center overflow-hidden transition-colors ${
+          className={`p-2 rounded-xl border-2 border-dashed space-y-1 min-h-[132px] flex flex-col justify-center overflow-hidden transition-colors ${
             memoryUnmapped
               ? 'bg-rose-50/75 dark:bg-rose-950/30 border-rose-500'
               : unmapSyscallActive
@@ -1579,7 +2011,7 @@ function Stage2MemoryUnmapScene({
         >
           {!memoryUnmapped ? (
             <>
-              <div className="flex items-center justify-between font-mono text-[10px]">
+              <div className="flex items-center justify-between font-mono text-[9.5px]">
                 <span className="font-extrabold text-indigo-700 dark:text-indigo-300">
                   0x00400000 (ImageBase)
                 </span>
@@ -1587,7 +2019,7 @@ function Stage2MemoryUnmapScene({
                   {unmapSyscallActive ? 'UNMAPPING...' : '✓ Signed PE'}
                 </span>
               </div>
-              <div className="space-y-1 font-mono text-[9.5px]">
+              <div className="space-y-1 font-mono text-[9px]">
                 {[
                   {
                     addr: '+0x0000',
@@ -1623,10 +2055,10 @@ function Stage2MemoryUnmapScene({
                       damping: 20,
                       delay: sec.delay,
                     }}
-                    className="p-1.5 rounded bg-white dark:bg-zinc-900 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-200 font-semibold flex items-center justify-between"
+                    className="px-1.5 py-1 rounded bg-white dark:bg-zinc-900 border border-sky-200 dark:border-sky-800 text-sky-900 dark:text-sky-200 font-semibold flex items-center justify-between"
                   >
                     <span>{sec.label}</span>
-                    <span className="text-[8.5px] text-zinc-400">{sec.addr}</span>
+                    <span className="text-[8px] text-zinc-400">{sec.addr}</span>
                   </motion.div>
                 ))}
               </div>
@@ -1636,22 +2068,22 @@ function Stage2MemoryUnmapScene({
               initial={{ scale: 0.88, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="text-center space-y-1.5 py-2 font-mono"
+              className="text-center space-y-1 py-1.5 font-mono"
             >
-              <div className="text-xs font-extrabold text-rose-700 dark:text-rose-300">
+              <div className="text-[11px] font-extrabold text-rose-700 dark:text-rose-300">
                 0x00400000 | UNMAPPED MEMORY VOID
               </div>
-              <div className="text-[10px] text-zinc-700 dark:text-zinc-300">
+              <div className="text-[9.5px] text-zinc-700 dark:text-zinc-300">
                 Legitimate svchost.exe sections stripped via NtUnmapViewOfSection
               </div>
-              <span className="inline-block px-2 py-0.5 rounded bg-rose-600 text-white text-[9.5px] font-bold">
+              <span className="inline-block px-2 py-0.5 rounded bg-rose-600 text-white text-[9px] font-bold">
                 SEC_IMAGE VAD Unlinked · Hollow Shell Ready
               </span>
             </motion.div>
           )}
         </motion.div>
 
-        <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between font-mono text-[9.5px]">
+        <div className="px-1.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between font-mono text-[9px]">
           <span className="text-zinc-500 font-bold">0x00100000</span>
           <span className="text-zinc-800 dark:text-zinc-200 font-semibold">
             Process Heap &amp; Thread Stack
@@ -1687,12 +2119,12 @@ function Stage3AllocationInjectionScene({
   return (
     <div
       data-testid="stage-3-allocation-injection-scene"
-      className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch"
+      className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-stretch"
     >
       {/* Left Column: Attacker Loader + Animated Byte Stream + VAD Forensics */}
-      <div className="sm:col-span-5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2.5 flex flex-col justify-between space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-7 rounded-lg bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
+      <div className="sm:col-span-5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-400 dark:border-rose-500/80 p-2 flex flex-col justify-between space-y-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-7 h-6 rounded-md bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
             <SketchNodeIcon
               iconType="MALWARE_PAYLOAD"
               isActive={false}
@@ -1700,29 +2132,29 @@ function Stage3AllocationInjectionScene({
             />
           </div>
           <div>
-            <div className="font-mono text-[9px] font-bold uppercase text-rose-600 dark:text-rose-400">
+            <div className="font-mono text-[8.5px] font-bold uppercase text-rose-600 dark:text-rose-400">
               ATTACKER LOADER
             </div>
-            <div className="font-mono text-xs font-extrabold text-zinc-900 dark:text-white">
+            <div className="font-mono text-[11px] font-extrabold text-zinc-900 dark:text-white">
               Invoice_Q4.exe [3104]
             </div>
           </div>
         </div>
 
         {/* Animated Cross-Process Byte Pipe */}
-        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono text-[9.5px] space-y-1">
+        <div className="p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono text-[9px] space-y-1">
           <div className="flex justify-between">
             <span className="text-zinc-500">hProcess:</span>
             <span className="font-bold text-zinc-900 dark:text-white">
               0x01C4 (0x1FFFFF)
             </span>
           </div>
-          <svg viewBox="0 0 180 20" className="w-full h-4 overflow-visible">
+          <svg viewBox="0 0 180 18" className="w-full h-3.5 overflow-visible">
             <line
               x1="6"
-              y1="10"
+              y1="9"
               x2="174"
-              y2="10"
+              y2="9"
               stroke="#e11d48"
               strokeWidth="2"
               strokeDasharray="4 3"
@@ -1731,8 +2163,8 @@ function Stage3AllocationInjectionScene({
               <>
                 <motion.circle
                   key={`wpm-dot1-${activeSubStepId}`}
-                  r="4"
-                  cy="10"
+                  r="3.5"
+                  cy="9"
                   fill="#e11d48"
                   initial={{ cx: 10 }}
                   animate={{ cx: 164 }}
@@ -1740,8 +2172,8 @@ function Stage3AllocationInjectionScene({
                 />
                 <motion.circle
                   key={`wpm-dot2-${activeSubStepId}`}
-                  r="4"
-                  cy="10"
+                  r="3.5"
+                  cy="9"
                   fill="#f59e0b"
                   initial={{ cx: 10 }}
                   animate={{ cx: 132 }}
@@ -1754,7 +2186,7 @@ function Stage3AllocationInjectionScene({
               </>
             )}
           </svg>
-          <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 text-center">
+          <div className="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 text-center">
             {payloadWritten
               ? '270,336 Bytes Streamed (100%)'
               : peHeadersWritten
@@ -1766,9 +2198,9 @@ function Stage3AllocationInjectionScene({
         {/* 3D VAD Anomaly Comparison Card */}
         <motion.div
           animate={{
-            scale: vadAnomalyFlagged ? 1.03 : 0.98,
+            scale: vadAnomalyFlagged ? 1.02 : 0.98,
           }}
-          className={`p-2 rounded-xl border font-mono text-[9.5px] space-y-1 ${
+          className={`p-1.5 rounded-xl border font-mono text-[9px] space-y-0.5 ${
             vadAnomalyFlagged
               ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
               : 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 text-zinc-800 dark:text-zinc-200'
@@ -1778,7 +2210,7 @@ function Stage3AllocationInjectionScene({
             <span>3D · VAD Forensics</span>
             <span>EID 10</span>
           </div>
-          <div className="text-[9px] leading-snug">
+          <div className="text-[8.5px] leading-snug">
             Expected: <strong>SEC_IMAGE (RX)</strong>
             <br />
             Detected: <strong>MEM_PRIVATE (RWX 0x40)</strong>
@@ -1787,13 +2219,13 @@ function Stage3AllocationInjectionScene({
       </div>
 
       {/* Right Column: Hollowed Target svchost.exe Memory Inspector */}
-      <div className="sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2.5 flex flex-col justify-between space-y-2">
+      <div className="sm:col-span-7 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 p-2 flex flex-col justify-between space-y-1.5">
         <div className="flex items-center justify-between gap-2 font-mono">
           <div>
-            <div className="text-[9px] font-bold uppercase text-sky-600 dark:text-sky-400">
+            <div className="text-[8.5px] font-bold uppercase text-sky-600 dark:text-sky-400">
               TARGET VIRTUAL MEMORY (0x00400000)
             </div>
-            <div className="text-xs font-extrabold text-zinc-900 dark:text-white">
+            <div className="text-[11px] font-extrabold text-zinc-900 dark:text-white">
               svchost.exe (PID 4892 · 264 KB)
             </div>
           </div>
@@ -1803,7 +2235,7 @@ function Stage3AllocationInjectionScene({
                 key={perm}
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
-                className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[9px] font-extrabold"
+                className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[8.5px] font-extrabold"
               >
                 {perm}
               </motion.span>
@@ -1813,7 +2245,7 @@ function Stage3AllocationInjectionScene({
 
         <div
           data-testid="stage3-api-call-banner"
-          className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 font-mono text-[9.5px] font-extrabold text-indigo-900 dark:text-indigo-200 text-center break-words"
+          className="px-1.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 font-mono text-[9px] font-extrabold text-indigo-900 dark:text-indigo-200 text-center break-words"
         >
           {peHeadersWritten
             ? 'CALL: WriteProcessMemory(0x01C4, Base: 0x00400000, Buffer, 270,336 Bytes)'
@@ -1822,19 +2254,19 @@ function Stage3AllocationInjectionScene({
 
         {/* Live Hex & Section Stream Box */}
         <div
-          className={`p-2.5 rounded-xl border-2 space-y-2 font-mono ${
+          className={`p-2 rounded-xl border-2 space-y-1.5 font-mono ${
             peHeadersWritten
               ? 'bg-rose-50/75 dark:bg-rose-950/30 border-rose-500'
               : 'bg-amber-50/75 dark:bg-amber-950/30 border-amber-500'
           }`}
         >
-          <div className="flex justify-between text-[10px] font-bold">
+          <div className="flex justify-between text-[9.5px] font-bold">
             <span>Committed: {payloadBytesCommitted.toLocaleString()} B</span>
             <span>{progressPct}% of 264 KB</span>
           </div>
           <div className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
             <motion.div
-              animate={{ width: `${ Math.max(8, progressPct) }%` }}
+              animate={{ width: `${Math.max(8, progressPct)}%` }}
               transition={{ type: 'spring', stiffness: 220, damping: 24 }}
               className="h-full bg-gradient-to-r from-rose-600 to-amber-500"
             />
@@ -1846,14 +2278,14 @@ function Stage3AllocationInjectionScene({
               opacity: peHeadersWritten ? 1 : 0.45,
               y: peHeadersWritten ? 0 : 4,
             }}
-            className="p-1.5 rounded bg-zinc-900 text-emerald-400 text-[9px] leading-tight"
+            className="px-1.5 py-1 rounded bg-zinc-900 text-emerald-400 text-[8.5px] leading-tight"
           >
             <div>0x00400000: 4D 5A 90 00 03 00 00 00 | MZ......</div>
             <div>0x00400080: 50 45 00 00 64 86 06 00 | PE..d...</div>
           </motion.div>
 
           {/* 3C: Injected Beacon Sections */}
-          <div className="grid grid-cols-3 gap-1 text-[8.5px]">
+          <div className="grid grid-cols-3 gap-1 text-[8px]">
             {[
               { name: '.text (Beacon)', rva: '+0x1000', ready: payloadWritten },
               { name: '.rdata (C2)', rva: '+0x28000', ready: payloadWritten },
@@ -1872,7 +2304,7 @@ function Stage3AllocationInjectionScene({
                 }`}
               >
                 <div>{sec.name}</div>
-                <div className="text-[8px] opacity-75">{sec.rva}</div>
+                <div className="text-[7.5px] opacity-75">{sec.rva}</div>
               </motion.div>
             ))}
           </div>
@@ -1901,15 +2333,15 @@ function Stage4ThreadHijackScene({
   return (
     <div
       data-testid="stage-4-thread-hijack-scene"
-      className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch"
+      className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-stretch"
     >
       {/* Left Column: Address Space with Sliding TID 4896 Pointer */}
-      <div className="sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-3 flex flex-col justify-between space-y-2 relative">
-        <div className="font-mono text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-zinc-200 dark:border-zinc-800 pb-1">
+      <div className="sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5 relative">
+        <div className="font-mono text-[9.5px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-zinc-200 dark:border-zinc-800 pb-1">
           PROCESS ADDRESS SPACE (PID 4892)
         </div>
 
-        <div className="relative pl-20 space-y-2.5 my-auto py-1">
+        <div className="relative pl-18 space-y-2 my-auto py-0.5">
           {/* Sliding TID 4896 Pointer */}
           <motion.div
             animate={{
@@ -1918,28 +2350,28 @@ function Stage4ThreadHijackScene({
             }}
             transition={{ type: 'spring', stiffness: 220, damping: 20 }}
             data-testid="stage4-tid-pointer"
-            className={`absolute left-0 px-2 py-1 rounded-lg border-2 font-mono text-[10px] font-extrabold flex items-center gap-1 shadow-xs z-10 ${
+            className={`absolute left-0 px-1.5 py-0.5 rounded-lg border-2 font-mono text-[9.5px] font-extrabold flex items-center gap-1 shadow-xs z-10 ${
               isRcxHijacked
                 ? 'bg-rose-600 text-white border-rose-700'
                 : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-700'
             }`}
           >
             <span>TID 4896</span>
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-2.5 h-2.5" />
           </motion.div>
 
           {/* Top Box: Unmapped Old Entry 0x00412000 */}
           <div
-            className={`p-2 rounded-xl border-2 border-dashed font-mono transition-opacity ${
+            className={`p-1.5 rounded-xl border-2 border-dashed font-mono transition-opacity ${
               isRcxHijacked
                 ? 'bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 opacity-50'
                 : 'bg-sky-50/80 dark:bg-sky-950/30 border-sky-500 opacity-100'
             }`}
           >
-            <div className="text-[10px] font-extrabold text-zinc-800 dark:text-zinc-200">
+            <div className="text-[9.5px] font-extrabold text-zinc-800 dark:text-zinc-200">
               [ UNMAPPED MEMORY VOID ]
             </div>
-            <div className="text-[9.5px] font-extrabold text-amber-700 dark:text-amber-300">
+            <div className="text-[9px] font-extrabold text-amber-700 dark:text-amber-300">
               Stale Entry: 0x00412000
             </div>
           </div>
@@ -1947,29 +2379,29 @@ function Stage4ThreadHijackScene({
           {/* Bottom Box: Cobalt Strike Payload 0x004014A0 */}
           <motion.div
             animate={{
-              scale: isRcxHijacked ? 1.02 : 0.98,
+              scale: isRcxHijacked ? 1.015 : 0.985,
             }}
-            className={`p-2 rounded-xl border-2 font-mono space-y-0.5 ${
+            className={`p-1.5 rounded-xl border-2 font-mono space-y-0.5 ${
               isRcxHijacked
                 ? 'bg-rose-50/90 dark:bg-rose-950/35 border-rose-500 shadow-xs'
                 : 'bg-white dark:bg-zinc-950 border-rose-300 dark:border-rose-800/70'
             }`}
           >
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[10px] font-extrabold text-rose-700 dark:text-rose-300">
+              <span className="text-[9.5px] font-extrabold text-rose-700 dark:text-rose-300">
                 COBALT STRIKE BEACON
               </span>
               {isRunning && (
                 <motion.span
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
-                  className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[8px] font-bold"
+                  className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[7.5px] font-bold"
                 >
                   EXECUTING
                 </motion.span>
               )}
             </div>
-            <div className="text-[10.5px] font-extrabold text-zinc-900 dark:text-white">
+            <div className="text-[10px] font-extrabold text-zinc-900 dark:text-white">
               New Entry: 0x004014A0
             </div>
           </motion.div>
@@ -1979,9 +2411,9 @@ function Stage4ThreadHijackScene({
         <motion.div
           animate={{
             opacity: tamperingEventFired ? 1 : 0.45,
-            scale: tamperingEventFired ? 1.02 : 0.98,
+            scale: tamperingEventFired ? 1.01 : 0.99,
           }}
-          className={`p-2 rounded-lg border font-mono text-[9px] font-bold flex items-center justify-between ${
+          className={`px-2 py-1 rounded-lg border font-mono text-[8.5px] font-bold flex items-center justify-between ${
             tamperingEventFired
               ? 'bg-rose-600 text-white border-rose-700'
               : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500'
@@ -1993,14 +2425,14 @@ function Stage4ThreadHijackScene({
       </div>
 
       {/* Right Column: 64-Bit CPU Register File & Scheduler Controller (TID 4896) */}
-      <div className="sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-3 flex flex-col justify-between space-y-2">
-        <div className="font-mono text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-zinc-200 dark:border-zinc-800 pb-1">
+      <div className="sm:col-span-6 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 flex flex-col justify-between space-y-1.5">
+        <div className="font-mono text-[9.5px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 border-b border-zinc-200 dark:border-zinc-800 pb-1">
           CPU CONTEXT_FULL (TID: 4896)
         </div>
 
-        <div className="grid grid-cols-2 gap-2 font-mono">
-          <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-            <div className="text-[8.5px] text-zinc-500 uppercase font-bold">
+        <div className="grid grid-cols-2 gap-1.5 font-mono">
+          <div className="p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div className="text-[8px] text-zinc-500 uppercase font-bold">
               SuspendCount
             </div>
             <motion.div
@@ -2008,7 +2440,7 @@ function Stage4ThreadHijackScene({
               initial={{ scale: 1.25 }}
               animate={{ scale: 1 }}
               data-testid="stage4-suspend-count"
-              className={`text-sm font-extrabold ${
+              className={`text-xs font-extrabold ${
                 isRunning
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-amber-600 dark:text-amber-400'
@@ -2018,12 +2450,12 @@ function Stage4ThreadHijackScene({
             </motion.div>
           </div>
 
-          <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-            <div className="text-[8.5px] text-zinc-500 uppercase font-bold">
+          <div className="p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div className="text-[8px] text-zinc-500 uppercase font-bold">
               Scheduler
             </div>
             <div
-              className={`text-[11px] font-extrabold mt-0.5 flex items-center gap-1 ${
+              className={`text-[10.5px] font-extrabold mt-0.5 flex items-center gap-1 ${
                 isRunning
                   ? 'text-rose-600 dark:text-rose-400'
                   : 'text-sky-600 dark:text-sky-400'
@@ -2031,12 +2463,12 @@ function Stage4ThreadHijackScene({
             >
               {isRunning ? (
                 <>
-                  <PlayCircle className="w-3.5 h-3.5 shrink-0" />
+                  <PlayCircle className="w-3 h-3 shrink-0" />
                   <span>RUNNING</span>
                 </>
               ) : (
                 <>
-                  <PauseCircle className="w-3.5 h-3.5 shrink-0" />
+                  <PauseCircle className="w-3 h-3 shrink-0" />
                   <span>FROZEN</span>
                 </>
               )}
@@ -2045,12 +2477,12 @@ function Stage4ThreadHijackScene({
         </div>
 
         {/* 64-Bit Register File Table */}
-        <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1 font-mono text-[9.5px]">
+        <div className="p-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1 font-mono text-[9px]">
           <motion.div
             key={visualState.rcxEntryPoint}
             initial={{ scale: 0.95 }}
             animate={{ scale: 1 }}
-            className={`p-1.5 rounded-lg border-2 flex items-center justify-between font-extrabold ${
+            className={`px-1.5 py-1 rounded-lg border-2 flex items-center justify-between font-extrabold ${
               isRcxHijacked
                 ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-900 dark:text-rose-100'
                 : 'bg-sky-50 dark:bg-sky-950/40 border-sky-400 text-sky-900 dark:text-sky-100'
@@ -2073,7 +2505,7 @@ function Stage4ThreadHijackScene({
           </div>
         </div>
 
-        <div className="p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 font-mono text-[9.5px]">
+        <div className="px-2 py-1 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 font-mono text-[9px]">
           <div className="font-extrabold text-indigo-800 dark:text-indigo-300">
             {isRunning
               ? '4C · ResumeThread(0x01C8) -> Executing'
@@ -2103,59 +2535,59 @@ function Stage5C2BeaconFftScene({
     visualState;
 
   return (
-    <div data-testid="stage-5-c2-beacon-scene" className="space-y-2.5">
+    <div data-testid="stage-5-c2-beacon-scene" className="space-y-2">
       {/* Top 3-Node Pipeline with Animated TLS Packet Stream */}
       <div className="grid grid-cols-3 gap-1.5 items-stretch">
-        <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 font-mono space-y-1">
+        <div className="p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-sky-400 dark:border-sky-500/80 font-mono space-y-0.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-7 h-6 rounded bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
+            <div className="w-6 h-5 rounded bg-sky-50 dark:bg-zinc-950 border border-sky-200 dark:border-sky-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
                 iconType="VICTIM_LAPTOP"
                 isActive={false}
                 isCompromised={true}
               />
             </div>
-            <div className="text-[9.5px] font-extrabold text-zinc-900 dark:text-white truncate">
+            <div className="text-[9px] font-extrabold text-zinc-900 dark:text-white truncate">
               WKS-04
             </div>
           </div>
-          <div className="text-[8.5px] font-bold text-sky-700 dark:text-sky-300 truncate">
+          <div className="text-[8px] font-bold text-sky-700 dark:text-sky-300 truncate">
             svchost.exe [4892]
           </div>
         </div>
 
-        <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border-2 border-emerald-500/80 font-mono space-y-1">
+        <div className="p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-emerald-500/80 font-mono space-y-0.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-7 h-6 rounded bg-emerald-50 dark:bg-zinc-950 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center p-0.5 shrink-0">
+            <div className="w-6 h-5 rounded bg-emerald-50 dark:bg-zinc-950 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
                 iconType="FIREWALL_ROUTER"
                 isActive={false}
                 isCompromised={false}
               />
             </div>
-            <div className="text-[9.5px] font-extrabold text-zinc-900 dark:text-white truncate">
+            <div className="text-[9px] font-extrabold text-zinc-900 dark:text-white truncate">
               EDGE FW
             </div>
           </div>
-          <div className="px-1 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700 text-[8.5px] font-extrabold text-emerald-800 dark:text-emerald-300 text-center">
+          <div className="px-1 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700 text-[8px] font-extrabold text-emerald-800 dark:text-emerald-300 text-center">
             SIGNED → PASS
           </div>
         </div>
 
-        <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 font-mono space-y-1">
+        <div className="p-1.5 rounded-xl bg-white dark:bg-zinc-900 border-2 border-rose-500/80 font-mono space-y-0.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-7 h-6 rounded bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
+            <div className="w-6 h-5 rounded bg-rose-50 dark:bg-zinc-950 border border-rose-200 dark:border-rose-800 flex items-center justify-center p-0.5 shrink-0">
               <SketchNodeIcon
                 iconType="ATTACKER"
                 isActive={false}
                 isCompromised={true}
               />
             </div>
-            <div className="text-[9.5px] font-extrabold text-rose-700 dark:text-rose-300 truncate">
+            <div className="text-[9px] font-extrabold text-rose-700 dark:text-rose-300 truncate">
               C2 SERVER
             </div>
           </div>
-          <div className="text-[8.5px] font-bold text-zinc-900 dark:text-white truncate">
+          <div className="text-[8px] font-bold text-zinc-900 dark:text-white truncate">
             185.220.101.42:443
           </div>
         </div>
@@ -2166,9 +2598,9 @@ function Stage5C2BeaconFftScene({
         layout
         animate={{
           opacity: malleableProfileActive ? 1 : 0.65,
-          scale: malleableProfileActive && !c2BeaconActive ? 1.015 : 1,
+          scale: malleableProfileActive && !c2BeaconActive ? 1.01 : 1,
         }}
-        className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-800 font-mono text-[9px] flex flex-wrap items-center justify-between gap-1.5"
+        className="px-2 py-1 rounded-xl bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-800 font-mono text-[8.5px] flex flex-wrap items-center justify-between gap-1"
       >
         <div>
           <span className="font-extrabold text-indigo-700 dark:text-indigo-300">
@@ -2184,16 +2616,16 @@ function Stage5C2BeaconFftScene({
       </motion.div>
 
       {/* 5C & 5D: Dual Time-Domain Heartbeat + Frequency-Domain FFT Spectrum */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2.5 space-y-2">
+      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-2 space-y-1.5">
         <div className="flex flex-wrap items-center justify-between gap-1">
-          <span className="font-mono text-[10px] font-extrabold text-zinc-900 dark:text-white">
+          <span className="font-mono text-[9.5px] font-extrabold text-zinc-900 dark:text-white">
             {fftSpectrumLocked
               ? '5D · FFT FREQUENCY SPECTRUM (f₀ = 0.0167 Hz LOCK)'
               : '5C · TIME-DOMAIN BEACON CADENCE (Δt = 60s ± 20%)'}
           </span>
           <span
             data-testid="stage5-fft-status-badge"
-            className={`px-2 py-0.5 rounded font-mono text-[9px] font-extrabold ${
+            className={`px-1.5 py-0.5 rounded font-mono text-[8.5px] font-extrabold ${
               c2BeaconActive
                 ? 'bg-rose-600 text-white'
                 : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
@@ -2207,15 +2639,15 @@ function Stage5C2BeaconFftScene({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-1.5 items-stretch">
           {/* Left 7 Cols: Time-Domain Pulses (60s, 120s, 180s, 240s) */}
-          <div className="sm:col-span-7 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-            <div className="font-mono text-[8.5px] font-bold text-zinc-500 mb-1">
+          <div className="sm:col-span-7 p-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <div className="font-mono text-[8px] font-bold text-zinc-500 mb-0.5">
               TIME DOMAIN · Δt = 60s ± 20% Jitter
             </div>
             <svg
               viewBox="0 0 360 78"
-              className="w-full h-16 overflow-visible"
+              className="w-full h-14 overflow-visible"
               role="img"
               aria-label="Cobalt Strike 60-second time-domain heartbeat"
             >
@@ -2260,16 +2692,16 @@ function Stage5C2BeaconFftScene({
 
           {/* Right 5 Cols: Frequency-Domain FFT Peak (0.0167 Hz) */}
           <div
-            className={`sm:col-span-5 p-2 rounded-lg border font-mono ${
+            className={`sm:col-span-5 p-1.5 rounded-lg border font-mono ${
               fftSpectrumLocked
                 ? 'bg-rose-50/80 dark:bg-rose-950/35 border-rose-500'
                 : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800'
             }`}
           >
-            <div className="text-[8.5px] font-bold text-rose-700 dark:text-rose-300 mb-1">
+            <div className="text-[8px] font-bold text-rose-700 dark:text-rose-300 mb-0.5">
               FFT SPECTRUM · f₀ = 0.0167 Hz
             </div>
-            <svg viewBox="0 0 220 78" className="w-full h-16 overflow-visible">
+            <svg viewBox="0 0 220 78" className="w-full h-14 overflow-visible">
               <line
                 x1="10"
                 y1="60"

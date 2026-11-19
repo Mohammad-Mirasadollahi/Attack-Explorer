@@ -26,8 +26,9 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
-import ProcessHollowingScrollytellingView from '@/components/ProcessHollowingScrollytellingView';
-import { PROCESS_HOLLOWING_SCENARIO_ID } from '@/lib/process-hollowing-scrollytelling';
+import ProcessHollowingScrollytellingView, {
+  ProcessHollowingSyncedSubStepsList,
+} from '@/components/ProcessHollowingScrollytellingView';
 
 interface ScenarioPageProps {
   params: Promise<{ id: string }>;
@@ -118,7 +119,7 @@ export default async function ScenarioLandingPage({
         dangerouslySetInnerHTML={{ __html: scenarioJsonLd }}
       />
 
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <nav
           aria-label="Breadcrumb"
           data-testid="scenario-breadcrumb-nav"
@@ -267,6 +268,11 @@ export default async function ScenarioLandingPage({
               </ul>
             </div>
           </div>
+
+          <ProcessHollowingSyncedSubStepsList
+            scenario={scenario}
+            stageNumber={0}
+          />
               </section>
 
         <section
@@ -358,6 +364,11 @@ export default async function ScenarioLandingPage({
                       {primaryMitigation}
                     </div>
                   )}
+
+                  <ProcessHollowingSyncedSubStepsList
+                    scenario={scenario}
+                    stageNumber={st.index}
+                  />
                 </article>
               );
             })}
@@ -366,12 +377,13 @@ export default async function ScenarioLandingPage({
             </>
           );
 
-          return scenario.id === PROCESS_HOLLOWING_SCENARIO_ID ? (
-            <ProcessHollowingScrollytellingView activeStageIndex={0}>
+          return (
+            <ProcessHollowingScrollytellingView
+              scenario={scenario}
+              activeStageIndex={0}
+            >
               {coreScenarioSections}
             </ProcessHollowingScrollytellingView>
-          ) : (
-            coreScenarioSections
           );
         })()}
 

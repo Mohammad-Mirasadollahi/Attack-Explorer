@@ -32,8 +32,9 @@ import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-dia
 import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
 import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
 import { CommandBreakdownList } from './CommandBreakdownList';
-import ProcessHollowingScrollytellingView from './ProcessHollowingScrollytellingView';
-import { PROCESS_HOLLOWING_SCENARIO_ID } from '@/lib/process-hollowing-scrollytelling';
+import ProcessHollowingScrollytellingView, {
+  ProcessHollowingSyncedSubStepsList,
+} from './ProcessHollowingScrollytellingView';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -1230,6 +1231,11 @@ export function InspectorPanel({
                         </div>
                       ))}
                     </div>
+
+                    <ProcessHollowingSyncedSubStepsList
+                      scenario={scenario}
+                      stageNumber={0}
+                    />
                   </section>
 
                   {/* 2. Interactive Topology Sections Directory */}
@@ -1386,7 +1392,7 @@ export function InspectorPanel({
                                   </div>
                                 </div>
 
-                                {/* Forward & Return Action Conduit (Wide 6/12 = 50% width for Technical Explanation) */}
+                                {/* Forward & Return Action Conduit (Wide 6/12 = 50% width for Technical Explanation + Animated SVG Interacting Vectors) */}
                                 <div className="lg:col-span-6 p-2.5 rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-950/20 flex flex-col justify-center gap-1">
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white text-[9.5px] font-extrabold">
@@ -1396,6 +1402,64 @@ export function InspectorPanel({
                                       {stageDiagram.conduit.forwardProtocolOrApi}
                                     </span>
                                   </div>
+                                  <svg
+                                    viewBox="0 0 260 22"
+                                    className="w-full h-5 overflow-visible"
+                                    aria-hidden="true"
+                                  >
+                                    <line
+                                      x1="4"
+                                      y1="6"
+                                      x2="250"
+                                      y2="6"
+                                      stroke="#e11d48"
+                                      strokeWidth="2"
+                                      strokeDasharray="5 3"
+                                    />
+                                    <polygon
+                                      points="256,6 248,2 248,10"
+                                      fill="#e11d48"
+                                    />
+                                    <motion.circle
+                                      cy="6"
+                                      r="3.5"
+                                      fill="#e11d48"
+                                      stroke="#ffffff"
+                                      strokeWidth="1.5"
+                                      animate={{ cx: [10, 246] }}
+                                      transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: 'easeInOut',
+                                      }}
+                                    />
+                                    <line
+                                      x1="256"
+                                      y1="16"
+                                      x2="10"
+                                      y2="16"
+                                      stroke="#10b981"
+                                      strokeWidth="1.5"
+                                      strokeDasharray="4 3"
+                                    />
+                                    <polygon
+                                      points="4,16 12,12 12,20"
+                                      fill="#10b981"
+                                    />
+                                    <motion.circle
+                                      cy="16"
+                                      r="3"
+                                      fill="#10b981"
+                                      stroke="#ffffff"
+                                      strokeWidth="1.2"
+                                      animate={{ cx: [246, 12] }}
+                                      transition={{
+                                        duration: 2.3,
+                                        repeat: Infinity,
+                                        ease: 'easeInOut',
+                                      }}
+                                    />
+                                  </svg>
                                   <div className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 leading-snug break-words">
                                     {stageDiagram.conduit.forwardActionLabel}
                                   </div>
@@ -1441,6 +1505,11 @@ export function InspectorPanel({
                                 ))}
                               </div>
                             )}
+
+                            <ProcessHollowingSyncedSubStepsList
+                              scenario={scenario}
+                              stageNumber={st.index}
+                            />
                           </div>
                         );
                       })}
@@ -1449,14 +1518,13 @@ export function InspectorPanel({
                     </div>
                   );
 
-                  return scenario.id === PROCESS_HOLLOWING_SCENARIO_ID ? (
+                  return (
                     <ProcessHollowingScrollytellingView
+                      scenario={scenario}
                       activeStageIndex={activeStageIndex}
                     >
                       {mainScenarioOverviewContent}
                     </ProcessHollowingScrollytellingView>
-                  ) : (
-                    mainScenarioOverviewContent
                   );
                 })()
               )}

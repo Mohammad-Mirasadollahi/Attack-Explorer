@@ -31,7 +31,6 @@ import {
 import ProcessHollowingScrollytellingView, {
   ProcessHollowingSyncedSubStepsList,
 } from './ProcessHollowingScrollytellingView';
-import { PROCESS_HOLLOWING_SCENARIO_ID } from '@/lib/process-hollowing-scrollytelling';
 import {
   ArrowLeft,
   ArrowRight,
@@ -649,7 +648,7 @@ export function StepByStepGuidePanel({
                           </div>
                         </div>
 
-                        {/* Center: Forward (#P.N→) & Return (⇠#P.N) Tracks */}
+                        {/* Center: Forward (#P.N→) & Return (⇠#P.N) Tracks with Animated SVG Interacting Vectors */}
                         <div className="lg:col-span-6 flex flex-col justify-center gap-2">
                           <div className="p-2 rounded-lg bg-rose-50/75 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1 font-mono">
                             <div className="flex flex-wrap items-center justify-between gap-1 text-[10.5px]">
@@ -660,7 +659,38 @@ export function StepByStepGuidePanel({
                                 FORWARD REQUEST ──▶
                               </span>
                             </div>
-                            <div className="h-0.5 w-full bg-rose-500/75 rounded-full" />
+                            <svg
+                              viewBox="0 0 260 14"
+                              className="w-full h-3.5 overflow-visible"
+                              aria-hidden="true"
+                            >
+                              <line
+                                x1="4"
+                                y1="7"
+                                x2="250"
+                                y2="7"
+                                stroke="#e11d48"
+                                strokeWidth="2"
+                                strokeDasharray="5 3"
+                              />
+                              <polygon
+                                points="256,7 248,3 248,11"
+                                fill="#e11d48"
+                              />
+                              <motion.circle
+                                cy="7"
+                                r="4"
+                                fill="#e11d48"
+                                stroke="#ffffff"
+                                strokeWidth="1.5"
+                                animate={{ cx: [10, 246] }}
+                                transition={{
+                                  duration: 2.1,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                              />
+                            </svg>
                             <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
                               {step.telemetryEvent.info}
                             </div>
@@ -675,7 +705,38 @@ export function StepByStepGuidePanel({
                                 ◀── RETURN CHANNEL
                               </span>
                             </div>
-                            <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
+                            <svg
+                              viewBox="0 0 260 14"
+                              className="w-full h-3.5 overflow-visible"
+                              aria-hidden="true"
+                            >
+                              <line
+                                x1="256"
+                                y1="7"
+                                x2="10"
+                                y2="7"
+                                stroke="#10b981"
+                                strokeWidth="1.75"
+                                strokeDasharray="4 3"
+                              />
+                              <polygon
+                                points="4,7 12,3 12,11"
+                                fill="#10b981"
+                              />
+                              <motion.circle
+                                cy="7"
+                                r="3.5"
+                                fill="#10b981"
+                                stroke="#ffffff"
+                                strokeWidth="1.5"
+                                animate={{ cx: [246, 12] }}
+                                transition={{
+                                  duration: 2.4,
+                                  repeat: Infinity,
+                                  ease: 'easeInOut',
+                                }}
+                              />
+                            </svg>
                             <div className="text-[10.5px] text-zinc-700 dark:text-zinc-300 leading-snug break-words">
                               {step.returnDescription}
                             </div>
@@ -1095,9 +1156,10 @@ export function StepByStepGuidePanel({
             <StructuredClausesList clauses={briefing.structuredSummaryClauses} />
           </div>
 
-          {scenario.id === PROCESS_HOLLOWING_SCENARIO_ID && (
-            <ProcessHollowingSyncedSubStepsList stageNumber={0} />
-          )}
+          <ProcessHollowingSyncedSubStepsList
+            scenario={scenario}
+            stageNumber={0}
+          />
 
           {/* Layer 3: Visual Participating Topology Nodes Grid (①..⑥ with Node Icons) */}
           <div
@@ -1427,7 +1489,7 @@ export function StepByStepGuidePanel({
                         </div>
                       </div>
 
-                      {/* Center Column: Bidirectional Forward (#N→) & Return (⇠#N) Tracks */}
+                      {/* Center Column: Bidirectional Forward (#N→) & Return (⇠#N) Animated Shape Interaction Tracks */}
                       <div className="lg:col-span-6 flex flex-col justify-center space-y-2">
                         {/* Forward Request Track (#N→) */}
                         <div className="p-2.5 rounded-lg bg-rose-50/75 dark:bg-rose-950/25 border border-rose-200/80 dark:border-rose-900/50 space-y-1">
@@ -1443,7 +1505,38 @@ export function StepByStepGuidePanel({
                               {step.fromNodeLabel} ──▶ {step.toNodeLabel}
                             </span>
                           </div>
-                          <div className="h-0.5 w-full bg-rose-500/75 rounded-full" />
+                          <svg
+                            viewBox="0 0 260 14"
+                            className="w-full h-3.5 overflow-visible"
+                            aria-hidden="true"
+                          >
+                            <line
+                              x1="4"
+                              y1="7"
+                              x2="250"
+                              y2="7"
+                              stroke="#e11d48"
+                              strokeWidth="2"
+                              strokeDasharray="5 3"
+                            />
+                            <polygon
+                              points="256,7 248,3 248,11"
+                              fill="#e11d48"
+                            />
+                            <motion.circle
+                              cy="7"
+                              r="4"
+                              fill="#e11d48"
+                              stroke="#ffffff"
+                              strokeWidth="1.5"
+                              animate={{ cx: [10, 246] }}
+                              transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                              }}
+                            />
+                          </svg>
                           <p className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
                             {step.forwardPayloadSummary}
                           </p>
@@ -1463,7 +1556,38 @@ export function StepByStepGuidePanel({
                               {step.fromNodeLabel} ◀── {step.toNodeLabel}
                             </span>
                           </div>
-                          <div className="h-0.5 w-full border-b border-dashed border-emerald-500/80" />
+                          <svg
+                            viewBox="0 0 260 14"
+                            className="w-full h-3.5 overflow-visible"
+                            aria-hidden="true"
+                          >
+                            <line
+                              x1="256"
+                              y1="7"
+                              x2="10"
+                              y2="7"
+                              stroke="#10b981"
+                              strokeWidth="1.75"
+                              strokeDasharray="4 3"
+                            />
+                            <polygon
+                              points="4,7 12,3 12,11"
+                              fill="#10b981"
+                            />
+                            <motion.circle
+                              cy="7"
+                              r="3.5"
+                              fill="#10b981"
+                              stroke="#ffffff"
+                              strokeWidth="1.5"
+                              animate={{ cx: [246, 12] }}
+                              transition={{
+                                duration: 2.3,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                              }}
+                            />
+                          </svg>
                           <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
                             {step.returnDescription}
                           </p>
@@ -1523,11 +1647,10 @@ export function StepByStepGuidePanel({
                   <StructuredClausesList clauses={step.structuredClauses} />
                 </div>
 
-                {scenario.id === PROCESS_HOLLOWING_SCENARIO_ID && (
-                  <ProcessHollowingSyncedSubStepsList
-                    stageNumber={step.stepNumber}
-                  />
-                )}
+                <ProcessHollowingSyncedSubStepsList
+                  scenario={scenario}
+                  stageNumber={step.stepNumber}
+                />
 
                 {/* 3/4. Practical Under-the-Hood Mechanism & Specs */}
                 <div
@@ -1716,12 +1839,13 @@ export function StepByStepGuidePanel({
           </>
         );
 
-        return scenario.id === PROCESS_HOLLOWING_SCENARIO_ID ? (
-          <ProcessHollowingScrollytellingView activeStageIndex={activeStageIndex}>
+        return (
+          <ProcessHollowingScrollytellingView
+            scenario={scenario}
+            activeStageIndex={activeStageIndex}
+          >
             {cardsContent}
           </ProcessHollowingScrollytellingView>
-        ) : (
-          cardsContent
         );
       })()}
 
