@@ -25,8 +25,14 @@ import {
   Play,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
-import { ProcessHollowingAnalogy3DEmbed } from '@/components/three/ProcessHollowingAnalogy3DEmbed';
+import { ScenarioSection3DEmbed } from '@/components/three/ScenarioSection3DEmbed';
+import {
+  getSection3DDescriptor,
+  stepNumberToSectionKey,
+} from '@/lib/section-3d-registry';
+import { getRawScenarioStepGuide } from '@/lib/scenario-step-guides';
 interface ScenarioPageProps {
   params: Promise<{ id: string }>;
 }
@@ -102,6 +108,9 @@ export default async function ScenarioLandingPage({
   const categoryLabel = formatAttackCategoryLabel(scenario.category);
   const categoryAnchor = formatCategoryAnchorId(scenario.category);
   const scenarioJsonLd = JSON.stringify(buildScenarioJsonLd(scenario));
+  const stepGuideData = getRawScenarioStepGuide(scenario.id);
+  const briefing3d = getSection3DDescriptor(scenario.id, 'briefing');
+  const memory3d = getSection3DDescriptor(scenario.id, 'memory-forensics');
 
   return (
     <main
@@ -195,9 +204,26 @@ export default async function ScenarioLandingPage({
           </p>
         </header>
 
-        {scenario.id === 'process-hollowing' && (
-          <section aria-label="Interactive 3D Armored Bank Truck Analogy">
-            <ProcessHollowingAnalogy3DEmbed />
+        {briefing3d && (
+          <section
+            aria-label="Story Analogy and Interactive 3D Scene"
+            className="space-y-3"
+          >
+            {stepGuideData?.briefing?.storyAnalogy && (
+              <div className="rounded-2xl bg-amber-50/85 dark:bg-amber-950/25 border border-amber-200/90 dark:border-amber-800/70 p-5 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>Real-World Story Analogy · End-to-End Briefing</span>
+                </div>
+                <p className="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                  {stepGuideData.briefing.storyAnalogy}
+                </p>
+              </div>
+            )}
+            <ScenarioSection3DEmbed
+              scenarioId={scenario.id}
+              sectionKey="briefing"
+            />
           </section>
         )}
 
@@ -333,9 +359,47 @@ export default async function ScenarioLandingPage({
                     {st.subtitle}
                   </p>
 
-                  <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                    {st.description}
-                  </p>
+                  {(() => {
+                    const secKey = stepNumberToSectionKey(st.index);
+                    const sec3d = secKey
+                      ? getSection3DDescriptor(scenario.id, secKey)
+                      : null;
+                    const stepStory = stepGuideData?.steps.find(
+                      (s) => s.stepNumber === st.index
+                    )?.storyAnalogy;
+                    if (!secKey || !sec3d) return null;
+                    return (
+                      <div className="space-y-3 pt-1">
+                        <div
+                          data-testid={`landing-stage-story-${st.index}`}
+                          className="p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
+                        >
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                            <span>
+                              Story Analogy · Stage {st.index} ({sec3d.title})
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                            {stepStory || sec3d.storyCue}
+                          </p>
+                        </div>
+                        <ScenarioSection3DEmbed
+                          scenarioId={scenario.id}
+                          sectionKey={secKey}
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-1 pt-1">
+                    <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                      Technical Forensic Deep-Dive
+                    </div>
+                    <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      {st.description}
+                    </p>
+                  </div>
 
                   {st.keySpecs.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -367,6 +431,41 @@ export default async function ScenarioLandingPage({
             })}
           </div>
         </section>
+
+        {memory3d && (
+          <section
+            id="memory-forensics-3d"
+            aria-label="Virtual Memory Forensics Story and 3D Comparison"
+            className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4 scroll-mt-6"
+          >
+            <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <span>
+                Virtual Memory Forensics: Signed On-Disk Image vs Hollowed RWX RAM
+              </span>
+            </h2>
+            <div className="p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1">
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                Real-World Story Analogy
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                {memory3d.storyCue}
+              </p>
+            </div>
+            <ScenarioSection3DEmbed
+              scenarioId={scenario.id}
+              sectionKey="memory-forensics"
+            />
+            <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-1">
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                Technical VAD / PE-Sieve Diff
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                {memory3d.technicalCue}
+              </p>
+            </div>
+          </section>
+        )}
             </>
           );
 

@@ -28,7 +28,11 @@ import {
   ProcessCommandLineInlineExplanation,
   SingleCommandExplanationCard,
 } from './CommandBreakdownList';
-import { ProcessHollowingAnalogy3DEmbed } from './three/ProcessHollowingAnalogy3DEmbed';
+import { ScenarioSection3DEmbed } from './three/ScenarioSection3DEmbed';
+import {
+  hasSection3DScene,
+  stepNumberToSectionKey,
+} from '@/lib/section-3d-registry';
 import {
   ArrowLeft,
   ArrowRight,
@@ -1141,8 +1145,12 @@ export function StepByStepGuidePanel({
             </p>
           </div>
 
-          {scenario.id === 'process-hollowing' && (
-            <ProcessHollowingAnalogy3DEmbed className="pt-1" />
+          {hasSection3DScene(scenario.id, 'briefing') && (
+            <ScenarioSection3DEmbed
+              scenarioId={scenario.id}
+              sectionKey="briefing"
+              className="pt-1"
+            />
           )}
 
           {/* Layer 2: Story ↔ Scenario Technical Bridge */}
@@ -1431,6 +1439,26 @@ export function StepByStepGuidePanel({
                     {step.storyAnalogy}
                   </p>
                 </div>
+
+                {/* 1B. Bespoke Three.js Anime 3D Visualization Matched to This Step */}
+                {(() => {
+                  const stepSectionKey = stepNumberToSectionKey(
+                    step.stepNumber
+                  );
+                  if (
+                    !stepSectionKey ||
+                    !hasSection3DScene(scenario.id, stepSectionKey)
+                  ) {
+                    return null;
+                  }
+                  return (
+                    <ScenarioSection3DEmbed
+                      scenarioId={scenario.id}
+                      sectionKey={stepSectionKey}
+                      className="pt-0.5"
+                    />
+                  );
+                })()}
 
                 {/* 2 (Unified Only). Visual Sequence Exchange Swimlane — Initiator (Sender) ⇄ Receiver (Target) with Node Icons */}
                 {!isSeparatedScenario && (

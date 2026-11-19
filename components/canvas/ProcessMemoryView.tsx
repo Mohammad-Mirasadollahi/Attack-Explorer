@@ -17,9 +17,12 @@ import {
   GitBranch,
   Layers,
   ShieldAlert,
+  Sparkles,
   Terminal,
 } from 'lucide-react';
 import { MemoryForensicsFlowchart } from './MemoryForensicsFlowchart';
+import { ScenarioSection3DEmbed } from '../three/ScenarioSection3DEmbed';
+import { getSection3DDescriptor } from '@/lib/section-3d-registry';
 
 interface ProcessMemoryViewProps {
   scenario: AttackScenario;
@@ -97,6 +100,37 @@ export function ProcessMemoryView({
             {envProfile.environmentTag} · {envProfile.subnetBadge}
           </span>
         </div>
+
+        {/* 0. Story Analogy + Bespoke 3D Virtual Memory Diff Scene (when registered) */}
+        {(() => {
+          const mem3d = getSection3DDescriptor(
+            scenario.id,
+            'memory-forensics'
+          );
+          if (!mem3d) return null;
+          return (
+            <section
+              data-testid="memory-story-and-3d-section"
+              className="space-y-3"
+            >
+              <div className="p-3.5 rounded-xl bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1">
+                <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    Real-World Story Analogy · {mem3d.title}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                  {mem3d.storyCue}
+                </p>
+              </div>
+              <ScenarioSection3DEmbed
+                scenarioId={scenario.id}
+                sectionKey="memory-forensics"
+              />
+            </section>
+          );
+        })()}
 
         {/* 1. Context-Aware Memory Forensics Briefing with Parenthetical (why ...) Callouts */}
         <section

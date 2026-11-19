@@ -32,7 +32,12 @@ import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-dia
 import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
 import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
 import { CommandBreakdownList } from './CommandBreakdownList';
-import { ProcessHollowingAnalogy3DEmbed } from './three/ProcessHollowingAnalogy3DEmbed';
+import { ScenarioSection3DEmbed } from './three/ScenarioSection3DEmbed';
+import {
+  getSection3DDescriptor,
+  hasSection3DScene,
+  stepNumberToSectionKey,
+} from '@/lib/section-3d-registry';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -1207,8 +1212,12 @@ export function InspectorPanel({
                         scenario.overview}
                     </div>
 
-                    {scenario.id === 'process-hollowing' && (
-                      <ProcessHollowingAnalogy3DEmbed className="pt-1" />
+                    {hasSection3DScene(scenario.id, 'briefing') && (
+                      <ScenarioSection3DEmbed
+                        scenarioId={scenario.id}
+                        sectionKey="briefing"
+                        className="pt-1"
+                      />
                     )}
 
                     <div className="space-y-2">
@@ -1345,6 +1354,33 @@ export function InspectorPanel({
                                 {st.mitreTechniqueId} · {st.mitreTechniqueName}
                               </span>
                             </div>
+
+                            {(() => {
+                              const secKey = stepNumberToSectionKey(st.index);
+                              const sec3d = secKey
+                                ? getSection3DDescriptor(scenario.id, secKey)
+                                : null;
+                              if (!secKey || !sec3d) return null;
+                              return (
+                                <div className="space-y-2.5">
+                                  <div className="p-3 rounded-lg bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                      <span>
+                                        Story Analogy · {sec3d.title}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                                      {sec3d.storyCue}
+                                    </p>
+                                  </div>
+                                  <ScenarioSection3DEmbed
+                                    scenarioId={scenario.id}
+                                    sectionKey={secKey}
+                                  />
+                                </div>
+                              );
+                            })()}
 
                             <div className="space-y-1.5">
                               {parseStructuredExplanationClauses(

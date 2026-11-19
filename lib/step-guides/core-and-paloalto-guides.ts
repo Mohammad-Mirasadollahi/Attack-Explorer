@@ -19,7 +19,7 @@ export const CORE_AND_PALOALTO_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         mitreId: 'T1106',
         plainTitle: 'Launching a Legitimate Windows Process in a Paused ("Suspended") State',
         storyAnalogy:
-          'Think of a stage director calling a famous, badge-carrying security guard onto the stage, but pressing the "Freeze" button the millisecond the guard steps through the door, before the guard can take a single step or read their official script.',
+          'Think of a stage director at a control console calling a famous, badge-carrying security guard onto the lit stage, pressing the cyan "Freeze" button the millisecond the guard crosses the doorway—locking them inside a stasis crystal before they can take a step—and quietly pocketing the golden master keys to both the guard’s body and script.',
         simpleExplanation:
           'The attacker’s initial loader (Invoice_Q4.exe, PID 3104, the stage-1 file executed on Victim Laptop WKS-04, 10.10.4.15) calls CreateProcessW to start a real Windows system program: C:\\Windows\\System32\\svchost.exe (PID 4892, chosen because svchost.exe carries a valid Microsoft digital signature, so security tools and analysts naturally expect to see it running in the background). However, the loader passes the creation flag CREATE_SUSPENDED = 0x00000004 (which tells the Windows kernel to build the process container in RAM and create its primary thread TID 4896, but freeze it at the starting line before its first instruction can execute). In response, the Windows kernel returns a populated PROCESS_INFORMATION structure containing process handle hProcess = 0x01C4 and thread handle hThread = 0x01C8 (handing Invoice_Q4.exe the master keys needed to inspect, empty, and rewrite svchost.exe’s memory in the next steps).',
         howItWorksInPractice:
@@ -34,7 +34,7 @@ export const CORE_AND_PALOALTO_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         mitreId: 'T1055.012',
         plainTitle: 'Hollowing Out ("Unmapping") the Original svchost.exe Code From Memory',
         storyAnalogy:
-          'While the official armored truck is still frozen in the garage, the crew opens the back doors and removes every single crate of genuine bank cargo, leaving a completely hollow shell that still carries the official license plate on the outside.',
+          'While the official armored truck stays frozen in the X-ray bay, an overhead scanner locates the cargo manifest (PEB+0x10) and slides every single crate of genuine bank bullion out through the rear doors, leaving a glowing hollow shell that still carries the official license plate on the outside.',
         simpleExplanation:
           'Now that svchost.exe (PID 4892, still frozen in memory so it cannot defend itself) is waiting, Invoice_Q4.exe (PID 3104) uses handle hProcess = 0x01C4 (received in Step #1) to read the child’s Process Environment Block (PEB, Windows’ internal process data table, queried at offset PEB+0x10 so the loader can find the exact memory address where svchost.exe was loaded: ImageBaseAddress = 0x00400000). The loader then calls ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000) (an undocumented native syscall that strips the original Microsoft svchost.exe code completely out of RAM), and the kernel replies with NTSTATUS = 0x00000000 (STATUS_SUCCESS, confirming that the 0x00400000 address slot inside PID 4892 is now completely empty and ready for the attacker’s payload).',
         howItWorksInPractice:
@@ -49,7 +49,7 @@ export const CORE_AND_PALOALTO_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         mitreId: 'T1055.012',
         plainTitle: 'Allocating Writable-Executable (RWX) Memory & Injecting the Malicious PE Image',
         storyAnalogy:
-          'Into that emptied-out armored truck, the intruder loads their own hidden gear and rewrites the route manual inside the cab, keeping the exterior paint job untouched so nobody outside notices the swap.',
+          'Inside that emptied-out armored frame, the intruder opens a glowing high-clearance vault (RWX 0x40) and streams in stacked crimson payload modules—MZ header, covert code, and rewritten route manual—while keeping the trusted exterior shell untouched so nobody outside notices the swap.',
         simpleExplanation:
           'Into that newly vacated base address (0x00400000, reusing the original base address freed in Step #2 so internal code pointers inside the malware do not break), Invoice_Q4.exe (PID 3104) uses handle hProcess = 0x01C4 (with GrantedAccess = 0x1FFFFF, granting full read, write, and allocation rights) to call VirtualAllocEx and reserve 264 KB (270,336 bytes) of private memory with PAGE_EXECUTE_READWRITE = 0x40 permissions (allowing the memory region to be both written to right now and executed as CPU instructions a moment later). It then calls WriteProcessMemory to stream the unpacked Cobalt Strike Beacon PE headers ("MZ" / 4D 5A, the Windows executable signature) and sections (.text.rdata.data) directly into svchost.exe’s RAM, receiving back lpNumberOfBytesWritten = 270,336 (confirming the entire payload and its entry point at 0x004014A0 are now mapped in memory without ever touching the hard drive).',
         howItWorksInPractice:
@@ -64,7 +64,7 @@ export const CORE_AND_PALOALTO_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         mitreId: 'T1055.012',
         plainTitle: 'Hijacking the CPU Thread Context & Resuming Execution',
         storyAnalogy:
-          'Before pressing "Unfreeze", the intruder turns the driver’s steering wheel and GPS toward their own secret destination (RCX = 0x004014A0). The moment the freeze button is released, the truck drives straight toward the attacker’s objective.',
+          'Before pressing "Unfreeze", the intruder climbs into the cockpit, cranks the steering wheel hard, and snaps the holographic GPS needle off the bank route onto their secret target (RCX = 0x004014A0). The instant the cryo lock shatters, the thread rockets straight down the attacker’s track.',
         simpleExplanation:
           'Even though the Cobalt Strike Beacon is now sitting inside svchost.exe (PID 4892 at 0x00400000), the frozen primary thread (TID 4896, accessed via handle hThread = 0x01C8 from Step #1) is still pointing at the old Microsoft startup address. To redirect it, Invoice_Q4.exe (PID 3104) calls SetThreadContext(hThread = 0x01C8) to overwrite the thread’s RCX register with 0x004014A0 (Base 0x00400000 + EntryPoint RVA 0x14A0, on 64-bit Windows, a newly created suspended thread holds its upcoming program entry-point address inside RCX, so updating RCX aims the thread straight at the injected Beacon without needing CreateRemoteThread). Finally, it calls ResumeThread(hThread = 0x01C8), which decrements the thread’s suspend counter from 1 to 0 (returning PreviousSuspendCount = 1 and waking TID 4896 so svchost.exe immediately begins executing the Beacon).',
         howItWorksInPractice:
@@ -79,7 +79,7 @@ export const CORE_AND_PALOALTO_STEP_GUIDES: Record<string, RawScenarioStepGuideD
         mitreId: 'T1071.001',
         plainTitle: 'Outbound HTTPS Command-and-Control (C2) Beacon From the Hollowed Process',
         storyAnalogy:
-          'The disguised armored truck now drives right past the perimeter gate guard (the firewall) to make a drop-off at an outside warehouse. The guard lets it pass because the truck’s badge says svchost.exe, until the central security room checks the GPS log and realizes that specific truck was never scheduled to leave the building.',
+          'The disguised armored truck now rolls right past the emerald perimeter firewall gate and opens an encrypted bridge to an external warehouse tower. The gate guard waves it through because its badge says svchost.exe—until the rotating SOC radar locks onto the unscheduled route.',
         simpleExplanation:
           'Now running actively inside the skin of C:\\Windows\\System32\\svchost.exe (PID 4892, so path-based endpoint firewall rules see a trusted Windows binary requesting network access), the Cobalt Strike Beacon loads winhttp.dll, opens an encrypted TLS 1.3 HTTPS connection over TCP port 443 (standard web traffic port chosen to blend in with normal employee browsing) to the external Command-and-Control server at 185.220.101.42:443, and sends an HTTP GET request for /jquery-3.3.1.min.js (a Malleable C2 profile that hides RSA-encrypted victim host metadata inside the HTTP Cookie header to mimic a harmless jQuery script fetch). The C2 server (185.220.101.42:443) replies with HTTP 200 OK (disguised as an application/javascript response carrying AES-encrypted operator tasking and a 60-second callback interval with 20% random jitter, spacing out future check-ins to evade simple fixed-timer beacon detectors).',
         howItWorksInPractice:
