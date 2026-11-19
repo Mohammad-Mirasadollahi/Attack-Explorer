@@ -28,7 +28,7 @@ import {
   ProcessCommandLineInlineExplanation,
   SingleCommandExplanationCard,
 } from './CommandBreakdownList';
-import { ScenarioSection3DEmbed } from './three/ScenarioSection3DEmbed';
+import { StandardStoryTechnicalSection } from './StandardStoryTechnicalSection';
 import {
   hasSection3DScene,
   stepNumberToSectionKey,
@@ -1131,38 +1131,19 @@ export function StepByStepGuidePanel({
             </span>
           </div>
 
-          {/* Layer 1: Real-World Story Analogy */}
-          <div
-            data-testid="step-guide-briefing-story-analogy"
-            className="p-3 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-800/70 space-y-1.5"
-          >
-            <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>1. Real-World Story Analogy:</span>
-            </div>
-            <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
-              {briefing.storyAnalogy}
-            </p>
-          </div>
-
-          {hasSection3DScene(scenario.id, 'briefing') && (
-            <ScenarioSection3DEmbed
-              scenarioId={scenario.id}
-              sectionKey="briefing"
-              className="pt-1"
-            />
-          )}
-
-          {/* Layer 2: Story ↔ Scenario Technical Bridge */}
-          <div
-            data-testid="step-guide-briefing-plain-summary"
-            className="space-y-1.5"
-          >
-            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-              2. Story ↔ Scenario Technical Bridge:
-            </div>
-            <StructuredClausesList clauses={briefing.structuredSummaryClauses} />
-          </div>
+          {/* Layer 1 + 2 + 3D: Canonical Overview Standard (Story FIRST -> Technical RIGHT BELOW -> Full-Width 3D Stage) */}
+          <StandardStoryTechnicalSection
+            scenarioId={scenario.id}
+            sectionKey={
+              hasSection3DScene(scenario.id, 'briefing') ? 'briefing' : null
+            }
+            storyHeading="1. Real-World Story Analogy:"
+            storyAnalogy={briefing.storyAnalogy}
+            technicalHeading="2. Story ↔ Scenario Technical Bridge:"
+            technicalClauses={briefing.structuredSummaryClauses}
+            storyTestId="step-guide-briefing-story-analogy"
+            technicalTestId="step-guide-briefing-plain-summary"
+          />
 
           {/* Layer 3: Visual Participating Topology Nodes Grid (①..⑥ with Node Icons) */}
           <div
@@ -1426,41 +1407,31 @@ export function StepByStepGuidePanel({
                   {step.plainTitle}
                 </h5>
 
-                {/* 1. Real-World Story Analogy */}
-                <div
-                  data-testid={`step-guide-story-analogy-${step.stepNumber}`}
-                  className="p-3 rounded-lg bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1"
-                >
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                    <span>1. Real-World Story Analogy:</span>
-                  </div>
-                  <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
-                    {step.storyAnalogy}
-                  </p>
-                </div>
-
-                {/* 1B. Bespoke Three.js Anime 3D Visualization Matched to This Step */}
+                {/* 1 + 2 + 3D: Canonical Overview Standard (Story FIRST -> Technical Bridge RIGHT BELOW -> Full-Width 3D Stage) */}
                 {(() => {
                   const stepSectionKey = stepNumberToSectionKey(
                     step.stepNumber
                   );
-                  if (
-                    !stepSectionKey ||
-                    !hasSection3DScene(scenario.id, stepSectionKey)
-                  ) {
-                    return null;
-                  }
+                  const resolvedSectionKey =
+                    stepSectionKey &&
+                    hasSection3DScene(scenario.id, stepSectionKey)
+                      ? stepSectionKey
+                      : null;
                   return (
-                    <ScenarioSection3DEmbed
+                    <StandardStoryTechnicalSection
                       scenarioId={scenario.id}
-                      sectionKey={stepSectionKey}
-                      className="pt-0.5"
+                      sectionKey={resolvedSectionKey}
+                      storyHeading="1. Real-World Story Analogy:"
+                      storyAnalogy={step.storyAnalogy}
+                      technicalHeading="2. Story ↔ Scenario Technical Bridge:"
+                      technicalClauses={step.structuredClauses}
+                      storyTestId={`step-guide-story-analogy-${step.stepNumber}`}
+                      technicalTestId={`step-guide-technical-bridge-${step.stepNumber}`}
                     />
                   );
                 })()}
 
-                {/* 2 (Unified Only). Visual Sequence Exchange Swimlane — Initiator (Sender) ⇄ Receiver (Target) with Node Icons */}
+                {/* 3 (Unified Only). Visual Sequence Exchange Swimlane — Initiator (Sender) ⇄ Receiver (Target) with Node Icons */}
                 {!isSeparatedScenario && (
                   <div
                     data-testid={`sequence-trace-row-${step.stepNumber}`}
@@ -1470,7 +1441,7 @@ export function StepByStepGuidePanel({
                       <span className="inline-flex items-center gap-1.5">
                         <GitCommitHorizontal className="w-3.5 h-3.5 shrink-0" />
                         <span>
-                          2. Visual Sequence Exchange — Initiator (Sender) ⇄ Receiver (Target)
+                          3. Visual Sequence Exchange — Initiator (Sender) ⇄ Receiver (Target)
                         </span>
                       </span>
                       <span className="px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
@@ -1655,19 +1626,6 @@ export function StepByStepGuidePanel({
                     </div>
                   </div>
                 )}
-
-                {/* 2/3. Story ↔ Scenario Technical Bridge */}
-                <div
-                  data-testid={`step-guide-technical-bridge-${step.stepNumber}`}
-                  className="space-y-1.5"
-                >
-                  <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    {isSeparatedScenario
-                      ? '2. Story ↔ Scenario Technical Bridge:'
-                      : '3. Story ↔ Scenario Technical Bridge:'}
-                  </div>
-                  <StructuredClausesList clauses={step.structuredClauses} />
-                </div>
 
                 {/* 3/4. Practical Under-the-Hood Mechanism & Specs */}
                 <div

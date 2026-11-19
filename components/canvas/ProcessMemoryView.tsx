@@ -101,7 +101,7 @@ export function ProcessMemoryView({
           </span>
         </div>
 
-        {/* 0. Story Analogy + Bespoke 3D Virtual Memory Diff Scene (when registered) */}
+        {/* 0. FIRST: Real-World Story Analogy (Exact Overview Amber Card Standard) */}
         {(() => {
           const mem3d = getSection3DDescriptor(
             scenario.id,
@@ -109,43 +109,35 @@ export function ProcessMemoryView({
           );
           if (!mem3d) return null;
           return (
-            <section
-              data-testid="memory-story-and-3d-section"
-              className="space-y-3"
+            <div
+              data-testid="memory-story-analogy"
+              className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 space-y-1"
             >
-              <div className="p-3.5 rounded-xl bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1">
-                <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    Real-World Story Analogy · {mem3d.title}
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
-                  {mem3d.storyCue}
-                </p>
+              <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>Real-World Story Analogy · {mem3d.title}</span>
               </div>
-              <ScenarioSection3DEmbed
-                scenarioId={scenario.id}
-                sectionKey="memory-forensics"
-              />
-            </section>
+              <p className="text-xs sm:text-[13px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                {mem3d.storyCue}
+              </p>
+            </div>
           );
         })()}
 
-        {/* 1. Context-Aware Memory Forensics Briefing with Parenthetical (why ...) Callouts */}
+        {/* 1. RIGHT BELOW STORY: Technical Documented Virtual Memory Forensics Briefing */}
         <section
           data-testid="memory-scope-briefing"
-          className="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/50 space-y-3"
+          className="p-4 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-3"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1 min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+              <div className="flex items-center gap-2 text-[10.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 <Cpu className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   1. DOCUMENTED VIRTUAL MEMORY FORENSICS (VAD / PE-SIEVE GROUNDED)
                 </span>
               </div>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
+              <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
                 {scopedMemory.scopeExplanation}
               </p>
             </div>
@@ -157,17 +149,17 @@ export function ProcessMemoryView({
           </div>
 
           {scopedMemory.structuredScopeClauses.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-rose-200/70 dark:border-rose-900/50">
+            <div className="space-y-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800">
               {scopedMemory.structuredScopeClauses.map((clause, cIdx) => (
                 <div
                   key={`${clause.clauseCode}-${cIdx}`}
-                  className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/85 border border-rose-200/70 dark:border-rose-800/60 space-y-1.5"
+                  className="p-2.5 rounded-xl bg-white dark:bg-zinc-900/85 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
                 >
                   <div className="flex items-start gap-2">
-                    <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                    <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
                       #{clause.clauseCode}
                     </span>
-                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                    <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
                       {clause.coreStatement}
                     </p>
                   </div>
@@ -192,6 +184,16 @@ export function ProcessMemoryView({
             </div>
           )}
         </section>
+
+        {/* 1A. FULL-WIDTH STANDARD ANIME 3D VIRTUAL MEMORY DIFF STAGE */}
+        {getSection3DDescriptor(scenario.id, 'memory-forensics') && (
+          <section data-testid="memory-story-and-3d-section">
+            <ScenarioSection3DEmbed
+              scenarioId={scenario.id}
+              sectionKey="memory-forensics"
+            />
+          </section>
+        )}
 
         {/* 1B. Visual Memory Analysis Flowchart (Dump -> String Analysis -> Forensic Extraction) */}
         <MemoryForensicsFlowchart flowchart={scopedMemory.flowchart} />

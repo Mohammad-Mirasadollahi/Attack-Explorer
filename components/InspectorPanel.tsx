@@ -29,10 +29,13 @@ import { InspectorContextMiniMap } from './InspectorContextMiniMap';
 import { SketchNodeIcon } from './SketchNodeIcons';
 import { ProcessMemoryView } from './canvas/ProcessMemoryView';
 import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-diagrams';
-import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
+import {
+  getRawScenarioStepGuide,
+  parseStructuredExplanationClauses,
+} from '@/lib/scenario-step-guides';
 import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
 import { CommandBreakdownList } from './CommandBreakdownList';
-import { ScenarioSection3DEmbed } from './three/ScenarioSection3DEmbed';
+import { StandardStoryTechnicalSection } from './StandardStoryTechnicalSection';
 import {
   getSection3DDescriptor,
   hasSection3DScene,
@@ -1204,42 +1207,22 @@ export function InspectorPanel({
                       {scenario.name}
                     </h2>
 
-                    <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                      <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
-                        Story-to-Spec Analogy & Executive Summary
-                      </div>
-                      {effectiveScopeContext.scopedStoryAnalogy ||
-                        scenario.overview}
-                    </div>
-
-                    {hasSection3DScene(scenario.id, 'briefing') && (
-                      <ScenarioSection3DEmbed
-                        scenarioId={scenario.id}
-                        sectionKey="briefing"
-                        className="pt-1"
-                      />
-                    )}
-
-                    <div className="space-y-2">
-                      {parseStructuredExplanationClauses(
-                        scenario.overview,
-                        '0'
-                      ).map((clause, cIdx) => (
-                        <div
-                          key={`${clause.clauseCode}-${cIdx}`}
-                          className="p-2.5 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
-                              #{clause.clauseCode}
-                            </span>
-                            <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
-                              {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <StandardStoryTechnicalSection
+                      scenarioId={scenario.id}
+                      sectionKey={
+                        hasSection3DScene(scenario.id, 'briefing')
+                          ? 'briefing'
+                          : null
+                      }
+                      storyHeading="Story-to-Spec Analogy & Executive Summary"
+                      storyAnalogy={
+                        effectiveScopeContext.scopedStoryAnalogy ||
+                        scenario.overview
+                      }
+                      technicalHeading="Technical Architecture & Forensic Overview"
+                      technicalText={scenario.overview}
+                      clausePrefix="0"
+                    />
 
                   </section>
 
@@ -1360,48 +1343,53 @@ export function InspectorPanel({
                               const sec3d = secKey
                                 ? getSection3DDescriptor(scenario.id, secKey)
                                 : null;
-                              if (!secKey || !sec3d) return null;
-                              return (
-                                <div className="space-y-2.5">
-                                  <div className="p-3 rounded-lg bg-amber-50/75 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/70 space-y-1">
-                                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                                      <span>
-                                        Story Analogy · {sec3d.title}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
-                                      {sec3d.storyCue}
-                                    </p>
-                                  </div>
-                                  <ScenarioSection3DEmbed
+                              const rawGuide = getRawScenarioStepGuide(
+                                scenario.id
+                              );
+                              const stepStory = rawGuide?.steps.find(
+                                (s) => s.stepNumber === st.index
+                              )?.storyAnalogy;
+
+                              if (secKey && sec3d) {
+                                return (
+                                  <StandardStoryTechnicalSection
                                     scenarioId={scenario.id}
                                     sectionKey={secKey}
+                                    storyHeading={`Story Analogy · Stage S${st.index} (${sec3d.title})`}
+                                    storyAnalogy={stepStory || sec3d.storyCue}
+                                    technicalHeading={`Technical Forensic Deep-Dive · Stage S${st.index}`}
+                                    technicalText={st.description}
+                                    clausePrefix={String(st.index)}
                                   />
+                                );
+                              }
+
+                              return (
+                                <div className="space-y-1.5">
+                                  {parseStructuredExplanationClauses(
+                                    st.description,
+                                    String(st.index)
+                                  ).map((clause, cIdx) => (
+                                    <div
+                                      key={`${clause.clauseCode}-${cIdx}`}
+                                      className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
+                                          #{clause.clauseCode}
+                                        </span>
+                                        <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
+                                          {clause.fullText.replace(
+                                            /\(\s*why\s*:\s*/gi,
+                                            '('
+                                          )}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               );
                             })()}
-
-                            <div className="space-y-1.5">
-                              {parseStructuredExplanationClauses(
-                                st.description,
-                                String(st.index)
-                              ).map((clause, cIdx) => (
-                                <div
-                                  key={`${clause.clauseCode}-${cIdx}`}
-                                  className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <span className="px-1.5 py-0.5 rounded bg-indigo-600 text-white font-mono text-[9.5px] font-extrabold shrink-0 mt-0.5">
-                                      #{clause.clauseCode}
-                                    </span>
-                                    <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed break-words flex-1">
-                                      {clause.fullText.replace(/\(\s*why\s*:\s*/gi, '(')}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
 
                             {/* Stage-Specific Structural Conduit & Process Spawn Diagram */}
                             <div

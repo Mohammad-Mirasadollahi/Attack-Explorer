@@ -1,333 +1,703 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import {
+  ANIME_3D_STAGE_STANDARD,
+  computeActivePhaseIndex,
+  getPhaseMidpointNormalized,
+  type Anime3DSceneKind,
+  type Section3DCalloutSpec,
+  type Section3DDescriptor,
+  type StandardCameraPresetId,
+  type StandardCutawayMode,
+} from '@/lib/section-3d-registry';
+import { computeFloatingCalloutLayout } from '@/lib/hollowing-3d-overlay-layout';
+import {
+  createAnimeMaterialLibrary,
+  createAnimeSkyDome,
+} from './anime-toon-materials';
+import { buildBespokeSectionScene } from './hollowing-step-scene-builders';
+import {
+  Camera,
+  ChevronDown,
+  ChevronUp,
+  Eye,
   Maximize2,
   Minimize2,
   Pause,
   Play,
   RotateCcw,
+  ShieldAlert,
   Sparkles,
   Tag,
+  Truck,
 } from 'lucide-react';
-import {
-  computeActivePhaseIndex,
-  type Anime3DSceneKind,
-  type Section3DCalloutSpec,
-  type Section3DDescriptor,
-} from '@/lib/section-3d-registry';
-import {
-  computeFloatingCalloutLayout,
-  type FloatingCalloutLayout,
-} from '@/lib/hollowing-3d-overlay-layout';
-import {
-  createAnimeMaterialLibrary,
-  createAnimeSkyDome,
-} from './anime-toon-materials';
-import { buildAnimeMagicGlitchParticles } from './anime-particle-system';
-import { buildBespokeSectionScene } from './hollowing-step-scene-builders';
+
+// Pre-allocated scratch vectors for zero GC allocations in the render loop
+const _scratchCamPos = new THREE.Vector3();
+const _scratchCamTarget = new THREE.Vector3();
+const _scratchPrimary = new THREE.Vector3();
+const _scratchSecondary = new THREE.Vector3();
+
+function detectSoftwareWebGL(): boolean {
+  if (typeof document === 'undefined') return false;
+  try {
+    const probeCanvas = document.createElement('canvas');
+    const gl =
+      probeCanvas.getContext('webgl2') || probeCanvas.getContext('webgl');
+    if (!gl) return true;
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
+    const gpu = String(gl.getParameter(param) || '');
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+  } catch {
+    return true;
+  }
+}
+
+const CALLOUT_CARD_STYLES: Record<
+  Section3DCalloutSpec['tone'],
+  { card: string; icon: string; sub: string }
+> = {
+  sky: {
+    card: 'bg-slate-950/84 border-sky-400/90 text-sky-400',
+    icon: 'text-sky-300',
+    sub: 'text-sky-200/95',
+  },
+  rose: {
+    card: 'bg-slate-950/86 border-rose-500/90 text-rose-400',
+    icon: 'text-rose-400',
+    sub: 'text-rose-200/95',
+  },
+  amber: {
+    card: 'bg-slate-950/86 border-amber-400/90 text-amber-400',
+    icon: 'text-amber-300',
+    sub: 'text-amber-200/95',
+  },
+  emerald: {
+    card: 'bg-slate-950/86 border-emerald-400/90 text-emerald-400',
+    icon: 'text-emerald-300',
+    sub: 'text-emerald-200/95',
+  },
+};
 
 interface AnimeSection3DStageProps {
   descriptor: Section3DDescriptor;
   className?: string;
 }
 
-const CALLOUT_TONE_CLASSES: Record<
-  Section3DCalloutSpec['tone'],
-  { border: string; dot: string; tag: string; stem: string }
-> = {
-  sky: {
-    border: 'border-sky-400/75 text-sky-100',
-    dot: 'bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.9)]',
-    tag: 'text-sky-300',
-    stem: 'from-sky-400/90',
-  },
-  rose: {
-    border: 'border-rose-400/75 text-rose-100',
-    dot: 'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.9)]',
-    tag: 'text-rose-300',
-    stem: 'from-rose-400/90',
-  },
-  amber: {
-    border: 'border-amber-400/75 text-amber-100',
-    dot: 'bg-amber-400 shadow-[0_0_8px_rgba(250,204,21,0.9)]',
-    tag: 'text-amber-300',
-    stem: 'from-amber-400/90',
-  },
-  emerald: {
-    border: 'border-emerald-400/75 text-emerald-100',
-    dot: 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]',
-    tag: 'text-emerald-300',
-    stem: 'from-emerald-400/90',
-  },
-};
-
+/**
+ * Canonical Three.js Anime 3D Stage modeled identically on the Process Hollowing
+ * Overview stage (`ProcessHollowingBankScene.tsx`):
+ * - Exact light/dark manga Top-Left Storyboard Card (Story first, Technical right below)
+ * - Exact Top-Right Actions (`Cutaway: AUTO/OPEN/SEALED` + Amber `Full Page`)
+ * - Exact Collapsible 2-Row Bottom Control Dock (`Hide/Show Controls`, `Pause/Play`, `Restart`,
+ *   Phase tabs, `0.5x/1x/1.5x`, `% + Timeline Scrubber`, `Camera` + 4 Viewpoint Presets,
+ *   Emerald `Labels ON/OFF`, Fuchsia `Bloom ON/OFF`)
+ * - Direct DOM ref `.anime-floating-callout-card` 3D overlays (zero React re-renders)
+ * - Software-WebGL (`SwiftShader`) `fenceSync` pacing + half-res bloom protection
+ */
 export function AnimeSection3DStage({
   descriptor,
   className = '',
 }: AnimeSection3DStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const canvasHostRef = useRef<HTMLDivElement | null>(null);
+  const canvasMountRef = useRef<HTMLDivElement | null>(null);
+  const primaryLabelRef = useRef<HTMLDivElement | null>(null);
+  const secondaryLabelRef = useRef<HTMLDivElement | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [bloomEnabled, setBloomEnabled] = useState(true);
-  const [labelsVisible, setLabelsVisible] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [activePhaseIdx, setActivePhaseIdx] = useState(0);
-  const [calloutLayout, setCalloutLayout] = useState<FloatingCalloutLayout>({
-    bankTruck: { x: 0, y: 0, visible: false, clamped: false },
-    hiddenIntruder: { x: 0, y: 0, visible: false, clamped: false },
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [activePhaseIndex, setActivePhaseIndex] = useState<number>(0);
+  const [timelinePct, setTimelinePct] = useState<number>(4);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [cutawayMode, setCutawayMode] = useState<StandardCutawayMode>('AUTO');
+  const [cameraPreset, setCameraPreset] =
+    useState<StandardCameraPresetId>('DIRECTOR');
+  const [dockExpanded, setDockExpanded] = useState<boolean>(true);
+  const [isFullPage, setIsFullPage] = useState<boolean>(false);
+  const [bloomEnabled, setBloomEnabled] = useState<boolean>(true);
+  const [labelsEnabled, setLabelsEnabled] = useState<boolean>(true);
+  const [webglError, setWebglError] = useState<string | null>(null);
+  const [manualOrbitActive, setManualOrbitActive] = useState<boolean>(false);
+
+  const simRef = useRef({
+    normalizedTime: 0.04,
+    isPlaying: true,
+    playbackSpeed: 1,
+    cutawayMode: 'AUTO' as StandardCutawayMode,
+    cameraPreset: 'DIRECTOR' as StandardCameraPresetId,
+    bloomEnabled: true,
+    labelsEnabled: true,
+    viewportWidth: 1200,
+    viewportHeight: 640,
+    manualOrbit: false,
+    snapCamera: true,
+    isDark: false,
+    elapsed: 0,
+    lastUiSyncMs: 0,
+    lastPhaseIndex: 0,
+    requestRender: () => {},
   });
 
-  const isPlayingRef = useRef(isPlaying);
-  const bloomEnabledRef = useRef(bloomEnabled);
-  const labelsVisibleRef = useRef(labelsVisible);
-  const timelineTimeRef = useRef(0);
-  const resetCameraFnRef = useRef<(() => void) | null>(null);
-
   useEffect(() => {
-    isPlayingRef.current = isPlaying;
+    simRef.current.isPlaying = isPlaying;
+    simRef.current.requestRender();
   }, [isPlaying]);
 
   useEffect(() => {
-    bloomEnabledRef.current = bloomEnabled;
+    simRef.current.playbackSpeed = playbackSpeed;
+  }, [playbackSpeed]);
+
+  useEffect(() => {
+    simRef.current.cutawayMode = cutawayMode;
+    simRef.current.requestRender();
+  }, [cutawayMode]);
+
+  useEffect(() => {
+    simRef.current.bloomEnabled = bloomEnabled;
+    simRef.current.requestRender();
   }, [bloomEnabled]);
 
   useEffect(() => {
-    labelsVisibleRef.current = labelsVisible;
-  }, [labelsVisible]);
+    simRef.current.labelsEnabled = labelsEnabled;
+    simRef.current.requestRender();
+  }, [labelsEnabled]);
 
   useEffect(() => {
-    const host = canvasHostRef.current;
-    if (!host) return;
+    simRef.current.cameraPreset = cameraPreset;
+    simRef.current.manualOrbit = false;
+    simRef.current.snapCamera = true;
+    simRef.current.requestRender();
+  }, [cameraPreset]);
+
+  // Escape exits Full-Page view; H toggles dock when Full-Page
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullPage) {
+        e.preventDefault();
+        setIsFullPage(false);
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (isFullPage && (e.key === 'h' || e.key === 'H')) {
+        e.preventDefault();
+        setDockExpanded((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFullPage]);
+
+  useEffect(() => {
+    const mountEl = canvasMountRef.current;
+    if (!mountEl) return;
     if (descriptor.sceneKind === 'bank-truck-briefing') return;
 
     const sceneKind = descriptor.sceneKind as Exclude<
       Anime3DSceneKind,
       'bank-truck-briefing'
     >;
+    const isSoftwareGl = detectSoftwareWebGL();
 
-    const initWidth = Math.max(320, host.clientWidth || 960);
-    const initHeight = Math.max(320, host.clientHeight || 540);
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: !isSoftwareGl,
+        powerPreference: 'high-performance',
+        alpha: false,
+      });
+    } catch {
+      queueMicrotask(() => {
+        setWebglError('WebGL is unavailable in this browser environment.');
+      });
+      return;
+    }
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    renderer.setPixelRatio(dpr);
-    renderer.setSize(initWidth, initHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.04;
-    renderer.shadowMap.enabled = true;
+    const isDarkNow = document.documentElement.classList.contains('dark');
+    simRef.current.isDark = isDarkNow;
+    renderer.toneMappingExposure = isDarkNow ? 0.96 : 1.02;
+    renderer.setPixelRatio(
+      isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2)
+    );
+    renderer.shadowMap.enabled = !isSoftwareGl;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.domElement.style.display = 'block';
+
+    const initialW = Math.max(320, mountEl.clientWidth || 1200);
+    const initialH = Math.max(360, mountEl.clientHeight || 640);
+    simRef.current.viewportWidth = initialW;
+    simRef.current.viewportHeight = initialH;
+    renderer.setSize(initialW, initialH, false);
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
-    host.appendChild(renderer.domElement);
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.dataset.testid = `section-3d-canvas-${descriptor.sectionKey}`;
+    mountEl.innerHTML = '';
+    mountEl.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const isDarkInit = document.documentElement.classList.contains('dark');
-    scene.fog = new THREE.FogExp2(isDarkInit ? 0x0b1024 : 0xcbe4f9, 0.014);
+    const fogColorLight = new THREE.Color(0xdfeffc);
+    const fogColorDark = new THREE.Color(0x0b1024);
 
-    const camera = new THREE.PerspectiveCamera(
-      40,
-      initWidth / initHeight,
-      0.1,
-      200
+    scene.background = (isDarkNow ? fogColorDark : fogColorLight).clone();
+    scene.fog = new THREE.FogExp2(
+      isDarkNow ? fogColorDark.getHex() : fogColorLight.getHex(),
+      isDarkNow ? 0.0085 : 0.0105
     );
 
-    const materials = createAnimeMaterialLibrary(renderer);
-    const skyDome = createAnimeSkyDome();
-    skyDome.uniforms.uDarkMode.value = isDarkInit ? 1.0 : 0.0;
-    scene.add(skyDome.mesh);
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const envTarget = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envTarget.texture;
+    pmremGenerator.dispose();
 
-    // Crisp Japanese anime key + sky hemisphere + rim lights
+    const materials = createAnimeMaterialLibrary(renderer);
+    const sky = createAnimeSkyDome();
+    sky.uniforms.uDarkMode.value = isDarkNow ? 1 : 0;
+    scene.add(sky.mesh);
+
     const hemiLight = new THREE.HemisphereLight(
-      isDarkInit ? 0x93c5fd : 0xf0f9ff,
-      isDarkInit ? 0x1e1b4b : 0x334155,
-      isDarkInit ? 1.15 : 1.35
+      isDarkNow ? 0x3b82f6 : 0xdbeafe,
+      isDarkNow ? 0x0f172a : 0x64748b,
+      isDarkNow ? 0.46 : 0.92
     );
     scene.add(hemiLight);
 
-    const sunLight = new THREE.DirectionalLight(
-      isDarkInit ? 0xe0f2fe : 0xfff7ed,
-      isDarkInit ? 1.9 : 2.1
+    const keyLight = new THREE.DirectionalLight(
+      isDarkNow ? 0xa5b4fc : 0xfff7ed,
+      isDarkNow ? 1.15 : 1.72
     );
-    sunLight.position.set(11, 16, 12);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(1024, 1024);
-    scene.add(sunLight);
+    keyLight.position.set(16, 26, 18);
+    keyLight.castShadow = !isSoftwareGl;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    scene.add(keyLight);
 
     const rimLight = new THREE.DirectionalLight(
       new THREE.Color(descriptor.accentHex),
-      1.05
+      isDarkNow ? 1.0 : 0.72
     );
-    rimLight.position.set(-10, 7, -10);
+    rimLight.position.set(-20, 14, -18);
     scene.add(rimLight);
 
-    // Build this section's bespoke anime diorama
-    const bespoke = buildBespokeSectionScene(sceneKind, materials);
+    const bespoke = buildBespokeSectionScene(sceneKind, materials, isSoftwareGl);
     scene.add(bespoke.root);
 
-    // Dual-layer Anime Magic Dust & Digital Glitch particle aura
-    const particleSystem = buildAnimeMagicGlitchParticles(dpr);
-    scene.add(particleSystem.root);
+    const pixelRatio = renderer.getPixelRatio();
 
-    camera.position.copy(bespoke.defaultCameraPos);
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      initialW / initialH,
+      0.2,
+      240
+    );
+    const initialPreset = descriptor.cameraPresets[0];
+    camera.position.set(...initialPreset.position);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.075;
-    controls.maxPolarAngle = Math.PI * 0.48;
-    controls.minDistance = 5.5;
-    controls.maxDistance = 24;
-    controls.target.copy(bespoke.defaultCameraTarget);
+    controls.enableDamping = !isSoftwareGl;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 36;
+    controls.maxPolarAngle = Math.PI * 0.475;
+    controls.minPolarAngle = 0.14;
+    controls.target.set(...initialPreset.target);
     controls.update();
 
-    resetCameraFnRef.current = () => {
-      camera.position.copy(bespoke.defaultCameraPos);
-      controls.target.copy(bespoke.defaultCameraTarget);
-      controls.update();
-    };
+    // Selective HDR Anime Bloom Pipeline (strictly HDR threshold + half-res on software GL)
+    const composerTarget = new THREE.WebGLRenderTarget(initialW, initialH, {
+      type: THREE.HalfFloatType,
+      samples: isSoftwareGl ? 0 : 4,
+    });
+    const composer = new EffectComposer(renderer, composerTarget);
+    composer.setPixelRatio(pixelRatio);
+    composer.setSize(initialW, initialH);
 
-    // Selective HDR Anime Bloom Composer (strict HDR threshold prevents white-out)
-    const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
 
+    const bloomResX = isSoftwareGl
+      ? Math.max(120, Math.floor(initialW / 2))
+      : initialW;
+    const bloomResY = isSoftwareGl
+      ? Math.max(120, Math.floor(initialH / 2))
+      : initialH;
     const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(initWidth, initHeight),
-      isDarkInit ? 0.4 : 0.24,
-      isDarkInit ? 0.4 : 0.3,
-      isDarkInit ? 0.98 : 1.12
+      new THREE.Vector2(bloomResX, bloomResY),
+      isDarkNow ? 0.42 : 0.26,
+      isDarkNow ? 0.42 : 0.32,
+      isDarkNow ? 0.98 : 1.12
     );
     composer.addPass(bloomPass);
     const outputPass = new OutputPass();
     composer.addPass(outputPass);
 
-    let viewportW = initWidth;
-    let viewportH = initHeight;
-
-    const handleResize = () => {
-      const w = Math.max(320, host.clientWidth || 960);
-      const h = Math.max(320, host.clientHeight || 540);
-      viewportW = w;
-      viewportH = h;
-      const nextDpr = Math.min(window.devicePixelRatio || 1, 2);
-      renderer.setPixelRatio(nextDpr);
-      renderer.setSize(w, h);
-      composer.setSize(w, h);
-      bloomPass.resolution.set(w, h);
-      particleSystem.setPixelRatio(nextDpr);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(host);
-
-    // Pre-allocated vectors for floating callout projection (zero per-frame GC)
-    const _projPrimary = new THREE.Vector3();
-    const _projSecondary = new THREE.Vector3();
-    let lastUiSync = 0;
-    let lastPhase = -1;
-    let lastFrameMs = performance.now();
-    let animId = 0;
-
-    const projectAnchor = (obj: THREE.Object3D, out: THREE.Vector3) => {
-      obj.getWorldPosition(out);
-      out.project(camera);
-      const visible = out.z >= -1 && out.z <= 1;
-      return {
-        x: (out.x * 0.5 + 0.5) * viewportW,
-        y: (-out.y * 0.5 + 0.5) * viewportH,
-        visible,
-      };
-    };
-
-    const animate = (nowMs: number) => {
-      animId = requestAnimationFrame(animate);
-      const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastFrameMs) / 1000));
-      lastFrameMs = nowMs;
-
-      if (isPlayingRef.current) {
-        timelineTimeRef.current =
-          (timelineTimeRef.current + dt) % descriptor.durationSec;
-      }
-
-      const elapsed = timelineTimeRef.current;
-      const isDark = document.documentElement.classList.contains('dark');
-      skyDome.uniforms.uTime.value = nowMs * 0.001;
-      skyDome.uniforms.uDarkMode.value = isDark ? 1.0 : 0.0;
-
-      // Sync selective bloom strength/threshold for light vs dark theme
-      bloomPass.strength = isDark ? 0.4 : 0.24;
-      bloomPass.radius = isDark ? 0.4 : 0.3;
-      bloomPass.threshold = isDark ? 0.98 : 1.12;
-
-      const phaseIdx = computeActivePhaseIndex(descriptor, elapsed);
-      const fx = bespoke.update(elapsed, phaseIdx, isDark);
-
-      particleSystem.update({
-        elapsed: nowMs * 0.001,
-        truckX: bespoke.particleCenter.x,
-        glitchIntensity: fx.glitchIntensity,
-        magicDustIntensity: fx.magicDustIntensity,
-        primaryHex: descriptor.accentHex,
-        secondaryHex: descriptor.secondaryHex,
-        stasisIntensity: fx.stasisIntensity,
-        brakeReleaseBoost: fx.brakeReleaseBoost,
-      });
-
-      controls.update();
-
-      if (bloomEnabledRef.current) {
+    const renderFrame = () => {
+      if (simRef.current.bloomEnabled) {
         composer.render();
       } else {
         renderer.render(scene, camera);
       }
+    };
 
-      // Sync React HUD / floating callouts at ~24Hz
-      if (nowMs - lastUiSync > 42) {
-        lastUiSync = nowMs;
-        if (phaseIdx !== lastPhase) {
-          lastPhase = phaseIdx;
-          setActivePhaseIdx(phaseIdx);
+    const syncTheme = () => {
+      const dark = document.documentElement.classList.contains('dark');
+      simRef.current.isDark = dark;
+      renderer.toneMappingExposure = dark ? 0.96 : 1.02;
+      sky.uniforms.uDarkMode.value = dark ? 1 : 0;
+      const targetFog = dark ? fogColorDark : fogColorLight;
+      if (scene.background instanceof THREE.Color) {
+        scene.background.copy(targetFog);
+      }
+      if (scene.fog instanceof THREE.FogExp2) {
+        scene.fog.color.copy(targetFog);
+        scene.fog.density = dark ? 0.0085 : 0.0105;
+      }
+      hemiLight.color.setHex(dark ? 0x3b82f6 : 0xdbeafe);
+      hemiLight.groundColor.setHex(dark ? 0x0f172a : 0x64748b);
+      hemiLight.intensity = dark ? 0.46 : 0.92;
+      keyLight.color.setHex(dark ? 0xa5b4fc : 0xfff7ed);
+      keyLight.intensity = dark ? 1.15 : 1.72;
+      rimLight.intensity = dark ? 1.0 : 0.72;
+    };
+
+    const themeObserver = new MutationObserver(() => {
+      syncTheme();
+      requestRender();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    const applySceneState = (dt: number) => {
+      const sim = simRef.current;
+      sim.elapsed += dt;
+
+      if (sim.isPlaying) {
+        sim.normalizedTime =
+          (sim.normalizedTime +
+            (dt * sim.playbackSpeed) / descriptor.durationSec) %
+          1;
+      }
+
+      const timeSec = sim.normalizedTime * descriptor.durationSec;
+      const phaseIdx = computeActivePhaseIndex(descriptor, timeSec);
+      sky.uniforms.uTime.value = sim.elapsed;
+
+      bespoke.update(timeSec, phaseIdx, sim.isDark, sim.cutawayMode);
+
+      bloomPass.strength = sim.isDark ? 0.42 : 0.26;
+      bloomPass.threshold = sim.isDark ? 0.98 : 1.12;
+      bloomPass.radius = sim.isDark ? 0.42 : 0.32;
+
+      // Smooth camera preset interpolation (or Director gentle breathing orbit)
+      if (!sim.manualOrbit) {
+        const preset =
+          descriptor.cameraPresets.find((p) => p.id === sim.cameraPreset) ||
+          descriptor.cameraPresets[0];
+        _scratchCamPos.set(...preset.position);
+        _scratchCamTarget.set(...preset.target);
+        if (sim.cameraPreset === 'DIRECTOR') {
+          _scratchCamPos.x += Math.sin(sim.elapsed * 0.28) * 0.7;
+          _scratchCamPos.y += Math.cos(sim.elapsed * 0.22) * 0.25;
         }
-        if (labelsVisibleRef.current) {
-          const p1 = projectAnchor(bespoke.primaryAnchor, _projPrimary);
-          const p2 = projectAnchor(bespoke.secondaryAnchor, _projSecondary);
-          setCalloutLayout(
-            computeFloatingCalloutLayout({
-              viewportWidth: viewportW,
-              viewportHeight: viewportH,
-              bankTruck: p1,
-              hiddenIntruder: p2,
-            })
+        if (sim.snapCamera) {
+          camera.position.copy(_scratchCamPos);
+          controls.target.copy(_scratchCamTarget);
+          sim.snapCamera = false;
+        } else {
+          const lambda = isSoftwareGl ? 10.5 : 4.8;
+          camera.position.x = THREE.MathUtils.damp(
+            camera.position.x,
+            _scratchCamPos.x,
+            lambda,
+            dt
+          );
+          camera.position.y = THREE.MathUtils.damp(
+            camera.position.y,
+            _scratchCamPos.y,
+            lambda,
+            dt
+          );
+          camera.position.z = THREE.MathUtils.damp(
+            camera.position.z,
+            _scratchCamPos.z,
+            lambda,
+            dt
+          );
+          controls.target.x = THREE.MathUtils.damp(
+            controls.target.x,
+            _scratchCamTarget.x,
+            lambda,
+            dt
+          );
+          controls.target.y = THREE.MathUtils.damp(
+            controls.target.y,
+            _scratchCamTarget.y,
+            lambda,
+            dt
+          );
+          controls.target.z = THREE.MathUtils.damp(
+            controls.target.z,
+            _scratchCamTarget.z,
+            lambda,
+            dt
           );
         }
+      } else {
+        sim.snapCamera = false;
+      }
+
+      controls.update();
+
+      // Direct DOM ref update for floating translucent 3D callout labels (zero React re-renders!)
+      const pEl = primaryLabelRef.current;
+      const sEl = secondaryLabelRef.current;
+      if (pEl && sEl) {
+        if (!sim.labelsEnabled) {
+          pEl.style.opacity = '0';
+          sEl.style.opacity = '0';
+        } else {
+          camera.updateMatrixWorld();
+          bespoke.root.updateMatrixWorld(true);
+          const vw = sim.viewportWidth;
+          const vh = sim.viewportHeight;
+
+          bespoke.primaryAnchor.getWorldPosition(_scratchPrimary);
+          _scratchPrimary.project(camera);
+          const pVisible = _scratchPrimary.z >= -1 && _scratchPrimary.z <= 1;
+
+          bespoke.secondaryAnchor.getWorldPosition(_scratchSecondary);
+          _scratchSecondary.project(camera);
+          const sVisible =
+            _scratchSecondary.z >= -1 && _scratchSecondary.z <= 1;
+
+          const layout = computeFloatingCalloutLayout({
+            viewportWidth: vw,
+            viewportHeight: vh,
+            bankTruck: {
+              x: (_scratchPrimary.x * 0.5 + 0.5) * vw,
+              y: (-_scratchPrimary.y * 0.5 + 0.5) * vh,
+              visible: pVisible,
+            },
+            hiddenIntruder: {
+              x: (_scratchSecondary.x * 0.5 + 0.5) * vw,
+              y: (-_scratchSecondary.y * 0.5 + 0.5) * vh,
+              visible: sVisible,
+            },
+          });
+
+          if (layout.bankTruck.visible) {
+            pEl.style.transform = `translate3d(${layout.bankTruck.x}px, ${layout.bankTruck.y}px, 0)`;
+            pEl.style.opacity = '1';
+          } else {
+            pEl.style.opacity = '0';
+          }
+
+          if (layout.hiddenIntruder.visible) {
+            sEl.style.transform = `translate3d(${layout.hiddenIntruder.x}px, ${layout.hiddenIntruder.y}px, 0)`;
+            sEl.style.opacity = '1';
+          } else {
+            sEl.style.opacity = '0';
+          }
+        }
+      }
+
+      // Throttled HUD sync (<= 6Hz or immediate on phase transition)
+      const nowMs = performance.now();
+      if (
+        phaseIdx !== sim.lastPhaseIndex ||
+        nowMs - sim.lastUiSyncMs > 180
+      ) {
+        sim.lastPhaseIndex = phaseIdx;
+        sim.lastUiSyncMs = nowMs;
+        setActivePhaseIndex(phaseIdx);
+        setTimelinePct(Math.round(sim.normalizedTime * 100));
       }
     };
 
-    animId = requestAnimationFrame(animate);
+    // Software-WebGL fenceSync frame scheduler (prevents SwiftShader CPU starvation!)
+    let disposed = false;
+    let frameId = 0;
+    let renderBusy = false;
+    let renderDirty = false;
+    let lastTickTime = performance.now();
+
+    function afterDraw(cb: () => void) {
+      if (disposed) return;
+      const gl = renderer.getContext() as WebGL2RenderingContext;
+      if (gl && typeof gl.fenceSync === 'function') {
+        const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+        gl.flush();
+        const poll = () => {
+          if (disposed) {
+            if (sync) gl.deleteSync(sync);
+            return;
+          }
+          const state = sync
+            ? gl.getSyncParameter(sync, gl.SYNC_STATUS)
+            : gl.SIGNALED;
+          if (state === gl.UNSIGNALED) {
+            frameId = window.setTimeout(poll, 8);
+          } else {
+            if (sync) gl.deleteSync(sync);
+            frameId = window.setTimeout(cb, 90);
+          }
+        };
+        frameId = window.setTimeout(poll, 8);
+      } else {
+        frameId = window.setTimeout(cb, 100);
+      }
+    }
+
+    function tick() {
+      if (disposed) return;
+      const now = performance.now();
+      const dt = Math.min(0.12, Math.max(0.004, (now - lastTickTime) / 1000));
+      lastTickTime = now;
+
+      renderDirty = false;
+      applySceneState(dt);
+      renderFrame();
+
+      const finishCycle = () => {
+        if (disposed) return;
+        if (simRef.current.isPlaying) {
+          tick();
+        } else {
+          renderBusy = false;
+          if (renderDirty) {
+            renderDirty = false;
+            requestRender();
+          }
+        }
+      };
+
+      if (simRef.current.isPlaying) {
+        if (isSoftwareGl) {
+          afterDraw(finishCycle);
+        } else {
+          frameId = window.requestAnimationFrame(finishCycle);
+        }
+      } else {
+        const donePaused = () => {
+          renderBusy = false;
+          if (renderDirty && !disposed) {
+            renderDirty = false;
+            requestRender();
+          }
+        };
+        if (isSoftwareGl) {
+          afterDraw(donePaused);
+        } else {
+          donePaused();
+        }
+      }
+    }
+
+    function requestRender() {
+      if (disposed) return;
+      if (simRef.current.isPlaying) {
+        if (!renderBusy) {
+          renderBusy = true;
+          lastTickTime = performance.now();
+          frameId = window.requestAnimationFrame(tick);
+        } else {
+          renderDirty = true;
+        }
+        return;
+      }
+      if (renderBusy) {
+        renderDirty = true;
+        return;
+      }
+      renderBusy = true;
+      frameId = window.requestAnimationFrame(() => {
+        if (disposed) return;
+        renderDirty = false;
+        applySceneState(0.016);
+        renderFrame();
+        const done = () => {
+          renderBusy = false;
+          if (renderDirty && !disposed) {
+            renderDirty = false;
+            requestRender();
+          }
+        };
+        if (isSoftwareGl) {
+          afterDraw(done);
+        } else {
+          done();
+        }
+      });
+    }
+
+    simRef.current.requestRender = requestRender;
+
+    const handleControlsStart = () => {
+      simRef.current.manualOrbit = true;
+      setManualOrbitActive(true);
+    };
+    const handleControlsChange = () => {
+      if (!simRef.current.isPlaying) {
+        requestRender();
+      }
+    };
+    controls.addEventListener('start', handleControlsStart);
+    controls.addEventListener('change', handleControlsChange);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = Math.max(240, Math.floor(entry.contentRect.width));
+        const h = Math.max(280, Math.floor(entry.contentRect.height));
+        simRef.current.viewportWidth = w;
+        simRef.current.viewportHeight = h;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+        composer.setSize(w, h);
+        bloomPass.resolution.set(
+          isSoftwareGl ? Math.max(120, Math.floor(w / 2)) : w,
+          isSoftwareGl ? Math.max(120, Math.floor(h / 2)) : h
+        );
+        requestRender();
+      }
+    });
+    resizeObserver.observe(mountEl);
+
+    renderBusy = true;
+    lastTickTime = performance.now();
+    frameId = window.requestAnimationFrame(tick);
 
     return () => {
-      cancelAnimationFrame(animId);
+      disposed = true;
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(frameId);
       resizeObserver.disconnect();
+      themeObserver.disconnect();
+      controls.removeEventListener('start', handleControlsStart);
+      controls.removeEventListener('change', handleControlsChange);
       controls.dispose();
       bespoke.dispose();
-      particleSystem.dispose();
-      skyDome.mesh.geometry.dispose();
-      (skyDome.mesh.material as THREE.Material).dispose();
-      materials.dispose();
+      bloomPass.dispose();
+      composer.dispose();
+      composerTarget.dispose();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) {
           obj.geometry?.dispose();
@@ -338,219 +708,440 @@ export function AnimeSection3DStage({
           }
         }
       });
-      composer.dispose();
+      materials.dispose();
+      envTarget.dispose();
       renderer.dispose();
-      if (renderer.domElement.parentNode === host) {
-        host.removeChild(renderer.domElement);
-      }
     };
   }, [descriptor]);
 
+  const handleSelectPhase = useCallback(
+    (phaseIdx: number) => {
+      const targetT = getPhaseMidpointNormalized(descriptor, phaseIdx);
+      simRef.current.normalizedTime = targetT;
+      simRef.current.manualOrbit = false;
+      simRef.current.cameraPreset = 'DIRECTOR';
+      simRef.current.snapCamera = true;
+      setCameraPreset('DIRECTOR');
+      setManualOrbitActive(false);
+      setActivePhaseIndex(phaseIdx);
+      setTimelinePct(Math.round(targetT * 100));
+      simRef.current.requestRender();
+    },
+    [descriptor]
+  );
+
+  const handleScrubTimeline = useCallback(
+    (pct: number) => {
+      const clamped = Math.max(0, Math.min(100, pct));
+      const t = clamped / 100;
+      simRef.current.normalizedTime = t;
+      simRef.current.snapCamera = true;
+      setTimelinePct(clamped);
+      setActivePhaseIndex(
+        computeActivePhaseIndex(descriptor, t * descriptor.durationSec)
+      );
+      simRef.current.requestRender();
+    },
+    [descriptor]
+  );
+
+  const handleRestart = useCallback(() => {
+    simRef.current.normalizedTime = 0.01;
+    simRef.current.manualOrbit = false;
+    simRef.current.cameraPreset = 'DIRECTOR';
+    simRef.current.snapCamera = true;
+    setCameraPreset('DIRECTOR');
+    setManualOrbitActive(false);
+    setActivePhaseIndex(0);
+    setTimelinePct(1);
+    setIsPlaying(true);
+    simRef.current.requestRender();
+  }, []);
+
+  const cycleCutawayMode = useCallback(() => {
+    setCutawayMode((prev) =>
+      prev === 'AUTO' ? 'OPEN' : prev === 'OPEN' ? 'SEALED' : 'AUTO'
+    );
+  }, []);
+
   const activePhase =
-    descriptor.phases[activePhaseIdx] ?? descriptor.phases[0];
+    descriptor.phases[activePhaseIndex] || descriptor.phases[0];
   const [primaryCallout, secondaryCallout] = descriptor.callouts;
-  const primaryTone = CALLOUT_TONE_CLASSES[primaryCallout.tone];
-  const secondaryTone = CALLOUT_TONE_CLASSES[secondaryCallout.tone];
+  const primaryStyle = CALLOUT_CARD_STYLES[primaryCallout.tone];
+  const secondaryStyle = CALLOUT_CARD_STYLES[secondaryCallout.tone];
+  const totalPhases = descriptor.phases.length;
 
   return (
     <div
       ref={containerRef}
       data-testid={`section-3d-stage-${descriptor.sectionKey}`}
       data-scene-kind={descriptor.sceneKind}
+      data-is-playing={isPlaying ? 'true' : 'false'}
+      data-cutaway-mode={cutawayMode}
+      data-camera-preset={cameraPreset}
+      data-is-fullpage={isFullPage ? 'true' : 'false'}
+      data-bloom-enabled={bloomEnabled ? 'true' : 'false'}
+      data-labels-enabled={labelsEnabled ? 'true' : 'false'}
       onClick={(e) => e.stopPropagation()}
-      className={`${
-        isExpanded
-          ? 'fixed inset-3 z-[80] h-[calc(100vh-24px)]'
-          : 'relative w-full h-[520px] sm:h-[580px]'
-      } anime-3d-stage-frame transition-all ${className}`}
+      onMouseDown={(e) => e.stopPropagation()}
+      className={
+        isFullPage
+          ? 'fixed inset-0 z-[95] w-screen h-screen p-2 bg-[#0B0F17] select-none'
+          : `anime-3d-stage-frame w-full ${ANIME_3D_STAGE_STANDARD.viewportHeightClasses} select-none ${className}`
+      }
     >
-      <div className="anime-3d-canvas-bezel relative w-full h-full overflow-hidden bg-[#0B0F17] select-none">
-        {/* Live WebGL Canvas */}
-        <div ref={canvasHostRef} className="w-full h-full" />
+      <div className="anime-3d-canvas-bezel relative w-full h-full bg-[#0B0F17]">
+        {/* Isolated WebGL Canvas Mount Container */}
+        <div
+          ref={canvasMountRef}
+          className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
+        />
 
-        {/* Top-Left Synchronized Story + Technical Cue HUD */}
-        <div className="pointer-events-none absolute top-3 left-3 z-20 max-w-[385px] rounded-xl border border-sky-400/35 bg-slate-950/88 px-3.5 py-2.5 text-white shadow-xl">
-          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono font-extrabold tracking-wider text-sky-300">
-            <span className="px-1.5 py-0.5 rounded bg-sky-400 text-slate-950">
-              {descriptor.mitreId}
-            </span>
-            <span>{descriptor.stageBadge}</span>
+        {/* Floating Translucent 3D Callout Overlay #1 (Direct DOM ref, zero React re-renders) */}
+        <div
+          ref={primaryLabelRef}
+          data-testid={`floating-label-primary-${descriptor.sectionKey}`}
+          aria-hidden={!labelsEnabled}
+          className="anime-floating-callout"
+          style={{ opacity: 0 }}
+        >
+          <div className={`anime-floating-callout-card ${primaryStyle.card}`}>
+            <div className="flex items-center gap-1.5">
+              <Truck className={`w-3.5 h-3.5 shrink-0 ${primaryStyle.icon}`} />
+              <span className="text-[11.5px] font-extrabold tracking-normal text-white">
+                {primaryCallout.title}
+              </span>
+            </div>
+            <div
+              className={`text-[9.5px] font-mono font-semibold leading-tight mt-0.5 ${primaryStyle.sub}`}
+            >
+              {primaryCallout.subtitle}
+            </div>
           </div>
-          <div className="mt-1 text-xs sm:text-[13px] font-extrabold text-white leading-snug">
-            {descriptor.title}
-          </div>
-          <p className="mt-1 text-[11px] text-amber-200/95 leading-snug">
-            <strong className="font-mono text-amber-400">STORY:</strong>{' '}
-            {activePhase?.caption || descriptor.storyCue}
-          </p>
-          <p className="mt-1 text-[10.5px] font-mono text-slate-300 leading-snug border-t border-slate-800/90 pt-1">
-            <strong className="text-sky-400">TECH:</strong>{' '}
-            {descriptor.technicalCue}
-          </p>
         </div>
 
-        {/* Top-Right Controls */}
-        <div className="absolute top-3 right-3 z-20 flex flex-wrap items-center justify-end gap-1.5">
+        {/* Floating Translucent 3D Callout Overlay #2 (Direct DOM ref, zero React re-renders) */}
+        <div
+          ref={secondaryLabelRef}
+          data-testid={`floating-label-secondary-${descriptor.sectionKey}`}
+          aria-hidden={!labelsEnabled}
+          className="anime-floating-callout"
+          style={{ opacity: 0 }}
+        >
+          <div className={`anime-floating-callout-card ${secondaryStyle.card}`}>
+            <div className="flex items-center gap-1.5">
+              <ShieldAlert
+                className={`w-3.5 h-3.5 shrink-0 ${secondaryStyle.icon}`}
+              />
+              <span className="text-[11.5px] font-extrabold tracking-normal text-white">
+                {secondaryCallout.title}
+              </span>
+            </div>
+            <div
+              className={`text-[9.5px] font-mono font-semibold leading-tight mt-0.5 ${secondaryStyle.sub}`}
+            >
+              {secondaryCallout.subtitle}
+            </div>
+          </div>
+        </div>
+
+        {/* Fallback when WebGL unavailable */}
+        {webglError && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-slate-950 text-slate-100">
+            <div className="max-w-md space-y-2 border-2 border-sky-400 bg-slate-900 p-5 rounded-xl">
+              <div className="font-mono text-xs font-bold text-sky-400">
+                3D ANIME SCENE FALLBACK
+              </div>
+              <p className="text-sm font-semibold">{webglError}</p>
+              <p className="text-xs text-slate-400">{descriptor.storyCue}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Top-Left Compact Anime Storyboard Caption (EXACT Overview Manga Style: Story FIRST, Technical RIGHT BELOW) */}
+        <div
+          data-testid={`section-3d-caption-${descriptor.sectionKey}`}
+          className="pointer-events-auto absolute top-3 left-3 z-20 max-w-[min(368px,52vw)] rounded-xl bg-white/95 dark:bg-slate-950/94 border-2 border-slate-900 dark:border-slate-700 shadow-[3px_3px_0px_#0F172A] px-3 py-2 text-left space-y-1"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-[10.5px] font-mono font-bold">
+            <span
+              style={{ backgroundColor: activePhase.accentHex }}
+              className="px-1.5 py-0.5 rounded text-slate-950 font-extrabold"
+            >
+              ACT 0{activePhase.id} / 0{totalPhases}
+            </span>
+            <span className="text-slate-600 dark:text-slate-300">
+              {activePhase.stageTag}
+            </span>
+            <span aria-hidden="true" className="text-slate-400">
+              ·
+            </span>
+            <span className="text-rose-600 dark:text-rose-400">
+              {descriptor.mitreId}
+            </span>
+          </div>
+
+          <h3 className="text-xs sm:text-sm font-black tracking-tight text-slate-950 dark:text-white leading-snug">
+            {activePhase.title}
+          </h3>
+
+          {/* Story-like Excerpt FIRST */}
+          <p className="text-[11.5px] font-medium text-slate-800 dark:text-slate-200 leading-snug">
+            &ldquo;{activePhase.storyExcerpt}&rdquo;
+          </p>
+
+          {/* Technical Explanation RIGHT BELOW */}
+          <div className="pt-1 border-t border-slate-200 dark:border-slate-800 text-[10.5px] font-mono text-indigo-700 dark:text-sky-300 leading-snug">
+            {activePhase.technicalParallel}
+          </div>
+        </div>
+
+        {/* Top-Right Compact Viewport Actions (EXACT Overview Button Placement: Cutaway + Amber Full Page) */}
+        <div className="pointer-events-auto absolute top-3.5 right-3.5 z-20 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setLabelsVisible((v) => !v)}
-            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10.5px] font-mono font-bold transition-colors cursor-pointer ${
-              labelsVisible
-                ? 'border-sky-400/70 bg-slate-950/90 text-sky-200'
-                : 'border-slate-700 bg-slate-950/80 text-slate-400 hover:text-white'
+            data-testid={`section-3d-cutaway-btn-${descriptor.sectionKey}`}
+            onClick={cycleCutawayMode}
+            aria-label={`Toggle cutaway view, currently ${cutawayMode}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-slate-900 dark:border-slate-600 text-[11px] font-mono font-bold shadow-[2px_2px_0px_#0F172A] transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+              cutawayMode === 'OPEN'
+                ? 'bg-rose-600 text-white'
+                : cutawayMode === 'SEALED'
+                ? 'bg-slate-800 text-slate-100'
+                : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 hover:bg-sky-50 dark:hover:bg-slate-800'
             }`}
           >
-            <Tag className="w-3 h-3" />
-            <span>Labels {labelsVisible ? 'ON' : 'OFF'}</span>
+            <Eye className="w-3.5 h-3.5 shrink-0" />
+            <span>Cutaway: {cutawayMode}</span>
           </button>
+
           <button
             type="button"
-            onClick={() => setBloomEnabled((v) => !v)}
-            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10.5px] font-mono font-bold transition-colors cursor-pointer ${
-              bloomEnabled
-                ? 'border-amber-400/70 bg-slate-950/90 text-amber-200'
-                : 'border-slate-700 bg-slate-950/80 text-slate-400 hover:text-white'
-            }`}
+            data-testid={`section-3d-fullpage-btn-${descriptor.sectionKey}`}
+            onClick={() => setIsFullPage((prev) => !prev)}
+            aria-label={
+              isFullPage
+                ? 'Exit full page 3D view'
+                : 'Expand 3D scene to full page'
+            }
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-mono font-extrabold shadow-[2px_2px_0px_#0F172A] transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
-            <Sparkles className="w-3 h-3" />
-            <span>Bloom {bloomEnabled ? 'ON' : 'OFF'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsExpanded((v) => !v)}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-950/90 px-2.5 py-1.5 text-[10.5px] font-mono font-bold text-slate-100 hover:border-sky-400 transition-colors cursor-pointer"
-          >
-            {isExpanded ? (
+            {isFullPage ? (
               <>
-                <Minimize2 className="w-3 h-3" />
-                <span>Exit Full</span>
+                <Minimize2 className="w-3.5 h-3.5 shrink-0" />
+                <span>Exit Full Page</span>
               </>
             ) : (
               <>
-                <Maximize2 className="w-3 h-3" />
+                <Maximize2 className="w-3.5 h-3.5 shrink-0" />
                 <span>Full Page</span>
               </>
             )}
           </button>
         </div>
 
-        {/* Live 3D-Projected Floating Translucent Callout Overlays */}
-        {labelsVisible && calloutLayout.bankTruck.visible && (
-          <div
-            data-testid={`floating-label-primary-${descriptor.sectionKey}`}
-            style={{
-              transform: `translate3d(${calloutLayout.bankTruck.x}px, ${calloutLayout.bankTruck.y}px, 0) translate(-50%, -100%)`,
-            }}
-            className={`anime-floating-callout pointer-events-none absolute top-0 left-0 z-10 w-[196px] rounded-lg border bg-slate-950/76 px-2.5 py-1.5 shadow-lg ${primaryTone.border}`}
+        {/* Collapsible Unified Bottom Control Dock (EXACT Overview 2-Row Standard) */}
+        <div
+          data-testid={`section-3d-bottom-dock-${descriptor.sectionKey}`}
+          className="pointer-events-none absolute inset-x-0 bottom-3.5 z-20 flex flex-col items-center px-3"
+        >
+          {/* Collapse / Expand Toggle Handle */}
+          <button
+            type="button"
+            data-testid={`section-3d-dock-toggle-${descriptor.sectionKey}`}
+            onClick={() => setDockExpanded((prev) => !prev)}
+            aria-expanded={dockExpanded}
+            className="pointer-events-auto mb-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-t-lg rounded-b-md bg-slate-950/92 hover:bg-slate-900 text-slate-100 border border-slate-700 text-[10.5px] font-mono font-bold transition-colors cursor-pointer"
           >
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`h-2 w-2 rounded-full shrink-0 ${primaryTone.dot}`}
-              />
-              <span
-                className={`text-[9px] font-mono font-extrabold uppercase tracking-wider truncate ${primaryTone.tag}`}
-              >
-                {primaryCallout.tag}
-              </span>
-            </div>
-            <div className="mt-0.5 text-[11.5px] font-extrabold tracking-normal text-white leading-tight">
-              {primaryCallout.title}
-            </div>
-            <div className="text-[9.5px] font-mono text-slate-300 leading-tight truncate">
-              {primaryCallout.subtitle}
-            </div>
-            <div
-              className={`mx-auto mt-1 h-2.5 w-[2px] bg-gradient-to-b ${primaryTone.stem} to-transparent`}
-            />
-          </div>
-        )}
+            {dockExpanded ? (
+              <>
+                <ChevronDown className="w-3.5 h-3.5" />
+                <span>Hide Controls</span>
+              </>
+            ) : (
+              <>
+                <ChevronUp className="w-3.5 h-3.5" />
+                <span>Show Controls</span>
+              </>
+            )}
+          </button>
 
-        {labelsVisible && calloutLayout.hiddenIntruder.visible && (
-          <div
-            data-testid={`floating-label-secondary-${descriptor.sectionKey}`}
-            style={{
-              transform: `translate3d(${calloutLayout.hiddenIntruder.x}px, ${calloutLayout.hiddenIntruder.y}px, 0) translate(-50%, -100%)`,
-            }}
-            className={`anime-floating-callout pointer-events-none absolute top-0 left-0 z-10 w-[196px] rounded-lg border bg-slate-950/76 px-2.5 py-1.5 shadow-lg ${secondaryTone.border}`}
-          >
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`h-2 w-2 rounded-full shrink-0 ${secondaryTone.dot}`}
-              />
-              <span
-                className={`text-[9px] font-mono font-extrabold uppercase tracking-wider truncate ${secondaryTone.tag}`}
-              >
-                {secondaryCallout.tag}
-              </span>
-            </div>
-            <div className="mt-0.5 text-[11.5px] font-extrabold tracking-normal text-white leading-tight">
-              {secondaryCallout.title}
-            </div>
-            <div className="text-[9.5px] font-mono text-slate-300 leading-tight truncate">
-              {secondaryCallout.subtitle}
-            </div>
-            <div
-              className={`mx-auto mt-1 h-2.5 w-[2px] bg-gradient-to-b ${secondaryTone.stem} to-transparent`}
-            />
-          </div>
-        )}
+          {dockExpanded && (
+            <div className="pointer-events-auto w-full max-w-[960px] rounded-xl bg-white/95 dark:bg-slate-950/94 border-2 border-slate-900 dark:border-slate-700 shadow-[4px_4px_0px_#0F172A] px-3.5 py-2.5 space-y-2">
+              {/* Row 1: Play/Pause + Restart | Story Phase Tabs | Speed Multiplier */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    data-testid={`section-3d-play-btn-${descriptor.sectionKey}`}
+                    onClick={() => setIsPlaying((prev) => !prev)}
+                    aria-label={
+                      isPlaying ? 'Pause 3D animation' : 'Play 3D animation'
+                    }
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-extrabold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      isPlaying
+                        ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 border border-slate-900'
+                        : 'bg-rose-600 hover:bg-rose-500 text-white border border-rose-800'
+                    }`}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause className="w-3.5 h-3.5 shrink-0" />
+                        <span>Pause</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 shrink-0" />
+                        <span>Play</span>
+                      </>
+                    )}
+                  </button>
 
-        {/* Bottom Interactive Phase & Playback Dock */}
-        <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-700/80 bg-slate-950/90 px-3 py-2 text-white shadow-lg">
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setIsPlaying((p) => !p)}
-              className="inline-flex items-center gap-1 rounded-lg bg-sky-400 hover:bg-sky-300 px-2.5 py-1 text-[10.5px] font-mono font-extrabold text-slate-950 transition-colors cursor-pointer"
-            >
-              {isPlaying ? (
-                <>
-                  <Pause className="w-3 h-3" />
-                  <span>Pause</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3 h-3" />
-                  <span>Play</span>
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                timelineTimeRef.current = 0;
-                setActivePhaseIdx(0);
-                resetCameraFnRef.current?.();
-              }}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 hover:border-sky-400 px-2 py-1 text-[10.5px] font-mono font-bold text-slate-200 transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset</span>
-            </button>
-          </div>
+                  <button
+                    type="button"
+                    data-testid={`section-3d-restart-btn-${descriptor.sectionKey}`}
+                    onClick={handleRestart}
+                    aria-label="Restart 3D animation from Act 1"
+                    className="inline-flex items-center justify-center p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 transition-colors cursor-pointer shrink-0"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            {descriptor.phases.map((ph, idx) => {
-              const active = idx === activePhaseIdx;
-              return (
-                <button
-                  key={ph.id}
-                  type="button"
-                  onClick={() => {
-                    timelineTimeRef.current = ph.startSec + 0.15;
-                    setActivePhaseIdx(idx);
-                  }}
-                  className={`rounded-md px-2 py-1 text-[10px] font-mono font-bold transition-colors cursor-pointer ${
-                    active
-                      ? 'bg-rose-500 text-white shadow-sm'
-                      : 'bg-slate-800/90 text-slate-300 hover:bg-slate-700'
-                  }`}
+                {/* Interactive Story Act / Phase Steps */}
+                <div
+                  className="flex items-center gap-1 flex-wrap"
+                  role="tablist"
+                  aria-label="Story Acts"
                 >
-                  {ph.id}. {ph.label}
-                </button>
-              );
-            })}
-          </div>
+                  {descriptor.phases.map((ph, idx) => {
+                    const isCurrent = idx === activePhaseIndex;
+                    return (
+                      <button
+                        key={ph.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={isCurrent}
+                        onClick={() => handleSelectPhase(idx)}
+                        className={`px-2 py-1 rounded-md text-[10.5px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                          isCurrent
+                            ? 'bg-slate-950 dark:bg-sky-400 text-white dark:text-slate-950'
+                            : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {ph.shortLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Speed Multiplier (0.5x / 1x / 1.5x) */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {ANIME_3D_STAGE_STANDARD.speedMultipliers.map((spd) => (
+                    <button
+                      key={spd}
+                      type="button"
+                      onClick={() => setPlaybackSpeed(spd)}
+                      className={`px-1.5 py-1 rounded text-[10px] font-mono font-bold tabular-nums transition-colors cursor-pointer ${
+                        playbackSpeed === spd
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {spd}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 2: Timeline Scrubber + Camera Viewpoints + Labels ON/OFF + Bloom ON/OFF */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+                  <label
+                    htmlFor={`section-3d-timeline-${descriptor.sectionKey}`}
+                    className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 tabular-nums shrink-0"
+                  >
+                    {timelinePct}%
+                  </label>
+                  <input
+                    id={`section-3d-timeline-${descriptor.sectionKey}`}
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={timelinePct}
+                    onChange={(e) => handleScrubTimeline(Number(e.target.value))}
+                    aria-label="Scrub 3D animation timeline"
+                    className="w-full h-1.5 accent-rose-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1 flex-wrap shrink-0">
+                  <Camera className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 mr-0.5 shrink-0" />
+                  {descriptor.cameraPresets.map((preset) => {
+                    const isActive =
+                      cameraPreset === preset.id && !manualOrbitActive;
+                    const label =
+                      preset.id === 'DIRECTOR' && manualOrbitActive
+                        ? 'Re-Center'
+                        : preset.label;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setCameraPreset(preset.id);
+                          simRef.current.cameraPreset = preset.id;
+                          simRef.current.manualOrbit = false;
+                          simRef.current.snapCamera = true;
+                          setManualOrbitActive(false);
+                          simRef.current.requestRender();
+                        }}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                          isActive
+                            ? 'bg-sky-500 text-slate-950'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+
+                  {/* Floating 3D Callout Labels Toggle */}
+                  <button
+                    type="button"
+                    data-testid={`section-3d-labels-btn-${descriptor.sectionKey}`}
+                    onClick={() => setLabelsEnabled((prev) => !prev)}
+                    aria-pressed={labelsEnabled}
+                    className={`inline-flex items-center gap-1 ml-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      labelsEnabled
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Tag className="w-3 h-3 shrink-0" />
+                    <span>Labels {labelsEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+
+                  {/* Post-Processing Cel-Shaded Bloom Toggle */}
+                  <button
+                    type="button"
+                    data-testid={`section-3d-bloom-btn-${descriptor.sectionKey}`}
+                    onClick={() => setBloomEnabled((prev) => !prev)}
+                    aria-pressed={bloomEnabled}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      bloomEnabled
+                        ? 'bg-fuchsia-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3 shrink-0" />
+                    <span>Bloom {bloomEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

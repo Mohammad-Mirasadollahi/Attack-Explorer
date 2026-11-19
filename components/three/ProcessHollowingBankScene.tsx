@@ -25,7 +25,6 @@ import {
   buildHighSecurityBankEnvironment,
   buildStasisFreezeRig,
 } from './hollowing-scene-builders';
-import { buildAnimeMagicGlitchParticles } from './anime-particle-system';
 import { computeFloatingCalloutLayout } from '@/lib/hollowing-3d-overlay-layout';
 import {
   Camera,
@@ -303,32 +302,7 @@ export function ProcessHollowingBankScene({
     const stasis = buildStasisFreezeRig(mats, TRUCK_GARAGE_X);
     scene.add(stasis.root);
 
-    // Custom GPU Anime Magic Dust & Digital Glitch Particle System surrounding the 3D armored truck
     const pixelRatio = renderer.getPixelRatio();
-    const animeParticles = buildAnimeMagicGlitchParticles(pixelRatio);
-    animeParticles.root.position.set(TRUCK_GARAGE_X, 0, 0);
-    scene.add(animeParticles.root);
-
-    // Ambient floating anime petal motes across the boulevard (InstancedMesh for single draw call)
-    const moteCount = 36;
-    const moteGeo = new THREE.PlaneGeometry(0.18, 0.12);
-    const moteMat = new THREE.MeshBasicMaterial({
-      color: 0xf9a8d4,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.72,
-    });
-    const motes = new THREE.InstancedMesh(moteGeo, moteMat, moteCount);
-    motes.frustumCulled = false;
-    const moteSeeds = Array.from({ length: moteCount }, (_, i) => ({
-      x: ((i * 7.3) % 44) - 20,
-      y: 1.5 + ((i * 2.9) % 10),
-      z: ((i * 5.1) % 18) - 9,
-      speed: 0.4 + (i % 5) * 0.14,
-      phase: i * 0.85,
-    }));
-    const moteDummy = new THREE.Object3D();
-    scene.add(motes);
 
     // Post-Processing High-Contrast Cel-Shaded Anime Bloom Pipeline (HalfFloat HDR RenderTarget)
     const composerTarget = new THREE.WebGLRenderTarget(initialW, initialH, {
@@ -631,42 +605,11 @@ export function ProcessHollowingBankScene({
         ).opacity = 0.28 + alarmFlash * 0.65;
       }
 
-      // 7. Anime Magic Dust + Digital Glitch Particle System & Post-Processing Bloom Dynamics
-      animeParticles.update({
-        elapsed: sim.elapsed,
-        truckX: st.truckX,
-        glitchIntensity: st.glitchIntensity,
-        magicDustIntensity: st.magicDustIntensity,
-        primaryHex: st.particlePrimaryHex,
-        secondaryHex: st.particleSecondaryHex,
-        stasisIntensity: st.stasisIntensity,
-        brakeReleaseBoost: st.brakeReleaseBoost,
-      });
-
+      // 7. Post-Processing Cel-Shaded Anime Bloom Dynamics
       const baseBloomStrength = sim.isDark ? 0.42 : 0.26;
       bloomPass.strength = baseBloomStrength * (0.72 + st.bloomStrength * 0.28);
       bloomPass.threshold = sim.isDark ? 0.98 : 1.12;
       bloomPass.radius = sim.isDark ? 0.42 : 0.32;
-
-      // Drifting Anime Petal Motes
-      for (let i = 0; i < moteCount; i += 1) {
-        const seed = moteSeeds[i];
-        const mx =
-          ((seed.x + sim.elapsed * seed.speed + 24) % 48) - 24;
-        const my =
-          seed.y + Math.sin(sim.elapsed * 1.1 + seed.phase) * 0.55;
-        const mz =
-          seed.z + Math.cos(sim.elapsed * 0.8 + seed.phase) * 0.4;
-        moteDummy.position.set(mx, my, mz);
-        moteDummy.rotation.set(
-          sim.elapsed * 0.9 + seed.phase,
-          sim.elapsed * 1.2,
-          seed.phase
-        );
-        moteDummy.updateMatrix();
-        motes.setMatrixAt(i, moteDummy.matrix);
-      }
-      motes.instanceMatrix.needsUpdate = true;
 
       // 8. Smooth Exponential Camera Damping (or instant snap on discrete Act/Preset/Scrub jump)
       if (!sim.manualOrbit) {
@@ -966,7 +909,6 @@ export function ProcessHollowingBankScene({
           isSoftwareGl ? Math.max(120, Math.floor(w / 2)) : w,
           isSoftwareGl ? Math.max(120, Math.floor(h / 2)) : h
         );
-        animeParticles.setPixelRatio(renderer.getPixelRatio());
         requestRender();
       }
     });
@@ -992,8 +934,7 @@ export function ProcessHollowingBankScene({
         onContextRestored
       );
 
-      // Dispose all geometries, materials, post-processing passes, particles and textures cleanly
-      animeParticles.dispose();
+      // Dispose all geometries, materials, post-processing passes, and textures cleanly
       bloomPass.dispose();
       composer.dispose();
       composerTarget.dispose();
