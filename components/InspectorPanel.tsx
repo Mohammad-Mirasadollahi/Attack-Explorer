@@ -32,6 +32,7 @@ import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-dia
 import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
 import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
 import { CommandBreakdownList } from './CommandBreakdownList';
+import { ProcessHollowingAnalogy3DEmbed } from './three/ProcessHollowingAnalogy3DEmbed';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -1205,6 +1206,10 @@ export function InspectorPanel({
                       {effectiveScopeContext.scopedStoryAnalogy ||
                         scenario.overview}
                     </div>
+
+                    {scenario.id === 'process-hollowing' && (
+                      <ProcessHollowingAnalogy3DEmbed className="pt-1" />
+                    )}
 
                     <div className="space-y-2">
                       {parseStructuredExplanationClauses(

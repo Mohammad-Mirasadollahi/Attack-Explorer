@@ -28,6 +28,7 @@ import {
   ProcessCommandLineInlineExplanation,
   SingleCommandExplanationCard,
 } from './CommandBreakdownList';
+import { ProcessHollowingAnalogy3DEmbed } from './three/ProcessHollowingAnalogy3DEmbed';
 import {
   ArrowLeft,
   ArrowRight,
@@ -1139,6 +1140,10 @@ export function StepByStepGuidePanel({
               {briefing.storyAnalogy}
             </p>
           </div>
+
+          {scenario.id === 'process-hollowing' && (
+            <ProcessHollowingAnalogy3DEmbed className="pt-1" />
+          )}
 
           {/* Layer 2: Story ↔ Scenario Technical Bridge */}
           <div

@@ -26,6 +26,7 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
+import { ProcessHollowingAnalogy3DEmbed } from '@/components/three/ProcessHollowingAnalogy3DEmbed';
 interface ScenarioPageProps {
   params: Promise<{ id: string }>;
 }
@@ -193,6 +194,12 @@ export default async function ScenarioLandingPage({
             {scenario.overview}
           </p>
         </header>
+
+        {scenario.id === 'process-hollowing' && (
+          <section aria-label="Interactive 3D Armored Bank Truck Analogy">
+            <ProcessHollowingAnalogy3DEmbed />
+          </section>
+        )}
 
         {(() => {
           const coreScenarioSections = (
