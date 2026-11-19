@@ -903,8 +903,7 @@ export function AttackExplorerWorkbench() {
                 /* Main Active Workbench View + Floating Hover Inspector Option */
                 <div className="relative flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto sm:overflow-hidden">
                   {/* Floating Hover Inspector Trigger on the Active Page */}
-                  {viewMode !== 'SCROLLYTELLING' && (
-                    <FloatingHoverInspectorTrigger
+                  <FloatingHoverInspectorTrigger
                       scenario={activeScenario}
                       currentStage={stageView.currentStage}
                       scopeContext={inspectorScopeContext}
@@ -915,7 +914,6 @@ export function AttackExplorerWorkbench() {
                         setInspectorOpen(true);
                       }}
                     />
-                  )}
 
                   <DiagramCanvas
                     scenario={activeScenario}

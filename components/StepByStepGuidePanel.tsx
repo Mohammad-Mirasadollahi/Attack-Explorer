@@ -28,9 +28,6 @@ import {
   ProcessCommandLineInlineExplanation,
   SingleCommandExplanationCard,
 } from './CommandBreakdownList';
-import ProcessHollowingScrollytellingView, {
-  ProcessHollowingSyncedSubStepsList,
-} from './ProcessHollowingScrollytellingView';
 import {
   ArrowLeft,
   ArrowRight,
@@ -89,7 +86,6 @@ function StructuredClausesList({
             key={`${clause.clauseCode}-${idx}`}
             id={clauseAnchorId}
             data-testid={`step-clause-${clause.clauseCode}`}
-            data-scrolly-clause={clause.clauseCode}
             onClick={() => {
               if (typeof window !== 'undefined') {
                 const nextUrl = `${window.location.pathname}${window.location.search}#${clauseAnchorId}`;
@@ -1078,7 +1074,6 @@ export function StepByStepGuidePanel({
               id="step-0"
               ref={briefingRef}
               data-testid="step-guide-scenario-briefing"
-              data-scrolly-stage={0}
               data-briefing-active={briefing.isActiveBriefing ? 'true' : 'false'}
               onClick={() => onSelectStage?.(0)}
               className={`rounded-xl border transition-all cursor-pointer overflow-hidden scroll-mt-16 ${
@@ -1155,11 +1150,6 @@ export function StepByStepGuidePanel({
             </div>
             <StructuredClausesList clauses={briefing.structuredSummaryClauses} />
           </div>
-
-          <ProcessHollowingSyncedSubStepsList
-            scenario={scenario}
-            stageNumber={0}
-          />
 
           {/* Layer 3: Visual Participating Topology Nodes Grid (①..⑥ with Node Icons) */}
           <div
@@ -1343,7 +1333,6 @@ export function StepByStepGuidePanel({
                 stepCardRefs.current[step.stepNumber] = el;
               }}
               data-testid={`step-guide-card-${step.stepNumber}`}
-              data-scrolly-stage={step.stepNumber}
               data-step-number={step.stepNumber}
               data-step-status={step.status}
               initial={{ opacity: 0, y: 6 }}
@@ -1647,11 +1636,6 @@ export function StepByStepGuidePanel({
                   <StructuredClausesList clauses={step.structuredClauses} />
                 </div>
 
-                <ProcessHollowingSyncedSubStepsList
-                  scenario={scenario}
-                  stageNumber={step.stepNumber}
-                />
-
                 {/* 3/4. Practical Under-the-Hood Mechanism & Specs */}
                 <div
                   data-testid={`step-guide-under-the-hood-${step.stepNumber}`}
@@ -1839,14 +1823,7 @@ export function StepByStepGuidePanel({
           </>
         );
 
-        return (
-          <ProcessHollowingScrollytellingView
-            scenario={scenario}
-            activeStageIndex={activeStageIndex}
-          >
-            {cardsContent}
-          </ProcessHollowingScrollytellingView>
-        );
+        return cardsContent;
       })()}
 
       {/* OUTRO COMPLETE CARD when walkthrough finishes */}

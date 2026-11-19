@@ -32,9 +32,6 @@ import { buildStepStructuralBreakdown } from '@/lib/documentation-structural-dia
 import { parseStructuredExplanationClauses } from '@/lib/scenario-step-guides';
 import { buildStageCommandBreakdowns } from '@/lib/command-line-explanations';
 import { CommandBreakdownList } from './CommandBreakdownList';
-import ProcessHollowingScrollytellingView, {
-  ProcessHollowingSyncedSubStepsList,
-} from './ProcessHollowingScrollytellingView';
 import {
   getScenarioAttribution,
   LEGAL_COMPLIANCE_STATEMENT,
@@ -1183,7 +1180,6 @@ export function InspectorPanel({
                     >
                       {/* 1. Main Scenario Executive Story-to-Spec Analogy */}
                       <section
-                        data-scrolly-stage={0}
                         className="rounded-2xl bg-white dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 p-5 shadow-sm space-y-3"
                       >
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1217,7 +1213,6 @@ export function InspectorPanel({
                       ).map((clause, cIdx) => (
                         <div
                           key={`${clause.clauseCode}-${cIdx}`}
-                          data-scrolly-clause={clause.clauseCode}
                           className="p-2.5 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-1.5"
                         >
                           <div className="flex items-start gap-2">
@@ -1232,10 +1227,6 @@ export function InspectorPanel({
                       ))}
                     </div>
 
-                    <ProcessHollowingSyncedSubStepsList
-                      scenario={scenario}
-                      stageNumber={0}
-                    />
                   </section>
 
                   {/* 2. Interactive Topology Sections Directory */}
@@ -1330,7 +1321,6 @@ export function InspectorPanel({
                           <div
                             key={`stage-card-${st.index}`}
                             data-testid={`inspector-stage-card-${st.index}`}
-                            data-scrolly-stage={st.index}
                             className={`p-4 sm:p-5 rounded-xl border transition-all space-y-3 ${
                               isCurrent
                                 ? 'bg-indigo-50/70 dark:bg-indigo-950/35 border-indigo-500'
@@ -1358,7 +1348,6 @@ export function InspectorPanel({
                               ).map((clause, cIdx) => (
                                 <div
                                   key={`${clause.clauseCode}-${cIdx}`}
-                                  data-scrolly-clause={clause.clauseCode}
                                   className="p-2.5 rounded-lg bg-white/90 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 space-y-1"
                                 >
                                   <div className="flex items-start gap-2">
@@ -1506,10 +1495,6 @@ export function InspectorPanel({
                               </div>
                             )}
 
-                            <ProcessHollowingSyncedSubStepsList
-                              scenario={scenario}
-                              stageNumber={st.index}
-                            />
                           </div>
                         );
                       })}
@@ -1518,14 +1503,7 @@ export function InspectorPanel({
                     </div>
                   );
 
-                  return (
-                    <ProcessHollowingScrollytellingView
-                      scenario={scenario}
-                      activeStageIndex={activeStageIndex}
-                    >
-                      {mainScenarioOverviewContent}
-                    </ProcessHollowingScrollytellingView>
-                  );
+                  return mainScenarioOverviewContent;
                 })()
               )}
             </div>

@@ -26,10 +26,6 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
-import ProcessHollowingScrollytellingView, {
-  ProcessHollowingSyncedSubStepsList,
-} from '@/components/ProcessHollowingScrollytellingView';
-
 interface ScenarioPageProps {
   params: Promise<{ id: string }>;
 }
@@ -203,7 +199,6 @@ export default async function ScenarioLandingPage({
             <>
               <section
                 id="forensic-fact-sheet"
-                data-scrolly-stage={0}
                 aria-label="Forensic Fact Sheet and Threat Intelligence"
                 className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4 scroll-mt-6"
               >
@@ -269,10 +264,6 @@ export default async function ScenarioLandingPage({
             </div>
           </div>
 
-          <ProcessHollowingSyncedSubStepsList
-            scenario={scenario}
-            stageNumber={0}
-          />
               </section>
 
         <section
@@ -297,7 +288,6 @@ export default async function ScenarioLandingPage({
                 <article
                   key={st.index}
                   id={`stage-${st.index}`}
-                  data-scrolly-stage={st.index}
                   className="p-4 sm:p-5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-800 space-y-2.5 scroll-mt-6"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -365,10 +355,6 @@ export default async function ScenarioLandingPage({
                     </div>
                   )}
 
-                  <ProcessHollowingSyncedSubStepsList
-                    scenario={scenario}
-                    stageNumber={st.index}
-                  />
                 </article>
               );
             })}
@@ -377,14 +363,7 @@ export default async function ScenarioLandingPage({
             </>
           );
 
-          return (
-            <ProcessHollowingScrollytellingView
-              scenario={scenario}
-              activeStageIndex={0}
-            >
-              {coreScenarioSections}
-            </ProcessHollowingScrollytellingView>
-          );
+          return coreScenarioSections;
         })()}
 
         <section className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-4">

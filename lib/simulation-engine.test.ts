@@ -1415,6 +1415,72 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(controlBarSrc.includes('canvas-shortcuts-btn'), false);
     assert.equal(controlBarSrc.includes('canvas-reset-layout-btn'), true);
   });
+
+  it('completely removes Scroll Walkthrough (scrollytelling) and all associated dead code', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+
+    const deletedFiles = [
+      'components/ProcessHollowingScrollytellingView.tsx',
+      'components/NotebookLmInteractiveShapeCanvas.tsx',
+      'components/PhPptFilmCanvas.tsx',
+      'components/ProcessHollowingPresentationView.tsx',
+      'lib/process-hollowing-scrollytelling.ts',
+      'lib/process-hollowing-scrollytelling.test.ts',
+      'lib/universal-scrollytelling.ts',
+      'lib/universal-scrollytelling.test.ts',
+      'lib/process-hollowing-presentation.ts',
+      'lib/process-hollowing-presentation.test.ts',
+      'lib/process-hollowing-film-timeline.ts',
+      'lib/process-hollowing-film-timeline.test.ts',
+      'docs/process-hollowing-cinematic-motion-spec.md',
+      'docs/storyboards/process-hollowing-ppt.md',
+      'docs/storyboards/animation-catalog.md',
+    ];
+    for (const rel of deletedFiles) {
+      assert.equal(
+        fs.existsSync(path.join(process.cwd(), rel)),
+        false,
+        `${rel} must be deleted`
+      );
+    }
+
+    const filesToCheck = [
+      'components/AttackExplorerWorkbench.tsx',
+      'components/AttackHeader.tsx',
+      'components/DiagramCanvas.tsx',
+      'components/InspectorPanel.tsx',
+      'components/StepByStepGuidePanel.tsx',
+      'components/SettingsDrawer.tsx',
+      'lib/diagram-memory-store.ts',
+      'app/scenarios/[id]/page.tsx',
+    ];
+    const forbiddenDeadTokens = [
+      'SCROLLYTELLING',
+      'Scroll Walkthrough',
+      'ProcessHollowingScrollytellingView',
+      'ProcessHollowingSyncedSubStepsList',
+      'NotebookLmInteractiveShapeCanvas',
+      'universal-scrollytelling',
+      'process-hollowing-scrollytelling',
+      'data-scrolly-stage',
+      'data-scrolly-clause',
+      'launch-scroll-walkthrough-banner',
+      'PhPptFilmCanvas',
+      'ProcessHollowingPresentationView',
+    ];
+
+    for (const relPath of filesToCheck) {
+      const content = fs.readFileSync(path.join(process.cwd(), relPath), 'utf8');
+      for (const token of forbiddenDeadTokens) {
+        assert.equal(
+          content.includes(token),
+          false,
+          `${relPath} must not contain dead code reference "${token}"`
+        );
+      }
+    }
+  });
 });
 
 

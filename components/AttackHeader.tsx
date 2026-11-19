@@ -30,12 +30,10 @@ import {
   Server,
   Settings,
   ShieldAlert,
-  Sparkles,
   Table2,
   UserRound,
   X,
 } from 'lucide-react';
-import { PROCESS_HOLLOWING_SCENARIO_ID } from '@/lib/process-hollowing-scrollytelling';
 
 interface AttackHeaderProps {
   scenario: AttackScenario;
@@ -153,18 +151,6 @@ export function AttackHeader({
       badge: 'VIEW 1',
       icon: <Network className="w-4 h-4 shrink-0" />,
     },
-    ...(scenario.id === PROCESS_HOLLOWING_SCENARIO_ID
-      ? [
-          {
-            id: 'SCROLLYTELLING' as CanvasViewMode,
-            label: 'Scroll Walkthrough',
-            tooltip:
-              'Scroll-Driven Animated Breakdown (Process Hollowing Step-by-Step)',
-            badge: 'SCROLL',
-            icon: <Sparkles className="w-4 h-4 shrink-0 text-rose-500" />,
-          },
-        ]
-      : []),
     {
       id: 'RAW_TABLES',
       label: 'Tables & Packets',
