@@ -4,6 +4,7 @@ import {
   ANIME_3D_STAGE_STANDARD,
   computeActivePhaseIndex,
   deduplicateTechnicalClausesAgainstStory,
+  findTechnicalJargonInStory,
   getPhaseMidpointNormalized,
   getSection3DDescriptor,
   hasSection3DScene,
@@ -11,6 +12,7 @@ import {
   stepNumberToSectionKey,
   type Section3DKey,
 } from './section-3d-registry';
+import { getRawScenarioStepGuide } from './scenario-step-guides';
 
 const JAPANESE_CHAR_REGEX = /[\u3040-\u30FF\u4E00-\u9FFF¥]/;
 
@@ -42,7 +44,7 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
     );
   });
 
-  it('registers a distinct bespoke 3D scene with 4 camera presets and Story+Technical phases for every Process Hollowing section', () => {
+  it('registers a distinct bespoke 3D scene with 4 camera presets, Story-to-Technical mappings, and Story+Technical phases for every Process Hollowing section', () => {
     const expectedKeys: Section3DKey[] = [
       'briefing',
       'step-1',
@@ -73,6 +75,10 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
         desc.technicalCue.length > 40,
         `technicalCue too short for ${key}`
       );
+      assert.ok(
+        desc.storyMappings.length >= 4,
+        `Expected >= 4 Story-to-Technical mappings for ${key}`
+      );
       assert.equal(desc.callouts.length, 2);
       assert.equal(desc.cameraPresets.length, 4);
       assert.equal(desc.cameraPresets[0].id, 'DIRECTOR');
@@ -86,7 +92,58 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
     }
   });
 
-  it('contains zero Japanese characters across all titles, cues, callouts, camera presets, and phases', () => {
+  it('keeps ALL Process Hollowing Story texts, phase story excerpts, and floating callout titles 100% jargon-free while keeping technical translations right underneath', () => {
+    const sections = listScenario3DSections('process-hollowing');
+    for (const desc of sections) {
+      assert.deepEqual(
+        findTechnicalJargonInStory(desc.storyCue),
+        [],
+        `Technical jargon leaked into storyCue of ${desc.sectionKey}: "${desc.storyCue}"`
+      );
+      for (const callout of desc.callouts) {
+        assert.deepEqual(
+          findTechnicalJargonInStory(callout.title),
+          [],
+          `Technical jargon leaked into floating callout title of ${desc.sectionKey}: "${callout.title}"`
+        );
+        assert.ok(
+          callout.subtitle.length >= 12,
+          `Floating callout subtitle must explain the technical equivalent for ${desc.sectionKey}`
+        );
+      }
+      for (const ph of desc.phases) {
+        assert.deepEqual(
+          findTechnicalJargonInStory(ph.storyExcerpt),
+          [],
+          `Technical jargon leaked into phase ${ph.id} storyExcerpt of ${desc.sectionKey}: "${ph.storyExcerpt}"`
+        );
+      }
+      for (const mapping of desc.storyMappings) {
+        assert.deepEqual(
+          findTechnicalJargonInStory(mapping.storyTerm),
+          [],
+          `Technical jargon leaked into storyTerm of ${desc.sectionKey}: "${mapping.storyTerm}"`
+        );
+        assert.ok(mapping.technicalTerm.length >= 10);
+      }
+    }
+
+    const rawGuide = getRawScenarioStepGuide('process-hollowing');
+    assert.ok(rawGuide);
+    assert.deepEqual(
+      findTechnicalJargonInStory(rawGuide.briefing.storyAnalogy),
+      []
+    );
+    for (const step of rawGuide.steps) {
+      assert.deepEqual(
+        findTechnicalJargonInStory(step.storyAnalogy),
+        [],
+        `Technical jargon leaked into step ${step.stepNumber} storyAnalogy: "${step.storyAnalogy}"`
+      );
+    }
+  });
+
+  it('contains zero Japanese characters across all titles, cues, mappings, callouts, camera presets, and phases', () => {
     const sections = listScenario3DSections('process-hollowing');
     for (const desc of sections) {
       const texts = [
@@ -94,6 +151,7 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
         desc.title,
         desc.storyCue,
         desc.technicalCue,
+        ...desc.storyMappings.flatMap((m) => [m.storyTerm, m.technicalTerm]),
         ...desc.callouts.flatMap((c) => [c.tag, c.title, c.subtitle]),
         ...desc.cameraPresets.map((c) => c.label),
         ...desc.phases.flatMap((p) => [
@@ -166,5 +224,44 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
     assert.ok(clean[0].fullText.includes('CreateProcessW'));
     assert.equal(clean[1].clauseCode, '0.2');
     assert.ok(clean[1].fullText.includes('NtUnmapViewOfSection'));
+  });
+
+  it('explicitly explains what EACH golden master key is for and attaches per-token plain-English inline why parentheticals across all Process Hollowing deep-dive steps', () => {
+    const rawGuide = getRawScenarioStepGuide('process-hollowing')!;
+    const step1 = rawGuide.steps[0];
+    const step1Scene = getSection3DDescriptor('process-hollowing', 'step-1')!;
+
+    // Both master keys must have explicit purpose explanations in Story, Technical, and Story-to-Technical Key
+    assert.ok(
+      step1.storyAnalogy.toLowerCase().includes('first master key') &&
+        step1.storyAnalogy.toLowerCase().includes('second master key'),
+      'Step 1 storyAnalogy must explicitly explain what BOTH golden master keys unlock'
+    );
+    assert.ok(
+      step1Scene.storyMappings.some(
+        (m) => m.storyTerm.includes('Key #1') && m.technicalTerm.includes('0x01C4')
+      ) &&
+        step1Scene.storyMappings.some(
+          (m) => m.storyTerm.includes('Key #2') && m.technicalTerm.includes('0x01C8')
+        ),
+      'Step 1 Story-to-Technical Key must separately map Key #1 (hProcess 0x01C4) and Key #2 (hThread 0x01C8)'
+    );
+
+    // Step 1 howItWorksInPractice must explain every major kernel/API token inline via plain-English parentheticals
+    const step1DeepDiveParens =
+      step1.howItWorksInPractice.match(/\([^)]{25,}\)/g) || [];
+    assert.ok(
+      step1DeepDiveParens.length >= 9,
+      `Step 1 howItWorksInPractice must explain every technical term inline (found only ${step1DeepDiveParens.length} substantive parentheticals)`
+    );
+
+    // Steps 2-5 howItWorksInPractice must also provide rich per-token inline parentheticals
+    for (const step of rawGuide.steps.slice(1)) {
+      const parens = step.howItWorksInPractice.match(/\([^)]{25,}\)/g) || [];
+      assert.ok(
+        parens.length >= 4,
+        `Step ${step.stepNumber} howItWorksInPractice must explain every technical token inline (found ${parens.length})`
+      );
+    }
   });
 });

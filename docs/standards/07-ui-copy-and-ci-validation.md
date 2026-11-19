@@ -37,21 +37,23 @@ No new document, scenario, or UI change may be merged until all **6 automated te
 npx --yes tsx --test --test-reporter=spec lib/*.test.ts
 ```
 
-### What the Automated Test Suite Verifies Across Modules `MOD-01` .. `MOD-07`
+### What the Automated Test Suite Verifies Across Modules `MOD-01` .. `MOD-11`
 
 | Test Suite File | Governed Modules | Key Automated Assertions |
 | :--- | :--- | :--- |
-| **`lib/documentation-standards.test.ts`** | `MOD-00` .. `MOD-07` | Verifies that all modular standard documents exist in `/docs/standards/`, adhere to the `MOD-01` Markdown template skeleton, contain zero non-English characters, and validates scenario/document payloads via `validateScenarioAgainstModularStandards()` and `validateMarkdownDocumentStandard()`. |
-| **`lib/scenario-step-guides.test.ts`** | `MOD-01`, `MOD-02`, `MOD-03` | Verifies 3-Layer Story-to-Spec completeness (`storyAnalogy`, `plainSummary`, `simpleExplanation`, `howItWorksInPractice`, `diagramAlignment`, `detectionAndEvidence`) and 100% English-only strings. |
+| **`lib/documentation-standards.test.ts`** | `MOD-00` .. `MOD-11` | Verifies that all 12 modular standard documents exist in `/docs/standards/`, adhere to `MOD-01`/`MOD-02`, validates all 188 scenarios via `validateScenarioAgainstModularStandards()`, and enforces **Prop-Purpose Clarity** (`validateStoryPropClarity`) and **Per-Token Inline Plain-English Why** (`validateTechnicalSectionInlineClarity`) across every upgraded section. |
+| **`lib/section-3d-registry.test.ts`** | `MOD-08`, `MOD-09`, `MOD-10`, `MOD-11` | Verifies bespoke 3D descriptors, 100% jargon-free Story strings (`findTechnicalJargonInStory`), zero Japanese characters, separate mapping of paired props (e.g., Master Key #1 vs. Key #2), and per-token inline parenthetical density in deep-dive steps. |
+| **`lib/scenario-step-guides.test.ts`** | `MOD-01`, `MOD-02`, `MOD-03`, `MOD-11` | Verifies 3-Layer Story-to-Spec completeness (`storyAnalogy`, `plainSummary`, `simpleExplanation`, `howItWorksInPractice`, `diagramAlignment`, `detectionAndEvidence`), substantive inline parentheticals, and 100% English-only strings across all 188 scenarios. |
 | **`lib/command-line-explanations.test.ts`** | `MOD-03` | Verifies token-by-token CLI command explanations and flag coverage. |
 | **`lib/simulation-engine.test.ts`** | `MOD-04`, `MOD-07` | Verifies scenario topology integrity, stage counts, telemetry correlation, and zero forbidden `truncate` classes in guarded UI components. |
-| **`lib/inspector-scope.test.ts`** | `MOD-06`, `MOD-07` | Verifies `MAIN_SCENARIO` / `EXPANDED_NODE` / `INTERNAL_SUBNODE` scope resolution and URL state round-tripping (`serializeWorkbenchUrlState` ↔ `parseWorkbenchUrlState`). |
-| **`lib/seo-metadata.test.ts`** | `MOD-05`, `MOD-06` | Verifies XML sitemap coverage, Schema.org `TechArticle` (`citation >= 3`, `mentions`, `keywords`) + `HowTo` + `BreadcrumbList`, Topic Cluster lateral links, `Accept: text/markdown` output, and `/public/llms-full.txt` parity across all 157 scenarios. |
+| **`lib/inspector-scope.test.ts`** | `MOD-06`, `MOD-07`, `MOD-08` | Verifies `MAIN_SCENARIO` / `EXPANDED_NODE` / `INTERNAL_SUBNODE` scope resolution, zero duplicate Story vs. Technical overview text, and URL state round-tripping (`serializeWorkbenchUrlState` ↔ `parseWorkbenchUrlState`). |
+| **`lib/seo-metadata.test.ts`** | `MOD-05`, `MOD-06` | Verifies XML sitemap coverage, Schema.org `TechArticle` (`citation >= 3`, `mentions`, `keywords`) + `HowTo` + `BreadcrumbList`, Topic Cluster lateral links, `Accept: text/markdown` output, and `/public/llms-full.txt` parity across all scenarios. |
 
 ---
 
 ## 4. Verification Checklist (`MOD-07`)
 
 - [ ] Are guarded UI components free of CSS `truncate` classes?
-- [ ] Do all 6 test suites in `npx --yes tsx --test --test-reporter=spec lib/*.test.ts` pass with 0 failures?
+- [ ] Do `validateStoryPropClarity()` and `validateTechnicalSectionInlineClarity()` pass on every newly authored or upgraded section (`briefing`, `steps[1..N]`, `stages[1..N]`, and `sequence`)?
+- [ ] Do all test suites in `npx --yes tsx --test --test-reporter=spec lib/*.test.ts` pass with 0 failures?
 - [ ] Do `npm run build` (`compile_applet`) and `eslint` (`lint_applet`) succeed with 0 errors?

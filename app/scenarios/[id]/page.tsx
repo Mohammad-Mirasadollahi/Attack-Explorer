@@ -208,7 +208,9 @@ export default async function ScenarioLandingPage({
                 stepGuideData?.briefing?.storyAnalogy || briefing3d.storyCue
               }
               technicalHeading="Technical Architecture & Forensic Overview"
-              technicalText={scenario.overview}
+              technicalText={
+                stepGuideData?.briefing?.plainSummary || scenario.overview
+              }
               clausePrefix="0"
               className="pt-1"
             />

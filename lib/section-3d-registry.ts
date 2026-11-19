@@ -22,8 +22,18 @@ export type StandardCutawayMode = 'AUTO' | 'OPEN' | 'SEALED';
 export interface Section3DCalloutSpec {
   id: string;
   tag: string;
+  /** Plain-language, non-technical story object name (e.g. "Bank Truck") */
   title: string;
+  /** Direct technical equivalent rendered underneath (e.g. "Trusted Host · svchost.exe") */
   subtitle: string;
+  tone: 'sky' | 'rose' | 'amber' | 'emerald';
+}
+
+export interface StoryTechnicalMapping {
+  /** Plain-language story character, prop, or action */
+  storyTerm: string;
+  /** Exact technical OS / API / telemetry counterpart */
+  technicalTerm: string;
   tone: 'sky' | 'rose' | 'amber' | 'emerald';
 }
 
@@ -32,7 +42,9 @@ export interface Section3DPhaseSpec {
   shortLabel: string;
   stageTag: string;
   title: string;
+  /** 100% plain-language, jargon-free story beat matching what the 3D animation plays */
   storyExcerpt: string;
+  /** Direct technical translation of that exact story beat */
   technicalParallel: string;
   accentHex: string;
   startSec: number;
@@ -53,8 +65,12 @@ export interface Section3DDescriptor {
   stageBadge: string;
   mitreId: string;
   title: string;
+  /** 100% plain-language, jargon-free story summary (Armored Bank Truck universe) */
   storyCue: string;
+  /** Technical summary paired directly underneath the story */
   technicalCue: string;
+  /** Explicit Story Element -> Technical Equivalent dictionary for this section */
+  storyMappings: StoryTechnicalMapping[];
   accentHex: string;
   secondaryHex: string;
   durationSec: number;
@@ -71,7 +87,7 @@ export interface Section3DDescriptor {
 /**
  * Canonical UI & 3D Stage Standard modeled directly on the Process Hollowing
  * Overview section so every scenario section uses identical layout order,
- * story-then-technical typography, HUD chrome, button placement, and display modes.
+ * jargon-free story-then-technical mapping, HUD chrome, button placement, and display modes.
  */
 export const ANIME_3D_STAGE_STANDARD = {
   sectionOrder: [
@@ -109,9 +125,41 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     mitreId: 'T1055.012',
     title: 'Armored Bank Truck — Process Hollowing End-to-End',
     storyCue:
-      'Hire an official armored bank truck, freeze it in the garage, empty the legal bank cargo, load the covert crew inside, and roll straight past the bank gate.',
+      'Hire an official armored bank truck, freeze it inside the garage before the driver starts the route, empty out all the legal bank gold, load your covert crew into the back of that exact truck, release the brake, and roll straight past the bank gate.',
     technicalCue:
-      'CreateProcessW (SUSPENDED) → NtUnmapViewOfSection → VirtualAllocEx (RWX) → WriteProcessMemory → SetThreadContext (RCX) → ResumeThread.',
+      'CreateProcessW (CREATE_SUSPENDED) → NtUnmapViewOfSection → VirtualAllocEx (RWX) → WriteProcessMemory → SetThreadContext (RCX) → ResumeThread.',
+    storyMappings: [
+      {
+        storyTerm: 'Official Armored Bank Truck',
+        technicalTerm: 'Trusted Windows Host · svchost.exe (PID 4892)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Freezing Truck in the Garage',
+        technicalTerm: 'CreateProcessW with CREATE_SUSPENDED (0x00000004)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Cargo-Door Master Key (Key #1)',
+        technicalTerm: 'Process Handle hProcess (0x01C4) · Unlocks RAM Edits in Steps #2–#3',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Cab & Ignition Master Key (Key #2)',
+        technicalTerm: 'Thread Handle hThread (0x01C8) · Unlocks CPU Steer & Wake in Step #4',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Emptying Gold & Loading Covert Crew',
+        technicalTerm: 'NtUnmapViewOfSection + VirtualAllocEx (RWX) + WriteProcessMemory',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Rolling Past Gate Guard & Cameras',
+        technicalTerm: 'ResumeThread + Host Firewall Trusting Signed svchost.exe',
+        tone: 'emerald',
+      },
+    ],
     accentHex: '#38BDF8',
     secondaryHex: '#F43F5E',
     durationSec: 26,
@@ -137,9 +185,10 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
         shortLabel: '1. Hire Truck',
         stageTag: 'STAGE 01 · SPAWN',
         title: 'Hire Official Armored Bank Truck',
-        storyExcerpt: 'Trusted armored truck arrives at dispatch garage.',
+        storyExcerpt:
+          'Instead of breaking down the front door in a ski mask, the intruder hires an official armored bank truck.',
         technicalParallel:
-          'CreateProcessW("svchost.exe") initiates a Microsoft-signed host.',
+          'CreateProcessW("svchost.exe") initiates a Microsoft-signed Windows host process.',
         accentHex: '#38BDF8',
         startSec: 0,
         endSec: 4.5,
@@ -149,9 +198,10 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
         shortLabel: '2. Freeze',
         stageTag: 'STAGE 02 · SUSPENDED',
         title: 'Freeze Truck Before Route Starts',
-        storyExcerpt: 'Cryo stasis locks engine before route begins.',
+        storyExcerpt:
+          'The intruder freezes the armored truck inside the garage before the driver even starts the route.',
         technicalParallel:
-          'CREATE_SUSPENDED = 0x00000004 halts TID 4896 before entry runs.',
+          'CREATE_SUSPENDED = 0x00000004 halts primary thread TID 4896 before its first instruction runs.',
         accentHex: '#22D3EE',
         startSec: 4.5,
         endSec: 8.5,
@@ -161,9 +211,10 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
         shortLabel: '3. Empty Cargo',
         stageTag: 'STAGE 03 · UNMAP',
         title: 'Empty Legal Bank Bullion Cargo',
-        storyExcerpt: 'Legal bank bullion crates are unmapped from hold.',
+        storyExcerpt:
+          'Every crate of legal bank gold is emptied out of the frozen truck, leaving a hollow armored shell.',
         technicalParallel:
-          'NtUnmapViewOfSection(0x00400000) vacates signed SEC_IMAGE.',
+          'NtUnmapViewOfSection(0x00400000) vacates the signed svchost.exe SEC_IMAGE from RAM.',
         accentHex: '#FACC15',
         startSec: 8.5,
         endSec: 13,
@@ -173,9 +224,10 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
         shortLabel: '4. Load Crew',
         stageTag: 'STAGE 04 · INJECT',
         title: 'Load Covert Intruder Crew',
-        storyExcerpt: 'Covert crew boards the hollowed rear bay.',
+        storyExcerpt:
+          'The intruder loads their own covert crew and mission crates into the empty back of that exact truck.',
         technicalParallel:
-          'VirtualAllocEx (RWX 0x40) + WriteProcessMemory injects Beacon PE.',
+          'VirtualAllocEx (RWX 0x40) + WriteProcessMemory injects 264 KB of Cobalt Strike Beacon PE.',
         accentHex: '#F43F5E',
         startSec: 13,
         endSec: 17.5,
@@ -185,9 +237,10 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
         shortLabel: '5. Release',
         stageTag: 'STAGE 05 · RESUME',
         title: 'Release Freeze & Redirect Route',
-        storyExcerpt: 'Stasis shatters and truck launches toward gate.',
+        storyExcerpt:
+          'The freeze shatters, the brake releases, and the hijacked truck launches toward the bank gate.',
         technicalParallel:
-          'SetThreadContext (RCX=0x004014A0) + ResumeThread wakes TID 4896.',
+          'SetThreadContext (RCX = 0x004014A0) + ResumeThread wakes TID 4896 on the Beacon entry point.',
         accentHex: '#FB7185',
         startSec: 17.5,
         endSec: 21.5,
@@ -197,9 +250,10 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
         shortLabel: '6. Pass Gate',
         stageTag: 'STAGE 06 · EGRESS',
         title: 'Roll Past Bank Gate Undetected',
-        storyExcerpt: 'Security cameras approve trusted BANK-01 shell.',
+        storyExcerpt:
+          'Every security camera and guard at the gate still sees the bank’s own trusted license plate and uniform.',
         technicalParallel:
-          'Host firewall trusts svchost.exe path during TLS 1.3 C2 egress.',
+          'Host firewall trusts signed svchost.exe path during outbound TLS 1.3 C2 beacon traffic.',
         accentHex: '#10B981',
         startSec: 21.5,
         endSec: 26,
@@ -217,53 +271,85 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     scenarioId: 'process-hollowing',
     sectionKey: 'step-1',
     sceneKind: 'frozen-stage-guard',
-    stageBadge: 'STEP #1 · SUSPENDED STAGE SPAWN',
+    stageBadge: 'STEP #1 · GARAGE DISPATCH & FREEZE',
     mitreId: 'T1106',
-    title: 'Frozen Stage Guard & Master Control Keys',
+    title: 'Hiring the Armored Bank Truck & Freezing It in the Garage',
     storyCue:
-      'Think of a stage director at a control console calling a famous, badge-carrying security guard onto the lit stage, pressing the cyan "Freeze" button the millisecond the guard crosses the doorway—locking them inside a stasis crystal—and quietly pocketing the golden master keys.',
+      'At the bank dispatch garage, the intruder calls in an official armored bank truck instead of showing up in a ski mask. The split-second the truck rolls into the private bay—before the driver can even start the route—the intruder hits a freeze switch that locks the whole truck in ice-blue stillness and pockets two golden master keys: the first master key unlocks the rear cargo doors so they can empty the gold and load their covert crew, and the second master key unlocks the driver cab so they can later change the GPS route and release the brake.',
     technicalCue:
-      'Invoice_Q4.exe (PID 3104) calls CreateProcessW(svchost.exe, CREATE_SUSPENDED = 0x00000004), freezing TID 4896 at RtlUserThreadStart and receiving master handles hProcess = 0x01C4 & hThread = 0x01C8.',
+      'Invoice_Q4.exe (PID 3104) calls CreateProcessW(svchost.exe, CREATE_SUSPENDED = 0x00000004, pausing primary thread TID 4896 at RtlUserThreadStart before code runs) and receives two master key handles: hProcess = 0x01C4 (permission token to inspect, empty, and rewrite RAM in Steps #2-#3) and hThread = 0x01C8 (permission token to steer CPU registers and resume TID 4896 in Step #4).',
+    storyMappings: [
+      {
+        storyTerm: 'Intruder at Dispatch Desk',
+        technicalTerm: 'Stage-1 Loader · Invoice_Q4.exe (PID 3104)',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Official Armored Bank Truck',
+        technicalTerm: 'Signed Windows Host · svchost.exe (PID 4892)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Garage Freeze Switch',
+        technicalTerm: 'CREATE_SUSPENDED = 0x00000004 (Pauses TID 4896 Before Code Runs)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Cargo-Door Master Key (Key #1)',
+        technicalTerm: 'Process Handle hProcess (0x01C4) · Unlocks RAM Edits in Steps #2–#3',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Cab & Ignition Master Key (Key #2)',
+        technicalTerm: 'Thread Handle hThread (0x01C8) · Unlocks CPU Steer & Wake in Step #4',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Unusual Dispatch Caller Alert',
+        technicalTerm: 'Sysmon Event ID 1 (Non-services.exe Parent Spawning svchost.exe)',
+        tone: 'emerald',
+      },
+    ],
     accentHex: '#38BDF8',
     secondaryHex: '#FACC15',
     durationSec: 15,
     callouts: [
       {
-        id: 'frozen-guard',
-        tag: 'CREATE_SUSPENDED · 0x4',
-        title: 'Frozen Guard',
-        subtitle: 'svchost.exe · PID 4892 (Halted)',
+        id: 'frozen-truck',
+        tag: 'TRUSTED SHELL · FROZEN',
+        title: 'Frozen Bank Truck',
+        subtitle: 'svchost.exe · PID 4892 (CREATE_SUSPENDED)',
         tone: 'sky',
       },
       {
         id: 'master-keys',
-        tag: 'PROCESS_INFORMATION',
-        title: 'Master Keys',
-        subtitle: 'hProcess 0x01C4 · hThread 0x01C8',
+        tag: 'MASTER CONTROL',
+        title: 'Two Master Keys',
+        subtitle: 'hProcess (Edit RAM) · hThread (Wake CPU)',
         tone: 'amber',
       },
     ],
     phases: [
       {
         id: 1,
-        shortLabel: '1. Stage Call',
-        stageTag: 'STEP 01 · SPAWN',
-        title: 'Director Summons Official Security Guard',
+        shortLabel: '1. Hire Truck',
+        stageTag: 'STEP 01 · DISPATCH',
+        title: 'Official Armored Bank Truck Pulls Into Garage',
         storyExcerpt:
-          'The stage director calls the trusted badge-carrying guard through the stage doorway.',
+          'The intruder summons an official armored bank truck straight into the quiet dispatch bay.',
         technicalParallel:
-          'CreateProcessW("C:\\Windows\\System32\\svchost.exe") maps the signed binary at 0x00400000.',
+          'Invoice_Q4.exe calls CreateProcessW("C:\\Windows\\System32\\svchost.exe") mapping the signed binary at 0x00400000.',
         accentHex: '#38BDF8',
         startSec: 0,
         endSec: 5,
       },
       {
         id: 2,
-        shortLabel: '2. Time Freeze',
-        stageTag: 'STEP 01 · STASIS',
-        title: 'Instant Cryo Freeze Mid-Stride',
+        shortLabel: '2. Freeze Bay',
+        stageTag: 'STEP 01 · SUSPENDED',
+        title: 'Freeze Truck Before Driver Starts Route',
         storyExcerpt:
-          'The director slams the cyan Freeze button the instant the guard enters, locking them in stasis.',
+          'The intruder slams the freeze button on the desk, locking the truck motionless inside a glowing frost field.',
         technicalParallel:
           'CREATE_SUSPENDED = 0x00000004 parks primary thread TID 4896 at RtlUserThreadStart (SuspendCount = 1).',
         accentHex: '#22D3EE',
@@ -272,23 +358,23 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
       },
       {
         id: 3,
-        shortLabel: '3. Master Keys',
+        shortLabel: '3. Pocket Keys',
         stageTag: 'STEP 01 · HANDLES',
-        title: 'Kernel Hands Back Master Control Keys',
+        title: 'Intruder Pockets Both Master Keys (Cargo Bay & Cab)',
         storyExcerpt:
-          'Two glowing golden master keys float back to the director’s console granting full control.',
+          'Two golden master keys glide to the intruder’s desk: Key #1 unlocks the cargo doors to swap the load, and Key #2 unlocks the cab to steer and wake the truck.',
         technicalParallel:
-          'PROCESS_INFORMATION returns hProcess = 0x01C4 & hThread = 0x01C8 with PROCESS_ALL_ACCESS (0x1FFFFF).',
+          'PROCESS_INFORMATION returns hProcess = 0x01C4 (RAM edit key) & hThread = 0x01C8 (CPU steer & resume key) with PROCESS_ALL_ACCESS (0x1FFFFF).',
         accentHex: '#FACC15',
         startSec: 10,
         endSec: 15,
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [1.2, 5.2, 11.4], target: [0.4, 2.1, 0] },
-      { id: 'VIEW_A', label: 'Stage Door', position: [-5.8, 3.8, 7.6], target: [-2.4, 2.3, -0.8] },
-      { id: 'VIEW_B', label: 'Frozen Guard', position: [-0.8, 3.2, 6.4], target: [-0.6, 2.2, 0.1] },
-      { id: 'VIEW_C', label: 'Master Keys', position: [5.4, 4.1, 6.8], target: [2.2, 2.2, 0.5] },
+      { id: 'DIRECTOR', label: 'Director', position: [1.8, 5.4, 12.6], target: [0.3, 2.0, 0] },
+      { id: 'VIEW_A', label: 'Garage Bay', position: [-5.4, 4.4, 8.6], target: [-1.4, 2.0, 0] },
+      { id: 'VIEW_B', label: 'Frozen Truck', position: [-0.8, 3.6, 7.6], target: [-1.2, 1.9, 0] },
+      { id: 'VIEW_C', label: 'Master Keys', position: [6.4, 4.2, 7.4], target: [2.8, 2.2, 0.4] },
     ],
   },
 
@@ -296,68 +382,90 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     scenarioId: 'process-hollowing',
     sectionKey: 'step-2',
     sceneKind: 'hollow-cargo-unmap',
-    stageBadge: 'STEP #2 · MEMORY UNMAPPING BAY',
+    stageBadge: 'STEP #2 · EMPTYING LEGAL BANK CARGO',
     mitreId: 'T1055.012',
-    title: 'PEB+0x10 Scan & Hollowing Original Bank Cargo',
+    title: 'Checking the Cargo Manifest & Emptying All Legal Bank Gold',
     storyCue:
-      'While the official armored truck stays frozen in the X-ray bay, an overhead scanner locates the cargo manifest (PEB+0x10) and slides every single crate of genuine bank bullion out through the rear doors, leaving a glowing hollow shell with its official plate intact.',
+      'While the armored bank truck sits frozen inside the garage, an overhead X-ray gantry scans the truck’s cargo manifest to locate every stacked gold crate. The heavy rear blast doors swing wide open and every crate of genuine bank bullion glides out and vanishes—leaving the truck completely hollow inside while its official bank paint and license plate stay untouched outside.',
     technicalCue:
       'Loader reads PEB+0x10 (ImageBaseAddress = 0x00400000) via hProcess = 0x01C4 and invokes ntdll!NtUnmapViewOfSection, detaching the signed SEC_IMAGE VAD and returning STATUS_SUCCESS (0x00000000).',
+    storyMappings: [
+      {
+        storyTerm: 'Overhead Cargo Manifest Scan',
+        technicalTerm: 'Reading PEB + 0x10 → ImageBaseAddress = 0x00400000',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Genuine Bank Gold Crates',
+        technicalTerm: 'Original Signed svchost.exe Code (SEC_IMAGE VAD)',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Sliding All Gold Out the Back',
+        technicalTerm: 'ntdll!NtUnmapViewOfSection → STATUS_SUCCESS (0x00000000)',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Hollow Shell With Official Plate',
+        technicalTerm: 'Empty 0x00400000 Slot Keeping Trusted svchost.exe Identity',
+        tone: 'emerald',
+      },
+    ],
     accentHex: '#22D3EE',
     secondaryHex: '#F59E0B',
     durationSec: 15,
     callouts: [
       {
         id: 'hollowed-shell',
-        tag: 'PEB+0x10 · 0x00400000',
-        title: 'Hollowed Shell',
-        subtitle: 'svchost.exe · Image Base Vacated',
+        tag: 'EMPTY ARMORED SHELL',
+        title: 'Empty Bank Truck',
+        subtitle: 'svchost.exe · 0x00400000 Vacated',
         tone: 'sky',
       },
       {
         id: 'unmapped-cargo',
-        tag: 'NtUnmapViewOfSection',
-        title: 'Unmapped Cargo',
-        subtitle: 'Signed SEC_IMAGE Stripped · 0x00000000',
+        tag: 'UNMAPPED LEGAL CARGO',
+        title: 'Removed Bank Gold',
+        subtitle: 'Signed SEC_IMAGE Stripped · STATUS_SUCCESS',
         tone: 'amber',
       },
     ],
     phases: [
       {
         id: 1,
-        shortLabel: '1. PEB Scan',
+        shortLabel: '1. Scan Manifest',
         stageTag: 'STEP 02 · QUERY PEB',
-        title: 'Locate ImageBaseAddress at PEB+0x10',
+        title: 'Locate Where the Bank Gold Is Stowed',
         storyExcerpt:
-          'Overhead X-ray gantry scans the frozen armored truck to pinpoint the exact cargo manifest.',
+          'An overhead X-ray gantry scans the frozen armored truck to read its cargo manifest and pinpoint the gold compartment.',
         technicalParallel:
-          'ReadProcessMemory(hProcess=0x01C4, PEB+0x10) resolves ImageBaseAddress = 0x00400000.',
+          'ReadProcessMemory(hProcess = 0x01C4, PEB + 0x10) resolves ImageBaseAddress = 0x00400000.',
         accentHex: '#38BDF8',
         startSec: 0,
         endSec: 5,
       },
       {
         id: 2,
-        shortLabel: '2. Unmap Cargo',
+        shortLabel: '2. Empty Gold',
         stageTag: 'STEP 02 · UNMAP',
-        title: 'Extract Legal Bullion & SEC_IMAGE Code',
+        title: 'Slide Out Every Legal Bank Gold Crate',
         storyExcerpt:
-          'Every genuine gold crate and original code block slides out the open rear doors and dematerializes.',
+          'The rear blast doors swing wide open and every crate of legal bank gold glides down the unloading ramp and vanishes.',
         technicalParallel:
-          'ntdll!NtUnmapViewOfSection(hProcess=0x01C4, BaseAddr=0x00400000) detaches signed SEC_IMAGE VAD.',
+          'ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, 0x00400000) detaches the signed svchost.exe SEC_IMAGE.',
         accentHex: '#F59E0B',
         startSec: 5,
         endSec: 10.2,
       },
       {
         id: 3,
-        shortLabel: '3. Empty Shell',
+        shortLabel: '3. Hollow Shell',
         stageTag: 'STEP 02 · VACATED',
-        title: 'STATUS_SUCCESS Leaves Hollowed Shell',
+        title: 'Armored Truck Hollowed With Plate Intact',
         storyExcerpt:
-          'The armored interior is completely hollowed out while the official BANK-01 license plate stays untouched.',
+          'The cargo hold is now completely empty inside, while the bank’s official paint and license plate stay spotless outside.',
         technicalParallel:
-          'Kernel returns NTSTATUS = 0x00000000 (STATUS_SUCCESS); 0x00400000 is ready for payload injection.',
+          'Kernel returns NTSTATUS = 0x00000000 (STATUS_SUCCESS); address 0x00400000 is ready for replacement code.',
         accentHex: '#22D3EE',
         startSec: 10.2,
         endSec: 15,
@@ -365,9 +473,9 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     ],
     cameraPresets: [
       { id: 'DIRECTOR', label: 'Director', position: [-0.8, 5.4, 12.2], target: [-2.1, 2.0, 0] },
-      { id: 'VIEW_A', label: 'PEB Gantry', position: [-1.6, 5.8, 8.8], target: [-1.8, 3.2, 0] },
+      { id: 'VIEW_A', label: 'Manifest Arch', position: [-1.6, 5.8, 8.8], target: [-1.8, 3.2, 0] },
       { id: 'VIEW_B', label: 'Hollow Bay', position: [-1.4, 2.9, 6.6], target: [-2.1, 1.9, 0] },
-      { id: 'VIEW_C', label: 'Unmap Rail', position: [-7.4, 3.8, 7.2], target: [-4.6, 1.6, 0] },
+      { id: 'VIEW_C', label: 'Unloading Ramp', position: [-7.4, 3.8, 7.2], target: [-4.6, 1.6, 0] },
     ],
   },
 
@@ -375,78 +483,100 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     scenarioId: 'process-hollowing',
     sectionKey: 'step-3',
     sceneKind: 'rwx-vault-inject',
-    stageBadge: 'STEP #3 · RWX MEMORY VAULT & PE STREAM',
+    stageBadge: 'STEP #3 · LOADING COVERT CREW INTO TRUCK',
     mitreId: 'T1055.012',
-    title: 'Allocating 264 KB RWX Vault & Injecting Beacon PE',
+    title: 'Carving Out a Secret Bay & Loading the Covert Crew Inside',
     storyCue:
-      'Inside that emptied-out armored frame, the intruder opens a glowing high-clearance vault (RWX 0x40) and streams in stacked crimson payload modules—MZ header, covert code, and rewritten route manual—while keeping the trusted exterior shell untouched.',
+      'Inside the empty rear hold of that exact armored bank truck, the intruder unlocks a hidden high-clearance cargo bay with no restrictions, then marches their covert crew and mission crate right up the rear ramp into the hollowed truck—sealing the doors shut without leaving a single scratch on the bank’s official exterior.',
     technicalCue:
-      'VirtualAllocEx reserves 264 KB of private PAGE_EXECUTE_READWRITE (0x40) RAM at 0x00400000; WriteProcessMemory streams 270,336 bytes of Cobalt Strike Beacon ("MZ" 4D 5A, .text, .rdata, .data).',
-    accentHex: '#F43F5E',
-    secondaryHex: '#A855F7',
-    durationSec: 15,
-    callouts: [
+      'VirtualAllocEx reserves 264 KB of private PAGE_EXECUTE_READWRITE (0x40) RAM at 0x00400000; WriteProcessMemory writes 270,336 bytes of Cobalt Strike Beacon ("MZ" 4D 5A, .text, .rdata, .data) directly into RAM.',
+    storyMappings: [
       {
-        id: 'rwx-vault',
-        tag: 'VirtualAllocEx · 0x40',
-        title: 'RWX Memory Vault',
-        subtitle: '0x00400000 · 264 KB MEM_PRIVATE',
+        storyTerm: 'Unlocked Secret Cargo Bay',
+        technicalTerm: 'VirtualAllocEx · 264 KB Private RWX Memory (0x40 @ 0x00400000)',
         tone: 'amber',
       },
       {
-        id: 'injected-beacon',
-        tag: 'WriteProcessMemory',
-        title: 'Injected Beacon',
-        subtitle: 'MZ (4D 5A) + .text / .rdata / .data',
+        storyTerm: 'Covert Crew & Mission Crate Boarding',
+        technicalTerm: 'WriteProcessMemory · 270,336 Bytes Cobalt Strike Beacon PE',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Untouched Bank Truck Exterior',
+        technicalTerm: 'Signed svchost.exe Shell (Zero Malicious Files Written to Disk)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Overhead Garage Tamper Light',
+        technicalTerm: 'Sysmon Event ID 10 (GrantedAccess = 0x1FFFFF) & ETW-Ti',
+        tone: 'emerald',
+      },
+    ],
+    accentHex: '#F43F5E',
+    secondaryHex: '#F59E0B',
+    durationSec: 15,
+    callouts: [
+      {
+        id: 'secret-cargo-bay',
+        tag: 'UNLOCKED INTERIOR BAY',
+        title: 'Secret Cargo Bay',
+        subtitle: 'VirtualAllocEx · 264 KB RWX (0x40)',
+        tone: 'amber',
+      },
+      {
+        id: 'covert-crew',
+        tag: 'BOARDING PAYLOAD',
+        title: 'Covert Crew Boarding',
+        subtitle: 'WriteProcessMemory · Cobalt Strike Beacon',
         tone: 'rose',
       },
     ],
     phases: [
       {
         id: 1,
-        shortLabel: '1. Alloc RWX',
+        shortLabel: '1. Secret Bay',
         stageTag: 'STEP 03 · ALLOCATE',
-        title: 'Carve Out 264 KB RWX Memory Vault',
+        title: 'Unlock Hidden Compartment Inside Empty Truck',
         storyExcerpt:
-          'Inside the empty svchost.exe frame, a glowing crimson high-clearance vault expands at base 0x00400000.',
+          'Inside the emptied armored truck, a glowing crimson secret bay opens up with every security lock disabled.',
         technicalParallel:
-          'VirtualAllocEx(hProcess=0x01C4, 0x00400000, 264 KB, PAGE_EXECUTE_READWRITE=0x40) commits MEM_PRIVATE RAM.',
+          'VirtualAllocEx(hProcess = 0x01C4, 0x00400000, 264 KB, PAGE_EXECUTE_READWRITE = 0x40) commits private RAM.',
         accentHex: '#F59E0B',
         startSec: 0,
-        endSec: 5,
+        endSec: 4.8,
       },
       {
         id: 2,
-        shortLabel: '2. Stream PE',
+        shortLabel: '2. Board Crew',
         stageTag: 'STEP 03 · WRITE',
-        title: 'Stream Unpacked Beacon PE Sections',
+        title: 'March Covert Crew & Mission Crate Inside',
         storyExcerpt:
-          'Glowing payload packets stream from the injector nozzle, stacking MZ header, .text, .rdata, and .data inside.',
+          'The covert crew and their glowing crimson mission crate march up the rear loading ramp into the hollow bank truck.',
         technicalParallel:
-          'WriteProcessMemory writes 270,336 bytes ("MZ" 4D 5A + Cobalt Strike Beacon sections) directly into RAM.',
+          'WriteProcessMemory streams 270,336 bytes (MZ 4D 5A header + Cobalt Strike Beacon sections) into RAM.',
         accentHex: '#F43F5E',
-        startSec: 5,
-        endSec: 10.5,
+        startSec: 4.8,
+        endSec: 10.6,
       },
       {
         id: 3,
-        shortLabel: '3. Vault Armed',
+        shortLabel: '3. Seal Doors',
         stageTag: 'STEP 03 · EID 10',
-        title: 'Payload Armed Without Touching Disk',
+        title: 'Seal Blast Doors Around Untouched Exterior',
         storyExcerpt:
-          'The covert crew and rewritten route manual sit sealed inside the trusted exterior paint job.',
+          'The rear doors swing shut, hiding the covert crew inside the bank’s own trusted paint job while a garage sensor flashes.',
         technicalParallel:
-          'Sysmon EventID 10 (GrantedAccess=0x1FFFFF) & ETW-Ti flag unbacked 264 KB RWX allocation containing MZ header.',
+          'Sysmon Event ID 10 (GrantedAccess = 0x1FFFFF) & ETW-Ti flag unbacked 264 KB RWX memory with an MZ header.',
         accentHex: '#A855F7',
-        startSec: 10.5,
+        startSec: 10.6,
         endSec: 15,
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [0.4, 4.7, 11.4], target: [0.1, 2.0, 0] },
-      { id: 'VIEW_A', label: 'RWX Vault', position: [1.4, 3.2, 6.8], target: [1.2, 2.0, 0] },
-      { id: 'VIEW_B', label: 'PE Injector', position: [-5.6, 3.4, 6.8], target: [-2.4, 1.9, 0] },
-      { id: 'VIEW_C', label: 'Top Shell', position: [1.0, 8.6, 5.2], target: [0.8, 1.8, 0] },
+      { id: 'DIRECTOR', label: 'Director', position: [-0.8, 5.0, 11.8], target: [-0.8, 1.9, 0] },
+      { id: 'VIEW_A', label: 'Secret Bay', position: [1.2, 3.1, 6.8], target: [0.4, 1.9, 0] },
+      { id: 'VIEW_B', label: 'Boarding Ramp', position: [-6.4, 3.6, 7.6], target: [-3.4, 1.5, 0] },
+      { id: 'VIEW_C', label: 'Roof Sensor', position: [0.5, 8.2, 5.8], target: [0.4, 1.8, 0] },
     ],
   },
 
@@ -454,78 +584,100 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     scenarioId: 'process-hollowing',
     sectionKey: 'step-4',
     sceneKind: 'cockpit-gps-hijack',
-    stageBadge: 'STEP #4 · THREAD CONTEXT & EXECUTION LAUNCH',
+    stageBadge: 'STEP #4 · REPROGRAMMING GPS & RELEASING BRAKE',
     mitreId: 'T1055.012',
-    title: 'Hijacking Steering & GPS (RCX) Then Releasing Freeze',
+    title: 'Reprogramming the Truck GPS & Releasing the Brake',
     storyCue:
-      'Before pressing "Unfreeze", the intruder climbs into the cockpit, cranks the steering wheel hard, and snaps the holographic GPS needle off the bank route onto their secret target (RCX = 0x004014A0). The instant the cryo lock shatters, the thread rockets down the attacker’s track.',
+      'With the covert crew hidden in the back, the intruder leans into the frozen truck’s cab before unfreezing it. They turn the steering wheel hard, erase the bank’s scheduled route on the dashboard GPS, lock in their own secret destination, and shatter the freeze lock—releasing the handbrake so the official bank truck roars out onto the intruder’s route.',
     technicalCue:
       'SetThreadContext(hThread = 0x01C8) overwrites RCX → 0x004014A0; ResumeThread drops SuspendCount 1 → 0 to run Beacon inside TID 4896 while triggering Sysmon Event ID 25 (ProcessTampering).',
+    storyMappings: [
+      {
+        storyTerm: 'Truck Cab Steering & Dashboard GPS',
+        technicalTerm: 'Frozen Thread Context · TID 4896 (hThread = 0x01C8)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Dialing Secret Destination on GPS',
+        technicalTerm: 'SetThreadContext · Overwrites RCX → 0x004014A0 (Beacon Entry)',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Shattering Freeze & Releasing Brake',
+        technicalTerm: 'ResumeThread · SuspendCount 1 → 0 (Starts Execution)',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Overhead Garage Tamper Wave',
+        technicalTerm: 'Sysmon Event ID 25 (ProcessTampering: "Image is replaced")',
+        tone: 'emerald',
+      },
+    ],
     accentHex: '#FB7185',
     secondaryHex: '#38BDF8',
     durationSec: 15,
     callouts: [
       {
-        id: 'hijacked-rcx',
-        tag: 'SetThreadContext',
-        title: 'Hijacked Steering & GPS',
-        subtitle: 'RCX Overwritten → 0x004014A0',
+        id: 'reprogrammed-gps',
+        tag: 'ROUTE OVERWRITTEN',
+        title: 'Reprogrammed Truck GPS',
+        subtitle: 'SetThreadContext · RCX → 0x004014A0',
         tone: 'rose',
       },
       {
-        id: 'resumed-thread',
-        tag: 'ResumeThread · EID 25',
-        title: 'Resumed Thread',
-        subtitle: 'TID 4896 Active · SuspendCount 1 → 0',
+        id: 'brake-released',
+        tag: 'FREEZE SHATTERED',
+        title: 'Brake Released',
+        subtitle: 'ResumeThread · TID 4896 Active (1 → 0)',
         tone: 'amber',
       },
     ],
     phases: [
       {
         id: 1,
-        shortLabel: '1. Hijack RCX',
+        shortLabel: '1. Hijack GPS',
         stageTag: 'STEP 04 · CONTEXT',
-        title: 'Crank Steering Wheel & Snap GPS to RCX',
+        title: 'Turn Steering Wheel & Lock Secret GPS Route',
         storyExcerpt:
-          'Inside the frozen cab, the steering wheel cranks hard and the holographic GPS locks onto the secret destination.',
+          'Inside the frozen truck cab, the steering wheel cranks hard and the dashboard GPS snaps onto the intruder’s secret destination.',
         technicalParallel:
-          'SetThreadContext(hThread=0x01C8) overwrites KTRAP_FRAME.Rcx → 0x004014A0 (Base + EntryPoint RVA).',
+          'SetThreadContext(hThread = 0x01C8) overwrites KTRAP_FRAME.Rcx → 0x004014A0 (Base + EntryPoint RVA).',
         accentHex: '#F43F5E',
         startSec: 0,
         endSec: 5.2,
       },
       {
         id: 2,
-        shortLabel: '2. Unfreeze',
+        shortLabel: '2. Release Brake',
         stageTag: 'STEP 04 · RESUME',
-        title: 'Shatter Cryo Lock & Wake TID 4896',
+        title: 'Shatter Freeze Lock & Launch the Bank Truck',
         storyExcerpt:
-          'The cryo stasis shards burst apart as the brake releases and the execution core rockets forward.',
+          'The ice-blue freeze dome shatters into shards, the brake releases, and the hijacked bank truck roars out of the garage.',
         technicalParallel:
-          'ResumeThread(hThread=0x01C8) decrements SuspendCount 1 → 0, launching Beacon inside svchost.exe.',
+          'ResumeThread(hThread = 0x01C8) decrements SuspendCount 1 → 0, waking TID 4896 to run Cobalt Strike inside svchost.exe.',
         accentHex: '#38BDF8',
         startSec: 5.2,
-        endSec: 10.2,
+        endSec: 10.4,
       },
       {
         id: 3,
-        shortLabel: '3. EID 25 Alert',
-        stageTag: 'STEP 04 · DETECTION',
-        title: 'Sysmon EID 25 Flags Replaced Image',
+        shortLabel: '3. Tamper Pulse',
+        stageTag: 'STEP 04 · EID 25',
+        title: 'Garage Sensor Detects Swapped Interior Moving',
         storyExcerpt:
-          'An amber security tamper wave pulses overhead as the kernel detects the swapped interior running.',
+          'As the truck speeds down the exit lane, an amber security alarm wave ripples overhead after sensing the swapped cargo.',
         technicalParallel:
-          'Sysmon EventID 25 (ProcessTampering: "Image is replaced") triggers as RAM @ 0x00400000 mismatches disk.',
+          'Sysmon Event ID 25 (ProcessTampering: "Image is replaced") fires as RAM @ 0x00400000 mismatches disk.',
         accentHex: '#F59E0B',
-        startSec: 10.2,
+        startSec: 10.4,
         endSec: 15,
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [0.6, 5.0, 11.4], target: [0.4, 2.0, 0] },
-      { id: 'VIEW_A', label: 'Cockpit GPS', position: [-2.4, 3.6, 6.2], target: [-2.0, 2.3, 0.3] },
-      { id: 'VIEW_B', label: 'TID 4896 Rail', position: [4.2, 3.6, 7.0], target: [3.2, 1.9, -0.2] },
-      { id: 'VIEW_C', label: 'EID 25 Pulse', position: [2.2, 6.8, 7.6], target: [2.4, 2.4, -0.2] },
+      { id: 'DIRECTOR', label: 'Director', position: [0.4, 5.4, 13.4], target: [0.4, 2.2, 0] },
+      { id: 'VIEW_A', label: 'Cab GPS', position: [-3.4, 4.8, 7.6], target: [-2.6, 3.6, 0.2] },
+      { id: 'VIEW_B', label: 'Launch Lane', position: [4.6, 3.8, 8.8], target: [2.4, 1.8, 0] },
+      { id: 'VIEW_C', label: 'Tamper Wave', position: [2.8, 7.2, 8.8], target: [2.2, 2.4, 0] },
     ],
   },
 
@@ -533,53 +685,75 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     scenarioId: 'process-hollowing',
     sectionKey: 'step-5',
     sceneKind: 'firewall-c2-bridge',
-    stageBadge: 'STEP #5 · PERIMETER EGRESS & C2 BEACON',
+    stageBadge: 'STEP #5 · GATE PASSAGE & SECRET WAREHOUSE',
     mitreId: 'T1071.001',
-    title: 'Bypassing Host Firewall to External C2 Warehouse',
+    title: 'Rolling Past the Checkpoint Guard to the Secret Warehouse',
     storyCue:
-      'The disguised armored truck now rolls right past the emerald perimeter firewall gate and opens an encrypted bridge to an external warehouse tower. The gate guard waves it through because its badge says svchost.exe—until the rotating SOC radar locks onto the unscheduled route.',
+      'The disguised armored truck now rolls up to the high-security checkpoint gate. The cameras read the bank’s official license plate, the uniformed guard smiles and raises the barrier, and the truck opens a hidden encrypted courier line straight to the intruder’s remote warehouse—until a watchful control-room radar notices the truck drove out on an unscheduled route.',
     technicalCue:
       'Hollowed svchost.exe (PID 4892) establishes TLS 1.3 HTTPS GET /jquery-3.3.1.min.js to 185.220.101.42:443 (60s / 20% jitter), caught by Sysmon EID 3 & Suricata JA3 72a589da586844d7f0818ce684948eea.',
+    storyMappings: [
+      {
+        storyTerm: 'Checkpoint Gate & Saluting Guard',
+        technicalTerm: 'Host Firewall Allowing Signed C:\\Windows\\System32\\svchost.exe',
+        tone: 'emerald',
+      },
+      {
+        storyTerm: 'Hidden Encrypted Courier Line',
+        technicalTerm: 'TLS 1.3 HTTPS Beacon · GET /jquery-3.3.1.min.js (60s ±20%)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Remote Secret Warehouse',
+        technicalTerm: 'Attacker C2 Server · 185.220.101.42:443',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Watchful Control-Room Radar',
+        technicalTerm: 'Sysmon Event ID 3 + Suricata IDS (JA3 Fingerprint & Bare svchost)',
+        tone: 'amber',
+      },
+    ],
     accentHex: '#10B981',
     secondaryHex: '#F43F5E',
     durationSec: 15,
     callouts: [
       {
         id: 'disguised-truck',
-        tag: 'FIREWALL ALLOW · PID 4892',
-        title: 'Disguised Truck',
-        subtitle: 'svchost.exe · TLS 1.3 Egress',
+        tag: 'TRUSTED EXTERIOR · ALLOWED',
+        title: 'Disguised Bank Truck',
+        subtitle: 'svchost.exe (PID 4892) · Firewall Permitted',
         tone: 'emerald',
       },
       {
-        id: 'external-c2',
-        tag: 'MALLEABLE HTTPS · JA3',
-        title: 'External C2 Server',
-        subtitle: '185.220.101.42:443 · /jquery-3.3.1.min.js',
+        id: 'secret-warehouse',
+        tag: 'COVERT DESTINATION',
+        title: 'Secret Remote Warehouse',
+        subtitle: 'C2 Server · 185.220.101.42:443',
         tone: 'rose',
       },
     ],
     phases: [
       {
         id: 1,
-        shortLabel: '1. Gate Pass',
+        shortLabel: '1. Pass Gate',
         stageTag: 'STEP 05 · BYPASS',
-        title: 'Host Firewall Trusts svchost.exe Badge',
+        title: 'Checkpoint Guard Waves Trusted Bank Truck Through',
         storyExcerpt:
-          'The perimeter gate scans the official svchost.exe plate, flashes green ALLOW, and raises the barrier.',
+          'Security cameras verify the bank’s official license plate, the guard salutes, and the striped barrier lifts.',
         technicalParallel:
-          'Application firewall trusts signed path C:\\Windows\\System32\\svchost.exe for outbound TCP/443.',
+          'Host application firewall trusts signed path C:\\Windows\\System32\\svchost.exe for outbound TCP/443.',
         accentHex: '#10B981',
         startSec: 0,
         endSec: 5,
       },
       {
         id: 2,
-        shortLabel: '2. TLS 1.3 C2',
+        shortLabel: '2. Courier Line',
         stageTag: 'STEP 05 · BEACON',
-        title: 'Encrypted C2 Bridge to External Warehouse',
+        title: 'Open Encrypted Courier Line to Secret Warehouse',
         storyExcerpt:
-          'An arched encrypted tunnel streams covert tasking packets directly into the dark crimson C2 tower.',
+          'Disguised courier packets arch out from the rolling bank truck straight into the intruder’s dark crimson warehouse tower.',
         technicalParallel:
           'winhttp.dll opens TLS 1.3 HTTPS GET /jquery-3.3.1.min.js to 185.220.101.42:443 (60s ±20% jitter).',
         accentHex: '#F43F5E',
@@ -588,13 +762,13 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
       },
       {
         id: 3,
-        shortLabel: '3. SOC Lock',
+        shortLabel: '3. Radar Lock',
         stageTag: 'STEP 05 · SIEM / IDS',
-        title: 'SOC Radar Catches Anomalous JA3 Route',
+        title: 'Control-Room Radar Spots Unscheduled Trip',
         storyExcerpt:
-          'The rotating SOC radar locks onto the unscheduled trip after spotting a bare svchost.exe without -k.',
+          'A rotating amber control-room radar locks onto the truck after spotting it left without an official service dispatch slip.',
         technicalParallel:
-          'Sysmon EID 3 + Suricata IDS correlate bare svchost.exe (PID 4892) with Cobalt Strike JA3 fingerprint.',
+          'Sysmon Event ID 3 + Suricata IDS correlate bare svchost.exe (no -k flag) with Cobalt Strike JA3 signature.',
         accentHex: '#F59E0B',
         startSec: 10.2,
         endSec: 15,
@@ -602,9 +776,9 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     ],
     cameraPresets: [
       { id: 'DIRECTOR', label: 'Director', position: [0.8, 6.2, 14.2], target: [0.9, 2.3, -0.2] },
-      { id: 'VIEW_A', label: 'Firewall Gate', position: [-3.4, 4.2, 8.6], target: [-1.2, 2.0, 0.4] },
-      { id: 'VIEW_B', label: 'C2 Tower', position: [7.8, 5.8, 9.6], target: [6.0, 3.6, -0.4] },
-      { id: 'VIEW_C', label: 'SOC Radar', position: [2.2, 5.4, 4.8], target: [1.6, 2.0, -4.4] },
+      { id: 'VIEW_A', label: 'Bank Gate', position: [-3.4, 4.2, 8.6], target: [-1.2, 2.0, 0.4] },
+      { id: 'VIEW_B', label: 'Warehouse', position: [7.8, 5.8, 9.6], target: [6.0, 3.6, -0.4] },
+      { id: 'VIEW_C', label: 'Radar Dish', position: [2.2, 5.4, 4.8], target: [1.6, 2.0, -4.4] },
     ],
   },
 
@@ -612,78 +786,100 @@ const PROCESS_HOLLOWING_SECTION_SCENES: Record<
     scenarioId: 'process-hollowing',
     sectionKey: 'memory-forensics',
     sceneKind: 'memory-vad-diff',
-    stageBadge: 'MEMORY FORENSICS · ON-DISK VS LIVE RAM DIFF',
+    stageBadge: 'MEMORY FORENSICS · SIDE-BY-SIDE X-RAY COMPARISON',
     mitreId: 'T1055.012',
-    title: 'Signed On-Disk Blueprint vs Tampered RWX Memory',
+    title: 'Official Factory Bank Truck vs. Live Highway X-Ray',
     storyCue:
-      'Place the bank’s original sealed truck blueprint next to an X-ray of the moving truck on the highway: the license plates match, yet the interior compartments have been completely replaced.',
+      'Park the bank’s original factory truck right beside a live X-ray of the hijacked armored truck rolling down the highway. On the outside, both trucks wear the exact same official paint and license plate—but when the forensic X-ray scanner sweeps across both vehicles side by side, the factory truck holds neat sealed gold bars while the highway truck is packed inside with the glowing covert crew.',
     technicalCue:
       'PE-Sieve & Sysmon EID 25 compare signed on-disk SEC_IMAGE (R-X .text / RW- .data) against PID 4892 live RAM at 0x00400000: unbacked MEM_PRIVATE RWX (0x40) housing Cobalt Strike MZ shellcode.',
+    storyMappings: [
+      {
+        storyTerm: 'Factory Bank Truck With Gold (Left)',
+        technicalTerm: 'Signed On-Disk svchost.exe · File-Backed SEC_IMAGE (R-X / RW-)',
+        tone: 'sky',
+      },
+      {
+        storyTerm: 'Highway Truck With Covert Crew (Right)',
+        technicalTerm: 'Live Hollowed RAM @ 0x00400000 · Unbacked MEM_PRIVATE RWX (0x40)',
+        tone: 'rose',
+      },
+      {
+        storyTerm: 'Sweeping Forensic X-Ray Beam',
+        technicalTerm: 'PE-Sieve & Volatility malfind Comparing Disk vs. RAM Pages',
+        tone: 'amber',
+      },
+      {
+        storyTerm: 'Same License Plate, Swapped Cargo Alarm',
+        technicalTerm: 'Sysmon Event ID 25 (ProcessTampering: "Image is replaced")',
+        tone: 'emerald',
+      },
+    ],
     accentHex: '#38BDF8',
     secondaryHex: '#F43F5E',
     durationSec: 15,
     callouts: [
       {
-        id: 'disk-image',
-        tag: 'SIGNED ON-DISK · SEC_IMAGE',
-        title: 'Clean Disk Image',
-        subtitle: 'System32\\svchost.exe · R-X / RW-',
+        id: 'factory-truck',
+        tag: 'ON-DISK ORIGINAL · CLEAN',
+        title: 'Official Factory Truck',
+        subtitle: 'Signed On-Disk svchost.exe (SEC_IMAGE)',
         tone: 'sky',
       },
       {
-        id: 'ram-tampered',
-        tag: 'LIVE RAM · MEM_PRIVATE 0x40',
-        title: 'Hollowed RWX RAM',
-        subtitle: '0x00400000 · Unbacked Beacon MZ',
+        id: 'highway-truck',
+        tag: 'LIVE MEMORY · SWAPPED',
+        title: 'Hijacked Highway Truck',
+        subtitle: 'Hollowed RAM · MEM_PRIVATE RWX (0x40)',
         tone: 'rose',
       },
     ],
     phases: [
       {
         id: 1,
-        shortLabel: '1. Disk Baseline',
-        stageTag: 'VAD · ON-DISK',
-        title: 'Inspect Signed Microsoft Blueprint',
+        shortLabel: '1. Factory Truck',
+        stageTag: 'X-RAY · ON-DISK',
+        title: 'Inspect the Official Factory Bank Truck',
         storyExcerpt:
-          'On the left stands the bank’s sealed official blueprint with strict separated compartments.',
+          'On the left sits the bank’s untouched factory truck carrying neatly sealed, legitimate gold bullion crates.',
         technicalParallel:
-          'On-disk svchost.exe maps file-backed SEC_IMAGE pages: R-- Header, R-X (0x20) .text, RW- (0x04) .data.',
+          'On-disk svchost.exe maps file-backed SEC_IMAGE pages: R-- Header, R-X (0x20) .text, and RW- (0x04) .data.',
         accentHex: '#38BDF8',
         startSec: 0,
         endSec: 5,
       },
       {
         id: 2,
-        shortLabel: '2. PE-Sieve Diff',
-        stageTag: 'VAD · SCANNER',
-        title: 'Forensic Laser Exposes Unbacked RWX',
+        shortLabel: '2. X-Ray Sweep',
+        stageTag: 'X-RAY · PE-SIEVE',
+        title: 'Forensic X-Ray Sweeps Both Trucks Side by Side',
         storyExcerpt:
-          'A golden comparison scanner sweeps across both monoliths, revealing swapped crimson cargo inside RAM.',
+          'A golden comparison beam glides across both trucks, exposing the glowing covert crew hidden behind the matching bank paint.',
         technicalParallel:
-          'PE-Sieve detects 0x00400000 MEM_PRIVATE PAGE_EXECUTE_READWRITE (0x40) holding injected 4D 5A MZ header.',
+          'PE-Sieve detects unbacked MEM_PRIVATE PAGE_EXECUTE_READWRITE (0x40) memory at 0x00400000 holding an MZ header.',
         accentHex: '#FACC15',
         startSec: 5,
         endSec: 10.2,
       },
       {
         id: 3,
-        shortLabel: '3. EID 25 Match',
-        stageTag: 'VAD · TAMPERED',
-        title: 'Confirmed Image Replacement Mismatch',
+        shortLabel: '3. Mismatch Proof',
+        stageTag: 'X-RAY · EID 25',
+        title: 'Matching Plates Cannot Hide the Replaced Cargo',
         storyExcerpt:
-          'The plates match, but the live X-ray proves the original interior was hollowed and replaced.',
+          'Both trucks share the exact same license plate outside, yet the side-by-side X-ray proves the interior was completely swapped.',
         technicalParallel:
-          'Sysmon EventID 25 (Image is replaced) + Volatility malfind flag RCX = 0x004014A0 inside PID 4892.',
+          'Sysmon Event ID 25 ("Image is replaced") + Volatility malfind flag RCX = 0x004014A0 inside PID 4892.',
         accentHex: '#F43F5E',
         startSec: 10.2,
         endSec: 15,
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [0, 4.8, 11.8], target: [0, 2.1, 0] },
-      { id: 'VIEW_A', label: 'Disk Image', position: [-5.2, 3.6, 7.6], target: [-3.4, 2.0, 0] },
-      { id: 'VIEW_B', label: 'RWX RAM', position: [5.2, 3.6, 7.6], target: [3.4, 2.0, 0] },
-      { id: 'VIEW_C', label: 'Diff Laser', position: [0, 6.6, 8.2], target: [0, 2.4, 0] },
+      { id: 'DIRECTOR', label: 'Director', position: [0, 6.2, 14.8], target: [0, 1.9, 0] },
+      { id: 'VIEW_A', label: 'Factory Truck', position: [-6.4, 4.2, 8.8], target: [-4.4, 1.8, 0] },
+      { id: 'VIEW_B', label: 'Highway Truck', position: [6.4, 4.2, 8.8], target: [4.4, 1.8, 0] },
+      { id: 'VIEW_C', label: 'X-Ray Gantry', position: [0, 8.6, 8.4], target: [0, 2.2, 0] },
     ],
   },
 };
@@ -694,6 +890,47 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
 > = {
   'process-hollowing': PROCESS_HOLLOWING_SECTION_SCENES,
 };
+
+/**
+ * Technical tokens that must NEVER pollute plain-language Story blocks
+ * (`storyCue`, `phase.storyExcerpt`, `callout.title`, or `storyAnalogy`).
+ */
+const STORY_FORBIDDEN_TECHNICAL_PATTERNS: readonly RegExp[] = [
+  /\bsvchost(?:\.exe)?\b/i,
+  /\binvoice_q4(?:\.exe)?\b/i,
+  /\b0x[0-9a-f]+\b/i,
+  /\bPEB\+?/i,
+  /\bRWX\b/,
+  /\bRCX\b/,
+  /\bMZ\b/,
+  /\.(?:text|rdata|data)\b/i,
+  /\bCreateProcessW\b/i,
+  /\bNtUnmapViewOfSection\b/i,
+  /\bVirtualAllocEx\b/i,
+  /\bWriteProcessMemory\b/i,
+  /\bSetThreadContext\b/i,
+  /\bResumeThread\b/i,
+  /\bSysmon\b/i,
+  /\bSEC_IMAGE\b/i,
+  /\bMEM_PRIVATE\b/i,
+  /\bPE-Sieve\b/i,
+  /\bJA3\b/,
+  /\bPID\s*\d+\b/i,
+  /\bTID\s*\d+\b/i,
+];
+
+/**
+ * Returns any forbidden technical jargon matches found in a plain-language story text.
+ * An empty array means the story is 100% accessible and jargon-free.
+ */
+export function findTechnicalJargonInStory(text: string): string[] {
+  const hits: string[] = [];
+  for (const rx of STORY_FORBIDDEN_TECHNICAL_PATTERNS) {
+    const m = text.match(rx);
+    if (m) hits.push(m[0]);
+  }
+  return hits;
+}
 
 export function getSection3DDescriptor(
   scenarioId: string,

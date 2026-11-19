@@ -21,6 +21,7 @@ import {
 import {
   buildDiagramStepGuideModel,
   DiagramStepGuideModel,
+  getRawScenarioStepGuide,
   parseStructuredExplanationClauses,
   StructuredExplanationClause,
 } from './scenario-step-guides';
@@ -480,9 +481,13 @@ export function resolveInspectorScopeContext({
       : scenario.name;
 
   const scopeSubtitle = whereAmISummary;
+  const mainBriefingStoryAnalogy = getRawScenarioStepGuide(
+    scenario.id
+  )?.briefing.storyAnalogy;
   const scopedStoryAnalogy =
     subBoardStoryAnalogy ||
     selectedMainNodeStoryAnalogy ||
+    mainBriefingStoryAnalogy ||
     scenario.overview;
 
   return {
@@ -1816,42 +1821,42 @@ const PROCESS_HOLLOWING_SEQUENCE_EXCHANGE_SPECS: Record<
       'CreateProcessW("C:\\Windows\\System32\\svchost.exe", CREATE_SUSPENDED = 0x00000004, asking Windows to create the trusted process in RAM while freezing its main thread before any code runs).',
     returnLabel: 'RET PID 4892 / hProcess 0x01C4',
     returnDescription:
-      'The Windows kernel creates the paused svchost.exe process (PID 4892) and returns PROCESS_INFORMATION containing hProcess = 0x01C4 and hThread = 0x01C8 (the master control handles that let Invoice_Q4.exe read, empty, and rewrite svchost.exe’s memory in the next exchanges).',
+      'The Windows kernel creates the paused svchost.exe process (PID 4892) and returns PROCESS_INFORMATION containing two master key handles: hProcess = 0x01C4 (the Process Master Key handle granting permission to inspect, empty, and rewrite svchost.exe’s RAM in Sequences #2 and #3) and hThread = 0x01C8 (the Thread Master Key handle granting permission to change the paused thread’s CPU registers and wake it up in Sequence #4).',
     continuationHint:
-      'Next in Sequence (#1 ──▶ #2): Invoice_Q4.exe (PID 3104) passes the returned process handle (hProcess = 0x01C4) directly into Sequence #2 to locate and unmap svchost.exe’s original code.',
+      'Next in Sequence (#1 ──▶ #2): Invoice_Q4.exe (PID 3104) passes the returned Process Master Key handle (hProcess = 0x01C4) directly into Sequence #2 to locate and unmap svchost.exe’s original code.',
     storyAnalogy:
-      'Think of this first exchange as a two-way dispatch order at a bank depot: the disguised courier (Invoice_Q4.exe) sends a request (#1→) asking the depot controller (the Windows kernel) to roll out an official armored bank van (svchost.exe) with its parking brake locked, and the controller replies (⇠#1) by handing back the van’s registration number (PID 4892) and master door keys (hProcess = 0x01C4 and hThread = 0x01C8) before the driver can even turn the ignition.',
+      'Think of this first exchange as a two-way dispatch order at a bank depot: the disguised courier sends a request (#1→) asking the depot controller to roll out an official armored bank truck with its parking brake locked, and the controller replies (⇠#1) by handing back the truck’s registration number and two golden master keys: the first master key unlocks the cargo doors so the courier can swap the bank load inside, and the second master key unlocks the driver cab so they can change the GPS route and release the brake later.',
     technicalBridge:
-      'In the forward request (#1→), the stage-1 dropper Invoice_Q4.exe (PID 3104, the initial loader launched on Victim Laptop WKS-04, 10.10.4.15) calls CreateProcessW targeting C:\\Windows\\System32\\svchost.exe (chosen because svchost.exe carries a valid Microsoft digital signature, allowing it to blend in with dozens of legitimate background services) with the creation flag CREATE_SUSPENDED = 0x00000004 (which tells the kernel to build the process container in RAM while halting its primary thread at the starting line before a single instruction executes). In the return response (⇠#1), the Windows kernel initializes the suspended process and replies to PID 3104 with a populated PROCESS_INFORMATION structure containing PID 4892, process handle hProcess = 0x01C4, and thread handle hThread = 0x01C8 (giving the loader full administrative control over the frozen child process’s virtual memory and CPU registers).',
+      'In the forward request (#1→), the stage-1 dropper Invoice_Q4.exe (PID 3104, the initial loader launched on Victim Laptop WKS-04, 10.10.4.15) calls CreateProcessW (Windows’ standard API for starting a new program) targeting C:\\Windows\\System32\\svchost.exe (chosen because svchost.exe carries a valid Microsoft digital signature, allowing it to blend in with dozens of legitimate background services) with the creation flag CREATE_SUSPENDED = 0x00000004 (which tells the kernel to build the process container in RAM while halting its primary thread at the starting line before a single instruction executes). In the return response (⇠#1), the Windows kernel initializes the suspended process and replies to PID 3104 with a populated PROCESS_INFORMATION structure (Windows’ startup receipt) containing PID 4892, Process Master Key handle hProcess = 0x01C4 (used to read, unmap, and overwrite svchost.exe’s virtual memory in Sequences #2 and #3), and Thread Master Key handle hThread = 0x01C8 (used to modify CPU registers and resume the frozen thread in Sequence #4).',
     underTheHood:
-      'During the #1→ / ⇠#1 kernel transition, ntdll!NtCreateUserProcess allocates the executive process object (EPROCESS for PID 4892), maps ntdll.dll and the signed svchost.exe image at base address 0x00400000, and parks the main thread (TID 4896) at ntdll!RtlUserThreadStart with SuspendCount = 1 (keeping the process completely inert in RAM while the parent dropper holds PROCESS_ALL_ACCESS = 0x1FFFFF rights via handle 0x01C4).',
+      'During the #1→ / ⇠#1 kernel transition, ntdll!NtCreateUserProcess (the low-level Windows syscall inside ntdll.dll that builds new processes inside the OS kernel) allocates the executive process object EPROCESS for PID 4892 (the kernel’s master tracking record holding the trusted svchost.exe identity, security token, and memory map), maps ntdll.dll (Windows’ mandatory system bridge library needed by every process to call kernel routines) alongside the signed svchost.exe image at base address 0x00400000 (the standard starting address in virtual RAM where Windows aligns executable code), and parks the main thread TID 4896 (the execution worker assigned to run program instructions) at ntdll!RtlUserThreadStart (Windows’ built-in thread launchpad waiting just before the program’s own entry point) with SuspendCount = 1 (a kernel pause counter set to 1 so the CPU scheduler keeps the process completely inert in RAM). Simultaneously, the kernel grants the parent dropper PROCESS_ALL_ACCESS = 0x1FFFFF (the highest Windows permission mask allowing full memory and thread tampering) via Process Master Key handle hProcess = 0x01C4 (a numeric permission token unlocking svchost.exe’s virtual memory so the loader can inspect, empty, and inject code in Sequences #2 and #3) and Thread Master Key handle hThread = 0x01C8 (a separate permission token unlocking the paused thread’s CPU registers so the loader can redirect its entry point and wake it up in Sequence #4).',
     detectionAndEvidence:
-      'Documented in Sysmon EventID 1 (ProcessCreate) captured during the #1→ / ⇠#1 transition: non-service parent C:\\Users\\Public\\Downloads\\Invoice_Q4.exe (PID 3104) spawning C:\\Windows\\System32\\svchost.exe (PID 4892, whereas legitimate svchost.exe instances are always spawned by services.exe with a -k service group flag).',
+      'Documented in Sysmon EventID 1 (ProcessCreate, the Windows log capturing every new process launch and its parent) during the #1→ / ⇠#1 transition: non-service parent C:\\Users\\Public\\Downloads\\Invoice_Q4.exe (PID 3104) spawning C:\\Windows\\System32\\svchost.exe (PID 4892, whereas legitimate svchost.exe instances are always spawned by services.exe with a -k service group flag).',
     keySpecs: [
       'Seq #1 (#1→ Request / ⇠#1 Response)',
       'CreateProcessW (CREATE_SUSPENDED = 0x00000004)',
       'Parent PID 3104 ──▶ Child PID 4892',
-      'Returned Handles: hProcess = 0x01C4 / hThread = 0x01C8',
+      'Master Key Handles: hProcess = 0x01C4 (Edit RAM) / hThread = 0x01C8 (Wake CPU)',
     ],
   },
   2: {
     plainTitle:
       'Querying the PEB Base Address & Unmapping the Legitimate svchost.exe Code From RAM',
     forwardPayloadSummary:
-      'ReadProcessMemory(PEB+0x10 ──▶ ImageBaseAddress = 0x00400000) followed by ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000, ordering the kernel to strip the original Microsoft code out of svchost.exe’s memory).',
+      'ReadProcessMemory(PEB+0x10 ──▶ ImageBaseAddress = 0x00400000, reading the process table to locate where svchost.exe sits in RAM) followed by ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000, ordering the kernel to strip the original Microsoft code out of memory).',
     returnLabel: 'RET STATUS_SUCCESS (0x00400000 Free)',
     returnDescription:
       'The Windows Memory Manager detaches the original svchost.exe image section from address 0x00400000 and returns NTSTATUS = 0x00000000 (STATUS_SUCCESS, confirming that the 0x00400000 memory slot inside PID 4892 is now completely empty and ready to receive the attacker’s payload).',
     continuationHint:
       'Next in Sequence (#2 ──▶ #3): The newly vacated base address (0x00400000) inside svchost.exe (PID 4892) is passed directly to VirtualAllocEx and WriteProcessMemory in Sequence #3.',
     storyAnalogy:
-      'While the armored van (svchost.exe, PID 4892) remains frozen in the bay, the loader sends a second request (#2→) to check the van’s cargo manifest (PEB+0x10) and hoist out every crate of genuine bank cargo (NtUnmapViewOfSection); the bay controller sends back an empty-bay confirmation (⇠#2: STATUS_SUCCESS at 0x00400000), proving the interior is now a hollow shell that still wears the bank’s trusted license plate on the outside.',
+      'While the armored truck remains frozen in the bay, the intruder uses the first golden master key (the cargo-door key from Exchange #1) to send a second order (#2→) scanning the truck’s cargo manifest and hoisting out every crate of genuine bank bullion; the bay controller sends back an empty-bay confirmation (⇠#2), proving the interior is now a hollow shell that still wears the bank’s trusted license plate on the outside.',
     technicalBridge:
-      'In the forward request (#2→), Invoice_Q4.exe (PID 3104) uses handle hProcess = 0x01C4 (received in Sequence #1) to read the frozen child process’s Process Environment Block at offset PEB+0x10 (locating the exact memory address where Windows loaded svchost.exe: ImageBaseAddress = 0x00400000) and then invokes ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000) (an undocumented native syscall that tells the kernel to unmap the legitimate Microsoft code section from RAM). In the return response (⇠#2), the kernel’s Virtual Memory Manager releases the file-backed section at 0x00400000 and returns STATUS_SUCCESS = 0x00000000 (confirming that address 0x00400000 is now free so the replacement malware image can be written at its preferred base address without needing complex pointer relocations).',
+      'In the forward request (#2→), Invoice_Q4.exe (PID 3104) uses Process Master Key handle hProcess = 0x01C4 (received in Sequence #1 specifically for cross-process memory operations) to read the frozen child process’s Process Environment Block at offset PEB+0x10 (Windows’ internal process data table, locating the exact memory address where Windows loaded svchost.exe: ImageBaseAddress = 0x00400000) and then invokes ntdll!NtUnmapViewOfSection(hProcess = 0x01C4, BaseAddr = 0x00400000) (an undocumented native syscall that tells the kernel to unmap the legitimate Microsoft code section from RAM). In the return response (⇠#2), the kernel’s Virtual Memory Manager releases the file-backed section at 0x00400000 and returns STATUS_SUCCESS = 0x00000000 (confirming that address 0x00400000 is now free so the replacement malware image can be written at its preferred base address without needing complex pointer relocations).',
     underTheHood:
-      'When NtUnmapViewOfSection executes across the #2→ / ⇠#2 boundary, nt!MiUnmapViewOfSection removes the SEC_IMAGE Virtual Address Descriptor (VAD) node backed by C:\\Windows\\System32\\svchost.exe at 0x00400000 (leaving PID 4892 alive in the kernel process table with its Microsoft-signed process metadata intact, even though its primary code region at 0x00400000 is now unallocated).',
+      'When NtUnmapViewOfSection (the native user-mode API in ntdll.dll for unmapping memory views) executes across the #2→ / ⇠#2 boundary, nt!MiUnmapViewOfSection (the internal kernel routine that tears down mapped executable sections) removes the SEC_IMAGE Virtual Address Descriptor (VAD, the kernel’s memory-inventory tree node linking address 0x00400000 to the signed file C:\\Windows\\System32\\svchost.exe on disk). This leaves PID 4892 alive in the kernel process table (preserving its trusted Microsoft-signed identity and metadata) even though its primary executable code region at 0x00400000 is now completely unallocated.',
     detectionAndEvidence:
-      'Documented in Win32 API / Kernel Memory ETW (MiUnmapViewOfSection) & Sysmon EventID 10 / 25: detects non-system process Invoice_Q4.exe (PID 3104) unmapping the primary executable image section (0x00400000) of a suspended Windows system binary (svchost.exe, PID 4892).',
+      'Documented in Win32 API / Kernel Memory ETW (Event Tracing for Windows monitoring MiUnmapViewOfSection) & Sysmon EventID 10 / 25: detects non-system process Invoice_Q4.exe (PID 3104) unmapping the primary executable image section (0x00400000) of a suspended Windows system binary (svchost.exe, PID 4892).',
     keySpecs: [
       'Seq #2 (#2→ Request / ⇠#2 Response)',
       'ntdll!NtUnmapViewOfSection (hProcess = 0x01C4)',
@@ -1863,20 +1868,20 @@ const PROCESS_HOLLOWING_SEQUENCE_EXCHANGE_SPECS: Record<
     plainTitle:
       'Reserving 264 KB of RWX Memory at 0x00400000 & Streaming the Cobalt Strike PE Payload',
     forwardPayloadSummary:
-      'VirtualAllocEx(0x00400000, 264 KB, PAGE_EXECUTE_READWRITE = 0x40) + WriteProcessMemory (streaming 270,336 bytes of the unpacked Cobalt Strike Beacon PE image directly into svchost.exe’s hollowed RAM).',
+      'VirtualAllocEx(0x00400000, 264 KB, PAGE_EXECUTE_READWRITE = 0x40, reserving writable-and-executable RAM) + WriteProcessMemory (streaming 270,336 bytes of the unpacked Cobalt Strike Beacon PE image directly into svchost.exe’s hollowed RAM).',
     returnLabel: 'RET 0x00400000 (264 KB Written)',
     returnDescription:
       'The kernel commits the private RWX memory block at 0x00400000 inside PID 4892 and returns NumberOfBytesWritten = 270,336 (confirming that the MZ/PE headers and executable .text section are now resident in svchost.exe’s memory with entry point 0x004014A0).',
     continuationHint:
-      'Next in Sequence (#3 ──▶ #4): Now that the Beacon entry point sits at 0x004014A0 inside svchost.exe (PID 4892), Sequence #4 uses thread handle hThread = 0x01C8 to point the frozen CPU thread at 0x004014A0.',
+      'Next in Sequence (#3 ──▶ #4): Now that the Beacon entry point sits at 0x004014A0 inside svchost.exe (PID 4892), Sequence #4 uses Thread Master Key handle hThread = 0x01C8 to point the frozen CPU thread at 0x004014A0.',
     storyAnalogy:
-      'In the third exchange, the loader sends a cargo-transfer order (#3→) that installs custom compartments at slot 0x00400000 inside the emptied armored van (VirtualAllocEx) and loads 264 KB of covert surveillance gear inside (WriteProcessMemory); the van’s internal load sensor replies with a weight receipt (⇠#3: 270,336 bytes committed at 0x00400000), confirming every piece of equipment is bolted in place before the driver wakes up.',
+      'In the third exchange, keeping the cargo bay unlocked with the first golden master key, the intruder sends a cargo-transfer order (#3→) that opens an unrestricted secret compartment inside the emptied armored truck and marches their covert crew and mission crate inside; the truck’s internal load sensor replies with a weight receipt (⇠#3), confirming every piece of equipment is bolted in place before the driver wakes up.',
     technicalBridge:
-      'In the forward request (#3→), Invoice_Q4.exe (PID 3104) calls VirtualAllocEx on hProcess = 0x01C4 (using GrantedAccess = 0x1FFFFF, which grants full read, write, and allocation rights) to reserve 264 KB at the vacated address 0x00400000 with PAGE_EXECUTE_READWRITE = 0x40 permissions (making the memory region simultaneously writable right now and executable as CPU instructions a moment later), and then calls WriteProcessMemory to copy the Cobalt Strike Beacon PE headers ("MZ" / 4D 5A) and sections (.text, .rdata, .data) into PID 4892 (loading the entire implant in RAM so no unpacked malware file is ever written to the hard drive). In the return response (⇠#3), the kernel confirms the allocation at base 0x00400000 and returns lpNumberOfBytesWritten = 270,336 (verifying that the Beacon’s executable entry point is now mapped at 0x004014A0).',
+      'In the forward request (#3→), Invoice_Q4.exe (PID 3104) calls VirtualAllocEx (Windows’ cross-process memory allocator) using Process Master Key handle hProcess = 0x01C4 (with GrantedAccess = 0x1FFFFF, granting full read, write, and allocation rights) to reserve 264 KB at the vacated address 0x00400000 with PAGE_EXECUTE_READWRITE = 0x40 permissions (making the memory region simultaneously writable right now and executable as CPU instructions a moment later), and then calls WriteProcessMemory (Windows’ cross-process byte-copy API) to write the Cobalt Strike Beacon PE headers ("MZ" / 4D 5A, the Windows executable header signature) and sections (.text for machine code, .rdata for read-only tables, and .data for variables) into PID 4892 (loading the entire implant strictly in RAM so no unpacked malware file ever touches the hard drive). In the return response (⇠#3), the kernel confirms the allocation at base 0x00400000 and returns lpNumberOfBytesWritten = 270,336 (verifying that the Beacon’s executable entry point is now mapped at 0x004014A0).',
     underTheHood:
-      'Across the #3→ / ⇠#3 syscall pair (NtAllocateVirtualMemory followed by NtWriteVirtualMemory), Windows creates a private, unbacked memory region (MEM_PRIVATE with PAGE_EXECUTE_READWRITE = 0x40 at 0x00400000, unlike genuine DLLs/EXEs which are backed by a signed file on disk and separate Read-Execute code from Read-Write data) containing a raw executable PE image inside svchost.exe (PID 4892).',
+      'Across the #3→ / ⇠#3 kernel syscall pair, NtAllocateVirtualMemory (which reserves virtual memory pages in a remote process) followed by NtWriteVirtualMemory (which transfers raw payload bytes across process memory spaces), Windows creates an unbacked private region marked MEM_PRIVATE (anonymous RAM not backed by any signed executable on disk) with PAGE_EXECUTE_READWRITE = 0x40 permissions at 0x00400000 (unlike genuine DLLs and EXEs, which use file-backed SEC_IMAGE sections that strictly separate Read-Execute code from Read-Write data) holding a raw executable PE image inside svchost.exe (PID 4892).',
     detectionAndEvidence:
-      'Documented in Sysmon EventID 10 (ProcessAccess with GrantedAccess = 0x1FFFFF from Invoice_Q4.exe PID 3104 to svchost.exe PID 4892) and Kernel ETW Threat-Intelligence (EtwTiLogAllocVMRemote, alerting on cross-process allocation of executable RWX = 0x40 memory containing an unbacked MZ header).',
+      'Documented in Sysmon EventID 10 (ProcessAccess logging full-control handle GrantedAccess = 0x1FFFFF from Invoice_Q4.exe PID 3104 to svchost.exe PID 4892) and Kernel ETW Threat-Intelligence (EtwTiLogAllocVMRemote, a Microsoft kernel sensor alerting on cross-process allocation of executable RWX = 0x40 memory containing an unbacked MZ header).',
     keySpecs: [
       'Seq #3 (#3→ Request / ⇠#3 Response)',
       'VirtualAllocEx: 0x00400000 (264 KB RWX = 0x40)',
@@ -1888,18 +1893,18 @@ const PROCESS_HOLLOWING_SEQUENCE_EXCHANGE_SPECS: Record<
     plainTitle:
       'Repointing the Frozen Thread’s RCX Register to 0x004014A0 & Resuming Execution',
     forwardPayloadSummary:
-      'SetThreadContext(hThread = 0x01C8, RCX = 0x004014A0, redirecting the frozen thread’s starting pointer to the injected Beacon) followed by ResumeThread(hThread = 0x01C8, unfreezing svchost.exe).',
+      'SetThreadContext(hThread = 0x01C8, RCX = 0x004014A0, using the Thread Master Key to redirect the frozen thread’s starting pointer to the injected Beacon) followed by ResumeThread(hThread = 0x01C8, unfreezing svchost.exe).',
     returnLabel: 'RET SuspendCount 1→0 / EID 25',
     returnDescription:
       'The kernel updates the thread context register RCX to 0x004014A0, decrements SuspendCount from 1 to 0 (waking TID 4896 so the Cobalt Strike Beacon begins executing inside svchost.exe PID 4892), and emits Sysmon EventID 25 (ProcessTampering: "Image is replaced").',
     continuationHint:
       'Next in Sequence (#4 ──▶ #5): Running actively inside svchost.exe (PID 4892), the awakened Beacon thread initiates its outbound HTTPS Command-and-Control handshake in Sequence #5.',
     storyAnalogy:
-      'In the fourth exchange, the dispatcher reaches into the cab of the refitted armored van (#4→), resets the driver’s navigation coordinate to the secret rendezvous point (overwriting register RCX with 0x004014A0), and releases the parking brake (ResumeThread); the van’s dashboard replies with an active engine-running signal (⇠#4: SuspendCount 1→0) as the vehicle starts moving under its trusted svchost.exe badge.',
+      'In the fourth exchange, the intruder pulls out the second golden master key (the cab-and-ignition key from Exchange #1) to unlock the refitted armored truck’s front cab (#4→), resets the driver’s dashboard GPS coordinate to their secret destination, and releases the parking brake; the truck’s dashboard replies with an active engine-running signal (⇠#4) as the vehicle roars onto the road under its trusted bank license plate.',
     technicalBridge:
-      'In the forward request (#4→), Invoice_Q4.exe (PID 3104) uses thread handle hThread = 0x01C8 (obtained in Sequence #1) to call SetThreadContext and overwrite the thread’s RCX register with 0x004014A0 (Base 0x00400000 + EntryPoint RVA 0x14A0, because on 64-bit Windows, a newly created suspended thread holds its upcoming program entry point in RCX, so changing RCX aims the thread straight at the injected Beacon without needing CreateRemoteThread), and then calls ResumeThread (telling the kernel to unfreeze the thread). In the return response (⇠#4), the kernel commits the modified CPU context, decrements the thread’s suspend counter from 1 to 0 (returning PreviousSuspendCount = 1 as TID 4896 begins executing the Beacon), and fires the kernel image-tampering notification captured as Sysmon EventID 25.',
+      'In the forward request (#4→), Invoice_Q4.exe (PID 3104) uses Thread Master Key handle hThread = 0x01C8 (obtained in Sequence #1 specifically to control the frozen thread) to call SetThreadContext (Windows’ API for modifying a paused thread’s CPU registers) and overwrite the thread’s RCX register with 0x004014A0 (Base 0x00400000 + EntryPoint RVA 0x14A0, because on 64-bit Windows, a newly created suspended thread holds its upcoming program entry point in RCX, so changing RCX aims the thread straight at the injected Beacon without calling CreateRemoteThread), and then calls ResumeThread (telling the kernel to drop the pause counter and start execution). In the return response (⇠#4), the kernel commits the modified CPU context, decrements the thread’s suspend counter from 1 to 0 (returning PreviousSuspendCount = 1 as TID 4896 begins executing the Beacon), and fires the kernel image-tampering notification captured as Sysmon EventID 25.',
     underTheHood:
-      'When NtSetContextThread and NtResumeThread complete their #4→ / ⇠#4 transition, the kernel updates the thread’s trap frame (KTRAP_FRAME.Rcx = 0x004014A0) and releases TID 4896 from ntdll!RtlUserThreadStart into user-mode execution (allowing the original dropper Invoice_Q4.exe PID 3104 to exit while the Cobalt Strike payload continues running inside svchost.exe PID 4892).',
+      'When NtSetContextThread (the kernel syscall that saves modified register values into a paused thread) and NtResumeThread (the kernel syscall that lowers SuspendCount so the CPU scheduler runs the thread) complete their #4→ / ⇠#4 transition, the kernel updates the thread’s trap frame at KTRAP_FRAME.Rcx = 0x004014A0 (the saved CPU register snapshot restored onto the processor when the thread wakes) and releases TID 4896 from ntdll!RtlUserThreadStart (Windows’ thread launchpad that jumps straight to the address inside RCX) into user-mode execution (allowing the original dropper Invoice_Q4.exe PID 3104 to exit while the Cobalt Strike payload continues running inside svchost.exe PID 4892).',
     detectionAndEvidence:
       'Documented in Sysmon EventID 25 (ProcessTampering, Type: "Image is replaced" on C:\\Windows\\System32\\svchost.exe, PID 4892, triggered when the resumed thread’s mapped image at 0x00400000 no longer matches the signed on-disk binary).',
     keySpecs: [
@@ -1913,20 +1918,20 @@ const PROCESS_HOLLOWING_SEQUENCE_EXCHANGE_SPECS: Record<
     plainTitle:
       'Outbound TLS 1.3 HTTPS Malleable C2 Check-In & Encrypted Tasking Handshake',
     forwardPayloadSummary:
-      'WinHttpConnect + TLS 1.3 ClientHello (JA3: 72a589da586844d7f0818ce684948eea) + HTTP GET /jquery-3.3.1.min.js to 185.220.101.42:443 (carrying encrypted victim metadata inside the HTTP Cookie header).',
+      'WinHttpConnect + TLS 1.3 ClientHello (JA3: 72a589da586844d7f0818ce684948eea, Cobalt Strike’s TLS client fingerprint) + HTTP GET /jquery-3.3.1.min.js to 185.220.101.42:443 (carrying encrypted victim metadata inside the HTTP Cookie header).',
     returnLabel: 'RESP HTTP 200 OK (60s / 20% Jitter)',
     returnDescription:
       'Attacker C2 Server (185.220.101.42:443) replies with TLS 1.3 ServerHello and HTTP 200 OK (disguised as an application/javascript response carrying AES-encrypted Cobalt Strike operator commands and a 60s / 20% jitter sleep schedule).',
     continuationHint:
       'Sequence Complete (⇠#5): Hollowed svchost.exe (PID 4892) maintains an asynchronous 60s (±20% jitter) polling loop with 185.220.101.42:443 while Node ⑥ (SIEM & EDR) correlates the host and network trail.',
     storyAnalogy:
-      'In the final exchange, the disguised armored van (svchost.exe, PID 4892) drives past the perimeter gate guard and sends a coded radio check-in (#5→: HTTPS GET /jquery-3.3.1.min.js) disguised as a routine web script download to the external syndicate tower (185.220.101.42:443); the tower replies (⇠#5: HTTP 200 OK) with encrypted mission orders tucked inside a normal-looking JavaScript response.',
+      'In the final exchange, the disguised armored truck rolls past the perimeter checkpoint guard and opens a coded courier line (#5→) disguised as a routine supply check-in to the intruder’s external warehouse; the warehouse replies (⇠#5) with encrypted mission orders tucked inside a normal-looking delivery slip.',
     technicalBridge:
       'In the forward request (#5→), the Cobalt Strike Beacon running inside C:\\Windows\\System32\\svchost.exe (PID 4892, using the trusted Windows binary path so host-based firewall rules allow the outbound socket) initiates an encrypted TLS 1.3 connection over TCP port 443 to 185.220.101.42:443 (blending in with standard HTTPS web traffic) and sends an HTTP GET request for /jquery-3.3.1.min.js (a Malleable C2 profile that hides RSA-encrypted victim host metadata inside the Cookie header to mimic a normal CDN script fetch). In the return response (⇠#5), the external C2 server (185.220.101.42:443) returns an HTTP 200 OK response containing AES-encrypted tasking instructions and sleep settings (60-second callback interval with 20% random jitter, spacing out future check-ins to evade simple fixed-timer network beacon detectors).',
     underTheHood:
-      'Across the #5→ / ⇠#5 network exchange, svchost.exe (PID 4892) loads winhttp.dll in user mode to negotiate TLS 1.3 (producing client TLS fingerprint JA3 = 72a589da586844d7f0818ce684948eea) through the perimeter firewall NAT toward 185.220.101.42:443, receiving encrypted command blocks that are decrypted directly inside the private heap of PID 4892.',
+      'Across the #5→ / ⇠#5 network exchange, svchost.exe (PID 4892) loads winhttp.dll (Windows’ built-in HTTP client DLL, avoiding custom network code) in user mode to negotiate TLS 1.3 (modern transport encryption that produces client TLS fingerprint JA3 = 72a589da586844d7f0818ce684948eea, a hash of TLS handshake fields uniquely identifying Cobalt Strike) through the perimeter firewall NAT (gateway translating corporate IPs to the internet) toward 185.220.101.42:443, receiving encrypted command blocks that are decrypted directly inside the private heap (runtime data memory) of PID 4892.',
     detectionAndEvidence:
-      'Documented in Sysmon EventID 3 (NetworkConnect logging C:\\Windows\\System32\\svchost.exe PID 4892 connecting to 185.220.101.42:443 without a -k service group flag) correlated with Suricata IDS (alerting on the Cobalt Strike Malleable C2 jQuery URI and TLS JA3 fingerprint 72a589da586844d7f0818ce684948eea).',
+      'Documented in Sysmon EventID 3 (NetworkConnect logging C:\\Windows\\System32\\svchost.exe PID 4892 connecting to 185.220.101.42:443 without a -k service group flag) correlated with Suricata IDS (network sensor alerting on the Cobalt Strike Malleable C2 jQuery URI and TLS JA3 fingerprint 72a589da586844d7f0818ce684948eea).',
     keySpecs: [
       'Seq #5 (#5→ Request / ⇠#5 Response)',
       'Outbound TLS 1.3: PID 4892 ──▶ 185.220.101.42:443',

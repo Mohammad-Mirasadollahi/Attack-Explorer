@@ -101,7 +101,7 @@ export function ProcessMemoryView({
           </span>
         </div>
 
-        {/* 0. FIRST: Real-World Story Analogy (Exact Overview Amber Card Standard) */}
+        {/* 0. FIRST: Real-World Story Analogy + Story-to-Technical Key (Exact Overview Standard) */}
         {(() => {
           const mem3d = getSection3DDescriptor(
             scenario.id,
@@ -111,15 +111,45 @@ export function ProcessMemoryView({
           return (
             <div
               data-testid="memory-story-analogy"
-              className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 space-y-1"
+              className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 space-y-2.5"
             >
-              <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>Real-World Story Analogy · {mem3d.title}</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span>Real-World Story Analogy · {mem3d.title}</span>
+                </div>
+                <p className="text-xs sm:text-[13px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+                  {mem3d.storyCue}
+                </p>
               </div>
-              <p className="text-xs sm:text-[13px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
-                {mem3d.storyCue}
-              </p>
+              {mem3d.storyMappings.length > 0 && (
+                <div
+                  data-testid="story-tech-mapping-key-memory-forensics"
+                  className="pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 space-y-1.5"
+                >
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-900/90 dark:text-amber-300/90">
+                    Story-to-Technical Key (What Each Story Piece Means in Windows)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {mem3d.storyMappings.map((item, idx) => (
+                      <div
+                        key={`${item.storyTerm}-${idx}`}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 dark:bg-zinc-950/75 border border-amber-200/70 dark:border-zinc-800 text-[11px] leading-snug"
+                      >
+                        <span className="px-1.5 py-0.5 rounded border bg-amber-100/90 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border-amber-300/80 dark:border-amber-800/70 font-bold shrink-0">
+                          {item.storyTerm}
+                        </span>
+                        <span className="text-amber-600 dark:text-amber-400 font-mono font-bold shrink-0">
+                          →
+                        </span>
+                        <span className="font-mono font-semibold text-indigo-800 dark:text-sky-300 break-words min-w-0">
+                          {item.technicalTerm}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}

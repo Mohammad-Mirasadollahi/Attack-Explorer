@@ -1,13 +1,15 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import {
   parseStructuredExplanationClauses,
   type StructuredExplanationClause,
 } from '@/lib/scenario-step-guides';
 import {
   deduplicateTechnicalClausesAgainstStory,
+  getSection3DDescriptor,
   hasSection3DScene,
   type Section3DKey,
+  type StoryTechnicalMapping,
 } from '@/lib/section-3d-registry';
 import { ScenarioSection3DEmbed } from './three/ScenarioSection3DEmbed';
 
@@ -20,6 +22,8 @@ export interface StandardStoryTechnicalSectionProps {
   storyHeading?: string;
   /** Plain-language story-like analogy rendered FIRST */
   storyAnalogy: string;
+  /** Optional explicit Story -> Technical translation pairs (auto-loaded from registry if omitted) */
+  storyMappings?: StoryTechnicalMapping[];
   /** Heading above the Technical Deep-Dive numbered clauses rendered RIGHT BELOW the story */
   technicalHeading?: string;
   /** Either pre-parsed clauses or raw technical explanation text */
@@ -35,11 +39,42 @@ export interface StandardStoryTechnicalSectionProps {
   className?: string;
 }
 
+const MAPPING_TONE_CLASSES: Record<
+  StoryTechnicalMapping['tone'],
+  { badge: string; arrow: string; tech: string }
+> = {
+  sky: {
+    badge:
+      'bg-sky-100/90 dark:bg-sky-950/60 text-sky-900 dark:text-sky-200 border-sky-300/80 dark:border-sky-800/70',
+    arrow: 'text-sky-600 dark:text-sky-400',
+    tech: 'text-sky-900 dark:text-sky-300',
+  },
+  rose: {
+    badge:
+      'bg-rose-100/90 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 border-rose-300/80 dark:border-rose-800/70',
+    arrow: 'text-rose-600 dark:text-rose-400',
+    tech: 'text-rose-900 dark:text-rose-300',
+  },
+  amber: {
+    badge:
+      'bg-amber-100/90 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border-amber-300/80 dark:border-amber-800/70',
+    arrow: 'text-amber-600 dark:text-amber-400',
+    tech: 'text-amber-900 dark:text-amber-300',
+  },
+  emerald: {
+    badge:
+      'bg-emerald-100/90 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 border-emerald-300/80 dark:border-emerald-800/70',
+    arrow: 'text-emerald-600 dark:text-emerald-400',
+    tech: 'text-emerald-900 dark:text-emerald-300',
+  },
+};
+
 /**
  * Canonical Overview-Standard Section Block:
- *   1. Real-World Story Analogy (Overview Amber Card)
+ *   1. Real-World Story Analogy (100% Jargon-Free Overview Amber Card)
+ *   1B. Story -> Technical Translation Key (Explicit "What each story piece means in Windows")
  *   2. Technical Forensic Explanation (Overview Numbered Indigo-Badge Clause Cards — directly below Story)
- *   3. Full-Width Interactive Cel-Shaded Anime 3D Stage (when registered for this scenario & section)
+ *   3. Full-Width Interactive Cel-Shaded Anime 3D Stage (animating every step of the exact story)
  *
  * Used identically across Overview, Step-by-Step Guide, Memory Forensics, and dedicated Scenario Landing Pages.
  */
@@ -48,6 +83,7 @@ export function StandardStoryTechnicalSection({
   sectionKey = null,
   storyHeading = 'Story-to-Spec Analogy & Executive Summary',
   storyAnalogy,
+  storyMappings,
   technicalHeading = 'Technical Forensic Explanation',
   technicalClauses,
   technicalText,
@@ -69,6 +105,14 @@ export function StandardStoryTechnicalSection({
     clausePrefix
   );
 
+  const descriptor = sectionKey
+    ? getSection3DDescriptor(scenarioId, sectionKey)
+    : null;
+  const resolvedMappings =
+    storyMappings && storyMappings.length > 0
+      ? storyMappings
+      : descriptor?.storyMappings ?? [];
+
   const show3D = Boolean(
     sectionKey && hasSection3DScene(scenarioId, sectionKey)
   );
@@ -83,15 +127,56 @@ export function StandardStoryTechnicalSection({
       {/* 1. FIRST: Story-Like Real-World Analogy (Exact Overview Amber Card Standard) */}
       <div
         data-testid={storyTestId}
-        className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed space-y-1"
+        className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed space-y-2.5"
       >
-        <div className="flex items-center gap-1.5 font-mono text-[10.5px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5 shrink-0" />
-          <span>{storyHeading}</span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 font-mono text-[10.5px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span>{storyHeading}</span>
+          </div>
+          <p className="text-xs sm:text-[13px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
+            {storyAnalogy}
+          </p>
         </div>
-        <p className="text-xs sm:text-[13px] text-zinc-800 dark:text-zinc-200 leading-relaxed break-words">
-          {storyAnalogy}
-        </p>
+
+        {/* 1B. Explicit Story <-> Technical Translation Key right inside the Story-to-Spec bridge */}
+        {resolvedMappings.length > 0 && (
+          <div
+            data-testid={
+              sectionKey ? `story-tech-mapping-key-${sectionKey}` : undefined
+            }
+            className="pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 space-y-1.5"
+          >
+            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-900/90 dark:text-amber-300/90">
+              Story-to-Technical Key (What Each Story Piece Means in Windows)
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {resolvedMappings.map((item, idx) => {
+                const styles = MAPPING_TONE_CLASSES[item.tone];
+                return (
+                  <div
+                    key={`${item.storyTerm}-${idx}`}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 dark:bg-zinc-950/75 border border-amber-200/70 dark:border-zinc-800 text-[11px] leading-snug"
+                  >
+                    <span
+                      className={`px-1.5 py-0.5 rounded border font-bold shrink-0 ${styles.badge}`}
+                    >
+                      {item.storyTerm}
+                    </span>
+                    <ArrowRight
+                      className={`w-3 h-3 shrink-0 ${styles.arrow}`}
+                    />
+                    <span
+                      className={`font-mono font-semibold break-words min-w-0 ${styles.tech}`}
+                    >
+                      {item.technicalTerm}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2. RIGHT BELOW STORY: Technical Explanation (Exact Overview Numbered Clause Standard) */}

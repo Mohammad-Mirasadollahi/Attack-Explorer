@@ -1137,5 +1137,52 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
       'InspectorPanel must normalize effectiveScopeContext to the full Main Scenario when in MAIN_SCENARIO'
     );
   });
+
+  it('keeps Main Page Story-to-Spec Analogy strictly distinct from Technical Architecture & Forensic Overview (no duplicate text)', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { getRawScenarioStepGuide } = await import('./scenario-step-guides');
+
+    for (const sc of ATTACK_SCENARIOS) {
+      const mainScope = resolveInspectorScopeContext({
+        scenario: sc,
+        activeStageIndex: 0,
+        activeEnvironment: 'WORKSTATION',
+        selectedNodeId: null,
+        expandedNodeId: null,
+        selectedInternalSubNodeId: null,
+      });
+      const rawGuide = getRawScenarioStepGuide(sc.id);
+      assert.ok(
+        rawGuide?.briefing.storyAnalogy,
+        `Scenario ${sc.id} must have a dedicated briefing.storyAnalogy`
+      );
+      assert.ok(
+        rawGuide?.briefing.plainSummary,
+        `Scenario ${sc.id} must have a dedicated briefing.plainSummary`
+      );
+      assert.equal(
+        mainScope.scopedStoryAnalogy,
+        rawGuide!.briefing.storyAnalogy,
+        `Scenario ${sc.id} MAIN_SCENARIO scopedStoryAnalogy must be pure briefing.storyAnalogy, not concatenated scenario.overview`
+      );
+      assert.notEqual(
+        mainScope.scopedStoryAnalogy.trim(),
+        rawGuide!.briefing.plainSummary.trim(),
+        `Scenario ${sc.id} Story Analogy must never equal Technical Architecture & Forensic Overview`
+      );
+    }
+
+    const inspectorSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/InspectorPanel.tsx'),
+      'utf8'
+    );
+    assert.equal(
+      inspectorSrc.includes('rawBriefingGuide?.briefing.storyAnalogy') &&
+        inspectorSrc.includes('rawBriefingGuide?.briefing.plainSummary'),
+      true,
+      'InspectorPanel Main Page must pass rawBriefingGuide.briefing.storyAnalogy and rawBriefingGuide.briefing.plainSummary separately'
+    );
+  });
 });
 

@@ -930,22 +930,30 @@ export function InspectorPanel({
                       </div>
                     )}
 
-                    <p
-                      data-testid="inspector-scoped-story-analogy"
-                      className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed"
-                    >
-                      {scopeContext.selectedMainNode.activitySummary ||
-                        scopeContext.selectedMainNode.internalSummary}
-                    </p>
-
                     {scopeContext.selectedMainNodeStoryAnalogy && (
-                      <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                        <div className="font-mono font-bold text-amber-800 dark:text-amber-300 uppercase mb-1">
-                          Plain-English Story-to-Spec Analogy
+                      <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-800/60 text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed space-y-1">
+                        <div className="flex items-center gap-1.5 font-mono text-[10.5px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+                          <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                          <span>Plain-English Story-to-Spec Analogy</span>
                         </div>
-                        {scopeContext.selectedMainNodeStoryAnalogy}
+                        <p className="text-xs sm:text-[13px] leading-relaxed">
+                          {scopeContext.selectedMainNodeStoryAnalogy}
+                        </p>
                       </div>
                     )}
+
+                    <div className="space-y-1">
+                      <div className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        Technical Forensic Role
+                      </div>
+                      <p
+                        data-testid="inspector-scoped-story-analogy"
+                        className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed"
+                      >
+                        {scopeContext.selectedMainNode.activitySummary ||
+                          scopeContext.selectedMainNode.internalSummary}
+                      </p>
+                    </div>
                   </section>
 
                   {/* 2. Connected Inbound & Outbound Telemetry Arms */}
@@ -1207,22 +1215,33 @@ export function InspectorPanel({
                       {scenario.name}
                     </h2>
 
-                    <StandardStoryTechnicalSection
-                      scenarioId={scenario.id}
-                      sectionKey={
-                        hasSection3DScene(scenario.id, 'briefing')
-                          ? 'briefing'
-                          : null
-                      }
-                      storyHeading="Story-to-Spec Analogy & Executive Summary"
-                      storyAnalogy={
-                        effectiveScopeContext.scopedStoryAnalogy ||
-                        scenario.overview
-                      }
-                      technicalHeading="Technical Architecture & Forensic Overview"
-                      technicalText={scenario.overview}
-                      clausePrefix="0"
-                    />
+                    {(() => {
+                      const rawBriefingGuide = getRawScenarioStepGuide(
+                        scenario.id
+                      );
+                      return (
+                        <StandardStoryTechnicalSection
+                          scenarioId={scenario.id}
+                          sectionKey={
+                            hasSection3DScene(scenario.id, 'briefing')
+                              ? 'briefing'
+                              : null
+                          }
+                          storyHeading="Story-to-Spec Analogy & Executive Summary"
+                          storyAnalogy={
+                            rawBriefingGuide?.briefing.storyAnalogy ||
+                            effectiveScopeContext.scopedStoryAnalogy ||
+                            scenario.overview
+                          }
+                          technicalHeading="Technical Architecture & Forensic Overview"
+                          technicalText={
+                            rawBriefingGuide?.briefing.plainSummary ||
+                            scenario.overview
+                          }
+                          clausePrefix="0"
+                        />
+                      );
+                    })()}
 
                   </section>
 

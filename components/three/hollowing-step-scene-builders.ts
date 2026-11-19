@@ -7,10 +7,12 @@ import {
   addAnimeInkEdges,
   addInvertedHullOutline,
   createScanConeMaterial,
-  createStasisDomeMaterial,
   type AnimeMaterialLibrary,
 } from './anime-toon-materials';
-import { buildArmoredBankTruck } from './hollowing-scene-builders';
+import {
+  buildArmoredBankTruck,
+  buildStasisFreezeRig,
+} from './hollowing-scene-builders';
 
 export interface BespokeSection3DScene {
   root: THREE.Group;
@@ -110,102 +112,90 @@ function createAnimeFloorGrid(
   const grid = new THREE.GridHelper(radius * 1.5, 16, accentHex, 0x334155);
   grid.position.y = 0.02;
   (grid.material as THREE.Material).transparent = true;
-  (grid.material as THREE.Material).opacity = 0.32;
+  (grid.material as THREE.Material).opacity = 0.3;
   group.add(grid);
 
   return group;
 }
 
-function buildStylizedHuman(
+function buildUniformedGuard(
   materials: AnimeMaterialLibrary,
   uniformHex: number,
-  accentHex: number,
-  hasBadge: boolean
-): THREE.Group {
+  accentHex: number
+): { group: THREE.Group; rightArmPivot: THREE.Group } {
   const g = new THREE.Group();
   const coatMat = materials.createToonMaterial(uniformHex);
   const darkMat = materials.createToonMaterial(0x0f172a);
   const skinMat = materials.createToonMaterial(0xfde68a);
   const accentMat = materials.createToonMaterial(accentHex, {
     emissive: accentHex,
-    emissiveIntensity: 0.75,
+    emissiveIntensity: 0.65,
   });
 
-  const legGeo = new THREE.CapsuleGeometry(0.16, 0.72, 6, 10);
+  const legGeo = new THREE.CapsuleGeometry(0.12, 0.52, 6, 10);
   const leftLeg = new THREE.Mesh(legGeo, darkMat);
-  leftLeg.position.set(-0.22, 0.52, 0.14);
-  leftLeg.rotation.x = -0.25;
+  leftLeg.position.set(-0.16, 0.38, 0);
   addInvertedHullOutline(leftLeg, materials.inkOutlineMaterial, 1.07);
   g.add(leftLeg);
 
   const rightLeg = new THREE.Mesh(legGeo, darkMat);
-  rightLeg.position.set(0.22, 0.52, -0.14);
-  rightLeg.rotation.x = 0.25;
+  rightLeg.position.set(0.16, 0.38, 0);
   addInvertedHullOutline(rightLeg, materials.inkOutlineMaterial, 1.07);
   g.add(rightLeg);
 
   const torso = new THREE.Mesh(
-    new THREE.BoxGeometry(0.92, 1.15, 0.48),
+    new THREE.BoxGeometry(0.68, 0.86, 0.38),
     coatMat
   );
-  torso.position.set(0, 1.52, 0);
+  torso.position.set(0, 1.12, 0);
   torso.castShadow = true;
   addAnimeInkEdges(torso, materials.inkLineMaterial, 22);
   g.add(torso);
 
-  if (hasBadge) {
-    const badge = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.14, 0.14, 0.08, 6),
-      accentMat
-    );
-    badge.rotation.x = Math.PI / 2;
-    badge.position.set(0.22, 1.66, 0.26);
-    g.add(badge);
-  }
+  const badge = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 0.06, 6),
+    accentMat
+  );
+  badge.rotation.x = Math.PI / 2;
+  badge.position.set(0.17, 1.24, 0.21);
+  g.add(badge);
 
-  const armGeo = new THREE.CapsuleGeometry(0.13, 0.68, 6, 10);
+  const armGeo = new THREE.CapsuleGeometry(0.1, 0.48, 6, 10);
   const leftArm = new THREE.Mesh(armGeo, coatMat);
-  leftArm.position.set(-0.62, 1.5, -0.08);
-  leftArm.rotation.z = 0.18;
-  leftArm.rotation.x = 0.3;
+  leftArm.position.set(-0.46, 1.06, 0);
+  leftArm.rotation.z = 0.14;
   addInvertedHullOutline(leftArm, materials.inkOutlineMaterial, 1.08);
   g.add(leftArm);
 
+  const rightArmPivot = new THREE.Group();
+  rightArmPivot.position.set(0.46, 1.38, 0);
   const rightArm = new THREE.Mesh(armGeo, coatMat);
-  rightArm.position.set(0.62, 1.5, 0.12);
-  rightArm.rotation.z = -0.18;
-  rightArm.rotation.x = -0.3;
+  rightArm.position.set(0, -0.3, 0);
   addInvertedHullOutline(rightArm, materials.inkOutlineMaterial, 1.08);
-  g.add(rightArm);
+  rightArmPivot.add(rightArm);
+  g.add(rightArmPivot);
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 14), skinMat);
-  head.position.set(0, 2.48, 0);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 12), skinMat);
+  head.position.set(0, 1.84, 0);
   addInvertedHullOutline(head, materials.inkOutlineMaterial, 1.07);
   g.add(head);
 
   const capCrown = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.39, 0.36, 0.22, 16),
+    new THREE.CylinderGeometry(0.3, 0.28, 0.16, 14),
     coatMat
   );
-  capCrown.position.set(0, 2.78, 0);
+  capCrown.position.set(0, 2.08, 0);
   addAnimeInkEdges(capCrown, materials.inkLineMaterial, 25);
   g.add(capCrown);
 
   const capBrim = new THREE.Mesh(
-    new THREE.BoxGeometry(0.58, 0.06, 0.36),
+    new THREE.BoxGeometry(0.44, 0.05, 0.28),
     darkMat
   );
-  capBrim.position.set(0, 2.68, 0.24);
+  capBrim.position.set(0, 2.0, 0.18);
   g.add(capBrim);
 
-  const capEmblem = new THREE.Mesh(
-    new THREE.BoxGeometry(0.14, 0.1, 0.06),
-    accentMat
-  );
-  capEmblem.position.set(0, 2.79, 0.37);
-  g.add(capEmblem);
-
-  return g;
+  return { group: g, rightArmPivot };
 }
 
 function buildMasterKeyToken(
@@ -248,157 +238,111 @@ function buildMasterKeyToken(
 }
 
 // ============================================================================
-// SCENE 1: STEP #1 — Frozen Stage Guard & Master Control Keys (CREATE_SUSPENDED)
+// SCENE 1: STEP #1 — Armored Bank Truck Dispatch Garage, Freeze & Master Keys
 // ============================================================================
 function buildFrozenStageGuardScene(
-  materials: AnimeMaterialLibrary
+  materials: AnimeMaterialLibrary,
+  isSoftwareGl: boolean
 ): BespokeSection3DScene {
   const root = new THREE.Group();
   const extraTextures: THREE.Texture[] = [];
 
-  root.add(createAnimeFloorGrid(materials, 0x38bdf8, 13));
+  root.add(createAnimeFloorGrid(materials, 0x38bdf8, 15));
 
-  const stageDeck = new THREE.Mesh(
-    new THREE.BoxGeometry(11.5, 0.55, 7.2),
-    materials.createToonMaterial(0x1e293b)
+  // Garage asphalt bay lane
+  const bayLane = new THREE.Mesh(
+    new THREE.BoxGeometry(16, 0.1, 5.2),
+    materials.createToonMaterial(0xffffff, { map: materials.roadSurfaceTexture })
   );
-  stageDeck.position.set(0, 0.275, -0.4);
-  stageDeck.receiveShadow = true;
-  addAnimeInkEdges(stageDeck, materials.inkLineMaterial, 20);
-  root.add(stageDeck);
+  bayLane.position.set(-1.0, 0.05, 0);
+  bayLane.receiveShadow = true;
+  root.add(bayLane);
 
-  const brassTrim = new THREE.Mesh(
-    new THREE.BoxGeometry(11.6, 0.14, 0.18),
-    materials.createToonMaterial(0xfacc15, {
-      emissive: 0xf59e0b,
-      emissiveIntensity: 0.45,
-    })
+  // Rear-mounted Garage Bay Canopy (zero foreground pillars blocking the truck!)
+  const garageArch = new THREE.Group();
+  garageArch.position.set(0, 0.05, 0);
+  const archMat = materials.createToonMaterial(0x1e293b);
+  for (const px of [-4.2, 1.8]) {
+    const pillar = new THREE.Mesh(
+      new THREE.BoxGeometry(0.58, 5.2, 0.58),
+      archMat
+    );
+    pillar.position.set(px, 2.6, -2.85);
+    addAnimeInkEdges(pillar, materials.inkLineMaterial, 20);
+    garageArch.add(pillar);
+  }
+  const topBeam = new THREE.Mesh(
+    new THREE.BoxGeometry(6.8, 0.68, 0.9),
+    archMat
   );
-  brassTrim.position.set(0, 0.52, 3.22);
-  root.add(brassTrim);
+  topBeam.position.set(-1.2, 5.2, -2.85);
+  addAnimeInkEdges(topBeam, materials.inkLineMaterial, 20);
+  garageArch.add(topBeam);
 
-  const doorGroup = new THREE.Group();
-  doorGroup.position.set(-3.4, 0.55, -1.6);
-  const pillarGeo = new THREE.BoxGeometry(0.5, 4.4, 0.65);
-  const pillarMat = materials.createToonMaterial(0x334155);
-  const pL = new THREE.Mesh(pillarGeo, pillarMat);
-  pL.position.set(-1.3, 2.2, 0);
-  addAnimeInkEdges(pL, materials.inkLineMaterial, 20);
-  doorGroup.add(pL);
-
-  const pR = new THREE.Mesh(pillarGeo, pillarMat);
-  pR.position.set(1.3, 2.2, 0);
-  addAnimeInkEdges(pR, materials.inkLineMaterial, 20);
-  doorGroup.add(pR);
-
-  const lintel = new THREE.Mesh(
-    new THREE.BoxGeometry(3.4, 0.85, 0.72),
-    materials.createToonMaterial(0x0f172a)
+  const canopyRoof = new THREE.Mesh(
+    new THREE.BoxGeometry(6.4, 0.24, 2.6),
+    archMat
   );
-  lintel.position.set(0, 4.7, 0);
-  addAnimeInkEdges(lintel, materials.inkLineMaterial, 20);
-  doorGroup.add(lintel);
+  canopyRoof.position.set(-1.2, 5.0, -1.6);
+  addAnimeInkEdges(canopyRoof, materials.inkLineMaterial, 20);
+  garageArch.add(canopyRoof);
 
-  const doorSignTex = createLabelBoardTexture(
-    'SVCHOST.EXE · STAGE DOOR',
-    'CREATE_SUSPENDED = 0x00000004',
+  const garageSignTex = createLabelBoardTexture(
+    'BANK DISPATCH GARAGE',
+    'CreateProcessW("svchost.exe", CREATE_SUSPENDED)',
     '#0F172A',
     '#38BDF8',
     '#F8FAFC',
     '#38BDF8'
   );
-  extraTextures.push(doorSignTex);
-  const doorSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.1, 0.72),
-    new THREE.MeshBasicMaterial({ map: doorSignTex })
+  extraTextures.push(garageSignTex);
+  const garageSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.8, 1.04),
+    new THREE.MeshBasicMaterial({ map: garageSignTex })
   );
-  doorSign.position.set(0, 4.7, 0.38);
-  doorGroup.add(doorSign);
+  garageSign.position.set(1.6, 5.55, -2.25);
+  garageArch.add(garageSign);
+  root.add(garageArch);
 
-  const curtainMat = materials.createToonMaterial(0x9f1239);
-  for (const xSign of [-1, 1]) {
-    const curtain = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.32, 0.44, 4.3, 10),
-      curtainMat
-    );
-    curtain.position.set(xSign * 1.95, 2.15, 0.15);
-    addInvertedHullOutline(curtain, materials.inkOutlineMaterial, 1.05);
-    doorGroup.add(curtain);
-  }
-  root.add(doorGroup);
+  // Real Composite Armored Bank Truck rolling into bay and freezing
+  const truckRig = buildArmoredBankTruck(materials, isSoftwareGl);
+  truckRig.root.scale.setScalar(0.84);
+  truckRig.root.position.set(-5.6, 0.1, 0);
+  truckRig.covertCrewRoot.visible = false;
+  truckRig.legalCargoRoot.visible = true;
+  root.add(truckRig.root);
 
-  const guardGroup = buildStylizedHuman(materials, 0x1d4ed8, 0xfacc15, true);
-  guardGroup.position.set(-2.6, 0.55, -0.5);
-  guardGroup.rotation.y = 0.52;
-  root.add(guardGroup);
+  // Cryo freeze dome rig positioned over the parked bay spot
+  const stasisRig = buildStasisFreezeRig(materials, -1.2);
+  stasisRig.root.scale.setScalar(0.86);
+  root.add(stasisRig.root);
 
-  const stasisRig = createStasisDomeMaterial();
-  const freezeCrystal = new THREE.Mesh(
-    new THREE.OctahedronGeometry(2.15, 1),
-    stasisRig.material
-  );
-  freezeCrystal.scale.set(0.88, 1.35, 0.88);
-  freezeCrystal.position.set(-0.6, 2.2, 0.1);
-  root.add(freezeCrystal);
-
-  const freezeWireframe = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.OctahedronGeometry(2.18, 1)),
-    new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.75,
-    })
-  );
-  freezeWireframe.scale.set(0.88, 1.35, 0.88);
-  freezeWireframe.position.copy(freezeCrystal.position);
-  root.add(freezeWireframe);
-
-  const freezeRing = new THREE.Mesh(
-    new THREE.TorusGeometry(1.75, 0.06, 8, 36),
-    new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.9,
-      toneMapped: false,
-    })
-  );
-  freezeRing.rotation.x = Math.PI / 2;
-  freezeRing.position.set(-0.6, 0.65, 0.1);
-  root.add(freezeRing);
-
-  const spotConeRig = createScanConeMaterial();
-  const spotCone = new THREE.Mesh(
-    new THREE.ConeGeometry(2.3, 5.2, 24, 1, true),
-    spotConeRig.material
-  );
-  spotCone.position.set(-0.6, 3.2, 0.1);
-  root.add(spotCone);
-
+  // Mastermind Dispatch Console Desk on the right
   const consoleGroup = new THREE.Group();
-  consoleGroup.position.set(3.8, 0.55, 0.7);
+  consoleGroup.position.set(5.2, 0.08, 1.15);
   consoleGroup.rotation.y = -0.45;
 
   const desk = new THREE.Mesh(
-    new THREE.BoxGeometry(2.3, 1.3, 1.2),
+    new THREE.BoxGeometry(2.4, 1.35, 1.25),
     materials.createToonMaterial(0x1e1b4b)
   );
-  desk.position.y = 0.65;
+  desk.position.y = 0.675;
   addAnimeInkEdges(desk, materials.inkLineMaterial, 20);
   consoleGroup.add(desk);
 
   const freezeBtn = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.28, 0.34, 0.18, 16),
-    materials.createToonMaterial(0x38bdf8, {
-      emissive: 0x38bdf8,
+    new THREE.CylinderGeometry(0.3, 0.36, 0.2, 16),
+    materials.createToonMaterial(0x22d3ee, {
+      emissive: 0x22d3ee,
       emissiveIntensity: 1.5,
     })
   );
-  freezeBtn.position.set(-0.35, 1.38, 0.15);
+  freezeBtn.position.set(-0.38, 1.44, 0.12);
   consoleGroup.add(freezeBtn);
 
   const consoleTex = createLabelBoardTexture(
-    'DIRECTOR · INVOICE_Q4.EXE',
-    'PID 3104 · CALLS CreateProcessW',
+    'INTRUDER DISPATCH DESK',
+    'Invoice_Q4.exe (PID 3104) · FREEZE SWITCH',
     '#1E1B4B',
     '#F43F5E',
     '#FDA4AF',
@@ -406,31 +350,31 @@ function buildFrozenStageGuardScene(
   );
   extraTextures.push(consoleTex);
   const consoleSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.15, 0.56),
+    new THREE.PlaneGeometry(2.25, 0.56),
     new THREE.MeshBasicMaterial({ map: consoleTex })
   );
-  consoleSign.position.set(0, 0.72, 0.62);
+  consoleSign.position.set(0, 0.72, 0.64);
   consoleGroup.add(consoleSign);
   root.add(consoleGroup);
 
+  // Two Glowing Golden Master Keys (hProcess & hThread)
   const keysGroup = new THREE.Group();
   const keyProcess = buildMasterKeyToken(materials, 0xfacc15);
-  keyProcess.position.set(0, 0.45, 0);
-  keyProcess.scale.setScalar(0.85);
+  keyProcess.position.set(0, 0.44, 0);
+  keyProcess.scale.setScalar(0.84);
   keysGroup.add(keyProcess);
 
   const keyThread = buildMasterKeyToken(materials, 0x38bdf8);
-  keyThread.position.set(0.3, -0.35, 0.25);
-  keyThread.scale.setScalar(0.76);
+  keyThread.position.set(0.32, -0.34, 0.24);
+  keyThread.scale.setScalar(0.74);
   keysGroup.add(keyThread);
-
-  keysGroup.position.set(1.6, 2.6, 0.6);
+  keysGroup.position.set(2.0, 2.8, 0.5);
   root.add(keysGroup);
 
   const tetherCurve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(-0.6, 2.2, 0.1),
-    new THREE.Vector3(1.6, 3.6, 0.4),
-    new THREE.Vector3(3.6, 1.9, 0.65)
+    new THREE.Vector3(-0.2, 2.35, 0.2),
+    new THREE.Vector3(2.4, 3.85, 0.7),
+    new THREE.Vector3(4.9, 1.9, 1.1)
   );
   const tetherMesh = new THREE.Mesh(
     new THREE.TubeGeometry(tetherCurve, 28, 0.055, 8, false),
@@ -444,86 +388,97 @@ function buildFrozenStageGuardScene(
   root.add(tetherMesh);
 
   const primaryAnchor = new THREE.Object3D();
-  primaryAnchor.position.set(-0.6, 4.15, 0.1);
+  primaryAnchor.position.set(-1.2, 4.15, 0);
   root.add(primaryAnchor);
 
   const secondaryAnchor = new THREE.Object3D();
-  secondaryAnchor.position.set(2.35, 3.35, 0.6);
+  secondaryAnchor.position.set(2.8, 3.6, 0.6);
   root.add(secondaryAnchor);
 
   return {
     root,
-    defaultCameraPos: new THREE.Vector3(1.2, 5.2, 11.4),
-    defaultCameraTarget: new THREE.Vector3(0.4, 2.1, 0),
+    defaultCameraPos: new THREE.Vector3(1.8, 5.4, 12.6),
+    defaultCameraTarget: new THREE.Vector3(0.3, 2.0, 0),
     primaryAnchor,
     secondaryAnchor,
-    particleCenter: new THREE.Vector3(-0.4, 0, 0.1),
+    particleCenter: new THREE.Vector3(-1.2, 0, 0),
     update: (timeSec, _phaseIndex, _isDark, cutawayMode) => {
       const t = timeSec % 15;
-      stasisRig.uniforms.uTime.value = timeSec;
-      spotConeRig.uniforms.uTime.value = timeSec;
+      stasisRig.domeUniforms.uTime.value = timeSec;
 
-      const walkProg = easeOutCubic(t / 4.6);
-      const guardX = THREE.MathUtils.lerp(-3.1, -0.6, walkProg);
-      const guardZ = THREE.MathUtils.lerp(-1.2, 0.1, walkProg);
-      guardGroup.position.set(
-        guardX,
-        0.55 + (t < 4.6 ? Math.abs(Math.sin(t * 7)) * 0.08 : 0),
-        guardZ
+      // Phase 1 (0..4.8s): Official armored bank truck rolls into garage bay
+      const rollProg = easeOutCubic(t / 4.6);
+      const truckX = THREE.MathUtils.lerp(-6.2, -1.2, rollProg);
+      truckRig.root.position.set(
+        truckX,
+        0.1 + (t < 4.6 ? Math.abs(Math.sin(t * 10)) * 0.03 : 0),
+        0
       );
+      for (const w of truckRig.wheels) {
+        w.rotation.z = -rollProg * 7.5;
+      }
 
+      // Cutaway mode exposes gleaming legal gold crates still inside the frozen truck
+      const openCutaway = cutawayMode === 'OPEN';
+      truckRig.cutawaySidePanel.visible = !openCutaway;
+      truckRig.cutawaySideMaterial.opacity = openCutaway ? 0.08 : 1.0;
+
+      // Phase 2 (4.6..10s): Freeze switch slams down; cyan stasis dome locks truck motionless
       const freezeProg = easeOutCubic((t - 4.6) / 1.4);
-      const crystalMult =
-        cutawayMode === 'OPEN' ? 0.35 : cutawayMode === 'SEALED' ? 1.2 : 1.0;
-      stasisRig.uniforms.uOpacity.value = Math.min(1, freezeProg * crystalMult);
-      freezeCrystal.visible = freezeProg > 0.02;
-      freezeCrystal.rotation.y = timeSec * 0.35;
-      freezeWireframe.visible = freezeProg > 0.02 && cutawayMode !== 'SEALED';
-      freezeWireframe.rotation.y = timeSec * 0.35;
-      freezeCrystal.scale.set(
-        0.88 * (0.7 + freezeProg * 0.3),
-        1.35 * (0.7 + freezeProg * 0.3),
-        0.88 * (0.7 + freezeProg * 0.3)
-      );
-      freezeWireframe.scale.copy(freezeCrystal.scale);
-      freezeRing.scale.setScalar(0.5 + freezeProg * 0.65);
-      freezeBtn.position.y = t >= 4.6 && t <= 5.8 ? 1.28 : 1.38;
-      spotConeRig.uniforms.uTrustedLock.value = freezeProg * 0.3;
+      const domeMult =
+        cutawayMode === 'OPEN' ? 0.35 : cutawayMode === 'SEALED' ? 1.15 : 0.92;
+      stasisRig.domeUniforms.uOpacity.value = Math.min(1, freezeProg * domeMult);
+      stasisRig.domeMesh.visible = freezeProg > 0.02;
+      stasisRig.runeRingOuter.rotation.z = timeSec * 0.45;
+      stasisRig.runeRingInner.rotation.z = -timeSec * 0.65;
+      (stasisRig.runeRingOuter.material as THREE.MeshBasicMaterial).opacity =
+        freezeProg * 0.85;
+      (stasisRig.runeRingInner.material as THREE.MeshBasicMaterial).opacity =
+        freezeProg * 0.72;
+      for (const shard of stasisRig.frostShards) {
+        shard.mesh.visible = freezeProg > 0.08;
+        shard.mesh.position.set(
+          shard.basePos.x,
+          shard.basePos.y + Math.sin(timeSec * 2.2 + shard.phase) * 0.14,
+          shard.basePos.z
+        );
+      }
+      freezeBtn.position.y = t >= 4.6 && t <= 6.2 ? 1.32 : 1.44;
 
+      // Phase 3 (9.5..15s): Two golden master keys glide from frozen truck to desk
       const keyProg = easeInOutQuad((t - 9.4) / 2.8);
-      const keyArcX = THREE.MathUtils.lerp(-0.4, 2.85, keyProg);
+      const keyArcX = THREE.MathUtils.lerp(-0.2, 4.4, keyProg);
       const keyArcY =
-        2.4 + Math.sin(keyProg * Math.PI) * 1.15 + Math.sin(timeSec * 3.2) * 0.1;
-      keysGroup.position.set(keyArcX, keyArcY, 0.55);
-      keysGroup.visible = t > 8.6 || cutawayMode === 'OPEN';
+        2.6 + Math.sin(keyProg * Math.PI) * 1.15 + Math.sin(timeSec * 3.0) * 0.1;
+      keysGroup.position.set(keyArcX, keyArcY, 0.75);
+      keysGroup.visible = t > 8.8 || cutawayMode === 'OPEN';
       keyProcess.rotation.y = timeSec * 1.6;
       keyThread.rotation.y = -timeSec * 1.9;
       tetherMesh.visible = t > 8.8 || cutawayMode === 'OPEN';
 
-      primaryAnchor.position.set(guardX, 4.1, guardZ);
+      primaryAnchor.position.set(truckX, 4.15, 0);
       secondaryAnchor.position.set(
-        Math.max(1.2, keyArcX),
-        keyArcY + 0.85,
-        0.55
+        Math.max(1.4, keyArcX),
+        keyArcY + 0.9,
+        0.75
       );
 
       return {
-        glitchIntensity: t > 4.6 && t < 9.4 ? 0.42 : 0.18,
-        magicDustIntensity: 0.78,
+        glitchIntensity: t > 4.6 && t < 9.6 ? 0.35 : 0.12,
+        magicDustIntensity: 0,
         stasisIntensity: freezeProg,
         brakeReleaseBoost: 0,
       };
     },
     dispose: () => {
       for (const tex of extraTextures) tex.dispose();
-      stasisRig.material.dispose();
-      spotConeRig.material.dispose();
+      (stasisRig.domeMesh.material as THREE.Material).dispose();
     },
   };
 }
 
 // ============================================================================
-// SCENE 2: STEP #2 — PEB+0x10 Scan & Hollowing Legal Cargo (NtUnmapViewOfSection)
+// SCENE 2: STEP #2 — Checking Cargo Manifest & Emptying All Legal Bank Gold
 // ============================================================================
 function buildHollowCargoUnmapScene(
   materials: AnimeMaterialLibrary,
@@ -532,36 +487,42 @@ function buildHollowCargoUnmapScene(
   const root = new THREE.Group();
   const extraTextures: THREE.Texture[] = [];
 
-  root.add(createAnimeFloorGrid(materials, 0x22d3ee, 14));
+  root.add(createAnimeFloorGrid(materials, 0x22d3ee, 14.5));
 
   const truckRig = buildArmoredBankTruck(materials, isSoftwareGl);
-  truckRig.root.position.set(-1.3, 0, 0);
-  truckRig.cutawaySidePanel.visible = false;
-  truckRig.rearDoorLeftPivot.rotation.y = -2.25;
-  truckRig.rearDoorRightPivot.rotation.y = 2.25;
+  truckRig.root.position.set(-1.2, 0.05, 0);
   truckRig.covertCrewRoot.visible = false;
   root.add(truckRig.root);
 
+  // Rear-mounted cantilevered Cargo Manifest X-Ray Gantry (keeps truck side 100% clear)
   const gantryGroup = new THREE.Group();
-  gantryGroup.position.set(-1.3, 0, 0);
+  gantryGroup.position.set(-1.2, 0, 0);
   const archMat = materials.createToonMaterial(0x1e293b);
-  for (const zSign of [-1, 1]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 5.2, 0.45), archMat);
-    leg.position.set(-0.5, 2.6, zSign * 2.75);
+  for (const lx of [-2.4, 1.6]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.46, 5.2, 0.46), archMat);
+    leg.position.set(lx, 2.6, -2.75);
     addAnimeInkEdges(leg, materials.inkLineMaterial, 20);
     gantryGroup.add(leg);
   }
   const crossBeam = new THREE.Mesh(
-    new THREE.BoxGeometry(1.1, 0.55, 6.1),
+    new THREE.BoxGeometry(4.8, 0.52, 0.72),
     archMat
   );
-  crossBeam.position.set(-0.5, 5.15, 0);
+  crossBeam.position.set(-0.4, 5.15, -2.75);
   addAnimeInkEdges(crossBeam, materials.inkLineMaterial, 20);
   gantryGroup.add(crossBeam);
 
+  const scanBoom = new THREE.Mesh(
+    new THREE.BoxGeometry(0.65, 0.34, 3.2),
+    archMat
+  );
+  scanBoom.position.set(-0.4, 5.05, -1.2);
+  addAnimeInkEdges(scanBoom, materials.inkLineMaterial, 20);
+  gantryGroup.add(scanBoom);
+
   const pebSignTex = createLabelBoardTexture(
-    'PEB+0x10 · 0x00400000 SCANNER',
-    'NtUnmapViewOfSection -> STATUS_SUCCESS',
+    'CARGO MANIFEST X-RAY',
+    'PEB+0x10 · NtUnmapViewOfSection(0x00400000)',
     '#0B1120',
     '#22D3EE',
     '#67E8F9',
@@ -569,10 +530,10 @@ function buildHollowCargoUnmapScene(
   );
   extraTextures.push(pebSignTex);
   const pebSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(4.4, 1.05),
+    new THREE.PlaneGeometry(4.6, 1.02),
     new THREE.MeshBasicMaterial({ map: pebSignTex })
   );
-  pebSign.position.set(-0.5, 5.78, 0.35);
+  pebSign.position.set(1.25, 5.6, -2.35);
   gantryGroup.add(pebSign);
   root.add(gantryGroup);
 
@@ -581,7 +542,7 @@ function buildHollowCargoUnmapScene(
     new THREE.ConeGeometry(2.55, 4.6, 24, 1, true),
     pebScanRig.material
   );
-  pebScanCone.position.set(-1.8, 2.75, 0);
+  pebScanCone.position.set(-1.7, 2.75, 0);
   root.add(pebScanCone);
 
   const hollowWire = new THREE.LineSegments(
@@ -589,43 +550,39 @@ function buildHollowCargoUnmapScene(
     new THREE.LineBasicMaterial({
       color: 0x22d3ee,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.85,
     })
   );
-  hollowWire.position.set(-2.25, 1.95, 0);
+  hollowWire.position.set(-2.15, 1.95, 0);
   root.add(hollowWire);
 
-  const unmappedBlocks: THREE.Mesh[] = [];
-  const blockMat = materials.createToonMaterial(0x0ea5e9, {
-    emissive: 0x38bdf8,
-    emissiveIntensity: 0.85,
-    transparent: true,
-    opacity: 0.92,
-  });
-  for (let i = 0; i < 4; i += 1) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.56, 0.56), blockMat);
-    b.position.set(-2.6 + i * 0.45, 1.65, i % 2 === 0 ? -0.45 : 0.45);
-    addAnimeInkEdges(b, materials.inkLineMaterial, 20);
-    root.add(b);
-    unmappedBlocks.push(b);
-  }
+  // Rear unloading ramp behind truck
+  const ramp = new THREE.Mesh(
+    new THREE.BoxGeometry(5.8, 0.14, 2.1),
+    materials.createToonMaterial(0x334155)
+  );
+  ramp.position.set(-6.1, 0.12, 0);
+  addAnimeInkEdges(ramp, materials.inkLineMaterial, 20);
+  root.add(ramp);
 
-  const railMat = new THREE.MeshBasicMaterial({
-    color: 0xf59e0b,
-    transparent: true,
-    opacity: 0.72,
-    toneMapped: false,
-  });
-  const rail = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.08, 1.4), railMat);
-  rail.position.set(-5.8, 0.35, 0);
-  root.add(rail);
+  const railStripe = new THREE.Mesh(
+    new THREE.BoxGeometry(5.6, 0.04, 0.25),
+    new THREE.MeshBasicMaterial({
+      color: 0xf59e0b,
+      transparent: true,
+      opacity: 0.85,
+      toneMapped: false,
+    })
+  );
+  railStripe.position.set(-6.1, 0.21, 0);
+  root.add(railStripe);
 
   const primaryAnchor = new THREE.Object3D();
-  primaryAnchor.position.set(-0.6, 3.65, 0);
+  primaryAnchor.position.set(-0.4, 3.8, 0);
   root.add(primaryAnchor);
 
   const secondaryAnchor = new THREE.Object3D();
-  secondaryAnchor.position.set(-5.2, 2.35, 0.2);
+  secondaryAnchor.position.set(-5.4, 2.35, 0.2);
   root.add(secondaryAnchor);
 
   return {
@@ -639,9 +596,14 @@ function buildHollowCargoUnmapScene(
       const t = timeSec % 15;
       pebScanRig.uniforms.uTime.value = timeSec;
 
-      const sweepX = -1.8 + Math.sin(timeSec * 2.1) * 1.25;
+      const sweepX = -1.7 + Math.sin(timeSec * 2.1) * 1.25;
       pebScanCone.position.x = sweepX;
       pebScanRig.uniforms.uTrustedLock.value = t > 10.2 ? 0.85 : 0.15;
+
+      // Rear blast doors swing open right before gold crates unload
+      const doorOpen = easeOutCubic((t - 3.6) / 1.2);
+      truckRig.rearDoorLeftPivot.rotation.y = -doorOpen * 2.25;
+      truckRig.rearDoorRightPivot.rotation.y = doorOpen * 2.25;
 
       // Cutaway mode controls truck armored side panel visibility
       const openCutaway =
@@ -655,7 +617,8 @@ function buildHollowCargoUnmapScene(
       truckRig.cutawaySidePanel.visible = openCutaway < 0.85;
       truckRig.cutawaySideMaterial.opacity = Math.max(0.08, 1 - openCutaway * 0.92);
 
-      const extractProg = easeInOutQuad((t - 4.4) / 5.8);
+      // Slide all real legal gold crates out the rear doors
+      const extractProg = easeInOutQuad((t - 4.6) / 5.6);
       for (let i = 0; i < truckRig.legalCrates.length; i += 1) {
         const crateEntry = truckRig.legalCrates[i];
         const crateT = clamp01(extractProg * 1.4 - i * 0.12);
@@ -664,37 +627,24 @@ function buildHollowCargoUnmapScene(
           crateEntry.unloadedPos,
           crateT
         );
-        crateEntry.group.position.x -= crateT * 2.2;
-        crateEntry.group.position.y += Math.sin(crateT * Math.PI) * 0.36;
+        crateEntry.group.position.x -= crateT * 1.6;
+        crateEntry.group.position.y += Math.sin(crateT * Math.PI) * 0.32;
         crateEntry.group.scale.setScalar(
           Math.max(0.01, 1 - Math.max(0, crateT - 0.65) * 2.8)
         );
         crateEntry.group.visible = crateT < 0.98;
       }
 
-      for (let i = 0; i < unmappedBlocks.length; i += 1) {
-        const blk = unmappedBlocks[i];
-        const bT = clamp01(extractProg * 1.3 - i * 0.14);
-        blk.position.set(
-          -2.4 + i * 0.35 - bT * 4.8,
-          2.05 + Math.sin(timeSec * 3 + i) * 0.18 + bT * 0.55,
-          i % 2 === 0 ? -0.55 : 0.55
-        );
-        blk.rotation.y = timeSec * 1.2 + i;
-        blk.scale.setScalar(Math.max(0.01, 1 - Math.max(0, bT - 0.68) * 3.0));
-        blk.visible = bT < 0.98;
-      }
-
-      hollowWire.visible = extractProg > 0.2;
+      hollowWire.visible = extractProg > 0.25 && openCutaway > 0.5;
       (hollowWire.material as THREE.LineBasicMaterial).opacity =
-        0.25 + extractProg * 0.75;
+        0.25 + extractProg * 0.7;
 
-      secondaryAnchor.position.set(-4.6 - extractProg * 1.5, 2.55, 0.25);
+      secondaryAnchor.position.set(-4.8 - extractProg * 1.4, 2.5, 0.25);
 
       return {
-        glitchIntensity: t > 4.4 && t < 10.6 ? 0.78 : 0.28,
-        magicDustIntensity: 0.75,
-        stasisIntensity: 0.62,
+        glitchIntensity: t > 4.6 && t < 10.6 ? 0.45 : 0.15,
+        magicDustIntensity: 0,
+        stasisIntensity: 0.55,
         brakeReleaseBoost: 0,
       };
     },
@@ -706,377 +656,390 @@ function buildHollowCargoUnmapScene(
 }
 
 // ============================================================================
-// SCENE 3: STEP #3 — 264 KB RWX Memory Vault & Beacon PE Injection
+// SCENE 3: STEP #3 — Real Armored Bank Truck Secret Bay & Covert Crew Boarding
 // ============================================================================
 function buildRwxVaultInjectScene(
-  materials: AnimeMaterialLibrary
+  materials: AnimeMaterialLibrary,
+  isSoftwareGl: boolean
 ): BespokeSection3DScene {
   const root = new THREE.Group();
   const extraTextures: THREE.Texture[] = [];
 
-  root.add(createAnimeFloorGrid(materials, 0xf43f5e, 13.5));
+  root.add(createAnimeFloorGrid(materials, 0xf43f5e, 14.5));
 
-  const shellWire = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(6.8, 3.3, 3.1)),
+  // Garage floor road lane
+  const lane = new THREE.Mesh(
+    new THREE.BoxGeometry(16, 0.1, 5.4),
+    materials.createToonMaterial(0xffffff, { map: materials.roadSurfaceTexture })
+  );
+  lane.position.set(-0.8, 0.05, 0);
+  lane.receiveShadow = true;
+  root.add(lane);
+
+  // Real Emptied Armored Bank Truck parked in the loading bay!
+  const truckRig = buildArmoredBankTruck(materials, isSoftwareGl);
+  truckRig.root.position.set(1.2, 0.1, 0);
+  truckRig.legalCargoRoot.visible = false; // Legal bank gold already emptied in Step #2!
+  truckRig.covertCrewRoot.visible = true;
+  root.add(truckRig.root);
+
+  // Rear Boarding Ramp aligned directly to truck's rear blast doors
+  const ramp = new THREE.Mesh(
+    new THREE.BoxGeometry(4.6, 0.14, 2.2),
+    materials.createToonMaterial(0x1e293b)
+  );
+  ramp.position.set(-4.35, 0.58, 0);
+  ramp.rotation.z = 0.21;
+  addAnimeInkEdges(ramp, materials.inkLineMaterial, 20);
+  root.add(ramp);
+
+  const rampGlowEdge = new THREE.Mesh(
+    new THREE.BoxGeometry(4.5, 0.05, 0.14),
+    new THREE.MeshBasicMaterial({ color: 0xf43f5e, toneMapped: false })
+  );
+  rampGlowEdge.position.set(-4.35, 0.67, 1.02);
+  rampGlowEdge.rotation.z = 0.21;
+  root.add(rampGlowEdge);
+
+  // Glowing Secret Unlocked Compartment Frame INSIDE the emptied truck cargo bay
+  const secretBayFrame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(3.85, 1.72, 1.92)),
     new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
+      color: 0xf43f5e,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.92,
     })
   );
-  shellWire.position.set(1.2, 2.05, 0);
-  root.add(shellWire);
+  secretBayFrame.position.set(0.15, 2.02, 0);
+  root.add(secretBayFrame);
 
-  // Outer trusted armor casing toggled by Cutaway mode (SEALED vs OPEN)
-  const outerArmorMat = materials.createToonMaterial(0x1e3a8a, {
-    transparent: true,
-    opacity: 0.18,
-    side: THREE.DoubleSide,
-  });
-  const outerArmorShell = new THREE.Mesh(
-    new THREE.BoxGeometry(6.72, 3.24, 3.02),
-    outerArmorMat
-  );
-  outerArmorShell.position.set(1.2, 2.05, 0);
-  root.add(outerArmorShell);
-
-  const outerBadgeTex = createLabelBoardTexture(
-    'SVCHOST.EXE · EXTERIOR SHELL',
-    'TRUSTED SIGNATURE INTACT · 0x00400000',
-    '#0F172A',
-    '#38BDF8',
-    '#E0F2FE',
-    '#38BDF8'
-  );
-  extraTextures.push(outerBadgeTex);
-  const outerBadge = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.8, 0.85),
-    new THREE.MeshBasicMaterial({ map: outerBadgeTex })
-  );
-  outerBadge.position.set(1.2, 4.25, 0);
-  root.add(outerBadge);
-
-  const vaultCage = new THREE.Mesh(
-    new THREE.BoxGeometry(4.6, 2.55, 2.4),
+  const secretBayFloorGlow = new THREE.Mesh(
+    new THREE.BoxGeometry(3.75, 0.08, 1.84),
     new THREE.MeshBasicMaterial({
       color: 0xf43f5e,
       transparent: true,
-      opacity: 0.14,
-      side: THREE.DoubleSide,
-      depthWrite: false,
+      opacity: 0.45,
+      toneMapped: false,
     })
   );
-  vaultCage.position.set(1.2, 1.85, 0);
-  root.add(vaultCage);
+  secretBayFloorGlow.position.set(0.15, 1.18, 0);
+  root.add(secretBayFloorGlow);
 
-  const vaultEdges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(4.65, 2.6, 2.45)),
-    new THREE.LineBasicMaterial({
-      color: 0xf43f5e,
+  // Rear-mounted cantilevered Garage Tamper Sensor Arch (keeps truck cutaway 100% unobstructed!)
+  const sensorArch = new THREE.Group();
+  sensorArch.position.set(0.8, 0, 0);
+  const archMat = materials.createToonMaterial(0x1e293b);
+  for (const px of [-2.2, 2.2]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.42, 4.95, 0.42), archMat);
+    post.position.set(px, 2.475, -2.8);
+    addAnimeInkEdges(post, materials.inkLineMaterial, 20);
+    sensorArch.add(post);
+  }
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(5.1, 0.46, 0.65), archMat);
+  beam.position.set(0, 4.92, -2.8);
+  addAnimeInkEdges(beam, materials.inkLineMaterial, 20);
+  sensorArch.add(beam);
+
+  const cantileverArm = new THREE.Mesh(
+    new THREE.BoxGeometry(0.55, 0.3, 3.0),
+    archMat
+  );
+  cantileverArm.position.set(0, 4.85, -1.35);
+  addAnimeInkEdges(cantileverArm, materials.inkLineMaterial, 20);
+  sensorArch.add(cantileverArm);
+
+  const baySignTex = createLabelBoardTexture(
+    'SECRET CARGO BAY · COVERT CREW',
+    'VirtualAllocEx (RWX 0x40) + WriteProcessMemory',
+    '#18181B',
+    '#F43F5E',
+    '#FFE4E6',
+    '#FDE68A'
+  );
+  extraTextures.push(baySignTex);
+  const baySign = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.6, 1.0),
+    new THREE.MeshBasicMaterial({ map: baySignTex })
+  );
+  baySign.position.set(0.35, 5.58, -2.4);
+  sensorArch.add(baySign);
+
+  const tamperBeacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.28, 14, 10),
+    new THREE.MeshBasicMaterial({ color: 0xf59e0b, toneMapped: false })
+  );
+  tamperBeacon.position.set(0, 4.42, 0);
+  sensorArch.add(tamperBeacon);
+
+  const tamperRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.15, 0.06, 8, 36),
+    new THREE.MeshBasicMaterial({
+      color: 0xf59e0b,
       transparent: true,
-      opacity: 0.95,
+      opacity: 0.85,
+      toneMapped: false,
     })
   );
-  vaultEdges.position.set(1.2, 1.85, 0);
-  root.add(vaultEdges);
+  tamperRing.rotation.x = Math.PI / 2;
+  tamperRing.position.set(0, 4.42, 0);
+  sensorArch.add(tamperRing);
+  root.add(sensorArch);
 
-  const moduleSpecs = [
-    { label: 'MZ PE HEADER', sub: '4D 5A 90 00 · 0x00400000', color: 0xf59e0b, y: 0.85 },
-    { label: '.text · BEACON', sub: 'RWX 0x40 · ENTRY 0x004014A0', color: 0xf43f5e, y: 1.52 },
-    { label: '.rdata · STRINGS', sub: 'MALLEABLE C2 CONFIG', color: 0xa855f7, y: 2.18 },
-    { label: '.data · PAYLOAD', sub: '270,336 BYTES COMMITTED', color: 0xe11d48, y: 2.82 },
-  ];
-
-  const peModules: THREE.Group[] = [];
-  for (const spec of moduleSpecs) {
-    const modGroup = new THREE.Group();
-    const slab = new THREE.Mesh(
-      new THREE.BoxGeometry(3.8, 0.48, 1.85),
-      materials.createToonMaterial(spec.color, {
-        emissive: spec.color,
-        emissiveIntensity: 0.55,
-      })
-    );
-    addAnimeInkEdges(slab, materials.inkLineMaterial, 20);
-    modGroup.add(slab);
-
-    const tex = createLabelBoardTexture(
-      spec.label,
-      spec.sub,
-      '#18181B',
-      '#FDA4AF',
-      '#FFFFFF',
-      '#FDE68A'
-    );
-    extraTextures.push(tex);
-    const face = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.45, 0.42),
-      new THREE.MeshBasicMaterial({ map: tex })
-    );
-    face.position.set(0, 0, 0.94);
-    modGroup.add(face);
-
-    modGroup.position.set(1.2, spec.y, 0);
-    root.add(modGroup);
-    peModules.push(modGroup);
-  }
-
-  const emitterGroup = new THREE.Group();
-  emitterGroup.position.set(-4.8, 1.85, 0);
-  const emitterBody = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.75, 1.05, 1.8, 12),
-    materials.createToonMaterial(0x1e1b4b)
-  );
-  emitterBody.rotation.z = -Math.PI / 2;
-  addAnimeInkEdges(emitterBody, materials.inkLineMaterial, 22);
-  emitterGroup.add(emitterBody);
-
-  const nozzleRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.68, 0.1, 8, 24),
-    new THREE.MeshBasicMaterial({ color: 0xf43f5e, toneMapped: false })
-  );
-  nozzleRing.rotation.y = Math.PI / 2;
-  nozzleRing.position.set(0.95, 0, 0);
-  emitterGroup.add(nozzleRing);
-  root.add(emitterGroup);
-
-  const packets: THREE.Mesh[] = [];
-  const packetGeo = new THREE.BoxGeometry(0.34, 0.22, 0.22);
-  const packetMat = new THREE.MeshBasicMaterial({
-    color: 0xfb7185,
-    toneMapped: false,
-  });
-  for (let i = 0; i < 8; i += 1) {
-    const p = new THREE.Mesh(packetGeo, packetMat);
-    root.add(p);
-    packets.push(p);
-  }
-
+  // Floating 3D Callout anchors (positioned cleanly away from overhead signboard)
   const primaryAnchor = new THREE.Object3D();
-  primaryAnchor.position.set(3.45, 3.25, 0.25);
+  primaryAnchor.position.set(3.2, 3.25, 0.25);
   root.add(primaryAnchor);
 
   const secondaryAnchor = new THREE.Object3D();
-  secondaryAnchor.position.set(-3.3, 3.05, 0.25);
+  secondaryAnchor.position.set(-4.0, 2.7, 0.8);
   root.add(secondaryAnchor);
 
   return {
     root,
-    defaultCameraPos: new THREE.Vector3(0.4, 4.7, 11.4),
-    defaultCameraTarget: new THREE.Vector3(0.1, 2.0, 0),
+    defaultCameraPos: new THREE.Vector3(-0.8, 5.0, 11.8),
+    defaultCameraTarget: new THREE.Vector3(-0.8, 1.9, 0),
     primaryAnchor,
     secondaryAnchor,
-    particleCenter: new THREE.Vector3(0.8, 0, 0),
+    particleCenter: new THREE.Vector3(0.4, 0, 0),
     update: (timeSec, _phaseIndex, _isDark, cutawayMode) => {
       const t = timeSec % 15;
 
-      // Cutaway toggles outer svchost armor casing
-      if (cutawayMode === 'OPEN') {
-        outerArmorShell.visible = false;
-      } else if (cutawayMode === 'SEALED') {
-        outerArmorShell.visible = true;
-        outerArmorMat.opacity = 0.72;
-      } else {
-        outerArmorShell.visible = true;
-        outerArmorMat.opacity = 0.14;
-      }
-
-      const vaultScale = easeOutCubic(t / 3.4);
-      vaultCage.scale.set(
-        Math.max(0.05, vaultScale),
-        Math.max(0.05, vaultScale),
-        Math.max(0.05, vaultScale)
+      // Phase 1 (0..4.8s): Secret unlocked bay expands inside emptied truck
+      const bayProg = easeOutCubic(t / 3.4);
+      secretBayFrame.scale.set(
+        Math.max(0.05, bayProg),
+        Math.max(0.05, bayProg),
+        Math.max(0.05, bayProg)
       );
-      vaultEdges.scale.copy(vaultCage.scale);
+      secretBayFloorGlow.scale.set(
+        Math.max(0.05, bayProg),
+        1,
+        Math.max(0.05, bayProg)
+      );
 
-      const streamActive = t > 3.4 && t < 12.2;
-      for (let i = 0; i < packets.length; i += 1) {
-        const p = packets[i];
-        p.visible = streamActive;
-        const cycle = (timeSec * 1.45 + i / packets.length) % 1;
-        p.position.set(
-          THREE.MathUtils.lerp(-3.7, 0.4, cycle),
-          1.85 + Math.sin(cycle * Math.PI * 2 + i) * 0.48,
-          Math.cos(cycle * Math.PI * 2 + i) * 0.35
-        );
-        p.rotation.x = timeSec * 4 + i;
-        p.rotation.y = timeSec * 3;
+      // Rear blast doors open during Phases 1-2 and seal shut in Phase 3
+      const doorOpen =
+        t < 10.6
+          ? easeOutCubic(t / 1.2)
+          : 1 - easeInOutQuad((t - 10.6) / 1.8);
+      truckRig.rearDoorLeftPivot.rotation.y = -doorOpen * 2.25;
+      truckRig.rearDoorRightPivot.rotation.y = doorOpen * 2.25;
+
+      // Side armor X-ray cutaway controlled by Cutaway button (AUTO shows interior during loading, then peeks)
+      const openCutaway =
+        cutawayMode === 'OPEN'
+          ? 1
+          : cutawayMode === 'SEALED'
+          ? 0
+          : t < 11.8
+          ? 1
+          : 0.45;
+      truckRig.cutawaySidePanel.visible = openCutaway < 0.85;
+      truckRig.cutawaySideMaterial.opacity = Math.max(0.08, 1 - openCutaway * 0.92);
+
+      // Phase 2 (4.6..10.6s): Covert operatives + crimson mission crate march up ramp into truck!
+      const boardProg = easeInOutQuad((t - 4.4) / 5.4);
+      for (let i = 0; i < truckRig.covertOperatives.length; i += 1) {
+        const op = truckRig.covertOperatives[i];
+        const opT = clamp01(boardProg * 1.3 - i * 0.14);
+        op.group.position.lerpVectors(op.alleyPos, op.insidePos, opT);
+        // Smooth walking stride bounce & arm swing while boarding
+        const walking = opT > 0.02 && opT < 0.96;
+        if (walking) {
+          op.group.position.y += Math.abs(Math.sin(timeSec * 9 + i)) * 0.12;
+          op.leftArm.rotation.x = Math.sin(timeSec * 9 + i) * 0.55;
+          op.rightArm.rotation.x = -Math.sin(timeSec * 9 + i) * 0.55;
+        } else {
+          op.leftArm.rotation.x = 0;
+          op.rightArm.rotation.x = 0;
+        }
       }
 
-      for (let i = 0; i < peModules.length; i += 1) {
-        const mod = peModules[i];
-        const appear = easeOutCubic((t - (4.4 + i * 1.4)) / 1.15);
-        mod.visible = appear > 0.02;
-        mod.scale.set(appear, appear, appear);
-        mod.position.x = THREE.MathUtils.lerp(-1.2, 1.2, appear);
+      // Crimson Beacon Mission Crate glides inside right alongside the crew
+      const crateT = clamp01(boardProg * 1.2 - 0.18);
+      truckRig.beaconCoreCrate.group.position.lerpVectors(
+        truckRig.beaconCoreCrate.alleyPos,
+        truckRig.beaconCoreCrate.insidePos,
+        crateT
+      );
+      if (crateT > 0.02 && crateT < 0.96) {
+        truckRig.beaconCoreCrate.group.position.y +=
+          Math.sin(crateT * Math.PI) * 0.35;
       }
 
-      nozzleRing.rotation.x = timeSec * 2.4;
+      // Crimson interior aura lights up as crew boards
+      truckRig.interiorGlowLight.intensity = 0.6 + boardProg * 2.8;
+      (truckRig.interiorBeaconGlowMesh.material as THREE.MeshBasicMaterial).opacity =
+        0.06 + boardProg * 0.32;
+
+      // Phase 3 (10.6..15s): Garage tamper sensor pulses amber (Sysmon EID 10)
+      const alertWave = ((t - 10.4) % 2.1) / 2.1;
+      const alertActive = t > 10.4;
+      tamperRing.visible = alertActive;
+      tamperRing.scale.setScalar(0.5 + Math.max(0, alertWave) * 1.8);
+      (tamperRing.material as THREE.MeshBasicMaterial).opacity =
+        Math.max(0, 1 - alertWave) * 0.9;
+      tamperBeacon.scale.setScalar(
+        alertActive ? 1 + Math.sin(timeSec * 8) * 0.22 : 0.85
+      );
+
+      // Track covert crew callout smoothly from ramp into truck
+      const crewLabelX = THREE.MathUtils.lerp(-4.2, -1.4, boardProg);
+      secondaryAnchor.position.set(crewLabelX, 2.75, 0.7);
 
       return {
-        glitchIntensity: streamActive ? 0.92 : 0.38,
-        magicDustIntensity: 0.85,
-        stasisIntensity: 0.18,
+        glitchIntensity: t > 4.4 && t < 10.8 ? 0.52 : 0.18,
+        magicDustIntensity: 0,
+        stasisIntensity: 0.15,
         brakeReleaseBoost: 0,
       };
     },
     dispose: () => {
       for (const tex of extraTextures) tex.dispose();
-      packetGeo.dispose();
-      packetMat.dispose();
     },
   };
 }
 
 // ============================================================================
-// SCENE 4: STEP #4 — Hijacked Steering Wheel, Holographic GPS (RCX) & Unfreeze
+// SCENE 4: STEP #4 — Real Armored Bank Truck + Holographic Cab GPS & Launch
 // ============================================================================
 function buildCockpitGpsHijackScene(
-  materials: AnimeMaterialLibrary
+  materials: AnimeMaterialLibrary,
+  isSoftwareGl: boolean
 ): BespokeSection3DScene {
   const root = new THREE.Group();
   const extraTextures: THREE.Texture[] = [];
 
-  root.add(createAnimeFloorGrid(materials, 0xfb7185, 13.5));
+  root.add(createAnimeFloorGrid(materials, 0xfb7185, 15.5));
 
-  const cockpitGroup = new THREE.Group();
-  cockpitGroup.position.set(-2.2, 0.35, 0.4);
+  // Garage Exit Runway
+  const runway = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.12, 5.2),
+    materials.createToonMaterial(0xffffff, { map: materials.roadSurfaceTexture })
+  );
+  runway.position.set(0.5, 0.06, 0);
+  runway.receiveShadow = true;
+  root.add(runway);
 
-  const dashMat = materials.createToonMaterial(0x1e293b, {
-    transparent: true,
-    opacity: 0.98,
-  });
-  const dash = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.9, 2.2), dashMat);
-  dash.position.y = 0.95;
-  addAnimeInkEdges(dash, materials.inkLineMaterial, 20);
-  cockpitGroup.add(dash);
+  // Real Armored Bank Truck loaded with Covert Crew, parked inside Freeze Dome
+  const truckRig = buildArmoredBankTruck(materials, isSoftwareGl);
+  truckRig.root.scale.setScalar(0.84);
+  truckRig.root.position.set(-3.4, 0.12, 0);
+  truckRig.legalCargoRoot.visible = false;
+  truckRig.covertCrewRoot.visible = true;
+  for (const op of truckRig.covertOperatives) {
+    op.group.position.copy(op.insidePos);
+  }
+  truckRig.beaconCoreCrate.group.position.copy(
+    truckRig.beaconCoreCrate.insidePos
+  );
+  truckRig.interiorGlowLight.intensity = 2.6;
+  root.add(truckRig.root);
+
+  // Cryo Stasis Dome around starting garage spot that shatters on ResumeThread
+  const stasisRig = buildStasisFreezeRig(materials, -3.4);
+  stasisRig.root.scale.setScalar(0.86);
+  root.add(stasisRig.root);
+
+  // Floating Holographic Cab Dashboard (Steering Wheel + GPS Dial) framed cleanly right of top-left HUD
+  const cabHoloGroup = new THREE.Group();
+  cabHoloGroup.position.set(2.55, 3.85, -1.55);
+
+  const holoBack = new THREE.Mesh(
+    new THREE.BoxGeometry(4.1, 1.95, 0.18),
+    materials.createToonMaterial(0x0f172a, {
+      transparent: true,
+      opacity: 0.88,
+    })
+  );
+  addAnimeInkEdges(holoBack, materials.inkLineMaterial, 20);
+  cabHoloGroup.add(holoBack);
 
   const wheelPivot = new THREE.Group();
-  wheelPivot.position.set(-0.7, 2.15, 0.72);
-  wheelPivot.rotation.x = -0.45;
-
+  wheelPivot.position.set(-0.98, 0.0, 0.24);
   const wheelRim = new THREE.Mesh(
-    new THREE.TorusGeometry(0.92, 0.13, 10, 28),
-    materials.createToonMaterial(0x0f172a)
+    new THREE.TorusGeometry(0.68, 0.1, 10, 28),
+    materials.createToonMaterial(0x1e293b)
   );
   addInvertedHullOutline(wheelRim, materials.inkOutlineMaterial, 1.07);
   wheelPivot.add(wheelRim);
 
-  const hub = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.24, 0.24, 0.18, 16),
+  const wheelHub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.14, 14),
     materials.createToonMaterial(0xf43f5e, {
       emissive: 0xf43f5e,
-      emissiveIntensity: 0.9,
+      emissiveIntensity: 0.95,
     })
   );
-  hub.rotation.x = Math.PI / 2;
-  wheelPivot.add(hub);
+  wheelHub.rotation.x = Math.PI / 2;
+  wheelPivot.add(wheelHub);
 
   for (let i = 0; i < 3; i += 1) {
     const spoke = new THREE.Mesh(
-      new THREE.BoxGeometry(0.14, 0.85, 0.1),
+      new THREE.BoxGeometry(0.1, 0.62, 0.08),
       materials.createToonMaterial(0x94a3b8)
     );
     const a = (i * Math.PI * 2) / 3;
-    spoke.position.set(Math.sin(a) * 0.42, Math.cos(a) * 0.42, 0);
+    spoke.position.set(Math.sin(a) * 0.31, Math.cos(a) * 0.31, 0);
     spoke.rotation.z = -a;
     wheelPivot.add(spoke);
   }
-  cockpitGroup.add(wheelPivot);
+  cabHoloGroup.add(wheelPivot);
 
+  // Holographic Dashboard GPS Dial
   const gpsGroup = new THREE.Group();
-  gpsGroup.position.set(1.05, 2.5, 0.15);
+  gpsGroup.position.set(0.92, 0.0, 0.22);
 
   const gpsRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.95, 0.06, 8, 36),
+    new THREE.TorusGeometry(0.72, 0.055, 8, 32),
     new THREE.MeshBasicMaterial({ color: 0x38bdf8, toneMapped: false })
   );
   gpsGroup.add(gpsRing);
 
-  const legMarker = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.18, 0),
+  const bankPin = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.14, 0),
     new THREE.MeshBasicMaterial({ color: 0x38bdf8, toneMapped: false })
   );
-  legMarker.position.set(-0.72, 0.62, 0);
-  gpsGroup.add(legMarker);
+  bankPin.position.set(-0.52, 0.45, 0);
+  gpsGroup.add(bankPin);
 
-  const hijackMarker = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.24, 0),
+  const secretPin = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.18, 0),
     new THREE.MeshBasicMaterial({ color: 0xf43f5e, toneMapped: false })
   );
-  hijackMarker.position.set(0.75, 0.58, 0);
-  gpsGroup.add(hijackMarker);
+  secretPin.position.set(0.55, 0.44, 0);
+  gpsGroup.add(secretPin);
 
   const gpsNeedle = new THREE.Group();
   const needleMesh = new THREE.Mesh(
-    new THREE.ConeGeometry(0.14, 1.05, 4),
+    new THREE.ConeGeometry(0.11, 0.78, 4),
     new THREE.MeshBasicMaterial({ color: 0xf43f5e, toneMapped: false })
   );
-  needleMesh.position.y = 0.42;
+  needleMesh.position.y = 0.32;
   gpsNeedle.add(needleMesh);
   gpsGroup.add(gpsNeedle);
-  cockpitGroup.add(gpsGroup);
+  cabHoloGroup.add(gpsGroup);
 
-  const rcxTex = createLabelBoardTexture(
-    'RCX = 0x004014A0 · HIJACKED',
-    'SetThreadContext -> ResumeThread (1 -> 0)',
+  const gpsSignTex = createLabelBoardTexture(
+    'TRUCK GPS HIJACKED · SECRET ROUTE',
+    'SetThreadContext (RCX -> 0x004014A0) + ResumeThread',
     '#18181B',
     '#F43F5E',
-    '#FDA4AF',
+    '#FFE4E6',
     '#38BDF8'
   );
-  extraTextures.push(rcxTex);
-  const rcxSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.8, 0.85),
-    new THREE.MeshBasicMaterial({ map: rcxTex })
+  extraTextures.push(gpsSignTex);
+  const gpsSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.1, 0.88),
+    new THREE.MeshBasicMaterial({ map: gpsSignTex })
   );
-  rcxSign.position.set(0.1, 4.15, 0);
-  cockpitGroup.add(rcxSign);
-  root.add(cockpitGroup);
+  gpsSign.position.set(0, 1.48, 0.06);
+  cabHoloGroup.add(gpsSign);
+  root.add(cabHoloGroup);
 
-  const railGroup = new THREE.Group();
-  railGroup.position.set(3.2, 1.45, -0.2);
-
-  const cpuRail = new THREE.Mesh(
-    new THREE.BoxGeometry(5.8, 0.28, 0.9),
-    materials.createToonMaterial(0x0f172a)
-  );
-  addAnimeInkEdges(cpuRail, materials.inkLineMaterial, 20);
-  railGroup.add(cpuRail);
-
-  const railStripe = new THREE.Mesh(
-    new THREE.BoxGeometry(5.6, 0.08, 0.22),
-    new THREE.MeshBasicMaterial({ color: 0xf43f5e, toneMapped: false })
-  );
-  railStripe.position.y = 0.16;
-  railGroup.add(railStripe);
-
-  const threadCore = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.58, 1),
-    materials.createToonMaterial(0xfb7185, {
-      emissive: 0xf43f5e,
-      emissiveIntensity: 1.5,
-    })
-  );
-  threadCore.position.set(-2.1, 0.78, 0);
-  addInvertedHullOutline(threadCore, materials.inkOutlineMaterial, 1.07);
-  railGroup.add(threadCore);
-
-  const lockShards: THREE.Mesh[] = [];
-  const shardMat = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
-    transparent: true,
-    opacity: 0.9,
-    toneMapped: false,
-  });
-  for (let i = 0; i < 6; i += 1) {
-    const sh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.62, 0.16), shardMat);
-    railGroup.add(sh);
-    lockShards.push(sh);
-  }
-
+  // Overhead Tamper Alert Wave Ring (Sysmon Event ID 25)
   const alertRing = new THREE.Mesh(
-    new THREE.TorusGeometry(1.15, 0.07, 8, 36),
+    new THREE.TorusGeometry(1.6, 0.08, 8, 36),
     new THREE.MeshBasicMaterial({
       color: 0xf59e0b,
       transparent: true,
@@ -1085,76 +1048,110 @@ function buildCockpitGpsHijackScene(
     })
   );
   alertRing.rotation.x = Math.PI / 2;
-  alertRing.position.set(0.8, 1.8, 0);
-  railGroup.add(alertRing);
-  root.add(railGroup);
+  alertRing.position.set(2.4, 3.6, 0);
+  root.add(alertRing);
 
   const primaryAnchor = new THREE.Object3D();
-  primaryAnchor.position.set(-2.1, 4.1, 0.5);
+  primaryAnchor.position.set(2.55, 6.05, -1.4);
   root.add(primaryAnchor);
 
   const secondaryAnchor = new THREE.Object3D();
-  secondaryAnchor.position.set(3.2, 3.45, -0.2);
+  secondaryAnchor.position.set(-3.4, 3.3, 0.4);
   root.add(secondaryAnchor);
 
   return {
     root,
-    defaultCameraPos: new THREE.Vector3(0.6, 5.0, 11.4),
-    defaultCameraTarget: new THREE.Vector3(0.4, 2.0, 0),
+    defaultCameraPos: new THREE.Vector3(0.4, 5.4, 13.4),
+    defaultCameraTarget: new THREE.Vector3(0.4, 2.2, 0),
     primaryAnchor,
     secondaryAnchor,
-    particleCenter: new THREE.Vector3(0.5, 0, 0),
+    particleCenter: new THREE.Vector3(0, 0, 0),
     update: (timeSec, _phaseIndex, _isDark, cutawayMode) => {
       const t = timeSec % 15;
+      stasisRig.domeUniforms.uTime.value = timeSec;
 
-      dashMat.opacity = cutawayMode === 'OPEN' ? 0.35 : 0.98;
+      // Cutaway button lets viewer see covert crew inside launching truck
+      const openCutaway =
+        cutawayMode === 'OPEN'
+          ? 1
+          : cutawayMode === 'SEALED'
+          ? 0
+          : 0.45;
+      truckRig.cutawaySidePanel.visible = openCutaway < 0.85;
+      truckRig.cutawaySideMaterial.opacity = Math.max(0.12, 1 - openCutaway * 0.88);
 
-      const hijackProg = easeInOutQuad((t - 0.8) / 3.8);
-      wheelPivot.rotation.z = THREE.MathUtils.lerp(0.55, -1.05, hijackProg);
+      // Phase 1 (0..5.2s): Steering wheel cranks & GPS needle locks onto crimson secret route
+      const hijackProg = easeInOutQuad((t - 0.6) / 3.8);
+      wheelPivot.rotation.z = THREE.MathUtils.lerp(0.6, -1.05, hijackProg);
       gpsNeedle.rotation.z = THREE.MathUtils.lerp(0.82, -0.82, hijackProg);
 
-      const resumeProg = easeOutCubic((t - 5.2) / 4.2);
-      for (let i = 0; i < lockShards.length; i += 1) {
-        const a = (i * Math.PI * 2) / lockShards.length;
-        const r = 0.88 + resumeProg * 2.1;
-        lockShards[i].position.set(
-          -2.1 + Math.cos(a) * r,
-          0.78 + Math.sin(a) * r * 0.75,
-          Math.sin(a * 2) * 0.45
+      // Phase 2 (5.2..11.2s): Cryo freeze dome shatters into flying frost shards & truck roars forward!
+      const shatterProg = easeOutCubic((t - 5.2) / 1.5);
+      const driveProg = easeInOutQuad((t - 5.4) / 5.4);
+      const stasisOpacity = Math.max(0, 1 - shatterProg * 1.25);
+
+      stasisRig.domeUniforms.uOpacity.value = stasisOpacity * 0.92;
+      stasisRig.domeMesh.visible = stasisOpacity > 0.02;
+      stasisRig.runeRingOuter.rotation.z = timeSec * 0.5;
+      (stasisRig.runeRingOuter.material as THREE.MeshBasicMaterial).opacity =
+        stasisOpacity * 0.85;
+      (stasisRig.runeRingInner.material as THREE.MeshBasicMaterial).opacity =
+        stasisOpacity * 0.7;
+
+      for (const shard of stasisRig.frostShards) {
+        const burst = shatterProg * 3.8;
+        shard.mesh.visible = shatterProg < 0.96;
+        shard.mesh.position.set(
+          shard.basePos.x + shard.burstDir.x * burst,
+          shard.basePos.y + shard.burstDir.y * burst * 0.65,
+          shard.basePos.z + shard.burstDir.z * burst
         );
-        lockShards[i].rotation.z = a + resumeProg * 2.6;
-        lockShards[i].visible = resumeProg < 0.92;
+        shard.mesh.rotation.x = timeSec * 2 + shard.phase;
+        shard.mesh.rotation.y = timeSec * 3 + shard.phase;
       }
-      shardMat.opacity = Math.max(0, 1 - resumeProg * 1.15);
 
-      const coreX = THREE.MathUtils.lerp(-2.1, 2.35, resumeProg);
-      threadCore.position.set(coreX, 0.78 + Math.sin(timeSec * 5) * 0.1, 0);
-      threadCore.rotation.y = timeSec * (1.2 + resumeProg * 5.0);
+      const truckX = THREE.MathUtils.lerp(-3.4, 4.2, driveProg);
+      const isMoving = driveProg > 0.01 && driveProg < 0.99;
+      truckRig.root.position.set(
+        truckX,
+        0.12 + (isMoving ? Math.abs(Math.sin(timeSec * 18)) * 0.045 : 0),
+        0
+      );
+      for (const w of truckRig.wheels) {
+        w.rotation.z = -driveProg * 12.5;
+      }
+      truckRig.speedLinesGroup.visible = driveProg > 0.04 && driveProg < 0.95;
 
-      const alertWave = ((t - 9.5) % 2.2) / 2.2;
-      alertRing.visible = t > 9.5;
-      alertRing.scale.setScalar(0.5 + Math.max(0, alertWave) * 1.85);
+      // Cab GPS hologram stays smoothly visible right of HUD card
+      cabHoloGroup.position.y = 3.85 + Math.sin(timeSec * 2.2) * 0.08;
+
+      // Phase 3 (10.2..15s): Amber Sysmon EID 25 tamper wave pulses above launched truck
+      const alertWave = ((t - 10.0) % 2.1) / 2.1;
+      const alertActive = t > 10.0;
+      alertRing.visible = alertActive;
+      alertRing.position.set(truckX, 3.25, 0);
+      alertRing.scale.setScalar(0.55 + Math.max(0, alertWave) * 1.9);
       (alertRing.material as THREE.MeshBasicMaterial).opacity =
         Math.max(0, 1 - alertWave) * 0.92;
 
-      secondaryAnchor.position.set(3.2 + coreX * 0.55, 3.4, -0.2);
+      secondaryAnchor.position.set(truckX - 0.5, 3.25, 0.5);
 
       return {
-        glitchIntensity: t > 5.0 && t < 10.2 ? 0.72 : 0.3,
-        magicDustIntensity: 0.8,
-        stasisIntensity: Math.max(0, 1 - resumeProg),
-        brakeReleaseBoost: t > 5.2 && t < 10.4 ? 0.85 : 0,
+        glitchIntensity: t > 5.0 && t < 10.6 ? 0.48 : 0.16,
+        magicDustIntensity: 0,
+        stasisIntensity: stasisOpacity,
+        brakeReleaseBoost: isMoving ? 0.85 : 0,
       };
     },
     dispose: () => {
       for (const tex of extraTextures) tex.dispose();
-      shardMat.dispose();
+      (stasisRig.domeMesh.material as THREE.Material).dispose();
     },
   };
 }
 
 // ============================================================================
-// SCENE 5: STEP #5 — Perimeter Firewall Gate -> TLS 1.3 Bridge -> External C2 Tower
+// SCENE 5: STEP #5 — Checkpoint Guard Gate, Courier Line & Secret Warehouse
 // ============================================================================
 function buildFirewallC2BridgeScene(
   materials: AnimeMaterialLibrary,
@@ -1177,8 +1174,15 @@ function buildFirewallC2BridgeScene(
   truckRig.root.position.set(-5.8, 0.14, 0.6);
   truckRig.legalCargoRoot.visible = false;
   truckRig.covertCrewRoot.visible = true;
+  for (const op of truckRig.covertOperatives) {
+    op.group.position.copy(op.insidePos);
+  }
+  truckRig.beaconCoreCrate.group.position.copy(
+    truckRig.beaconCoreCrate.insidePos
+  );
   root.add(truckRig.root);
 
+  // Bank Checkpoint Gate + Uniformed Guard who waves the truck through
   const gateGroup = new THREE.Group();
   gateGroup.position.set(-0.6, 0.14, 0.6);
   const booth = new THREE.Mesh(
@@ -1188,6 +1192,11 @@ function buildFirewallC2BridgeScene(
   booth.position.set(0, 1.35, -2.5);
   addAnimeInkEdges(booth, materials.inkLineMaterial, 20);
   gateGroup.add(booth);
+
+  const gateGuard = buildUniformedGuard(materials, 0x1d4ed8, 0xfacc15);
+  gateGuard.group.position.set(1.1, 0, -2.0);
+  gateGuard.group.rotation.y = -0.35;
+  gateGroup.add(gateGuard.group);
 
   const allowLight = new THREE.Mesh(
     new THREE.SphereGeometry(0.28, 12, 10),
@@ -1217,8 +1226,8 @@ function buildFirewallC2BridgeScene(
   gateGroup.add(fwScanCone);
 
   const fwSignTex = createLabelBoardTexture(
-    'FIREWALL: ALLOW SVCHOST.EXE',
-    'SIGNED MICROSOFT PATH PERMITTED',
+    'BANK CHECKPOINT · ALLOW PLATE',
+    'Host Firewall Trusts Signed svchost.exe Path',
     '#052E16',
     '#10B981',
     '#6EE7B7',
@@ -1226,13 +1235,14 @@ function buildFirewallC2BridgeScene(
   );
   extraTextures.push(fwSignTex);
   const fwSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.6, 0.78),
+    new THREE.PlaneGeometry(3.8, 0.82),
     new THREE.MeshBasicMaterial({ map: fwSignTex })
   );
   fwSign.position.set(0, 4.15, -2.2);
   gateGroup.add(fwSign);
   root.add(gateGroup);
 
+  // Remote Secret Warehouse (C2 Server)
   const c2Group = new THREE.Group();
   c2Group.position.set(6.4, 0.14, -0.5);
 
@@ -1268,8 +1278,8 @@ function buildFirewallC2BridgeScene(
   c2Group.add(c2BeaconOrb);
 
   const c2SignTex = createLabelBoardTexture(
-    'C2 SERVER · 185.220.101.42:443',
-    'TLS 1.3 · GET /jquery-3.3.1.min.js',
+    'SECRET WAREHOUSE · C2 SERVER',
+    '185.220.101.42:443 · GET /jquery-3.3.1.min.js',
     '#1F0914',
     '#F43F5E',
     '#FDA4AF',
@@ -1277,7 +1287,7 @@ function buildFirewallC2BridgeScene(
   );
   extraTextures.push(c2SignTex);
   const c2Sign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.9, 0.85),
+    new THREE.PlaneGeometry(4.1, 0.88),
     new THREE.MeshBasicMaterial({ map: c2SignTex })
   );
   c2Sign.position.set(0, 5.65, 1.45);
@@ -1312,6 +1322,7 @@ function buildFirewallC2BridgeScene(
     tlsPackets.push(pkt);
   }
 
+  // Control-Room Radar Dish
   const radarGroup = new THREE.Group();
   radarGroup.position.set(1.6, 0.14, -4.6);
   const radarBase = new THREE.Mesh(
@@ -1357,7 +1368,6 @@ function buildFirewallC2BridgeScene(
       const t = timeSec % 15;
       fwScanRig.uniforms.uTime.value = timeSec;
 
-      // Cutaway mode exposes covert crew inside moving truck
       const showInside = cutawayMode === 'OPEN';
       truckRig.cutawaySidePanel.visible = !showInside;
       truckRig.cutawaySideMaterial.opacity = showInside ? 0.08 : 1.0;
@@ -1372,6 +1382,8 @@ function buildFirewallC2BridgeScene(
       const gateOpen = easeOutCubic((t - 1.2) / 1.5);
       barrierPivot.rotation.x = -gateOpen * 1.32;
       fwScanRig.uniforms.uTrustedLock.value = gateOpen;
+      // Guard raises right arm in salute as truck passes
+      gateGuard.rightArmPivot.rotation.z = gateOpen * 2.25;
 
       const c2Active = t > 4.2;
       tlsArc.visible = c2Active;
@@ -1391,8 +1403,8 @@ function buildFirewallC2BridgeScene(
       primaryAnchor.position.set(tx, 3.25, 0.6);
 
       return {
-        glitchIntensity: c2Active ? 0.52 : 0.18,
-        magicDustIntensity: 0.72,
+        glitchIntensity: c2Active ? 0.4 : 0.14,
+        magicDustIntensity: 0,
         stasisIntensity: 0,
         brakeReleaseBoost: t > 1.5 && t < 6.4 ? 0.55 : 0,
       };
@@ -1407,118 +1419,107 @@ function buildFirewallC2BridgeScene(
 }
 
 // ============================================================================
-// SCENE 6: MEMORY FORENSICS — On-Disk Signed SEC_IMAGE vs In-RAM Tampered RWX
+// SCENE 6: MEMORY FORENSICS — Side-by-Side X-Ray of Two Real Armored Bank Trucks
 // ============================================================================
 function buildMemoryVadDiffScene(
-  materials: AnimeMaterialLibrary
+  materials: AnimeMaterialLibrary,
+  isSoftwareGl: boolean
 ): BespokeSection3DScene {
   const root = new THREE.Group();
   const extraTextures: THREE.Texture[] = [];
 
-  root.add(createAnimeFloorGrid(materials, 0x38bdf8, 13.5));
+  root.add(createAnimeFloorGrid(materials, 0x38bdf8, 16.0));
 
-  const diskGroup = new THREE.Group();
-  diskGroup.position.set(-3.4, 0.25, 0);
+  // LEFT PLATFORM: Official Factory Bank Truck (Clean Signed On-Disk SEC_IMAGE)
+  const leftBay = new THREE.Mesh(
+    new THREE.BoxGeometry(7.0, 0.22, 4.4),
+    materials.createToonMaterial(0x0c4a6e)
+  );
+  leftBay.position.set(-4.6, 0.11, 0);
+  addAnimeInkEdges(leftBay, materials.inkLineMaterial, 20);
+  root.add(leftBay);
 
-  const diskLayers = [
-    { label: 'SIGNED PE HEADER', sub: 'R-- · MICROSOFT CERT OK', color: 0x0284c7, y: 0.55 },
-    { label: '.text (CLEAN)', sub: 'R-X (0x20) · SEC_IMAGE', color: 0x0ea5e9, y: 1.4 },
-    { label: '.rdata (CLEAN)', sub: 'R-- (0x02) · FILE-BACKED', color: 0x38bdf8, y: 2.25 },
-    { label: '.data (CLEAN)', sub: 'RW- (0x04) · NO EXEC', color: 0x10b981, y: 3.1 },
-  ];
-  const allSlabMats: THREE.MeshToonMaterial[] = [];
-  for (const layer of diskLayers) {
-    const slabMat = materials.createToonMaterial(layer.color, {
-      emissive: layer.color,
-      emissiveIntensity: 0.35,
-      transparent: true,
-      opacity: 0.96,
-    });
-    allSlabMats.push(slabMat);
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.62, 2.0), slabMat);
-    slab.position.y = layer.y;
-    addAnimeInkEdges(slab, materials.inkLineMaterial, 20);
-    diskGroup.add(slab);
+  const factoryTruck = buildArmoredBankTruck(materials, isSoftwareGl);
+  factoryTruck.root.scale.setScalar(0.76);
+  factoryTruck.root.position.set(-4.6, 0.22, 0);
+  factoryTruck.legalCargoRoot.visible = true;
+  factoryTruck.covertCrewRoot.visible = false;
+  root.add(factoryTruck.root);
 
-    const tex = createLabelBoardTexture(
-      layer.label,
-      layer.sub,
-      '#082F49',
-      '#38BDF8',
-      '#F0F9FF',
-      '#7DD3FC'
-    );
-    extraTextures.push(tex);
-    const lbl = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.1, 0.5),
-      new THREE.MeshBasicMaterial({ map: tex })
-    );
-    lbl.position.set(0, layer.y, 1.02);
-    diskGroup.add(lbl);
+  const diskSignTex = createLabelBoardTexture(
+    'FACTORY TRUCK · CLEAN GOLD',
+    'Signed Disk svchost.exe (SEC_IMAGE · R-X / RW-)',
+    '#082F49',
+    '#38BDF8',
+    '#E0F2FE',
+    '#7DD3FC'
+  );
+  extraTextures.push(diskSignTex);
+  const diskSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.4, 0.92),
+    new THREE.MeshBasicMaterial({ map: diskSignTex })
+  );
+  diskSign.position.set(-4.6, 4.45, -1.9);
+  root.add(diskSign);
+
+  // RIGHT PLATFORM: Hijacked Highway Bank Truck (Tampered Live RAM MEM_PRIVATE RWX)
+  const rightBay = new THREE.Mesh(
+    new THREE.BoxGeometry(7.0, 0.22, 4.4),
+    materials.createToonMaterial(0x4c0519)
+  );
+  rightBay.position.set(4.6, 0.11, 0);
+  addAnimeInkEdges(rightBay, materials.inkLineMaterial, 20);
+  root.add(rightBay);
+
+  const highwayTruck = buildArmoredBankTruck(materials, isSoftwareGl);
+  highwayTruck.root.scale.setScalar(0.76);
+  highwayTruck.root.position.set(4.6, 0.22, 0);
+  highwayTruck.legalCargoRoot.visible = false;
+  highwayTruck.covertCrewRoot.visible = true;
+  for (const op of highwayTruck.covertOperatives) {
+    op.group.position.copy(op.insidePos);
   }
-  root.add(diskGroup);
+  highwayTruck.beaconCoreCrate.group.position.copy(
+    highwayTruck.beaconCoreCrate.insidePos
+  );
+  highwayTruck.interiorGlowLight.intensity = 2.8;
+  root.add(highwayTruck.root);
 
-  const ramGroup = new THREE.Group();
-  ramGroup.position.set(3.4, 0.25, 0);
+  const ramSignTex = createLabelBoardTexture(
+    'HIGHWAY TRUCK · COVERT CREW',
+    'Live RAM 0x00400000 (MEM_PRIVATE · RWX 0x40)',
+    '#2A0A14',
+    '#F43F5E',
+    '#FFE4E6',
+    '#FDE68A'
+  );
+  extraTextures.push(ramSignTex);
+  const ramSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.4, 0.92),
+    new THREE.MeshBasicMaterial({ map: ramSignTex })
+  );
+  ramSign.position.set(4.6, 4.45, -1.9);
+  root.add(ramSign);
 
-  const ramLayers = [
-    { label: 'INJECTED MZ HEADER', sub: '0x00400000 · 4D 5A RW-', color: 0xf59e0b, y: 0.55 },
-    { label: 'BEACON .text (RWX!)', sub: 'MEM_PRIVATE 0x40 · 264 KB', color: 0xf43f5e, y: 1.4 },
-    { label: 'UNBACKED SHELLCODE', sub: 'ENTRY RCX = 0x004014A0', color: 0xe11d48, y: 2.25 },
-    { label: 'ntdll.dll (CLEAN)', sub: '0x7FF8B4200000 · R-X', color: 0x0284c7, y: 3.1 },
-  ];
-  const anomalousSlabs: THREE.Mesh[] = [];
-  for (let i = 0; i < ramLayers.length; i += 1) {
-    const layer = ramLayers[i];
-    const isMal = i < 3;
-    const slabMat = materials.createToonMaterial(layer.color, {
-      emissive: layer.color,
-      emissiveIntensity: isMal ? 0.85 : 0.3,
-      transparent: true,
-      opacity: 0.96,
-    });
-    allSlabMats.push(slabMat);
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.62, 2.0), slabMat);
-    slab.position.y = layer.y;
-    addAnimeInkEdges(slab, materials.inkLineMaterial, 20);
-    ramGroup.add(slab);
-    if (isMal) anomalousSlabs.push(slab);
-
-    const tex = createLabelBoardTexture(
-      layer.label,
-      layer.sub,
-      isMal ? '#2A0A14' : '#082F49',
-      isMal ? '#F43F5E' : '#38BDF8',
-      '#FFFFFF',
-      isMal ? '#FDE68A' : '#7DD3FC'
-    );
-    extraTextures.push(tex);
-    const lbl = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.1, 0.5),
-      new THREE.MeshBasicMaterial({ map: tex })
-    );
-    lbl.position.set(0, layer.y, 1.02);
-    ramGroup.add(lbl);
-  }
-  root.add(ramGroup);
-
+  // Sweeping Golden Forensic X-Ray Comparison Beam spanning BOTH trucks!
   const scannerGroup = new THREE.Group();
   const scanBeam = new THREE.Mesh(
-    new THREE.BoxGeometry(10.6, 0.09, 2.75),
+    new THREE.BoxGeometry(16.2, 0.1, 3.6),
     new THREE.MeshBasicMaterial({
       color: 0xfacc15,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.78,
       toneMapped: false,
     })
   );
   scannerGroup.add(scanBeam);
-  scannerGroup.position.set(0, 1.6, 0);
+  scannerGroup.position.set(0, 1.8, 0);
   root.add(scannerGroup);
 
+  // Top Central Mismatch Proof Signboard
   const diffTex = createLabelBoardTexture(
-    'SYSMON EID 25 · IMAGE MISMATCH',
-    'DISK SEC_IMAGE != RAM MEM_PRIVATE RWX',
+    'SAME PLATE · SWAPPED INTERIOR',
+    'Sysmon EID 25 & PE-Sieve: Disk != Live RAM',
     '#18181B',
     '#FACC15',
     '#FDE047',
@@ -1526,47 +1527,71 @@ function buildMemoryVadDiffScene(
   );
   extraTextures.push(diffTex);
   const diffSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(4.4, 0.92),
+    new THREE.PlaneGeometry(4.8, 0.96),
     new THREE.MeshBasicMaterial({ map: diffTex })
   );
-  diffSign.position.set(0, 4.55, 0);
+  diffSign.position.set(0, 5.55, -1.1);
   root.add(diffSign);
 
+  // Clean Floating 3D Callout Anchors right over each truck roof (well below overhead 3D signboards!)
   const primaryAnchor = new THREE.Object3D();
-  primaryAnchor.position.set(-3.4, 4.15, 0);
+  primaryAnchor.position.set(-4.6, 2.75, 1.25);
   root.add(primaryAnchor);
 
   const secondaryAnchor = new THREE.Object3D();
-  secondaryAnchor.position.set(3.4, 4.15, 0);
+  secondaryAnchor.position.set(4.6, 2.75, 1.25);
   root.add(secondaryAnchor);
 
   return {
     root,
-    defaultCameraPos: new THREE.Vector3(0, 4.8, 11.8),
-    defaultCameraTarget: new THREE.Vector3(0, 2.1, 0),
+    defaultCameraPos: new THREE.Vector3(0, 6.2, 14.8),
+    defaultCameraTarget: new THREE.Vector3(0, 1.9, 0),
     primaryAnchor,
     secondaryAnchor,
-    particleCenter: new THREE.Vector3(2.4, 0, 0),
+    particleCenter: new THREE.Vector3(0, 0, 0),
     update: (timeSec, _phaseIndex, _isDark, cutawayMode) => {
       const t = timeSec % 15;
-      const scanY = 0.55 + ((Math.sin(timeSec * 1.45) + 1) * 0.5) * 3.1;
+
+      // Golden X-ray beam sweeps smoothly across both trucks vertically
+      const scanY = 0.65 + ((Math.sin(timeSec * 1.55) + 1) * 0.5) * 2.4;
       scannerGroup.position.y = scanY;
 
-      const slabOpacity = cutawayMode === 'OPEN' ? 0.52 : 0.98;
-      for (const m of allSlabMats) {
-        m.opacity = slabOpacity;
+      // Highway truck wheels subtly spin (rolling down the highway!)
+      for (const w of highwayTruck.wheels) {
+        w.rotation.z = -timeSec * 3.2;
       }
 
-      for (let i = 0; i < anomalousSlabs.length; i += 1) {
-        const s = anomalousSlabs[i];
-        const nearBeam = Math.abs(s.position.y + 0.25 - scanY) < 0.55;
-        s.position.x = nearBeam ? Math.sin(timeSec * 36 + i) * 0.08 : 0;
-      }
+      // Cutaway mode: AUTO opens side armor during X-ray sweep so user compares gold vs covert crew!
+      const openCutaway =
+        cutawayMode === 'OPEN'
+          ? 1
+          : cutawayMode === 'SEALED'
+          ? 0
+          : t > 3.2
+          ? 1
+          : 0.25;
+      factoryTruck.cutawaySidePanel.visible = openCutaway < 0.85;
+      factoryTruck.cutawaySideMaterial.opacity = Math.max(
+        0.08,
+        1 - openCutaway * 0.92
+      );
+      highwayTruck.cutawaySidePanel.visible = openCutaway < 0.85;
+      highwayTruck.cutawaySideMaterial.opacity = Math.max(
+        0.08,
+        1 - openCutaway * 0.92
+      );
+
+      // Subtle crimson interior pulse on the hijacked highway truck
+      highwayTruck.interiorGlowLight.intensity =
+        2.2 + Math.sin(timeSec * 5.0) * 0.8;
+      (
+        highwayTruck.interiorBeaconGlowMesh.material as THREE.MeshBasicMaterial
+      ).opacity = 0.24 + Math.sin(timeSec * 5.0) * 0.1;
 
       return {
-        glitchIntensity: t > 4.6 ? 0.72 : 0.28,
-        magicDustIntensity: 0.74,
-        stasisIntensity: 0.15,
+        glitchIntensity: t > 4.6 ? 0.45 : 0.15,
+        magicDustIntensity: 0,
+        stasisIntensity: 0.1,
         brakeReleaseBoost: 0,
       };
     },
@@ -1583,16 +1608,16 @@ export function buildBespokeSectionScene(
 ): BespokeSection3DScene {
   switch (sceneKind) {
     case 'frozen-stage-guard':
-      return buildFrozenStageGuardScene(materials);
+      return buildFrozenStageGuardScene(materials, isSoftwareGl);
     case 'hollow-cargo-unmap':
       return buildHollowCargoUnmapScene(materials, isSoftwareGl);
     case 'rwx-vault-inject':
-      return buildRwxVaultInjectScene(materials);
+      return buildRwxVaultInjectScene(materials, isSoftwareGl);
     case 'cockpit-gps-hijack':
-      return buildCockpitGpsHijackScene(materials);
+      return buildCockpitGpsHijackScene(materials, isSoftwareGl);
     case 'firewall-c2-bridge':
       return buildFirewallC2BridgeScene(materials, isSoftwareGl);
     case 'memory-vad-diff':
-      return buildMemoryVadDiffScene(materials);
+      return buildMemoryVadDiffScene(materials, isSoftwareGl);
   }
 }

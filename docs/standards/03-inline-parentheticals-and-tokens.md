@@ -52,7 +52,23 @@ Whenever any token from these 5 categories appears in a narrative (`overview`, `
 
 ---
 
-## 4. Command-Line Token Breakdown Standard (`lib/command-line-explanations.ts`)
+## 4. Zero Unexplained Technical Terms in Deep-Dive Prose (`howItWorksInPractice` & `underTheHood`)
+
+A common failure mode is writing clear inline parentheticals in `simpleExplanation` while dumping an unexplained chain of raw kernel routines, structures, hex addresses, and handles inside `howItWorksInPractice` or `underTheHood`. **This is strictly forbidden.**
+
+Every distinct technical artifact inside deep-dive paragraphs—including native syscalls (`ntdll!NtCreateUserProcess`), kernel structures (`EPROCESS`, `VAD`, `KTRAP_FRAME`), core DLLs (`ntdll.dll`, `winhttp.dll`), base addresses (`0x00400000`), thread launchpads (`ntdll!RtlUserThreadStart`), counters (`SuspendCount = 1`), permission masks (`PROCESS_ALL_ACCESS = 0x1FFFFF`), and returned handles (`hProcess = 0x01C4`, `hThread = 0x01C8`)—**must immediately carry a concise plain-English parenthetical explaining WHAT it is and WHY it is used here**.
+
+### Anti-Pattern (Dense Jargon Chain Without Explaining Why Each Part Exists)
+> When `CreateProcessW` is invoked with `CREATE_SUSPENDED (0x00000004)`, `ntdll!NtCreateUserProcess` allocates the kernel process object (`EPROCESS` for `PID 4892`), maps `ntdll.dll` and the signed `svchost.exe` binary at base address `0x00400000`, and parks the primary thread (`TID 4896`) at `ntdll!RtlUserThreadStart` with `SuspendCount = 1` (keeping the child process completely inert in RAM while the parent dropper holds full `PROCESS_ALL_ACCESS = 0x1FFFFF` rights via handle `hProcess = 0x01C4`).
+
+*Why this fails*: A reader who is not already a Windows kernel developer cannot tell why `ntdll!NtCreateUserProcess` runs, what `EPROCESS` stores, why `ntdll.dll` is mapped, why `0x00400000` matters, what `ntdll!RtlUserThreadStart` is, what `PROCESS_ALL_ACCESS` permits, or what the two Master Key handles (`hProcess` vs. `hThread`) are actually used for.
+
+### Canonical Pattern (Every Technical Part Explains Its Role & Purpose Inline)
+> When `CreateProcessW` (Windows' user-mode function for starting a program) is invoked with `CREATE_SUSPENDED` (`0x00000004`, a creation flag that pauses the new program before its first instruction runs so the attacker gets a quiet window to swap its contents), it calls `ntdll!NtCreateUserProcess` (the low-level system call inside `ntdll.dll` that crosses into the Windows kernel to build a new process). Inside the kernel, Windows allocates an `EPROCESS` object for `PID 4892` (the kernel's master tracking record storing the process's trusted `svchost.exe` identity, security token, and memory map), maps `ntdll.dll` (Windows' mandatory core bridge library required by every process to make kernel requests) and the signed `svchost.exe` binary at base address `0x00400000` (the standard starting memory slot where Windows loads executable code so internal memory jumps line up cleanly), and parks primary thread `TID 4896` (the main execution worker assigned to run CPU instructions) at `ntdll!RtlUserThreadStart` (Windows' built-in thread launchpad where every new thread waits right before jumping into the program's startup code) with `SuspendCount = 1` (a kernel pause counter set to 1 so the CPU scheduler skips this thread until resumed). Windows simultaneously grants `PROCESS_ALL_ACCESS = 0x1FFFFF` (the highest permission mask allowing full memory and thread tampering) via two returned Master Key handles: `hProcess = 0x01C4` (Process Master Key to inspect, empty, and rewrite RAM in Steps #2 and #3) and `hThread = 0x01C8` (Thread Master Key to redirect CPU registers and unfreeze `TID 4896` in Step #4).
+
+---
+
+## 5. Command-Line Token Breakdown Standard (`lib/command-line-explanations.ts`)
 
 Every command line displayed in the Inspector (`CommandBreakdownList.tsx`) or step guide must be decomposable into individual tokens where each flag, binary, path, or operator has a deterministic explanation:
 
@@ -64,9 +80,10 @@ Every command line displayed in the Inspector (`CommandBreakdownList.tsx`) or st
 
 ---
 
-## 5. Verification Checklist (`MOD-03`)
+## 6. Verification Checklist (`MOD-03`)
 
-- [ ] Does every stage description (`stages[].description`) and step explanation (`simpleExplanation` / `howItWorksInPractice`) contain inline parentheticals (`(...)`) explaining technical tokens right where they appear?
-- [ ] Do parentheticals explain **both** mechanical behavior AND security impact (rather than merely restating an acronym)?
+- [ ] Does every stage description (`stages[].description`), step explanation (`simpleExplanation`), AND deep-dive paragraph (`howItWorksInPractice` / `underTheHood`) attach a plain-English inline parenthetical `(...)` to **every** technical token right where it appears?
+- [ ] Do parentheticals explain **both** what the token is mechanically AND why it is used (rather than merely repeating a hex code or acronym)?
+- [ ] When multiple handles, keys, or tokens are introduced (such as `hProcess` vs. `hThread`), does the text explicitly explain the exact job of **each** one and which upcoming steps use it?
 - [ ] Are symbolic constants paired with their exact hex values (`0x00000004`, `0x40`, `0x1FFFFF`, `0x17`)?
 - [ ] Do all command-line breakdown tests in `lib/command-line-explanations.test.ts` pass?

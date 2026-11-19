@@ -8,12 +8,19 @@ import {
   getRequiredModulesForTask,
   validateMarkdownDocumentStandard,
   validateScenarioAgainstModularStandards,
+  validateSectionFullClarityStandard,
+  validateStoryPropClarity,
+  validateTechnicalSectionInlineClarity,
 } from './documentation-standards';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
+import {
+  buildScopedSequenceModel,
+  resolveInspectorScopeContext,
+} from './inspector-scope';
 
-describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-07)', () => {
-  it('registers all 8 modular standard files (MOD-00 through MOD-07) and verifies each exists on disk and passes MOD-01/MOD-02 validation', () => {
-    assert.equal(DOCUMENTATION_STANDARD_MODULES.length, 8);
+describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-11)', () => {
+  it('registers all 12 modular standard files (MOD-00 through MOD-11) and verifies each exists on disk and passes MOD-01/MOD-02 validation', () => {
+    assert.equal(DOCUMENTATION_STANDARD_MODULES.length, 12);
 
     for (const mod of DOCUMENTATION_STANDARD_MODULES) {
       const fullPath = path.join(process.cwd(), mod.filePath);
@@ -40,7 +47,16 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-07)',
     const newScenarioChain = getRequiredModulesForTask('NEW_SCENARIO');
     assert.deepEqual(
       newScenarioChain.map((m) => m.id),
-      ['MOD-01', 'MOD-02', 'MOD-03', 'MOD-04', 'MOD-05', 'MOD-06', 'MOD-07']
+      [
+        'MOD-01',
+        'MOD-02',
+        'MOD-03',
+        'MOD-11',
+        'MOD-04',
+        'MOD-05',
+        'MOD-06',
+        'MOD-07',
+      ]
     );
 
     const markdownDocChain = getRequiredModulesForTask(
@@ -49,6 +65,14 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-07)',
     assert.deepEqual(
       markdownDocChain.map((m) => m.id),
       ['MOD-01', 'MOD-02', 'MOD-03', 'MOD-07']
+    );
+
+    const interactive3dChain = getRequiredModulesForTask(
+      'INTERACTIVE_3D_STORY_SECTION'
+    );
+    assert.deepEqual(
+      interactive3dChain.map((m) => m.id),
+      ['MOD-02', 'MOD-03', 'MOD-11', 'MOD-08', 'MOD-09', 'MOD-10', 'MOD-07']
     );
   });
 
@@ -132,5 +156,77 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-07)',
         'https://jeffreyappel.nl/artex-old-attacks-at-machine-speed-and-how-microsoft-defender-keeps-up/'
       )
     );
+  });
+
+  it('permanently enforces Prop-Purpose Clarity and Per-Token Inline Plain-English Why across every section (rejecting jargon dumps and unexplained paired props, and passing all Process Hollowing sections and Sequence Exchanges)', () => {
+    // 1. Must REJECT dense jargon-dump paragraphs lacking per-token plain-English why parentheticals
+    const oldJargonDump =
+      'When CreateProcessW is invoked with CREATE_SUSPENDED (0x00000004), ntdll!NtCreateUserProcess allocates the kernel process object (EPROCESS for PID 4892), maps ntdll.dll and the signed svchost.exe binary at base address 0x00400000, and parks the primary thread (TID 4896) at ntdll!RtlUserThreadStart with SuspendCount = 1 (keeping the child process completely inert in RAM while the parent dropper holds full PROCESS_ALL_ACCESS = 0x1FFFFF rights via handle hProcess = 0x01C4).';
+    const dumpCheck = validateTechnicalSectionInlineClarity(
+      oldJargonDump,
+      'OldStep1DeepDive'
+    );
+    assert.equal(
+      dumpCheck.valid,
+      false,
+      'validateTechnicalSectionInlineClarity MUST reject dense kernel jargon dumps lacking per-token inline parentheticals'
+    );
+    assert.ok(dumpCheck.violations.length >= 1);
+
+    // 2. Must REJECT stories mentioning paired props ("two golden master keys") without explaining what EACH prop unlocks or without separate mappings
+    const vaguePropStory =
+      'The intruder hits a freeze switch and pockets the two golden master keys to its cargo doors and engine.';
+    const vagueMappings = [
+      {
+        storyTerm: 'Two Golden Master Keys',
+        technicalTerm: 'Kernel Handles · hProcess (0x01C4) & hThread (0x01C8)',
+      },
+    ];
+    const propCheck = validateStoryPropClarity(
+      vaguePropStory,
+      vagueMappings,
+      'VagueMasterKeysStory'
+    );
+    assert.equal(
+      propCheck.valid,
+      false,
+      'validateStoryPropClarity MUST reject stories mentioning paired props without explaining what EACH prop unlocks'
+    );
+    assert.ok(
+      propCheck.violations.length >= 2,
+      `Expected violations for both story prose and combined mapping, got: ${propCheck.violations.join('; ')}`
+    );
+
+    // 3. Must PASS across every Sequence Exchange (storyAnalogy, technicalBridge, underTheHood) of Process Hollowing
+    const hollowing = ATTACK_SCENARIOS.find(
+      (s) => s.id === 'process-hollowing'
+    )!;
+    const scope = resolveInspectorScopeContext({
+      scenario: hollowing,
+      activeStageIndex: 0,
+      activeEnvironment: 'WORKSTATION',
+      selectedNodeId: null,
+      expandedNodeId: null,
+      selectedInternalSubNodeId: null,
+    });
+    const seqModel = buildScopedSequenceModel(scope, null);
+    assert.equal(seqModel.exchanges.length, 5);
+    for (const ex of seqModel.exchanges) {
+      const seqCheck = validateSectionFullClarityStandard(
+        {
+          storyAnalogy: ex.storyAnalogy,
+          technicalTexts: [
+            { label: 'technicalBridge', text: ex.technicalBridge },
+            { label: 'underTheHood', text: ex.underTheHood },
+          ],
+        },
+        `process-hollowing#sequence-${ex.stepNumber}`
+      );
+      assert.equal(
+        seqCheck.valid,
+        true,
+        `Sequence #${ex.stepNumber} failed permanent clarity standard:\n${seqCheck.violations.join('\n')}`
+      );
+    }
   });
 });
