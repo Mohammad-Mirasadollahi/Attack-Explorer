@@ -1,6 +1,6 @@
 # Attack Explorer
 
-# [https://www.attackexplorer.com/](https://www.attackexplorer.com)
+# [https://www.attackexplorer.com](https://www.attackexplorer.com)
 
 Live product: **[www.attackexplorer.com](https://www.attackexplorer.com)**
 
