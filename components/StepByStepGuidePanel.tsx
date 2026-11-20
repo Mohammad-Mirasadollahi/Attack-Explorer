@@ -1139,6 +1139,7 @@ export function StepByStepGuidePanel({
             }
             storyHeading="1. Real-World Story Analogy:"
             storyAnalogy={briefing.storyAnalogy}
+            storyMappings={briefing.storyMappings}
             technicalHeading="2. Story ↔ Scenario Technical Bridge:"
             technicalClauses={briefing.structuredSummaryClauses}
             storyTestId="step-guide-briefing-story-analogy"
@@ -1423,6 +1424,7 @@ export function StepByStepGuidePanel({
                       sectionKey={resolvedSectionKey}
                       storyHeading="1. Real-World Story Analogy:"
                       storyAnalogy={step.storyAnalogy}
+                      storyMappings={step.storyMappings}
                       technicalHeading="2. Story ↔ Scenario Technical Bridge:"
                       technicalClauses={step.structuredClauses}
                       storyTestId={`step-guide-story-analogy-${step.stepNumber}`}

@@ -1233,6 +1233,7 @@ export function InspectorPanel({
                             effectiveScopeContext.scopedStoryAnalogy ||
                             scenario.overview
                           }
+                          storyMappings={rawBriefingGuide?.briefing.storyMappings}
                           technicalHeading="Technical Architecture & Forensic Overview"
                           technicalText={
                             rawBriefingGuide?.briefing.plainSummary ||
@@ -1365,19 +1366,30 @@ export function InspectorPanel({
                               const rawGuide = getRawScenarioStepGuide(
                                 scenario.id
                               );
-                              const stepStory = rawGuide?.steps.find(
+                              const rawStep = rawGuide?.steps.find(
                                 (s) => s.stepNumber === st.index
-                              )?.storyAnalogy;
+                              );
+                              const stepStory = rawStep?.storyAnalogy;
+                              const stepTechnical = rawStep
+                                ? `${rawStep.simpleExplanation} ${rawStep.howItWorksInPractice}`
+                                : st.description;
 
-                              if (secKey && sec3d) {
+                              if (stepStory || (secKey && sec3d)) {
                                 return (
                                   <StandardStoryTechnicalSection
                                     scenarioId={scenario.id}
-                                    sectionKey={secKey}
-                                    storyHeading={`Story Analogy · Stage S${st.index} (${sec3d.title})`}
-                                    storyAnalogy={stepStory || sec3d.storyCue}
+                                    sectionKey={secKey && sec3d ? secKey : null}
+                                    storyHeading={
+                                      sec3d
+                                        ? `Story Analogy · Stage S${st.index} (${sec3d.title})`
+                                        : `Story Analogy · Stage S${st.index} (${rawStep?.plainTitle || st.title})`
+                                    }
+                                    storyAnalogy={stepStory || sec3d?.storyCue || ''}
+                                    storyMappings={rawStep?.storyMappings}
                                     technicalHeading={`Technical Forensic Deep-Dive · Stage S${st.index}`}
-                                    technicalText={st.description}
+                                    technicalText={
+                                      sec3d ? st.description : stepTechnical
+                                    }
                                     clausePrefix={String(st.index)}
                                   />
                                 );

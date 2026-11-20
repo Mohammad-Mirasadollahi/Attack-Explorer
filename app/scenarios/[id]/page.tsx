@@ -199,14 +199,17 @@ export default async function ScenarioLandingPage({
             {scenario.shortSubtitle}
           </p>
 
-          {briefing3d ? (
+          {stepGuideData?.briefing || briefing3d ? (
             <StandardStoryTechnicalSection
               scenarioId={scenario.id}
-              sectionKey="briefing"
+              sectionKey={briefing3d ? 'briefing' : null}
               storyHeading="Story-to-Spec Analogy & Executive Summary"
               storyAnalogy={
-                stepGuideData?.briefing?.storyAnalogy || briefing3d.storyCue
+                stepGuideData?.briefing?.storyAnalogy ||
+                briefing3d?.storyCue ||
+                ''
               }
+              storyMappings={stepGuideData?.briefing?.storyMappings}
               technicalHeading="Technical Architecture & Forensic Overview"
               technicalText={
                 stepGuideData?.briefing?.plainSummary || scenario.overview
@@ -358,18 +361,27 @@ export default async function ScenarioLandingPage({
                     const sec3d = secKey
                       ? getSection3DDescriptor(scenario.id, secKey)
                       : null;
-                    const stepStory = stepGuideData?.steps.find(
+                    const rawStep = stepGuideData?.steps.find(
                       (s) => s.stepNumber === st.index
-                    )?.storyAnalogy;
-                    if (secKey && sec3d) {
+                    );
+                    const stepStory = rawStep?.storyAnalogy;
+                    const stepTechnical = rawStep
+                      ? `${rawStep.simpleExplanation} ${rawStep.howItWorksInPractice}`
+                      : st.description;
+                    if (stepStory || (secKey && sec3d)) {
                       return (
                         <StandardStoryTechnicalSection
                           scenarioId={scenario.id}
-                          sectionKey={secKey}
-                          storyHeading={`Story Analogy · Stage ${st.index} (${sec3d.title})`}
-                          storyAnalogy={stepStory || sec3d.storyCue}
+                          sectionKey={secKey && sec3d ? secKey : null}
+                          storyHeading={
+                            sec3d
+                              ? `Story Analogy · Stage ${st.index} (${sec3d.title})`
+                              : `Story Analogy · Stage ${st.index} (${rawStep?.plainTitle || st.title})`
+                          }
+                          storyAnalogy={stepStory || sec3d?.storyCue || ''}
+                          storyMappings={rawStep?.storyMappings}
                           technicalHeading={`Technical Forensic Deep-Dive · Stage ${st.index}`}
-                          technicalText={st.description}
+                          technicalText={sec3d ? st.description : stepTechnical}
                           clausePrefix={String(st.index)}
                           storyTestId={`landing-stage-story-${st.index}`}
                           className="pt-1"

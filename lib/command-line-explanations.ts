@@ -819,10 +819,11 @@ export function explainCommandLine(
   const cleanStageDesc = (options.stageDescription || '')
     .replace(/\s+/g, ' ')
     .trim();
+  const firstSentenceMatch = cleanStageDesc.match(/^[^.!?]+[.!?]/);
   const conciseContext =
-    cleanStageDesc.length > 220
-      ? `${cleanStageDesc.slice(0, 217).trim()}...`
-      : cleanStageDesc || stageTitle;
+    cleanStageDesc.length > 220 && firstSentenceMatch
+      ? firstSentenceMatch[0].replace(/[.!?]+$/, '').trim()
+      : cleanStageDesc.replace(/[.!?]+$/, '').trim() || stageTitle;
 
   const isServiceDaemon =
     /services\.exe|systemd|\/sbin\/init|sshd|w3wp\.exe|tomcat|nginx|httpd|sqlservr|lsass\.exe|explorer\.exe|spoolsv\.exe/i.test(

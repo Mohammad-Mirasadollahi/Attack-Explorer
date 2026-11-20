@@ -21,10 +21,17 @@ import {
   buildStageCommandBreakdowns,
   StageCommandBreakdownItem,
 } from './command-line-explanations';
+import {
+  getSection3DDescriptor,
+  stepNumberToSectionKey,
+  type StoryTechnicalMapping,
+} from './section-3d-registry';
+import { ALL_CATEGORY_STANDARD_PATCHES } from './step-guides/categories';
 
 export interface RawScenarioBriefingGuide {
   headline: string;
   storyAnalogy: string;
+  storyMappings?: StoryTechnicalMapping[];
   plainSummary: string;
   diagramTopologySummary: string;
   documentedAdvisory: string;
@@ -35,6 +42,7 @@ export interface RawScenarioStepGuideItem {
   mitreId: string;
   plainTitle: string;
   storyAnalogy: string;
+  storyMappings?: StoryTechnicalMapping[];
   simpleExplanation: string;
   howItWorksInPractice: string;
   diagramAlignment: string;
@@ -301,32 +309,63 @@ function mergeStepGuidesFirstWins(
   for (const batch of batches) {
     for (const [id, guide] of Object.entries(batch)) {
       if (!(id in merged)) {
+        const patch = ALL_CATEGORY_STANDARD_PATCHES[id];
+        const bPatch = patch?.briefing;
         const cleanedBriefing: RawScenarioBriefingGuide = {
-          headline: normalizeStepGuideProse(guide.briefing.headline),
-          storyAnalogy: normalizeStepGuideProse(guide.briefing.storyAnalogy),
-          plainSummary: normalizeStepGuideProse(guide.briefing.plainSummary),
+          headline: normalizeStepGuideProse(
+            bPatch?.headline ?? guide.briefing.headline
+          ),
+          storyAnalogy: normalizeStepGuideProse(
+            bPatch?.storyAnalogy ?? guide.briefing.storyAnalogy
+          ),
+          storyMappings:
+            bPatch?.storyMappings ??
+            guide.briefing.storyMappings ??
+            getSection3DDescriptor(id, 'briefing')?.storyMappings,
+          plainSummary: normalizeStepGuideProse(
+            bPatch?.plainSummary ?? guide.briefing.plainSummary
+          ),
           diagramTopologySummary: normalizeStepGuideProse(
-            guide.briefing.diagramTopologySummary
+            bPatch?.diagramTopologySummary ??
+              guide.briefing.diagramTopologySummary
           ),
           documentedAdvisory: normalizeStepGuideProse(
-            guide.briefing.documentedAdvisory
+            bPatch?.documentedAdvisory ?? guide.briefing.documentedAdvisory
           ),
         };
         merged[id] = {
           ...guide,
           briefing: cleanedBriefing,
           steps: guide.steps.map((step) => {
+            const sPatch = patch?.steps?.[step.stepNumber];
             const cleanedStep: RawScenarioStepGuideItem = {
               ...step,
-              plainTitle: normalizeStepGuideProse(step.plainTitle),
-              storyAnalogy: normalizeStepGuideProse(step.storyAnalogy),
-              simpleExplanation: normalizeStepGuideProse(step.simpleExplanation),
-              howItWorksInPractice: normalizeStepGuideProse(
-                step.howItWorksInPractice
+              plainTitle: normalizeStepGuideProse(
+                sPatch?.plainTitle ?? step.plainTitle
               ),
-              diagramAlignment: normalizeStepGuideProse(step.diagramAlignment),
+              storyAnalogy: normalizeStepGuideProse(
+                sPatch?.storyAnalogy ?? step.storyAnalogy
+              ),
+              storyMappings:
+                sPatch?.storyMappings ??
+                step.storyMappings ??
+                (() => {
+                  const sk = stepNumberToSectionKey(step.stepNumber);
+                  return sk
+                    ? getSection3DDescriptor(id, sk)?.storyMappings
+                    : undefined;
+                })(),
+              simpleExplanation: normalizeStepGuideProse(
+                sPatch?.simpleExplanation ?? step.simpleExplanation
+              ),
+              howItWorksInPractice: normalizeStepGuideProse(
+                sPatch?.howItWorksInPractice ?? step.howItWorksInPractice
+              ),
+              diagramAlignment: normalizeStepGuideProse(
+                sPatch?.diagramAlignment ?? step.diagramAlignment
+              ),
               detectionAndEvidence: normalizeStepGuideProse(
-                step.detectionAndEvidence
+                sPatch?.detectionAndEvidence ?? step.detectionAndEvidence
               ),
             };
             if (/\([^)]{25,}\)/.test(cleanedStep.simpleExplanation)) {
@@ -640,6 +679,7 @@ export function buildDiagramStepGuideModel(
       rawGuide?.briefing.storyAnalogy ||
         scenario.shortSubtitle
     ),
+    storyMappings: rawGuide?.briefing.storyMappings,
     plainSummary: plainSummaryText,
     diagramTopologySummary: normalizeStepGuideProse(
       rawGuide?.briefing.diagramTopologySummary ||
@@ -752,6 +792,7 @@ export function buildDiagramStepGuideModel(
         storyAnalogy: normalizeStepGuideProse(
           rawStep?.storyAnalogy || stage.subtitle
         ),
+        storyMappings: rawStep?.storyMappings,
         simpleExplanation: simpleExplanationText,
         howItWorksInPractice: practiceText,
         diagramAlignment: syncedAlignment,
