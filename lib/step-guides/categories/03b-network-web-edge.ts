@@ -14,18 +14,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Fleet headquarters console',
           technicalTerm: 'Central VMware vCenter management server',
+          tone: 'amber',
         },
         {
           storyTerm: 'Directory window memory fault',
           technicalTerm: 'vmdird DCERPC out-of-bounds write (CVE-2023-34048)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Central branch key safe',
           technicalTerm: 'Encrypted vpxuser credentials and symkey.dat file',
+          tone: 'rose',
         },
         {
           storyTerm: 'Hidden basement intercom wire',
           technicalTerm: 'ESXi VIRTUALPITA listener over AF_VSOCK sockets',
+          tone: 'emerald',
         },
       ],
     },
@@ -37,18 +41,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Headquarters directory clerk',
             technicalTerm: 'vmdird directory service process',
+            tone: 'amber',
           },
           {
             storyTerm: 'Oversized filing card',
             technicalTerm: 'Malformed DCERPC request triggering CVE-2023-34048',
+            tone: 'sky',
           },
           {
             storyTerm: 'Writing past the tray edge',
             technicalTerm: 'Out-of-bounds heap write in vmdird',
+            tone: 'rose',
           },
           {
             storyTerm: 'Central management hub',
             technicalTerm: 'Compromised vCenter Server appliance',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -61,18 +69,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Master vault codebook',
             technicalTerm: '/etc/vmware-vpx/ssl/symkey.dat decryption key',
+            tone: 'amber',
           },
           {
             storyTerm: 'Branch-office combinations',
             technicalTerm: 'Decrypted ESXi vpxuser host credentials',
+            tone: 'sky',
           },
           {
             storyTerm: 'Remote building floors',
             technicalTerm: 'Managed ESXi hypervisor hosts',
+            tone: 'rose',
           },
           {
             storyTerm: 'Vault access ledger',
             technicalTerm: 'Auditd file-read records and ESXi SSH sign-in logs',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -85,18 +97,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Lowered inspection standard',
             technicalTerm: 'ESXi AcceptanceLevel reduced to CommunitySupported',
+            tone: 'amber',
           },
           {
             storyTerm: 'Unsigned maintenance module',
             technicalTerm: 'Rogue VIB package deploying VIRTUALPITA',
+            tone: 'sky',
           },
           {
             storyTerm: 'Basement speaking tube',
             technicalTerm: 'Hypervisor-to-guest AF_VSOCK communication channel',
+            tone: 'rose',
           },
           {
             storyTerm: 'Floor compliance log',
             technicalTerm: 'ESXi syslog.log and socket listener inventory',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -113,18 +129,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Corporate mail-screening station',
           technicalTerm: 'Barracuda Email Security Gateway appliance',
+          tone: 'amber',
         },
         {
           storyTerm: 'Wrapped item label trick',
           technicalTerm: 'Sanitization flaw on tar member filenames (CVE-2023-2868)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Two hidden mailroom watchers',
           technicalTerm: 'SALTWATER mail module and SEASPY passive listener',
+          tone: 'rose',
         },
         {
           storyTerm: 'Self-reviving ledger tripwire',
           technicalTerm: 'SUBMARINE persistent SQLite database triggers',
+          tone: 'emerald',
         },
       ],
     },
@@ -136,18 +156,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Automated mail scanner',
             technicalTerm: 'Appliance Perl attachment screening parser',
+            tone: 'amber',
           },
           {
             storyTerm: 'Bundled parcel attachment',
             technicalTerm: 'Inbound SMTP tar archive attachment',
+            tone: 'sky',
           },
           {
             storyTerm: 'Broken quote-mark label',
             technicalTerm: 'Unsanitized archive member name (CVE-2023-2868)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Perimeter inspection sensor',
             technicalTerm: 'Network IDS signature monitoring inbound SMTP headers',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -160,18 +184,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Quiet courier assistant',
             technicalTerm: 'SALTWATER trojanized /usr/sbin/bsmtp module',
+            tone: 'amber',
           },
           {
             storyTerm: 'Silent doorframe listener',
             technicalTerm: 'SEASPY libpcap passive network monitor',
+            tone: 'sky',
           },
           {
             storyTerm: 'Mail delivery program',
             technicalTerm: 'Appliance SMTP processing daemon',
+            tone: 'rose',
           },
           {
             storyTerm: 'Binary authenticity scan',
             technicalTerm: 'CISA YARA signatures checking modified gateway binaries',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -184,18 +212,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Station record book rules',
             technicalTerm: 'SUBMARINE SQLite triggers inside /mail/config/',
+            tone: 'amber',
           },
           {
             storyTerm: 'Startup relaunch script',
             technicalTerm: 'Unauthorized initialization file /etc/init.d/ee',
+            tone: 'sky',
           },
           {
             storyTerm: 'Outside pickup transfer',
             technicalTerm: 'Anomalous outbound HTTPS exfiltration from the gateway',
+            tone: 'rose',
           },
           {
             storyTerm: 'Corporate mail archive',
             technicalTerm: 'Targeted enterprise email data routed through the gateway',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -212,18 +244,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Network routing station',
           technicalTerm: 'Cisco IOS XE network device web management UI',
+          tone: 'amber',
         },
         {
           storyTerm: 'Double-coded room name',
           technicalTerm: 'Encoded path bypass creating privilege-15 admin (CVE-2023-20198)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Software-update basement hatch',
           technicalTerm: 'Authenticated command flaw in installAdd API (CVE-2023-20273)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Silent lobby web panel',
           technicalTerm: 'BadCandy Lua backdoor embedded in NGINX',
+          tone: 'emerald',
         },
       ],
     },
@@ -235,18 +271,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Front reception filter',
             technicalTerm: 'Front-end NGINX authentication proxy layer',
+            tone: 'amber',
           },
           {
             storyTerm: 'Twice-encoded lettering',
             technicalTerm: 'Double-URL-encoded web management URI path',
+            tone: 'sky',
           },
           {
             storyTerm: 'Top-clearance badge',
             technicalTerm: 'Unauthorized privilege level 15 local user account',
+            tone: 'rose',
           },
           {
             storyTerm: 'Router configuration ledger',
             technicalTerm: 'IOS syslog %SYS-5-CONFIG_I audit message',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -259,18 +299,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Software-installation chute',
             technicalTerm: '/webui/rest/softwareMgmt/installAdd REST handler',
+            tone: 'amber',
           },
           {
             storyTerm: 'Breaking into the basement',
             technicalTerm: 'Privilege escalation to underlying root OS (CVE-2023-20273)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Installation activity journal',
             technicalTerm: 'IOS syslog %WEBUI-6-INSTALL_OPERATION_INFO entry',
+            tone: 'rose',
           },
           {
             storyTerm: 'Chained administrative audit',
             technicalTerm: 'Install event immediately following web configuration change',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -283,18 +327,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Silent custom response page',
             technicalTerm: 'BadCandy Lua implant added to NGINX configuration',
+            tone: 'amber',
           },
           {
             storyTerm: 'Extra lobby config sheet',
             technicalTerm: 'Unauthorized /usr/binos/conf/nginx-conf/occo.conf file',
+            tone: 'sky',
           },
           {
             storyTerm: 'Torn-up temporary badge',
             technicalTerm: 'Deletion of the rogue privilege-15 user account',
+            tone: 'rose',
           },
           {
             storyTerm: 'Secret lobby check-in address',
             technicalTerm: 'POST requests to /webui/logoutconfirm.html?logon_hash=1',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -311,18 +359,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Perimeter guardhouse',
           technicalTerm: 'Zyxel VPN firewall gateway appliance',
+          tone: 'amber',
         },
         {
           storyTerm: 'Shared factory stamp',
           technicalTerm: 'Hardcoded 3DES key decrypting only the first 48 bytes',
+          tone: 'sky',
         },
         {
           storyTerm: 'Spoken loudspeaker log',
           technicalTerm: 'Unsafe shell invocation writing sdwan_vpndebug.log',
+          tone: 'rose',
         },
         {
           storyTerm: 'Single-envelope takeover',
           technicalTerm: 'Pre-auth UDP/500 IKEv2 command injection (CVE-2023-28771)',
+          tone: 'emerald',
         },
       ],
     },
@@ -334,18 +386,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Short sealed header strip',
             technicalTerm: '48-byte encrypted IKEv2 Notify Type 14 header',
+            tone: 'amber',
           },
           {
             storyTerm: 'Plain-text trailing message',
             technicalTerm: 'Unencrypted payload bytes appended beyond offset 48',
+            tone: 'sky',
           },
           {
             storyTerm: 'Envelope verifier module',
             technicalTerm: 'Appliance libike.so IKEv2 packet parser',
+            tone: 'rose',
           },
           {
             storyTerm: 'Front tunnel mailbox',
             technicalTerm: 'Publicly reachable UDP port 500 IKEv2 listener',
+            tone: 'emerald',
           },
         ],
         howItWorksInPractice:
@@ -360,18 +416,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Shift debug notebook',
             technicalTerm: '/tmp/sdwan_vpndebug.log diagnostic log file',
+            tone: 'amber',
           },
           {
             storyTerm: 'Building command intercom',
             technicalTerm: 'C system() call invoking /bin/sh on untrusted input',
+            tone: 'sky',
           },
           {
             storyTerm: 'Sentence-splitting punctuation',
             technicalTerm: 'Shell metacharacter command injection inside Notify text',
+            tone: 'rose',
           },
           {
             storyTerm: 'Guardhouse daemon',
             technicalTerm: 'Privileged ssod process spawning shell utilities',
+            tone: 'emerald',
           },
         ],
         howItWorksInPractice:
@@ -386,18 +446,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Single-packet border breach',
             technicalTerm: 'Unauthenticated root compromise over UDP/500',
+            tone: 'amber',
           },
           {
             storyTerm: 'Outward toolkit pickup',
             technicalTerm: 'Firewall initiating outbound HTTP fetches for shell scripts',
+            tone: 'sky',
           },
           {
             storyTerm: 'Foreign binary kit',
             technicalTerm: 'Downloaded MIPS64 ELF malware payload',
+            tone: 'rose',
           },
           {
             storyTerm: 'Egress watchtower log',
             technicalTerm: 'Upstream firewall or DNS logs recording anomalous egress',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -414,18 +478,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Router administration booth',
           technicalTerm: 'Juniper Junos OS J-Web management interface',
+          tone: 'amber',
         },
         {
           storyTerm: 'Redirected rulebook slip',
           technicalTerm: 'Unauthenticated PHPRC=/dev/fd/0 setting (CVE-2023-36845)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Custom slot rule settings',
           technicalTerm: 'allow_url_include and auto_prepend_file runtime directives',
+          tone: 'rose',
         },
         {
           storyTerm: 'Copied router blueprint',
           technicalTerm: 'Exfiltrated /config/juniper.conf device configuration',
+          tone: 'emerald',
         },
       ],
     },
@@ -437,18 +505,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Booth clerk form window',
             technicalTerm: 'Publicly exposed /webauth_operation.php endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Environment override slip',
             technicalTerm: 'Unauthenticated PHPRC environment variable manipulation',
+            tone: 'sky',
           },
           {
             storyTerm: 'Incoming mail envelope stream',
             technicalTerm: 'Standard input descriptor /dev/fd/0',
+            tone: 'rose',
           },
           {
             storyTerm: 'Booth visitor ledger',
             technicalTerm: 'J-Web /var/log/httpd.log access records',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -461,18 +533,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Inline script permission line',
             technicalTerm: 'PHP allow_url_include=1 configuration directive',
+            tone: 'amber',
           },
           {
             storyTerm: 'Mandatory opening note line',
             technicalTerm: 'PHP auto_prepend_file data stream directive',
+            tone: 'sky',
           },
           {
             storyTerm: 'Envelope body payload',
             technicalTerm: 'HTTP POST body fed directly via /dev/fd/0',
+            tone: 'rose',
           },
           {
             storyTerm: 'Deep parcel inspection',
             technicalTerm: 'Network packet capture inspecting J-Web POST bodies',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -485,18 +561,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Purely in-memory execution',
             technicalTerm: 'Fileless PHP interpreter command execution',
+            tone: 'amber',
           },
           {
             storyTerm: 'Router management clerk',
             technicalTerm: 'php-cgi worker spawning /bin/sh or /usr/sbin/cli',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master configuration binder',
             technicalTerm: 'Protected /config/juniper.conf configuration file',
+            tone: 'rose',
           },
           {
             storyTerm: 'Security patch advisory',
             technicalTerm: 'Juniper JSA72300 remediation and audit guidance',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -513,18 +593,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Team knowledge library',
           technicalTerm: 'Atlassian Confluence Data Center and Server',
+          tone: 'amber',
         },
         {
           storyTerm: 'Flipped setup-finished switch',
           technicalTerm: 'Resetting setupComplete=false via XWork chaining (CVE-2023-22515)',
+          tone: 'sky',
         },
         {
           storyTerm: 'New head librarian account',
           technicalTerm: 'Unauthorized confluence-administrators user registration',
+          tone: 'rose',
         },
         {
           storyTerm: 'Custom tool extension',
           technicalTerm: 'Uploaded malicious OSGi servlet plugin',
+          tone: 'emerald',
         },
       ],
     },
@@ -536,18 +620,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Public status desk',
             technicalTerm: 'Unauthenticated /server-info.action endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Chained internal dials',
             technicalTerm: 'XWork getter/setter parameter traversal',
+            tone: 'sky',
           },
           {
             storyTerm: 'Setup-finished latch',
             technicalTerm: 'bootstrapStatusProvider.applicationConfig.setupComplete flag',
+            tone: 'rose',
           },
           {
             storyTerm: 'Library entrance log',
             technicalTerm: 'Tomcat conf_access_log HTTP request records',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -560,18 +648,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Reopened setup counter',
             technicalTerm: '/setup/setupadministrator.action registration endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Closing the setup latch',
             technicalTerm: '/setup/finishsetup.action completion request',
+            tone: 'sky',
           },
           {
             storyTerm: 'Head librarian group',
             technicalTerm: 'Privileged confluence-administrators role',
+            tone: 'rose',
           },
           {
             storyTerm: 'Membership audit trail',
             technicalTerm: 'Application audit logs showing unexpected admin creation',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -584,18 +676,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Extension upload desk',
             technicalTerm: 'POST /rest/plugins/1.0/ plugin management endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Custom plug-in box',
             technicalTerm: 'Malicious OSGi Java servlet plugin archive',
+            tone: 'sky',
           },
           {
             storyTerm: 'Library service engine',
             technicalTerm: 'Confluence Java runtime process',
+            tone: 'rose',
           },
           {
             storyTerm: 'Workshop command line',
             technicalTerm: 'Spawned shell interpreters (bash, cmd.exe, powershell.exe)',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -612,18 +708,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Railway dispatch broker',
           technicalTerm: 'Apache ActiveMQ OpenWire messaging server',
+          tone: 'amber',
         },
         {
           storyTerm: 'Forged fault notice',
           technicalTerm: 'Crafted OpenWire ExceptionResponse (0x1F) frame (CVE-2023-46604)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Automated blueprint loader',
           technicalTerm: 'Spring ClassPathXmlApplicationContext constructor',
+          tone: 'rose',
         },
         {
           storyTerm: 'Outside instruction sheet',
           technicalTerm: 'Remote XML bean definition spawning OS commands',
+          tone: 'emerald',
         },
       ],
     },
@@ -635,18 +735,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Broker dispatch track',
             technicalTerm: 'Exposed OpenWire TCP port 61616 listener',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tagged error frame',
             technicalTerm: 'OpenWire ExceptionResponse command byte 0x1F',
+            tone: 'sky',
           },
           {
             storyTerm: 'Named configuration loader',
             technicalTerm: 'ClassPathXmlApplicationContext class string',
+            tone: 'rose',
           },
           {
             storyTerm: 'External street address',
             technicalTerm: 'Attacker-hosted HTTP URL pointing to remote XML',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -659,18 +763,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unchecked handbook builder',
             technicalTerm: 'BaseDataStreamMarshaller.createThrowable() reflection call',
+            tone: 'amber',
           },
           {
             storyTerm: 'Fetching the instruction sheet',
             technicalTerm: 'Loading remote Spring XML bean definitions over HTTP',
+            tone: 'sky',
           },
           {
             storyTerm: 'Broker operations log',
             technicalTerm: 'data/activemq.log application runtime journal',
+            tone: 'rose',
           },
           {
             storyTerm: 'Missing safety check',
             technicalTerm: 'Unrestricted arbitrary class instantiation vulnerability',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -683,18 +791,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pre-wired assembly entry',
             technicalTerm: 'Spring bean invoking java.lang.ProcessBuilder',
+            tone: 'amber',
           },
           {
             storyTerm: 'Broker service process',
             technicalTerm: 'ActiveMQ java or wrapper.exe runtime',
+            tone: 'sky',
           },
           {
             storyTerm: 'Launched command console',
             technicalTerm: 'Spawned cmd.exe, powershell.exe, msiexec.exe, or /bin/sh',
+            tone: 'rose',
           },
           {
             storyTerm: 'Process lineage monitor',
             technicalTerm: 'Sysmon EventID 1 and Linux Auditd EXECVE records',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -711,18 +823,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Print-shop management office',
           technicalTerm: 'PaperCut MF/NG print management application server',
+          tone: 'amber',
         },
         {
           storyTerm: 'Unlocked welcome card',
           technicalTerm: 'SetupCompleted authentication bypass (CVE-2023-27350)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Print-job safety shield',
           technicalTerm: 'Mozilla Rhino print.script.sandboxed setting',
+          tone: 'rose',
         },
         {
           storyTerm: 'Direct office-wide command',
           technicalTerm: 'Runtime.getRuntime().exec() inside a printer script',
+          tone: 'emerald',
         },
       ],
     },
@@ -734,18 +850,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Installation completion page',
             technicalTerm: '/app?service=page/SetupCompleted web route',
+            tone: 'amber',
           },
           {
             storyTerm: 'Submitted welcome form',
             technicalTerm: 'POST request targeting SetupCompleted/$Form',
+            tone: 'sky',
           },
           {
             storyTerm: 'Active manager badge',
             technicalTerm: 'Authenticated administrator JSESSIONID cookie',
+            tone: 'rose',
           },
           {
             storyTerm: 'Missing identity check',
             technicalTerm: 'Improper access control flaw (CVE-2023-27350)',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -758,18 +878,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Custom scripting switch',
             technicalTerm: 'print-and-device.script.enabled configuration option',
+            tone: 'amber',
           },
           {
             storyTerm: 'Protective safety barrier',
             technicalTerm: 'print.script.sandboxed Mozilla Rhino sandbox flag',
+            tone: 'sky',
           },
           {
             storyTerm: 'Manager settings audit',
             technicalTerm: 'PaperCut server.log and Admin Audit configuration trail',
+            tone: 'rose',
           },
           {
             storyTerm: 'Main building machinery',
             technicalTerm: 'Unrestricted underlying Java runtime APIs',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -782,18 +906,22 @@ export const CATEGORY_03B_NETWORK_WEB_EDGE_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Existing printer rule',
             technicalTerm: 'Device print script executed by Rhino engine',
+            tone: 'amber',
           },
           {
             storyTerm: 'Inserted system instruction',
             technicalTerm: 'java.lang.Runtime.getRuntime().exec() invocation',
+            tone: 'sky',
           },
           {
             storyTerm: 'Print shop service engine',
             technicalTerm: 'pc-app.exe running under NT AUTHORITY\\SYSTEM',
+            tone: 'rose',
           },
           {
             storyTerm: 'Spawned workshop utilities',
             technicalTerm: 'Child cmd.exe, powershell.exe, certutil.exe, or bitsadmin.exe',
+            tone: 'emerald',
           },
         ],
         howItWorksInPractice:

@@ -14,18 +14,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Unique way of knocking',
           technicalTerm: 'TLS ClientHello JA3 and JA4 handshake fingerprints',
+          tone: 'amber',
         },
         {
           storyTerm: 'Blank default warehouse seal',
           technicalTerm: 'JA3S ServerHello and default Java KeyStore X.509 certificate',
+          tone: 'sky',
         },
         {
           storyTerm: 'Rhythmic hourly pickups',
           technicalTerm: 'Periodic beacon sleep and jitter intervals in conn.log',
+          tone: 'rose',
         },
         {
           storyTerm: 'Harbor network inspectors',
           technicalTerm: 'Zeek ssl.log and conn.log forensic telemetry',
+          tone: 'emerald',
         },
       ],
     },
@@ -37,18 +41,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Recorded handshake sequence',
             technicalTerm: 'JA3 MD5 and JA4 client TLS fingerprint hashes',
+            tone: 'amber',
           },
           {
             storyTerm: 'Swapped outer envelope',
             technicalTerm: 'Malleable C2 spoofed HTTP headers and User-Agent',
+            tone: 'sky',
           },
           {
             storyTerm: 'Harbor gate ledger',
             technicalTerm: 'Zeek ssl.log encrypted session metadata',
+            tone: 'rose',
           },
           {
             storyTerm: 'Genuine browser crowd',
             technicalTerm: 'Baseline enterprise browser TLS cipher suite profiles',
+            tone: 'emerald',
           },
         ],
       },
@@ -59,18 +67,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Distant warehouse reply pattern',
             technicalTerm: 'JA3S TLS ServerHello response fingerprint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Generic blank wax stamp',
             technicalTerm: 'Self-signed or default Java KeyStore X.509 certificate',
+            tone: 'sky',
           },
           {
             storyTerm: 'Matched pair check',
             technicalTerm: 'Correlating JA3 client hash with JA3S server hash',
+            tone: 'rose',
           },
           {
             storyTerm: 'Out-of-the-box command post',
             technicalTerm: 'Cobalt Strike Team Server TLS listener',
+            tone: 'emerald',
           },
         ],
       },
@@ -81,18 +93,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Departure timestamp chart',
             technicalTerm: 'Inter-arrival time histogram built from Zeek conn.log',
+            tone: 'amber',
           },
           {
             storyTerm: 'Steady automated drumbeat',
             technicalTerm: 'Configured C2 sleep interval with bounded jitter',
+            tone: 'sky',
           },
           {
             storyTerm: 'Small randomized pauses',
             technicalTerm: 'Statistical jitter percentage around a fixed mean',
+            tone: 'rose',
           },
           {
             storyTerm: 'Human browsing crowd',
             technicalTerm: 'Irregular bursty user web traffic distribution',
+            tone: 'emerald',
           },
         ],
       },
@@ -107,18 +123,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Busy postal depot',
           technicalTerm: 'Microsoft IIS web server and w3wp.exe worker process',
+          tone: 'amber',
         },
         {
           storyTerm: 'Hidden sorting desk ledger',
           technicalTerm: 'Malicious module registered in applicationHost.config',
+          tone: 'sky',
         },
         {
           storyTerm: 'Basement mail chute',
           technicalTerm: 'Kernel-mode HTTP.sys URI UrlGroup listener',
+          tone: 'rose',
         },
         {
           storyTerm: 'Live basement inspection',
           technicalTerm: 'netsh http show servicestate and CLR AppDomain triage',
+          tone: 'emerald',
         },
       ],
     },
@@ -130,18 +150,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Depot master staffing roster',
             technicalTerm: 'IIS applicationHost.config global module list',
+            tone: 'amber',
           },
           {
             storyTerm: 'Newly added sorting clerk',
             technicalTerm: 'Rogue native DLL or managed IIS HTTP module',
+            tone: 'sky',
           },
           {
             storyTerm: 'Spotless bulletin board',
             technicalTerm: 'Absence of traditional .aspx webshell files on disk',
+            tone: 'rose',
           },
           {
             storyTerm: 'Roster change alert',
             technicalTerm: 'Sysmon file modification and IIS configuration logs',
+            tone: 'emerald',
           },
         ],
       },
@@ -152,18 +176,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Basement conveyor switchboard',
             technicalTerm: 'Windows kernel-mode HTTP.sys request router',
+            tone: 'amber',
           },
           {
             storyTerm: 'Private chute reservation',
             technicalTerm: 'Registered HTTP.sys URI UrlGroup prefix',
+            tone: 'sky',
           },
           {
             storyTerm: 'Switchboard operational log',
             technicalTerm: 'Microsoft-Windows-HttpService/Operational event log',
+            tone: 'rose',
           },
           {
             storyTerm: 'Front counter bypass',
             technicalTerm: 'Requests intercepted before standard IIS site logging',
+            tone: 'emerald',
           },
         ],
       },
@@ -174,18 +202,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Live chute roll call',
             technicalTerm: 'netsh http show servicestate active queue listing',
+            tone: 'amber',
           },
           {
             storyTerm: 'Clerk working trays',
             technicalTerm: 'Live .NET CLR AppDomain loaded assemblies in w3wp.exe',
+            tone: 'sky',
           },
           {
             storyTerm: 'Memory-resident helper',
             technicalTerm: 'In-memory IIS webshell without a disk-backed page',
+            tone: 'rose',
           },
           {
             storyTerm: 'Depot worker process',
             technicalTerm: 'Active IIS w3wp.exe host process',
+            tone: 'emerald',
           },
         ],
       },
@@ -200,18 +232,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Front-desk forwarding slips',
           technicalTerm: 'Exchange Frontend HttpProxy routing logs',
+          tone: 'amber',
         },
         {
           storyTerm: 'Tampered address-book path',
           technicalTerm: 'MSExchange Management Set-OabVirtualDirectory EventID 1',
+          tone: 'sky',
         },
         {
           storyTerm: 'Fresh workshop printouts',
           technicalTerm: 'ASP.NET dynamic compilation in Temporary ASP.NET Files',
+          tone: 'rose',
         },
         {
           storyTerm: 'Mailroom clerk running tools',
           technicalTerm: 'w3wp.exe spawning unexpected command child processes',
+          tone: 'emerald',
         },
       ],
     },
@@ -223,18 +259,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Reception counter logbook',
             technicalTerm: 'V15\\Logging\\HttpProxy\\*\\*.log proxy audit files',
+            tone: 'amber',
           },
           {
             storyTerm: 'Static graphic shelf address',
             technicalTerm: 'Crafted /ecp/*.js path triggering SSRF routing',
+            tone: 'sky',
           },
           {
             storyTerm: 'Rear backend mail engine',
             technicalTerm: 'Internal Exchange backend RPC and EWS services',
+            tone: 'rose',
           },
           {
             storyTerm: 'Strange routing stamp',
             technicalTerm: 'X-BEResource cookie directing arbitrary backend calls',
+            tone: 'emerald',
           },
         ],
       },
@@ -245,18 +285,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Supervisor office ledger',
             technicalTerm: 'MSExchange Management EventID 1 administrative log',
+            tone: 'amber',
           },
           {
             storyTerm: 'Rewritten address-book link',
             technicalTerm: 'Set-OabVirtualDirectory ExternalUrl payload injection',
+            tone: 'sky',
           },
           {
             storyTerm: 'Resetting the directory',
             technicalTerm: 'Reset-OabVirtualDirectory writing payload to webroot',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden page script',
             technicalTerm: 'Dropped ASPX webshell embedded inside OAB config',
+            tone: 'emerald',
           },
         ],
       },
@@ -267,18 +311,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Compiled proof plates',
             technicalTerm: 'Compiled DLLs in Temporary ASP.NET Files cache',
+            tone: 'amber',
           },
           {
             storyTerm: 'Mailroom clerk process',
             technicalTerm: 'IIS w3wp.exe worker handling the webshell request',
+            tone: 'sky',
           },
           {
             storyTerm: 'Heavy workshop tools',
             technicalTerm: 'Spawned cmd.exe, powershell.exe, or credential dumpers',
+            tone: 'rose',
           },
           {
             storyTerm: 'Deleted wall flyer',
             technicalTerm: 'Removed source .aspx file still evidenced by build artifacts',
+            tone: 'emerald',
           },
         ],
       },
@@ -293,18 +341,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Vault bookkeeper engine',
           technicalTerm: 'Microsoft SQL Server sqlservr.exe database service',
+          tone: 'amber',
         },
         {
           storyTerm: 'Hidden workshop switch',
           technicalTerm: 'sp_configure enabling advanced options and xp_cmdshell',
+          tone: 'sky',
         },
         {
           storyTerm: 'Two helper toolkits',
           technicalTerm: 'Loaded xplog70.dll and odsole70.dll server modules',
+          tone: 'rose',
         },
         {
           storyTerm: 'Permanent custom catalog stamp',
           technicalTerm: 'Malicious CLR assembly persisted in sys.assemblies',
+          tone: 'emerald',
         },
       ],
     },
@@ -316,18 +368,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'First safety lock',
             technicalTerm: 'sp_configure show advanced options set to 1',
+            tone: 'amber',
           },
           {
             storyTerm: 'Direct workshop command lever',
             technicalTerm: 'sp_configure xp_cmdshell or Ole Automation enabled',
+            tone: 'sky',
           },
           {
             storyTerm: 'Vault configuration book',
             technicalTerm: 'MSSQL ERRORLOG and EventID 15457 reconfiguration logs',
+            tone: 'rose',
           },
           {
             storyTerm: 'Privileged caller badge',
             technicalTerm: 'Compromised sysadmin or sa database account',
+            tone: 'emerald',
           },
         ],
       },
@@ -338,18 +394,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Shell command toolkit',
             technicalTerm: 'xplog70.dll module backing xp_cmdshell execution',
+            tone: 'amber',
           },
           {
             storyTerm: 'External automation toolkit',
             technicalTerm: 'odsole70.dll module backing sp_OACreate execution',
+            tone: 'sky',
           },
           {
             storyTerm: 'Bookkeeper parent process',
             technicalTerm: 'sqlservr.exe database engine binary',
+            tone: 'rose',
           },
           {
             storyTerm: 'Office command console',
             technicalTerm: 'Child cmd.exe or powershell.exe spawned by sqlservr.exe',
+            tone: 'emerald',
           },
         ],
       },
@@ -360,18 +420,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unsigned custom extension',
             technicalTerm: 'Malicious .NET CLR stored procedure in sys.assemblies',
+            tone: 'amber',
           },
           {
             storyTerm: 'Vault catalog registry',
             technicalTerm: 'Database system catalog tables storing assemblies',
+            tone: 'sky',
           },
           {
             storyTerm: 'Automatic rolling trace reel',
             technicalTerm: 'MSSQL Default Trace (.trc) forensic log files',
+            tone: 'rose',
           },
           {
             storyTerm: 'Re-locked workshop lever',
             technicalTerm: 'Attacker disabling xp_cmdshell to hide initial traces',
+            tone: 'emerald',
           },
         ],
       },
@@ -386,18 +450,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Archive database manager',
           technicalTerm: 'PostgreSQL database server daemon (postgres)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Special shipping privilege',
           technicalTerm: 'Superuser or pg_execute_server_program role membership',
+          tone: 'sky',
         },
         {
           storyTerm: 'External workshop import command',
           technicalTerm: 'SQL COPY ... FROM PROGRAM OS command execution',
+          tone: 'rose',
         },
         {
           storyTerm: 'Exported custom binary library',
           technicalTerm: 'Shared object written via pg_largeobject and lo_export',
+          tone: 'emerald',
         },
       ],
     },
@@ -409,18 +477,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Archive reception register',
             technicalTerm: 'PostgreSQL server authentication and connection logs',
+            tone: 'amber',
           },
           {
             storyTerm: 'Master clearance badge',
             technicalTerm: 'Superuser or pg_execute_server_program role',
+            tone: 'sky',
           },
           {
             storyTerm: 'Staff permission chart',
             technicalTerm: 'pg_roles and pg_auth_members privilege check',
+            tone: 'rose',
           },
           {
             storyTerm: 'Remote manager connection',
             technicalTerm: 'External client TCP session on port 5432',
+            tone: 'emerald',
           },
         ],
       },
@@ -431,18 +503,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Table-import command slip',
             technicalTerm: 'COPY table FROM PROGRAM SQL statement',
+            tone: 'amber',
           },
           {
             storyTerm: 'Launched command-line helper',
             technicalTerm: 'postgres worker spawning /bin/sh child process',
+            tone: 'sky',
           },
           {
             storyTerm: 'Temporary holding table',
             technicalTerm: 'Scratch SQL table capturing command stdout',
+            tone: 'rose',
           },
           {
             storyTerm: 'Building security camera',
             technicalTerm: 'Linux auditd execve process telemetry',
+            tone: 'emerald',
           },
         ],
       },
@@ -453,18 +529,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Bulk-storage vault',
             technicalTerm: 'PostgreSQL pg_largeobject binary storage table',
+            tone: 'amber',
           },
           {
             storyTerm: 'Writing pieces onto disk',
             technicalTerm: 'lo_export() dropping a compiled shared library (.so)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Loading the custom tool',
             technicalTerm: 'CREATE FUNCTION loading dynamic C shared library',
+            tone: 'rose',
           },
           {
             storyTerm: 'Forensic vault audit',
             technicalTerm: 'Querying pg_largeobject_metadata and pg_proc entries',
+            tone: 'emerald',
           },
         ],
       },
@@ -479,18 +559,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Folded state receipt',
           technicalTerm: 'ASP.NET hidden __VIEWSTATE form parameter',
+          tone: 'amber',
         },
         {
           storyTerm: 'Secret sealing key',
           technicalTerm: 'Exposed web.config <machineKey> validationKey',
+          tone: 'sky',
         },
         {
           storyTerm: 'Spring-loaded forged receipt',
           technicalTerm: 'Signed LosFormatter / TypeConfuseDelegate gadget payload',
+          tone: 'rose',
         },
         {
           storyTerm: 'Swapping the office seal',
           technicalTerm: 'MachineKey rotation and w3wp.exe process triage',
+          tone: 'emerald',
         },
       ],
     },
@@ -502,18 +586,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Configuration binder',
             technicalTerm: 'Application web.config containing <machineKey>',
+            tone: 'amber',
           },
           {
             storyTerm: 'Leaked office sealing stamp',
             technicalTerm: 'Compromised or publicly known validationKey secret',
+            tone: 'sky',
           },
           {
             storyTerm: 'Small test receipts',
             technicalTerm: 'Probing HTTP POST requests carrying signed __VIEWSTATE',
+            tone: 'rose',
           },
           {
             storyTerm: 'Front desk arrival book',
             technicalTerm: 'IIS W3SVC access logs tracking POST lengths and status',
+            tone: 'emerald',
           },
         ],
       },
@@ -524,18 +612,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Validly stamped bulky receipt',
             technicalTerm: 'HMAC-signed malicious __VIEWSTATE POST payload',
+            tone: 'amber',
           },
           {
             storyTerm: 'Receipt unfolding engine',
             technicalTerm: 'ASP.NET ObjectStateFormatter / LosFormatter deserializer',
+            tone: 'sky',
           },
           {
             storyTerm: 'Self-triggering gadget parts',
             technicalTerm: 'TypeConfuseDelegate .NET deserialization gadget chain',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unexpected desk exception',
             technicalTerm: 'Application Event Log and SharePoint ULS error traces',
+            tone: 'emerald',
           },
         ],
       },
@@ -546,18 +638,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Web clerk worker',
             technicalTerm: 'IIS w3wp.exe worker spawning cmd.exe or powershell.exe',
+            tone: 'amber',
           },
           {
             storyTerm: 'Endpoint motion sensor',
             technicalTerm: 'Sysmon EventID 1 process creation lineage alert',
+            tone: 'sky',
           },
           {
             storyTerm: 'Replacing the sealing stamp',
             technicalTerm: 'Rotating ASP.NET MachineKey across the SharePoint farm',
+            tone: 'rose',
           },
           {
             storyTerm: 'Branch desk synchronization',
             technicalTerm: 'Running Update-SPMachineKey and restarting IIS pools',
+            tone: 'emerald',
           },
         ],
       },
@@ -572,18 +668,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Open street-facing freight shaft',
           technicalTerm: 'Exposed Tomcat AJP/1.3 connector on TCP port 8009',
+          tone: 'amber',
         },
         {
           storyTerm: 'Staff passcode sheet',
           technicalTerm: 'Read WEB-INF/web.xml or tomcat-users.xml (CVE-2020-1938)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Disguised package bundle',
           technicalTerm: 'Malicious WAR archive deployed via /manager/text/deploy',
+          tone: 'rose',
         },
         {
           storyTerm: 'Freshly compiled control page',
           technicalTerm: 'Jasper-compiled *_jsp.class execution inside the JVM',
+          tone: 'emerald',
         },
       ],
     },
@@ -595,18 +695,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unguarded freight shaft',
             technicalTerm: 'Unauthenticated AJP/1.3 port 8009 listener',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tagged internal storage path',
             technicalTerm: 'javax.servlet.include.path_info request attribute',
+            tone: 'sky',
           },
           {
             storyTerm: 'Private configuration blueprints',
             technicalTerm: 'Arbitrary webapp file read under WEB-INF/',
+            tone: 'rose',
           },
           {
             storyTerm: 'Freight shaft flaw',
             technicalTerm: 'Tomcat Ghostcat file read vulnerability (CVE-2020-1938)',
+            tone: 'emerald',
           },
         ],
       },
@@ -617,18 +721,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Package loading dock',
             technicalTerm: 'Authenticated PUT /manager/text/deploy endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Zipped application crate',
             technicalTerm: 'Uploaded malicious Web Application Archive (.war)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Valid manager passcodes',
             technicalTerm: 'Compromised manager-script role credentials',
+            tone: 'rose',
           },
           {
             storyTerm: 'Dock arrival journal',
             technicalTerm: 'Tomcat localhost_access_log HTTP deployment trace',
+            tone: 'emerald',
           },
         ],
       },
@@ -639,18 +747,22 @@ export const CATEGORY_03C_NETWORK_WEB_DFIR_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Automatic script translator',
             technicalTerm: 'Tomcat Jasper JSP-to-bytecode compiler',
+            tone: 'amber',
           },
           {
             storyTerm: 'Compiled machine instructions',
             technicalTerm: 'Generated work/Catalina/localhost/*/*_jsp.class artifacts',
+            tone: 'sky',
           },
           {
             storyTerm: 'Application runtime engine',
             technicalTerm: 'Java Virtual Machine (java) process running Tomcat',
+            tone: 'rose',
           },
           {
             storyTerm: 'Launched command shell',
             technicalTerm: 'Unexpected /bin/sh or cmd.exe child process under java',
+            tone: 'emerald',
           },
         ],
       },

@@ -13,18 +13,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Hidden startup closet',
           technicalTerm: 'Hidden FAT32 EFI System Partition (\\Device\\HarddiskVolume1\\EFI\\)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Older, still-stamped clerk handbook',
           technicalTerm: 'Downgraded Microsoft-signed bootmgfw.efi, hvloader.efi, and winload.efi (BYOVB)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Wording loophole during the handoff ceremony',
           technicalTerm: 'CVE-2022-21894 Baton Drop BCD argument truncation exploit',
+          tone: 'rose',
         },
         {
           storyTerm: 'Shutting off vault alarms to admit an unbadged saboteur',
           technicalTerm: 'In-RAM patching of HVCI, BitLocker, and Code Integrity to load an unsigned Ring-0 driver',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -38,18 +42,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Hidden dawn-startup closet',
             technicalTerm: 'Mounted hidden FAT32 EFI System Partition (ESP)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Older officially stamped opening manuals',
             technicalTerm: 'Legitimately signed older copies of bootmgfw.efi, hvloader.efi, and winload.efi',
+            tone: 'sky',
           },
           {
             storyTerm: 'Motherboard permanent chalk ledger',
             technicalTerm: 'UEFI NVRAM variables modified via ZwSetSystemEnvironmentValueEx',
+            tone: 'rose',
           },
           {
             storyTerm: 'Stolen manager keys',
             technicalTerm: 'Local Administrator privileges used by the BlackLotus installer',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -62,18 +70,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Older stamped clerk starting at dawn',
             technicalTerm: 'Vulnerable signed bootmgfw.efi and winload.efi executing during early boot',
+            tone: 'amber',
           },
           {
             storyTerm: 'Specially folded morning checklist',
             technicalTerm: 'Crafted Boot Configuration Data (BCD) store triggering CVE-2022-21894',
+            tone: 'sky',
           },
           {
             storyTerm: 'Cutting off safety instructions mid-sentence',
             technicalTerm: 'Baton Drop BCD argument truncation bypassing Secure Boot verification',
+            tone: 'rose',
           },
           {
             storyTerm: 'Front-door seal check flashing green',
             technicalTerm: 'UEFI Secure Boot signature check satisfied by the unrevoked Microsoft binary',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -86,18 +98,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Erasing glass integrity shields in active workspace',
             technicalTerm: 'In-RAM patching of hvloader.efi and winload.efi (OslFwpKernelSetupPhase1)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Disabled vault locks and shields',
             technicalTerm: 'Neutralized HVCI, VBS, BitLocker protections, and Code Integrity',
+            tone: 'sky',
           },
           {
             storyTerm: 'Unbadged kernel saboteur',
             technicalTerm: 'Unsigned Ring-0 kernel rootkit driver loaded without driver signing enforcement',
+            tone: 'rose',
           },
           {
             storyTerm: 'Main operating floor waking up',
             technicalTerm: 'Windows kernel startup with compromised winlogon.exe network beacons',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -114,18 +130,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Outdated, genuinely stamped inspector pass card',
           technicalTerm: 'Signed vulnerable Sysinternals PROCEXP152.SYS v16.32 kernel driver (BYOVD)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Inspector service hatch',
           technicalTerm: 'Kernel device symbolic link \\\\.\\PROCEXP152 exposed to user-mode callers',
+          tone: 'sky',
         },
         {
           storyTerm: 'Two special code knocks (master badge knock and wire-yank knock)',
           technicalTerm: 'IOCTL 0x8335003C (open privileged handle) and IOCTL 0x83350004 (close handle)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Knocking out every building alarm before unlocking the safe',
           technicalTerm: 'Ring-0 termination of PPL-protected EDR sensors prior to ransomware execution',
+          tone: 'emerald',
         },
       ],
     },
@@ -137,18 +157,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Retired legitimately stamped pass card',
             technicalTerm: 'Embedded Microsoft-signed Sysinternals PROCEXP152.SYS v16.32',
+            tone: 'amber',
           },
           {
             storyTerm: 'Official building driver rack',
             technicalTerm: 'C:\\Windows\\System32\\drivers\\PROCEXP152.SYS registered as a kernel service',
+            tone: 'sky',
           },
           {
             storyTerm: 'Briefcase carrying the embedded card',
             technicalTerm: 'AuKill C++ user-mode BYOVD loader running with Administrator rights',
+            tone: 'rose',
           },
           {
             storyTerm: 'No real maintenance engineer present',
             technicalTerm: 'Driver loaded by an untrusted binary rather than signed procexp64.exe',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -161,18 +185,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Inspector service hatch',
             technicalTerm: 'Device handle opened to \\\\.\\PROCEXP152 via CreateFile',
+            tone: 'amber',
           },
           {
             storyTerm: 'First control knock granting a master handle',
             technicalTerm: 'DeviceIoControl IOCTL 0x8335003C opening full-access Ring-0 process handles',
+            tone: 'sky',
           },
           {
             storyTerm: 'Second control knock snipping open lock handles',
             technicalTerm: 'DeviceIoControl IOCTL 0x83350004 forcibly closing target process handles',
+            tone: 'rose',
           },
           {
             storyTerm: 'Team of helpers enumerating guards',
             technicalTerm: 'Multi-threaded AuKill worker routines scanning running endpoint security PIDs',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -185,18 +213,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Armored security monitors',
             technicalTerm: 'Protected Process Light (PPL) EDR services such as MsMpEng.exe',
+            tone: 'amber',
           },
           {
             storyTerm: 'Master handle knock and wire-snipping knock',
             technicalTerm: 'Paired IOCTL 0x8335003C termination and IOCTL 0x83350004 handle closure loop',
+            tone: 'sky',
           },
           {
             storyTerm: 'Running endlessly even as monitors restart',
             technicalTerm: 'Continuous AuKill watchdog loop terminating respawning EDR services',
+            tone: 'rose',
           },
           {
             storyTerm: 'Blinded building ready for the ransomware crew',
             technicalTerm: 'Unmonitored endpoint enabling Medusa Locker or LockBit mass encryption',
+            tone: 'emerald',
           },
         ],
       },
@@ -211,18 +243,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Custom saboteur card stamped by a hijacked badge office',
           technicalTerm: 'POORTRY / BURNTCIGAR custom kernel rootkit signed via abused WHQL account',
+          tone: 'amber',
         },
         {
           storyTerm: 'Secret spoken handshake at the control room door',
           technicalTerm: 'Cryptographic challenge-response DeviceIoControl handshake from STONESTOP',
+          tone: 'sky',
         },
         {
           storyTerm: 'Cutting every alarm wire on the central watchboard',
           technicalTerm: 'Zeroing PspCreateProcessNotifyRoutine and ObRegisterCallbacks arrays',
+          tone: 'rose',
         },
         {
           storyTerm: 'Erasing armored insignia from guards and the vault ledger',
           technicalTerm: 'DKOM stripping of _PS_PROTECTION bits on EDR processes and lsass.exe',
+          tone: 'emerald',
         },
       ],
     },
@@ -234,18 +270,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Intruder street runner',
             technicalTerm: 'STONESTOP user-mode loader invoking NtLoadDriver',
+            tone: 'amber',
           },
           {
             storyTerm: 'Purpose-built saboteur pass',
             technicalTerm: 'Malicious kernel driver poortry.sys (BURNTCIGAR)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Authentic government wax seal from a hijacked office',
             technicalTerm: 'Fraudulently obtained Microsoft WHQL / Windows Hardware Dev Center attestation signature',
+            tone: 'rose',
           },
           {
             storyTerm: 'Building core checkpoint',
             technicalTerm: 'Windows Driver Signature Enforcement (DSE) kernel load check',
+            tone: 'emerald',
           },
         ],
       },
@@ -256,18 +296,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Secret coded knock-and-reply exchange',
             technicalTerm: 'Cryptographic challenge-response authentication over DeviceIoControl',
+            tone: 'amber',
           },
           {
             storyTerm: 'Central notification bell wires',
             technicalTerm: 'Kernel callback arrays PspCreateProcessNotifyRoutine and ObRegisterCallbacks',
+            tone: 'sky',
           },
           {
             storyTerm: 'Snipping the bell wires',
             technicalTerm: 'POORTRY overwriting EDR kernel callback pointers in Ring-0 memory',
+            tone: 'rose',
           },
           {
             storyTerm: 'Blinded security office',
             technicalTerm: 'EDR sensors stripped of process creation and handle-access visibility',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -280,18 +324,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Central staff ledger',
             technicalTerm: 'Kernel opaque _EPROCESS structures tracking active Windows processes',
+            tone: 'amber',
           },
           {
             storyTerm: 'Rubbing out the armored-protection stamp',
             technicalTerm: 'Direct Kernel Object Manipulation (DKOM) zeroing _PS_PROTECTION bits',
+            tone: 'sky',
           },
           {
             storyTerm: 'Dismissed security guards',
             technicalTerm: 'Terminated EDR agent processes after PPL immunity removal',
+            tone: 'rose',
           },
           {
             storyTerm: 'Emptied master credential vault',
             technicalTerm: 'Unprotected lsass.exe memory dumped for enterprise credentials',
+            tone: 'emerald',
           },
         ],
       },
@@ -306,18 +354,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Temporary hallway locker with a burned paper lease',
           technicalTerm: 'Unlinked ELF binary executing from RAM-backed /dev/shm/kdmtmpflush',
+          tone: 'amber',
         },
         {
           storyTerm: 'Maintenance janitor badge',
           technicalTerm: 'Masqueraded argv[0] process name disguising the active implant',
+          tone: 'sky',
         },
         {
           storyTerm: 'Tiny acoustic sieve on the main mail chute with no doorway',
           technicalTerm: 'Raw AF_PACKET socket with SO_ATTACH_FILTER classic BPF bytecode and zero open ports',
+          tone: 'rose',
         },
         {
           storyTerm: 'Envelope carrying a secret wax seal opening a back staircase',
           technicalTerm: 'Magic packet (0x7255 / 0x5293) triggering iptables redirect and memory-only PTY shell',
+          tone: 'emerald',
         },
       ],
     },
@@ -329,18 +381,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Memory-only hallway locker',
             technicalTerm: 'RAM-backed tmpfs staging file /dev/shm/kdmtmpflush',
+            tone: 'amber',
           },
           {
             storyTerm: 'Backdating the locker stamp by a decade',
             technicalTerm: 'Timestomping file modification time to 2008-10-30',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shredding the locker key tag',
             technicalTerm: 'Self-unlinking binary leaving a /proc/<pid>/exe (deleted) trace',
+            tone: 'rose',
           },
           {
             storyTerm: 'Routine building-service nametag',
             technicalTerm: 'Masqueraded process name hiding BPFDoor in ps output',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -353,18 +409,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Visible service window checked by guards',
             technicalTerm: 'Standard listening TCP/UDP socket visible to netstat or ss',
+            tone: 'amber',
           },
           {
             storyTerm: 'Main incoming mail chute',
             technicalTerm: 'Raw packet socket created via socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP))',
+            tone: 'sky',
           },
           {
             storyTerm: '30-step mechanical sieve',
             technicalTerm: 'Classic BPF bytecode filter attached via setsockopt(SO_ATTACH_FILTER)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Secret emblem watched by the sieve',
             technicalTerm: 'Hardcoded magic packet signatures (0x7255 or 0x5293) across TCP, UDP, or ICMP',
+            tone: 'emerald',
           },
         ],
       },
@@ -375,18 +435,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Passing letter with secret wax stamp and passphrase',
             technicalTerm: 'Magic TCP, UDP, or ICMP packet bearing 0x7255 / 0x5293 and valid password hash',
+            tone: 'amber',
           },
           {
             storyTerm: 'Swinging a wall panel around the metal detector',
             technicalTerm: 'Dynamic iptables NAT/PREROUTING rule redirecting traffic past host firewalls',
+            tone: 'sky',
           },
           {
             storyTerm: 'Private trace-free speaking tube',
             technicalTerm: 'Forked child process allocating a /dev/ptmx pseudo-terminal without utmp logging',
+            tone: 'rose',
           },
           {
             storyTerm: 'Post office basement access',
             technicalTerm: 'Interactive root shell session lasting only while the magic session stays active',
+            tone: 'emerald',
           },
         ],
       },
@@ -401,18 +465,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Stone foundation chip beneath the building',
           technicalTerm: 'Motherboard 8MB SPI NOR flash chip storing UEFI firmware',
+          tone: 'amber',
         },
         {
           storyTerm: 'Carved mechanical detour inside the foundation',
           technicalTerm: 'Patched CSMCORE DXE UEFI driver hooking HandleProtocol',
+          tone: 'sky',
         },
         {
           storyTerm: 'Three-person morning baton relay',
           technicalTerm: 'Boot hook chain across bootmgfw.efi, winload.efi, and OslArchTransferToKernel',
+          tone: 'rose',
         },
         {
           storyTerm: 'Switching off the building alarm clock before the governor wakes',
           technicalTerm: 'Neutralizing PatchGuard (KiFilterFiberContext) and hooking ZwCreateSection in ntoskrnl.exe',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -426,18 +494,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Permanent stone foundation block',
             technicalTerm: 'Physical 8MB SPI NOR flash chip on ASUS or Gigabyte H81 motherboards',
+            tone: 'amber',
           },
           {
             storyTerm: 'Chiseled secret trigger inside the block',
             technicalTerm: 'Modified CSMCORE DXE driver (GUID {A062CF1F-8473-4AA3-87AF-993111011898})',
+            tone: 'sky',
           },
           {
             storyTerm: 'Morning wake-up handshake intercepted',
             technicalTerm: 'Inline hook placed on UEFI Boot Services HandleProtocol',
+            tone: 'rose',
           },
           {
             storyTerm: 'Surviving full floor replacement',
             technicalTerm: 'Persistence across complete Windows reinstalls and disk swaps',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -450,18 +522,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Front-gate opener caught at the lobby',
             technicalTerm: 'bootmgfw.efi hooked at Archpx64TransferTo64BitApplicationAsm',
+            tone: 'amber',
           },
           {
             storyTerm: 'Floor-captain loader preparing the main hall',
             technicalTerm: 'winload.efi hooked during OS loader preparation',
+            tone: 'sky',
           },
           {
             storyTerm: 'Passing the hidden baton upward',
             technicalTerm: 'Multi-hop pre-OS inline hooking chain bridging firmware to OS loader',
+            tone: 'rose',
           },
           {
             storyTerm: 'Governor desk handoff point',
             technicalTerm: 'OslArchTransferToKernel transition right before ntoskrnl.exe starts',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -474,18 +550,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Unhooking the master watchdog bell',
             technicalTerm: 'Patching KiFilterFiberContext in ntoskrnl.exe RAM to bypass PatchGuard',
+            tone: 'amber',
           },
           {
             storyTerm: 'Secret listener on the room-opening ledger',
             technicalTerm: 'Kernel hook placed on ZwCreateSection inside ntoskrnl.exe',
+            tone: 'sky',
           },
           {
             storyTerm: 'Governor private study',
             technicalTerm: 'Ring-0 Windows kernel execution context prior to user-mode boot',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden courier line',
             technicalTerm: 'Kernel-level shellcode deployment and remote C2 payload retrieval',
+            tone: 'emerald',
           },
         ],
       },
@@ -500,18 +580,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Genuinely stamped security-vendor master badge',
           technicalTerm: 'Signed vulnerable Zemana AntiMalware kernel driver (zam64.sys)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Unguarded badge-enrollment desk',
           technicalTerm: 'Unauthenticated IOCTL 0x80002010 self-allowlisting flaw (CVE-2021-31728)',
+          tone: 'sky',
         },
         {
           storyTerm: 'VIP master roster',
           technicalTerm: 'Internal zam64.sys trusted Process ID allowlist in kernel memory',
+          tone: 'rose',
         },
         {
           storyTerm: 'Endless loop shutting off every guard station',
           technicalTerm: 'Continuous while(true) IOCTL 0x80002048 Ring-0 termination of 24 EDR agents',
+          tone: 'emerald',
         },
       ],
     },
@@ -523,18 +607,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Genuinely signed third-party security driver',
             technicalTerm: 'Embedded zam64.sys validly signed by Zemana Ltd. and countersigned by Microsoft',
+            tone: 'amber',
           },
           {
             storyTerm: 'Random cover name on the tag',
             technicalTerm: 'Randomized driver filename written under C:\\Windows\\System32\\drivers\\',
+            tone: 'sky',
           },
           {
             storyTerm: 'Burglar carrying administrator keys',
             technicalTerm: 'Terminator.exe user-mode wrapper executing with local admin rights',
+            tone: 'rose',
           },
           {
             storyTerm: 'Building core engine room',
             technicalTerm: 'Windows Ring-0 kernel driver space accepting the signed driver',
+            tone: 'emerald',
           },
         ],
       },
@@ -545,18 +633,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'VIP security roster',
             technicalTerm: 'Internal zam64.sys allowlist of authorized caller Process IDs',
+            tone: 'amber',
           },
           {
             storyTerm: 'Enrollment window that never checks identity',
             technicalTerm: 'Unauthenticated IOCTL 0x80002010 exposed by \\\\.\\ZemanaAntiMalware (CVE-2021-31728)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Writing their own badge number onto the list',
             technicalTerm: 'Terminator.exe registering its own PID as a trusted kernel caller',
+            tone: 'rose',
           },
           {
             storyTerm: 'Privileged master controls unlocked',
             technicalTerm: 'Arbitrary Ring-0 process termination and raw disk access granted to the caller',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -569,18 +661,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Pacing the hallways in a relentless circle',
             technicalTerm: 'Infinite while(true) loop calling CreateToolhelp32Snapshot to scan active PIDs',
+            tone: 'amber',
           },
           {
             storyTerm: 'Pocket hit-list of 24 security agencies',
             technicalTerm: 'Hardcoded array of 24 AV and EDR executable names targeted by Terminator.exe',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master kill switch',
             technicalTerm: 'IOCTL 0x80002048 invoking kernel-level process termination via zam64.sys',
+            tone: 'rose',
           },
           {
             storyTerm: 'Silenced guard stations',
             technicalTerm: 'Terminated endpoint protection agents leaving the host defenseless',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -597,18 +693,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Master uniform coatroom',
           technicalTerm: 'Global dynamic linker preload file /etc/ld.so.preload',
+          tone: 'amber',
         },
         {
           storyTerm: 'Parasitic mist woven into every official jacket',
           technicalTerm: 'Shared object library (/usr/lib/liblinux.so) injected into every running process',
+          tone: 'sky',
         },
         {
           storyTerm: 'Copying vault passphrases whispered by couriers',
           technicalTerm: 'PAM backdoor and libc read() hooking inside ssh and scp harvesting keystrokes',
+          tone: 'rose',
         },
         {
           storyTerm: 'Clouding safety auditor magnifying lenses',
           technicalTerm: 'Hooking pcap_compile() and setsockopt(SO_ATTACH_FILTER) to blind tcpdump',
+          tone: 'emerald',
         },
       ],
     },
@@ -620,18 +720,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Universal uniform rack',
             technicalTerm: 'System-wide /etc/ld.so.preload dynamic linker configuration',
+            tone: 'amber',
           },
           {
             storyTerm: 'Rigged lining hung on the rack',
             technicalTerm: 'Malicious ELF shared library (/usr/lib/liblinux.so)',
+            tone: 'sky',
           },
           {
             storyTerm: 'No separate name on the attendance sheet',
             technicalTerm: 'No standalone malware process visible in ps or top listings',
+            tone: 'rose',
           },
           {
             storyTerm: 'Every worker clocking in automatically wearing it',
             technicalTerm: 'Dynamic linker mapping Symbiote first into every newly launched Linux binary',
+            tone: 'emerald',
           },
         ],
       },
@@ -642,18 +746,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Couriers typing vault combinations',
             technicalTerm: 'Administrator ssh and scp client sessions with hooked libc read()',
+            tone: 'amber',
           },
           {
             storyTerm: 'Locked notebook storing copied combinations',
             technicalTerm: 'RC4-encrypted credential stash file hidden on disk (/var/tmp/...)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master override phrase at the front gate',
             technicalTerm: 'PAM authentication backdoor permitting root login with a hardcoded password',
+            tone: 'rose',
           },
           {
             storyTerm: 'Riding inside clerk sleeves',
             technicalTerm: 'In-process userland symbol interposition inside sshd and ssh clients',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -666,18 +774,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Inspectors watching outgoing mail trucks',
             technicalTerm: 'DFIR analysts running tcpdump or packet sniffers directly on the infected host',
+            tone: 'amber',
           },
           {
             storyTerm: 'Swapping in tinted lenses inside the inspector glasses',
             technicalTerm: 'Hooking libpcap pcap_compile() and libc setsockopt(SO_ATTACH_FILTER)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Blotting out the spy truck license plates',
             technicalTerm: 'Injecting BPF bytecode exclusions that scrub C2 IP addresses and ports from captures',
+            tone: 'rose',
           },
           {
             storyTerm: 'Off-site rooftop camera catching the truth',
             technicalTerm: 'Out-of-band switch SPAN port or hardware network tap immune to host hooks',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -694,18 +806,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Officially stamped guard badge from a video-game arcade',
           technicalTerm: 'Signed Genshin Impact anti-cheat kernel driver mhyprot2.sys (CVE-2020-36603)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Bank headquarters accepting the arcade badge',
           technicalTerm: 'Windows Domain Controller loading standalone C:\\Users\\Public\\mhyprot2.sys',
+          tone: 'sky',
         },
         {
           storyTerm: 'Speaking a scrambled sequence at the control window',
           technicalTerm: 'IOCTL 0x80034000 seeding the driver 64-bit Mersenne Twister (MT19937-64) cipher',
+          tone: 'rose',
         },
         {
           storyTerm: 'Shutting down every real bank guard before locking the vaults',
           technicalTerm: 'XOR-encoded IOCTL 0x81034000 Ring-0 ZwTerminateProcess loop killing AV/EDR agents',
+          tone: 'emerald',
         },
       ],
     },
@@ -717,18 +833,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Authentic arcade anti-cheat guard badge',
             technicalTerm: 'Standalone 350KB Microsoft-signed mhyprot2.sys kernel driver',
+            tone: 'amber',
           },
           {
             storyTerm: 'Public hallway table',
             technicalTerm: 'Staging path C:\\Users\\Public\\mhyprot2.sys on an enterprise server',
+            tone: 'sky',
           },
           {
             storyTerm: 'Bank central headquarters',
             technicalTerm: 'Compromised Windows Domain Controller or enterprise server',
+            tone: 'rose',
           },
           {
             storyTerm: 'Registering it with the building core',
             technicalTerm: 'Loading mhyprot2.sys as a Ring-0 service without any Genshin Impact game installed',
+            tone: 'emerald',
           },
         ],
       },
@@ -739,18 +859,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Arcade driver back window',
             technicalTerm: 'Device handle opened to \\\\.\\mhyprot2 by kill_svc.exe',
+            tone: 'amber',
           },
           {
             storyTerm: '24-byte starting cipher dial',
             technicalTerm: 'Initialization structure sent via DeviceIoControl IOCTL 0x80034000',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shared scrambling pattern',
             technicalTerm: 'Internal 64-bit Mersenne Twister (MT19937-64) encryption key stream',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden command panel unlocked',
             technicalTerm: 'Authenticated kernel command channel ready for process-termination requests',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -763,18 +887,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Scrambled guard badge numbers',
             technicalTerm: 'XOR-encrypted target security PIDs submitted via IOCTL 0x81034000',
+            tone: 'amber',
           },
           {
             storyTerm: 'Building core evicting every security officer',
             technicalTerm: 'Ring-0 ZwTerminateProcess killing Ntrtscan.exe, TmCCSF.exe, uiWatchDog.exe, and MsMpEng.exe',
+            tone: 'sky',
           },
           {
             storyTerm: 'Slamming padlocks across every file cabinet',
             technicalTerm: 'Uncontested ransomware mass encryption across the blinded enterprise host',
+            tone: 'rose',
           },
           {
             storyTerm: 'Intruder dispatcher sending the hit list',
             technicalTerm: 'kill_svc.exe enumerating and feeding endpoint protection PIDs to mhyprot2.sys',
+            tone: 'emerald',
           },
         ],
       },
@@ -789,18 +917,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Temporary memory-only closet with a shredded receipt',
           technicalTerm: 'Self-unlinked /dev/shm/kdmtmpflush binary visible as /proc/<pid>/exe (deleted)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Invisible wire sieve clipped onto the main telegraph cable',
           technicalTerm: 'AF_PACKET raw socket with SO_ATTACH_FILTER classic BPF bytecode',
+          tone: 'sky',
         },
         {
           storyTerm: 'Front floor map showing no open door',
           technicalTerm: 'netstat -tulnp showing zero listening TCP or UDP ports',
+          tone: 'rose',
         },
         {
           storyTerm: 'Raw cable-tap ledger and brass locking pin',
           technicalTerm: '/proc/net/packet, ss -0pb BPF dump, and /var/run/haldrund.pid mutex',
+          tone: 'emerald',
         },
       ],
     },
@@ -812,18 +944,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Memory-only storage closet',
             technicalTerm: 'tmpfs shared memory execution path /dev/shm/kdmtmpflush',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tearing up the closet doorway sign',
             technicalTerm: 'Unlinking on-disk executable leaving /proc/<pid>/exe (deleted) forensic trace',
+            tone: 'sky',
           },
           {
             storyTerm: 'Altering its own staff nametag',
             technicalTerm: 'Overwriting argv[0] and calling prctl(PR_SET_NAME) to masquerade as a daemon',
+            tone: 'rose',
           },
           {
             storyTerm: 'Launching into background duty',
             technicalTerm: 'Self-re-execution with --init flag detaching from the parent terminal',
+            tone: 'emerald',
           },
         ],
       },
@@ -834,18 +970,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Numbered ticket window checked by watchmen',
             technicalTerm: 'Standard listening TCP/UDP socket listed by netstat -tulnp',
+            tone: 'amber',
           },
           {
             storyTerm: 'Main telegraph line clamp',
             technicalTerm: 'socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP)) raw packet socket',
+            tone: 'sky',
           },
           {
             storyTerm: 'Raw acoustic sieve',
             technicalTerm: 'Classic BPF bytecode filter attached via setsockopt(SOL_SOCKET, SO_ATTACH_FILTER)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Secret trigger code',
             technicalTerm: 'Magic packet sequence waking the passive implant on demand',
+            tone: 'emerald',
           },
         ],
       },
@@ -856,18 +996,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Depot master cable-clamp registry',
             technicalTerm: 'Kernel /proc/net/packet table listing all active AF_PACKET raw sockets',
+            tone: 'amber',
           },
           {
             storyTerm: 'Exposing the hidden sieve bytecode',
             technicalTerm: 'ss -0pb dumping attached BPF filter instructions and owning process PIDs',
+            tone: 'sky',
           },
           {
             storyTerm: 'Single-occupancy brass lock pin',
             technicalTerm: 'Mutex PID file /var/run/haldrund.pid preventing duplicate implant instances',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unlinked closet occupant',
             technicalTerm: 'Running implant correlated via /proc/<pid>/exe pointing to deleted /dev/shm file',
+            tone: 'emerald',
           },
         ],
       },
@@ -882,18 +1026,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Universal work coat hanging on the entrance rack',
           technicalTerm: 'System-wide dynamic linker file /etc/ld.so.preload',
+          tone: 'amber',
         },
         {
           storyTerm: 'Rigged lining sewn into the coat',
           technicalTerm: 'Malicious shared library /usr/lib64/libudev-guardian.so',
+          tone: 'sky',
         },
         {
           storyTerm: 'Blurred lenses hiding the tailor doorway',
           technicalTerm: 'Userland PLT/GOT hooks on readdir64() and fopen() hiding files and sockets',
+          tone: 'rose',
         },
         {
           storyTerm: 'Sealed external binoculars reading the raw room ledger',
           technicalTerm: 'Statically linked busybox binary inspecting /proc/1/maps and /proc/self/map_files',
+          tone: 'emerald',
         },
       ],
     },
@@ -905,18 +1053,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Custom rigged coat lining on the supply shelf',
             technicalTerm: 'Compiled ELF shared object placed at /usr/lib64/libudev-guardian.so',
+            tone: 'amber',
           },
           {
             storyTerm: 'Mandatory entrance-rack sheet',
             technicalTerm: 'Path entry written into /etc/ld.so.preload',
+            tone: 'sky',
           },
           {
             storyTerm: 'Tamper-proof camera bolted above the rack',
             technicalTerm: 'Kernel-level auditd syscall monitoring recording nametype=CREATE',
+            tone: 'rose',
           },
           {
             storyTerm: 'Front-desk tools about to be fooled',
             technicalTerm: 'Standard dynamically linked Linux utilities (ps, ls, netstat, lsof)',
+            tone: 'emerald',
           },
         ],
       },
@@ -927,18 +1079,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Entrance dresser handing out the rigged coat',
             technicalTerm: 'Dynamic linker /lib64/ld-linux-x86-64.so.2 loading /etc/ld.so.preload first',
+            tone: 'amber',
           },
           {
             storyTerm: 'Intercepting every glance down the aisles',
             technicalTerm: 'PLT/GOT function hooking of libc readdir64() hiding directories and PIDs',
+            tone: 'sky',
           },
           {
             storyTerm: 'Intercepting glances at the attendance clipboard',
             technicalTerm: 'Userland hooking of fopen() filtering /proc/net/tcp entries',
+            tone: 'rose',
           },
           {
             storyTerm: 'Fooled routine floor checks',
             technicalTerm: 'Compromised output from dynamically linked ps, ls, netstat, and lsof',
+            tone: 'emerald',
           },
         ],
       },
@@ -949,18 +1105,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Self-contained outside gear skipping the coat rack',
             technicalTerm: 'Statically linked busybox binary immune to /etc/ld.so.preload injection',
+            tone: 'amber',
           },
           {
             storyTerm: 'Raw hallway map inside the master guard station',
             technicalTerm: 'Kernel-generated /proc/1/maps and /proc/self/map_files memory mappings',
+            tone: 'sky',
           },
           {
             storyTerm: 'Direct inspection without intermediary glasses',
             technicalTerm: 'Shell builtin read loop bypassing hooked userland libc file wrappers',
+            tone: 'rose',
           },
           {
             storyTerm: 'Foreign lining wrapped around every worker',
             technicalTerm: 'Exposed /usr/lib64/libudev-guardian.so mapping across PID 1 and child processes',
+            tone: 'emerald',
           },
         ],
       },
@@ -975,18 +1135,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Freezing the courthouse in mid-motion',
           technicalTerm: 'Raw physical RAM acquisition (memdump.raw) analyzed with Volatility 3',
+          tone: 'amber',
         },
         {
           storyTerm: 'Armed strangers in unbacked private booths wearing clerk robes',
           technicalTerm: 'windows.malfind flagging unbacked PAGE_EXECUTE_READWRITE VADs in svchost.exe',
+          tone: 'sky',
         },
         {
           storyTerm: 'Front-desk attendance list versus physical hallway headcount',
           technicalTerm: 'windows.pslist (linked list) compared against windows.psscan (pool scan) detecting DKOM',
+          tone: 'rose',
         },
         {
           storyTerm: 'Master courthouse bell-pull board',
           technicalTerm: 'windows.callbacks and windows.driverscan inspecting PspCreateProcessNotifyRoutine',
+          tone: 'emerald',
         },
       ],
     },
@@ -998,18 +1162,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Room-assignment trees',
             technicalTerm: 'Kernel _MMVAD_SHORT / _MMVAD Virtual Address Descriptor balanced trees',
+            tone: 'amber',
           },
           {
             storyTerm: 'Trusted clerk office',
             technicalTerm: 'Target host process svchost.exe (PID 2480)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Private booth with no blueprint file on the shelf',
             technicalTerm: 'Unbacked private PAGE_EXECUTE_READWRITE (RWX) memory region flagged by windows.malfind',
+            tone: 'rose',
           },
           {
             storyTerm: 'Executable payload hiding inside live workspace',
             technicalTerm: 'In-memory MZ/PE header or shellcode recovered via windows.vadinfo and malfind',
+            tone: 'emerald',
           },
         ],
       },
@@ -1020,18 +1188,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Official front-desk employee chain',
             technicalTerm: 'Doubly linked Nt!PsActiveProcessHead list walked by windows.pslist and Task Manager',
+            tone: 'amber',
           },
           {
             storyTerm: 'Erasing its own link from the chain',
             technicalTerm: 'Direct Kernel Object Manipulation (DKOM) unlinking _EPROCESS of kworker_win.exe (PID 5912)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Physical sweep of every office chair',
             technicalTerm: 'Pool-tag memory carving via windows.psscan locating unlinked _EPROCESS blocks',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden worker caught sitting in plain sight',
             technicalTerm: 'Process present in psscan output while absent from pslist output',
+            tone: 'emerald',
           },
         ],
       },
@@ -1042,18 +1214,22 @@ export const KERNEL_FIRMWARE_BYOVD_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Courthouse master bell-pull board',
             technicalTerm: 'Kernel arrays PspCreateProcessNotifyRoutine, PspCreateThreadNotifyRoutine, and ObRegisterCallbacks',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tracing every wire back to its owner',
             technicalTerm: 'Volatility 3 windows.callbacks correlating callback addresses to loaded drivers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Auditing every badge holder in the engine room',
             technicalTerm: 'windows.driverscan enumerating all Ring-0 driver objects in RAM',
+            tone: 'rose',
           },
           {
             storyTerm: 'Rogue driver tampering with security bells',
             technicalTerm: 'Unauthorized or unbacked kernel driver hooking or wiping EDR callbacks',
+            tone: 'emerald',
           },
         ],
       },

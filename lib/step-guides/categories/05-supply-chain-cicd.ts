@@ -13,18 +13,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Hidden saboteur watching the assembly press',
           technicalTerm: 'SUNSPOT build-hijack service (taskhostsvc.exe) polling MsBuild.exe',
+          tone: 'amber',
         },
         {
           storyTerm: 'Swapping a counterfeit board before the gold warranty seal is stamped',
           technicalTerm: 'Transient InventoryManager.cs swap compiled into signed SolarWinds.Orion.Core.BusinessLayer.dll',
+          tone: 'sky',
         },
         {
           storyTerm: 'Sleeping for two weeks before whispering home',
           technicalTerm: 'SUNBURST 12-to-14 day dormancy and *.avsvmcloud.com DGA DNS beacon',
+          tone: 'rose',
         },
         {
           storyTerm: 'Unlocking each bank identity vault',
           technicalTerm: 'Memory-only TEARDROP loader and ADFS Golden SAML token-signing theft',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -38,18 +42,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Saboteur checking the conveyor belt every second',
             technicalTerm: 'SUNSPOT (taskhostsvc.exe) polling for MsBuild.exe every 1,000 milliseconds',
+            tone: 'amber',
           },
           {
             storyTerm: 'Poisoned page slipped in and swapped back',
             technicalTerm: 'Temporary replacement and restoration of InventoryManager.cs during compilation',
+            tone: 'sky',
           },
           {
             storyTerm: 'Official gold seal stamped on the finished module',
             technicalTerm: 'Valid SolarWinds Authenticode code-signing certificate applied to the trojanized DLL',
+            tone: 'rose',
           },
           {
             storyTerm: 'Clean blueprint table left untouched',
             technicalTerm: 'Unmodified Git source repository evading developer code review',
+            tone: 'emerald',
           },
         ],
       },
@@ -60,18 +68,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Counterfeit board sitting silent for two weeks',
             technicalTerm: 'SUNBURST 12-to-14 day random dormancy delay inside SolarWinds.BusinessLayerHost.exe',
+            tone: 'amber',
           },
           {
             storyTerm: 'Checking it is not inside a security workshop',
             technicalTerm: 'FNV-1a hash blocklist checking for antivirus drivers, debuggers, and analysis domains',
+            tone: 'sky',
           },
           {
             storyTerm: 'Coded postal inquiries disguised as routine check-ins',
             technicalTerm: 'Domain Generation Algorithm (DGA) DNS beacons to *.avsvmcloud.com',
+            tone: 'rose',
           },
           {
             storyTerm: 'Remote handler signaling whether to rob the bank',
             technicalTerm: 'CNAME DNS response redirecting high-value victims to dedicated C2 infrastructure',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -84,18 +96,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Paperless lockpicker unfolded inside memory',
             technicalTerm: 'TEARDROP memory-only dropper delivered over disguised OIP JSON HTTPS traffic',
+            tone: 'amber',
           },
           {
             storyTerm: 'Corporate badge-printing vault',
             technicalTerm: 'Active Directory Federation Services (ADFS) server and DKM key container',
+            tone: 'sky',
           },
           {
             storyTerm: 'Stealing the master embossing plate',
             technicalTerm: 'Extraction of the ADFS token-signing private key certificate',
+            tone: 'rose',
           },
           {
             storyTerm: 'Stamping flawless executive badges for cloud offices',
             technicalTerm: 'Golden SAML forgery granting persistent access to Microsoft 365 and federated SaaS',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -112,18 +128,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Swapping every floating shelf label to a rigged tool',
           technicalTerm: 'Force-repointing mutable Git tags (v1..v45) to malicious commit 0e58ed8',
+          tone: 'amber',
         },
         {
           storyTerm: 'Reading secret combinations from live workbench memory',
           technicalTerm: 'sudo python3 memdump.py scraping /proc/$pid/mem of Runner.Worker',
+          tone: 'sky',
         },
         {
           storyTerm: 'Doubled-over cipher printed on the public bulletin board',
           technicalTerm: 'Double-Base64 encoded CI secrets printed straight into public GitHub Actions logs',
+          tone: 'rose',
         },
         {
           storyTerm: 'Permanent serial number preventing the swap',
           technicalTerm: 'Pinning workflow actions to immutable 40-character Git commit SHAs',
+          tone: 'emerald',
         },
       ],
     },
@@ -135,18 +155,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Stolen librarian pass',
             technicalTerm: 'Compromised maintainer GitHub Personal Access Token (PAT)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Moving every floating version tag onto a tampered edition',
             technicalTerm: 'git push origin --tags --force repointing tags to commit 0e58ed8',
+            tone: 'sky',
           },
           {
             storyTerm: 'Tampered checklist tool',
             technicalTerm: 'Backdoored tj-actions/changed-files dist/index.js payload (CVE-2025-30066)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Fixed serial number defense',
             technicalTerm: 'Full 40-character immutable Git commit SHA pinning in .github/workflows/*.yml',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -159,18 +183,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Workshop unlocked master key',
             technicalTerm: 'Passwordless sudo privileges granted to GitHub-hosted Ubuntu runners',
+            tone: 'amber',
           },
           {
             storyTerm: 'Peering into the live memory notebook of the foreman',
             technicalTerm: 'sudo python3 memdump.py reading /proc/[pid]/mem of Runner.Worker',
+            tone: 'sky',
           },
           {
             storyTerm: 'Lifted vault keys and shipping passes',
             technicalTerm: 'Plaintext CI/CD secrets (AWS keys, NPM tokens, GITHUB_TOKEN, PATs) in RAM',
+            tone: 'rose',
           },
           {
             storyTerm: 'Rigged checklist tool running on the workbench',
             technicalTerm: 'Malicious dist/index.js executing automatically during CI workflow runs',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -183,18 +211,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Avoiding noisy delivery trucks past highway guards',
             technicalTerm: 'Zero outbound C2 network calls bypassing CI runner egress firewalls',
+            tone: 'amber',
           },
           {
             storyTerm: 'Folding every stolen secret twice in a simple disguise',
             technicalTerm: 'Double-Base64 encoding bypassing GitHub Actions single-pass secret masking',
+            tone: 'sky',
           },
           {
             storyTerm: 'Public build-log chalkboard',
             technicalTerm: 'Publicly viewable GitHub Actions workflow execution logs',
+            tone: 'rose',
           },
           {
             storyTerm: 'Reading secrets quietly from across the street',
             technicalTerm: 'Offline scraping of public repository build logs to harvest leaked tokens',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -211,18 +243,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Spare warehouse key left inside an old shipping box',
           technicalTerm: 'Residual Google Cloud Storage (GCS) service account credential in a Docker image layer',
+          tone: 'amber',
         },
         {
           storyTerm: 'Adding one hidden line to the script on the public counter',
           technicalTerm: 'Tampering with the hosted codecov.sh Bash Uploader script in GCS',
+          tone: 'sky',
         },
         {
           storyTerm: 'Running the script blind and mailing back the factory key ring',
           technicalTerm: 'Unverified curl | bash execution exfiltrating $(env) CI variables to attacker IPs',
+          tone: 'rose',
         },
         {
           storyTerm: 'Walking straight into customer private blueprint rooms',
           technicalTerm: 'Cloning private Git repositories and abusing stolen cloud and signing tokens',
+          tone: 'emerald',
         },
       ],
     },
@@ -234,18 +270,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Discarded container crate',
             technicalTerm: 'Codecov Docker image build layer exposing a residual credential',
+            tone: 'amber',
           },
           {
             storyTerm: 'Forgotten storage-room key',
             technicalTerm: 'Leaked Google Cloud Storage (GCS) service account key',
+            tone: 'sky',
           },
           {
             storyTerm: 'Public delivery shelf',
             technicalTerm: 'Hosted https://codecov.io/bash script object in cloud storage',
+            tone: 'rose',
           },
           {
             storyTerm: 'Single silent forwarding line',
             technicalTerm: 'Injected curl POST one-liner capturing all CI runner environment variables',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -258,18 +298,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pulling and running the unsealed script blindly',
             technicalTerm: 'Unverified bash <(curl -s https://codecov.io/bash) CI pipeline invocation',
+            tone: 'amber',
           },
           {
             storyTerm: 'Key cards and tokens sitting on the assembly bench',
             technicalTerm: 'CI runner environment variables exposed via $(env) command substitution',
+            tone: 'sky',
           },
           {
             storyTerm: 'Unmarked post-office box',
             technicalTerm: 'Attacker-controlled collection servers (178.62.86.114 and 104.248.94.23)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Silent mailing line',
             technicalTerm: 'Background curl HTTP POST exfiltration blended into normal CI coverage uploads',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -282,18 +326,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Stolen customer key rings',
             technicalTerm: 'Exfiltrated GITHUB_TOKEN, Personal Access Tokens, and cloud service keys',
+            tone: 'amber',
           },
           {
             storyTerm: 'Private blueprint vaults',
             technicalTerm: 'Downstream victim private Git repositories and source archives',
+            tone: 'sky',
           },
           {
             storyTerm: 'Entering from outside the factory with bot keys',
             technicalTerm: 'Unauthorized git.clone operations originating from non-CI external IP addresses',
+            tone: 'rose',
           },
           {
             storyTerm: 'Additional signing keys harvested inside',
             technicalTerm: 'Secondary supply-chain credentials enabling follow-on enterprise compromises',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -310,18 +358,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Master building-management dispatch console',
           technicalTerm: 'Internet-exposed Kaseya VSA Managed Service Provider (MSP) server',
+          tone: 'amber',
         },
         {
           storyTerm: 'Breaking past the dispatch front lock',
           technicalTerm: 'CVE-2021-30116 authentication bypass on /dl.asp uploading agent.crt',
+          tone: 'sky',
         },
         {
           storyTerm: 'Fake urgent maintenance order unplugging fire alarms',
           technicalTerm: 'Pushed "Kaseya VSA Agent Hot-fix" disabling Windows Defender and decoding agent.exe',
+          tone: 'rose',
         },
         {
           storyTerm: 'Slipping a poisoned part into an authentic guard tool',
           technicalTerm: 'Older signed MsMpEng.exe DLL side-loading REvil ransomware (mpsvc.dll)',
+          tone: 'emerald',
         },
       ],
     },
@@ -333,18 +385,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unpatched backdoor window on the dispatch console',
             technicalTerm: 'Unauthenticated HTTP POST to /dl.asp exploiting CVE-2021-30116',
+            tone: 'amber',
           },
           {
             storyTerm: 'Disguised parcel labeled as an official certificate',
             technicalTerm: 'Base64-encoded payload staged as c:\\kworking\\agent.crt',
+            tone: 'sky',
           },
           {
             storyTerm: 'Central dispatch console',
             technicalTerm: 'Compromised Kaseya VSA management server controlling downstream MSP agents',
+            tone: 'rose',
           },
           {
             storyTerm: 'Holiday weekend timing',
             technicalTerm: 'Coordinated Friday afternoon launch minimizing immediate SOC response',
+            tone: 'emerald',
           },
         ],
       },
@@ -355,18 +411,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Trusted dispatch megaphone broadcasting an emergency order',
             technicalTerm: 'Kaseya VSA Agent Procedure pushed as "Kaseya VSA Agent Hot-fix"',
+            tone: 'amber',
           },
           {
             storyTerm: 'Local building agents obeying automatically',
             technicalTerm: 'Trusted AgentMon.exe executing PowerShell commands as NT AUTHORITY\\SYSTEM',
+            tone: 'sky',
           },
           {
             storyTerm: 'Switching off every smoke detector',
             technicalTerm: 'PowerShell Set-MpPreference disabling Windows Defender real-time monitoring',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unpacking the certificate parcel into a live toolkit',
             technicalTerm: 'certutil.exe -decode c:\\kworking\\agent.crt c:\\kworking\\agent.exe',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -379,18 +439,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Older genuinely stamped security-guard badge machine',
             technicalTerm: 'Legitimate older Microsoft-signed Windows Defender binary (MsMpEng.exe) dropped to C:\\Windows\\',
+            tone: 'amber',
           },
           {
             storyTerm: 'Counterfeit internal gear bearing the expected spare-part name',
             technicalTerm: 'Malicious REvil ransomware payload named mpsvc.dll placed beside MsMpEng.exe',
+            tone: 'sky',
           },
           {
             storyTerm: 'Guard machine automatically loading the adjacent gear',
             technicalTerm: 'DLL search-order side-loading executing mpsvc.dll inside a signed Microsoft process',
+            tone: 'rose',
           },
           {
             storyTerm: 'Simultaneous lockouts across every customer tower',
             technicalTerm: 'Mass REvil file encryption across MSP-managed downstream enterprises',
+            tone: 'emerald',
           },
         ],
       },
@@ -405,18 +469,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Tasting robot reading visitor cards inside the locked head-chef kitchen',
           technicalTerm: 'GitHub Actions pull_request_target workflow interpolating untrusted fork branch names',
+          tone: 'amber',
         },
         {
           storyTerm: 'Stealing the factory official distribution stamp',
           technicalTerm: 'Harvested PYPI_TOKEN used to publish poisoned ultralytics v8.3.41 to v8.3.46',
+          tone: 'sky',
         },
         {
           storyTerm: 'Hidden coin-minting gadget inside the recipe kit',
           technicalTerm: 'Backdoored ultralytics/utils/downloads.py fetching XMRig cryptocurrency miner',
+          tone: 'rose',
         },
         {
           storyTerm: 'Hijacked research kitchens worldwide',
           technicalTerm: 'Downstream ML workstations and Colab notebooks executing /tmp/ultralytics_runner',
+          tone: 'emerald',
         },
       ],
     },
@@ -428,18 +496,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Public suggestion card from outside the gate',
             technicalTerm: 'External fork pull request triggering a pull_request_target GitHub Actions workflow',
+            tone: 'amber',
           },
           {
             storyTerm: 'Title label hiding extra shell punctuation marks',
             technicalTerm: 'Crafted Git branch name containing command separators injecting shell execution',
+            tone: 'sky',
           },
           {
             storyTerm: 'Automated tasting robot inside the secure vault',
             technicalTerm: 'Privileged CI workflow runner holding repository write tokens and release secrets',
+            tone: 'rose',
           },
           {
             storyTerm: 'Obeying the outsider during routine intake',
             technicalTerm: 'PwnRequest remote command execution inside the Ultralytics CI pipeline',
+            tone: 'emerald',
           },
         ],
       },
@@ -450,18 +522,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Factory shipping-house distribution stamp',
             technicalTerm: 'Compromised PYPI_TOKEN publishing credentials',
+            tone: 'amber',
           },
           {
             storyTerm: 'Silent remote-fetching routine inside the download helper',
             technicalTerm: 'Malicious code injected into ultralytics/utils/downloads.py safe_download()',
+            tone: 'sky',
           },
           {
             storyTerm: 'Poisoned fresh editions on public pantry shelves',
             technicalTerm: 'Compromised PyPI releases ultralytics v8.3.41 through v8.3.46',
+            tone: 'rose',
           },
           {
             storyTerm: 'Clean recipe ledger left behind',
             technicalTerm: 'Mismatch between signed Git source tags and published PyPI wheel archives',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -474,18 +550,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unpacking the fresh kit in a research lab',
             technicalTerm: 'Installing poisoned ultralytics on ML workstations or Google Colab notebooks',
+            tone: 'amber',
           },
           {
             storyTerm: 'Coin-mining engine hidden in a temporary closet',
             technicalTerm: 'Downloaded XMRig miner executing as /tmp/ultralytics_runner',
+            tone: 'sky',
           },
           {
             storyTerm: 'Burning the closet door tag',
             technicalTerm: 'Self-unlinked Linux binary running from /tmp/* (deleted)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Phoning the intruder mining depot',
             technicalTerm: 'Outbound mining pool connection to connect.consrensys.com:8080',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -502,18 +582,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Tiny brass screws packed inside millions of kits',
           technicalTerm: 'Foundational transitive NPM packages ua-parser-js, coa, and rc',
+          tone: 'amber',
         },
         {
           storyTerm: 'Warehouse login lacking a pocket code',
           technicalTerm: 'Compromised NPM maintainer accounts without 2FA enforcement',
+          tone: 'sky',
         },
         {
           storyTerm: 'Spring-loaded trap inside the box lid',
           technicalTerm: 'Malicious package.json preinstall hook running preinstall.js and compile.bat',
+          tone: 'rose',
         },
         {
           storyTerm: 'Launching a credential thief with a trusted workshop tool',
           technicalTerm: 'regsvr32.exe -s create.dll executing the DanaBot password stealer silently',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -527,18 +611,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Component-maker account lacking a pocket-code lock',
             technicalTerm: 'Maintainer NPM account without two-factor authentication (2FA) for publishing',
+            tone: 'amber',
           },
           {
             storyTerm: 'Routine-looking version bump',
             technicalTerm: 'Malicious patch versions published for ua-parser-js, coa, and rc',
+            tone: 'sky',
           },
           {
             storyTerm: 'Spring-loaded lid script',
             technicalTerm: 'package.json preinstall lifecycle hook executing automatically on install',
+            tone: 'rose',
           },
           {
             storyTerm: 'Workshops pulling the crate transitively',
             technicalTerm: 'Millions of downstream Node.js builds auto-resolving caret dependency ranges',
+            tone: 'emerald',
           },
         ],
       },
@@ -549,18 +637,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Routine morning toolbox refresh',
             technicalTerm: 'Developer or CI runner executing npm install',
+            tone: 'amber',
           },
           {
             storyTerm: 'Checking whether the workshop runs Windows or Linux',
             technicalTerm: 'preinstall.js inspecting process.platform to branch payloads by OS',
+            tone: 'sky',
           },
           {
             storyTerm: 'Hidden helper script fetching the module',
             technicalTerm: 'node.exe spawning cmd.exe /c compile.bat invoking curl.exe',
+            tone: 'rose',
           },
           {
             storyTerm: 'Concealed espionage module in the local parts bin',
             technicalTerm: 'Downloaded sdd.dll (create.dll) staged inside node_modules',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -573,18 +665,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Official parts-registration machine set on mute',
             technicalTerm: 'Signed Microsoft COM utility regsvr32.exe invoked with the -s silent flag',
+            tone: 'amber',
           },
           {
             storyTerm: 'Awakening the password thief inside the machine',
             technicalTerm: 'regsvr32.exe -s create.dll invoking DllRegisterServer for DanaBot',
+            tone: 'sky',
           },
           {
             storyTerm: 'Sweeping browser vaults and developer keys',
             technicalTerm: 'DanaBot credential harvesting across browser profiles, SSH keys, and tokens',
+            tone: 'rose',
           },
           {
             storyTerm: 'Blending past front-gate guard checks',
             technicalTerm: 'Living-off-the-land signed binary proxy execution (MITRE T1218.010)',
+            tone: 'emerald',
           },
         ],
       },
@@ -599,18 +695,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Shared banner hung without a tamper-proof weight seal',
           technicalTerm: 'External <script src="https://cdn.polyfill.io/..."> lacking Subresource Integrity (SRI)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Shady new owner checking who walks into each store',
           technicalTerm: 'Compromised cdn.polyfill.io fingerprinting HTTP User-Agent, Referer, and geolocation',
+          tone: 'sky',
         },
         {
           storyTerm: 'Hidden pickpocket script served conditionally',
           technicalTerm: 'Time-delayed dynamic JavaScript payload redirecting mobile visitors (CVE-2024-38526)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Operating inside the storefront trusted showroom',
           technicalTerm: 'Full first-party Same-Origin Policy (DOM and cookie) execution context',
+          tone: 'emerald',
         },
       ],
     },
@@ -622,18 +722,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Outside helper banner on the front counter',
             technicalTerm: '<script src="https://cdn.polyfill.io/v2/polyfill.min.js"> embedded in web pages',
+            tone: 'amber',
           },
           {
             storyTerm: 'Missing cryptographic wax seal',
             technicalTerm: 'Absence of integrity="sha384-..." Subresource Integrity (SRI) verification',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shady new owner buying the sign warehouse',
             technicalTerm: 'Acquisition and weaponization of the polyfill.io domain and CDN infrastructure',
+            tone: 'rose',
           },
           {
             storyTerm: 'Instant exposure across a hundred thousand shops',
             technicalTerm: 'Supply-chain fan-out affecting every site referencing the unpinned CDN domain',
+            tone: 'emerald',
           },
         ],
       },
@@ -644,18 +748,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Peeking at the visitor hat, shoes, and home town',
             technicalTerm: 'Server-side inspection of HTTP User-Agent, Referer, and GeoIP headers',
+            tone: 'amber',
           },
           {
             storyTerm: 'Spotless script handed to desktop security inspectors',
             technicalTerm: 'Conditional evasion serving benign polyfills to automated scanners and researchers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Delayed hijacking payload handed to mobile shoppers',
             technicalTerm: 'Obfuscated redirector script firing after a delay on targeted mobile sessions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hijacked sign warehouse',
             technicalTerm: 'Attacker-operated cdn.polyfill.io edge server generating tailored responses',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -668,18 +776,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Invited directly onto the showroom floor',
             technicalTerm: 'Third-party script executing with full first-party Same-Origin Policy (SOP) rights',
+            tone: 'amber',
           },
           {
             storyTerm: 'Lookalike tracker script pulled in mid-visit',
             technicalTerm: 'Unauthorized secondary script loaded from lookalike domain www.googie-anaiytics.com',
+            tone: 'sky',
           },
           {
             storyTerm: 'Inspecting customer trays and hijacking visits',
             technicalTerm: 'Full DOM access, session interception, and silent browser redirection',
+            tone: 'rose',
           },
           {
             storyTerm: 'Showroom guest-list rulebook',
             technicalTerm: 'Strict Content-Security-Policy (CSP) script-src allowlist blocking rogue domains',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -696,18 +808,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Former employee keycard never canceled after offboarding',
           technicalTerm: 'Phished npmjs account retaining publish rights to @ledgerhq/connect-kit',
+          tone: 'amber',
         },
         {
           storyTerm: 'Shared courier truck delivering unpinned updates to hundreds of banks',
           technicalTerm: '@ledgerhq/connect-kit-loader fetching unpinned jsDelivr @ledgerhq/connect-kit@1',
+          tone: 'sky',
         },
         {
           storyTerm: 'Counterfeit vault signing screen',
           technicalTerm: 'Angel Drainer rogue WalletConnect modal using an attacker Project ID',
+          tone: 'rose',
         },
         {
           storyTerm: 'Tricking customers into signing away their holdings',
           technicalTerm: 'Malicious eth_signTypedData_v4 (Permit2) and setApprovalForAll drain transactions',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -721,18 +837,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Former worker badge never revoked at offboarding',
             technicalTerm: 'Active npmjs maintainer rights left on a former Ledger employee account',
+            tone: 'amber',
           },
           {
             storyTerm: 'Convincing phishing lure',
             technicalTerm: 'Spear-phishing campaign harvesting the former employee NPM credentials',
+            tone: 'sky',
           },
           {
             storyTerm: 'Three poisoned release editions on the official shelf',
             technicalTerm: 'Published @ledgerhq/connect-kit versions 1.1.5, 1.1.6, and 1.1.7',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden payload packed inside the connector',
             technicalTerm: 'Angel Drainer JavaScript bundle embedded in the official package release',
+            tone: 'emerald',
           },
         ],
       },
@@ -743,18 +863,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Partner shops that bolted down their local parts list',
             technicalTerm: 'DeFi frontends with locked local package-lock.json files',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tiny starter loader fetching the newest edition automatically',
             technicalTerm: '@ledgerhq/connect-kit-loader pulling unpinned jsDelivr @1 CDN bundle',
+            tone: 'sky',
           },
           {
             storyTerm: 'Public delivery truck',
             technicalTerm: 'cdn.jsdelivr.net serving newly published npm versions within minutes',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hundreds of live finance storefronts poisoned at once',
             technicalTerm: 'Simultaneous downstream impact across SushiSwap, Revoke.cash, and Web3 dApps',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -767,18 +891,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pixel-perfect counterfeit signature pad',
             technicalTerm: 'Rogue WalletConnect modal rendered using an attacker WalletConnect Project ID',
+            tone: 'amber',
           },
           {
             storyTerm: 'Blank power-of-attorney slip',
             technicalTerm: 'Malicious Permit2 eth_signTypedData_v4 and setApprovalForAll signatures',
+            tone: 'sky',
           },
           {
             storyTerm: 'Emptying every asset in the customer vault',
             technicalTerm: 'Automated Angel Drainer transfer of ERC-20 tokens and NFTs to drainer addresses',
+            tone: 'rose',
           },
           {
             storyTerm: 'Pre-signing vault safety preview',
             technicalTerm: 'Wallet transaction simulation flagging drainer spender contracts before signing',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -795,18 +923,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Lookalike courier website stealing a publishing seal',
           technicalTerm: 'Spear-phishing NPM maintainer to hijack @solana/web3.js and @rspack/core publish tokens',
+          tone: 'amber',
         },
         {
           storyTerm: 'Silent key-copying scribe inside the key-loading latch',
           technicalTerm: 'Injected addToQueue() hook inside Keypair.fromSecretKey and Keypair.fromSeed',
+          tone: 'sky',
         },
         {
           storyTerm: 'Disguised delivery-address stamps on routine envelopes',
           technicalTerm: '64-byte private keys smuggled inside fake CF-Connecting-IP and CF-Ray HTTP headers',
+          tone: 'rose',
         },
         {
           storyTerm: 'Secret external mailbox receiving the stolen keys',
           technicalTerm: 'Attacker collection endpoint at sol-rpc.xyz harvesting wallet and CI secrets',
+          tone: 'emerald',
         },
       ],
     },
@@ -818,18 +950,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Lookalike guild portal notice',
             technicalTerm: 'Spoofed NPM security domain spear-phishing package maintainers',
+            tone: 'amber',
           },
           {
             storyTerm: 'Hijacked publishing passkey',
             technicalTerm: 'Stolen NPM automation and publish token for @solana/web3.js and @rspack/core',
+            tone: 'sky',
           },
           {
             storyTerm: 'Freshly backdoored editions in the registry',
             technicalTerm: 'Malicious @solana/web3.js versions 1.95.6 and 1.95.7 published to npmjs',
+            tone: 'rose',
           },
           {
             storyTerm: 'Downstream automated workshops',
             technicalTerm: 'Developer workstations and CI pipelines using unpinned caret ranges (^1.95.0)',
+            tone: 'emerald',
           },
         ],
       },
@@ -840,18 +976,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Refreshing the parts shelf automatically',
             technicalTerm: 'npm update resolving unpinned caret version ^1.95.0 to poisoned 1.95.6',
+            tone: 'amber',
           },
           {
             storyTerm: 'Official key-loading hinge',
             technicalTerm: 'Keypair.fromSecretKey() and Keypair.fromSeed() core SDK methods',
+            tone: 'sky',
           },
           {
             storyTerm: 'Hidden scribe copying the master secret',
             technicalTerm: 'Injected addToQueue() exfiltration hook capturing raw private key bytes',
+            tone: 'rose',
           },
           {
             storyTerm: 'Normal vault work continuing without interruption',
             technicalTerm: 'Silent background staging preventing immediate runtime errors or crashes',
+            tone: 'emerald',
           },
         ],
       },
@@ -862,18 +1002,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Watchful mailroom inspectors',
             technicalTerm: 'Outbound proxy, DLP, and RPC network telemetry monitors',
+            tone: 'amber',
           },
           {
             storyTerm: 'Fake transit-routing stamps on web envelopes',
             technicalTerm: 'Stolen keys hidden inside spoofed CF-Connecting-IP and CF-Ray HTTP headers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Impostor courier depot',
             technicalTerm: 'Attacker-controlled exfiltration server at sol-rpc.xyz',
+            tone: 'rose',
           },
           {
             storyTerm: 'Empty customer vaults after receipt',
             technicalTerm: 'Automated wallet sweeping using recovered 64-byte Solana private keys',
+            tone: 'emerald',
           },
         ],
       },
@@ -888,18 +1032,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Studio publishing pass pushing three backdoored flipbooks',
           technicalTerm: 'Compromised NPM token publishing @lottiefiles/lottie-player v2.0.5, 2.0.6, and 2.0.7',
+          tone: 'amber',
         },
         {
           storyTerm: 'Hidden radio beacon dialing an outside handler',
           technicalTerm: 'Obfuscated bundle opening WebSocket C2 to wss://castleservices.org',
+          tone: 'sky',
         },
         {
           storyTerm: 'Fake glass login sheet laid over trusted pages',
           technicalTerm: 'Dynamic DOM modal overlay injected inside victim Web3 applications',
+          tone: 'rose',
         },
         {
           storyTerm: 'Draining visitor wallets through the fake sheet',
           technicalTerm: 'AceDrainer eth_sendTransaction and Permit2 malicious signing requests',
+          tone: 'emerald',
         },
       ],
     },
@@ -911,18 +1059,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Stolen studio access token',
             technicalTerm: 'Compromised @lottiefiles NPM maintainer publish credential',
+            tone: 'amber',
           },
           {
             storyTerm: 'Three rapid-fire compromised editions',
             technicalTerm: 'Poisoned @lottiefiles/lottie-player versions 2.0.5, 2.0.6, and 2.0.7',
+            tone: 'sky',
           },
           {
             storyTerm: 'Sites pulling the newest edition live without a hash lock',
             technicalTerm: 'Unpinned CDN script tags loading @lottiefiles/lottie-player@latest or @2',
+            tone: 'rose',
           },
           {
             storyTerm: 'Appended hidden payload inside the flipbook',
             technicalTerm: 'Obfuscated AceDrainer JavaScript loader bundled into lottie-player.js',
+            tone: 'emerald',
           },
         ],
       },
@@ -933,18 +1085,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Webpage playing a decorative animation',
             technicalTerm: 'Victim browser loading unpinned lottie-player.js inside a trusted site',
+            tone: 'amber',
           },
           {
             storyTerm: 'Live two-way radio channel',
             technicalTerm: 'Outbound WebSocket connection established to wss://castleservices.org',
+            tone: 'sky',
           },
           {
             storyTerm: 'Checking for valuable digital keys',
             technicalTerm: 'Browser wallet extension detection (window.ethereum) inside the page context',
+            tone: 'rose',
           },
           {
             storyTerm: 'Outside command post directing next moves',
             technicalTerm: 'Remote AceDrainer C2 server issuing real-time DOM overlay instructions',
+            tone: 'emerald',
           },
         ],
       },
@@ -955,18 +1111,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Crystal-clear counterfeit prompt over the trusted window',
             technicalTerm: 'Injected full-screen AceDrainer modal overlay inside the host DOM',
+            tone: 'amber',
           },
           {
             storyTerm: 'Host site own trusted banner',
             technicalTerm: 'Legitimate victim domain URL bar lending visual authenticity to the prompt',
+            tone: 'sky',
           },
           {
             storyTerm: 'Sweeping vault-transfer slip',
             technicalTerm: 'Crafted eth_sendTransaction and Permit2 approval prompts sent to the wallet',
+            tone: 'rose',
           },
           {
             storyTerm: 'Direct asset transfer to the attacker',
             technicalTerm: 'On-chain draining of user tokens immediately upon wallet signature',
+            tone: 'emerald',
           },
         ],
       },
@@ -981,18 +1141,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Silent pocket-picking program lifting a stamped two-factor pass',
           technicalTerm: 'macOS infostealer stealing a 2FA-authenticated browser session cookie',
+          tone: 'amber',
         },
         {
           storyTerm: 'Replaying the active pass from abroad to enter the control room',
           technicalTerm: 'Foreign proxy session replay accessing CircleCI production databases and KMS keys',
+          tone: 'sky',
         },
         {
           storyTerm: 'Copying both the encrypted lockboxes and the decoding key',
           technicalTerm: 'Exfiltrating customer secret databases alongside runtime encryption keys',
+          tone: 'rose',
         },
         {
           storyTerm: 'Unlocking customer cloud and code keys offline',
           technicalTerm: 'Offline decryption and replay of customer GitHub OAuth tokens and AWS keys',
+          tone: 'emerald',
         },
       ],
     },
@@ -1004,18 +1168,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Trojanized helper tool on a work laptop',
             technicalTerm: 'Third-party macOS infostealer executing on a privileged engineer endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Already-verified security wristband inside the browser drawer',
             technicalTerm: 'Active 2FA-backed SSO browser session cookie stolen from disk/keychain',
+            tone: 'sky',
           },
           {
             storyTerm: 'Skipping the two-factor badge gate',
             technicalTerm: 'Session cookie theft bypassing hardware MFA and antivirus detection',
+            tone: 'rose',
           },
           {
             storyTerm: 'Privileged engineer identity',
             technicalTerm: 'Production access rights capable of generating customer data tokens',
+            tone: 'emerald',
           },
         ],
       },
@@ -1026,18 +1194,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Wearing the stolen wristband from an overseas booth',
             technicalTerm: 'Replaying the hijacked session cookie from a foreign proxy IP address',
+            tone: 'amber',
           },
           {
             storyTerm: 'Encrypted customer secret ledgers',
             technicalTerm: 'Exfiltrated CircleCI production database dumps containing encrypted CI secrets',
+            tone: 'sky',
           },
           {
             storyTerm: 'Live master decoding key in the engine room',
             technicalTerm: 'Stolen runtime encryption / KMS key material protecting customer vaults',
+            tone: 'rose',
           },
           {
             storyTerm: 'Central vault control room',
             technicalTerm: 'Privileged internal CircleCI production data and secrets infrastructure',
+            tone: 'emerald',
           },
         ],
       },
@@ -1048,18 +1220,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pairing the master key with copied ledgers offline',
             technicalTerm: 'Offline decryption of customer environment variables, SSH keys, and OAuth tokens',
+            tone: 'amber',
           },
           {
             storyTerm: 'Freshly uncovered code and cloud keys',
             technicalTerm: 'Decrypted customer GitHub OAuth tokens, AWS IAM keys, and project API tokens',
+            tone: 'sky',
           },
           {
             storyTerm: 'Entering downstream company estates',
             technicalTerm: 'Downstream replay of stolen CI/CD secrets against customer repos and clouds',
+            tone: 'rose',
           },
           {
             storyTerm: 'Emergency lock replacement across all tenants',
             technicalTerm: 'Mandatory global rotation of all CircleCI-stored OAuth, SSH, and cloud secrets',
+            tone: 'emerald',
           },
         ],
       },
@@ -1074,18 +1250,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Nonexistent room slip with a hidden semicolon fold',
           technicalTerm: 'Unauthenticated ?jsp=/app/rest/...;.jsp auth bypass (CVE-2024-27198)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Minting a brand-new administrator keycard',
           technicalTerm: 'Creating a privileged TeamCity Bearer access token via REST API',
+          tone: 'sky',
         },
         {
           storyTerm: 'Poisoned assembly step on the production conveyor belt',
           technicalTerm: 'Injected malicious build step via /app/rest/buildTypes accessing signing keys',
+          tone: 'rose',
         },
         {
           storyTerm: 'Factory signing press stamping genuine approval seals',
           technicalTerm: 'ProdRelease agent compiling and officially code-signing a backdoored release',
+          tone: 'emerald',
         },
       ],
     },
@@ -1097,18 +1277,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Empty hallway address with a hidden semicolon trick',
             technicalTerm: 'Non-existent path paired with ?jsp=/app/rest/...;.jsp matrix parameter',
+            tone: 'amber',
           },
           {
             storyTerm: 'Gate guard waving the slip past the badge booth',
             technicalTerm: 'TeamCity authentication filter bypassed by CVE-2024-27198 path confusion',
+            tone: 'sky',
           },
           {
             storyTerm: 'Fresh master admin keycard minted on demand',
             technicalTerm: 'Newly generated TeamCity administrator Bearer JWT (Authorization: Bearer eyJ0eXAi...)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Back-office token desk',
             technicalTerm: 'Unprotected internal /app/rest/users/id:1/tokens REST endpoint',
+            tone: 'emerald',
           },
         ],
       },
@@ -1119,18 +1303,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Master assembly-line schedule',
             technicalTerm: 'TeamCity /app/rest/buildTypes API listing production build configurations',
+            tone: 'amber',
           },
           {
             storyTerm: 'Flagship customer release belt',
             technicalTerm: 'ProdRelease CI/CD pipeline holding code-signing certificates and secrets',
+            tone: 'sky',
           },
           {
             storyTerm: 'Covert extra build step inserted before signing',
             technicalTerm: 'Injected malicious compilation or patch runner step via TeamCity REST API',
+            tone: 'rose',
           },
           {
             storyTerm: 'Newly minted admin keycard',
             technicalTerm: 'Hijacked administrator Bearer token authenticating pipeline modifications',
+            tone: 'emerald',
           },
         ],
       },
@@ -1141,18 +1329,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unsuspecting factory robot running the schedule',
             technicalTerm: 'TeamCity build agent executing the tampered ProdRelease pipeline',
+            tone: 'amber',
           },
           {
             storyTerm: 'Welding a hidden backdoor inside the finished product',
             technicalTerm: 'Malicious build step compiling backdoor code into the official release binary',
+            tone: 'sky',
           },
           {
             storyTerm: 'Authentic cryptographic warranty seal',
             technicalTerm: 'Legitimate vendor code-signing key applied automatically by the release stage',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shipping trojanized crates to trusting customers',
             technicalTerm: 'Downstream supply-chain distribution of officially signed backdoored installers',
+            tone: 'emerald',
           },
         ],
       },
@@ -1167,18 +1359,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Public downtown market checked before the private warehouse',
           technicalTerm: 'pip --extra-index-url prioritizing public PyPI over download.pytorch.org/whl/nightly',
+          tone: 'amber',
         },
         {
           storyTerm: 'Booth rented under the exact internal part name',
           technicalTerm: 'Dependency-confusion package named torchtriton squatted on public PyPI',
+          tone: 'sky',
         },
         {
           storyTerm: 'Disguised spy box unpacking automatically on research benches',
           technicalTerm: 'triton/__init__.py launching compiled ELF stealer binary (triton/runtime/triton)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Whispering stolen keys out as tiny postal-lookup cards',
           technicalTerm: 'AES-encrypted DNS tunneling exfiltration via wheezy.io to *.h4ck.cfd',
+          tone: 'emerald',
         },
       ],
     },
@@ -1190,18 +1386,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Internal helper name unreserved in public',
             technicalTerm: 'Internal PyTorch nightly dependency named torchtriton',
+            tone: 'amber',
           },
           {
             storyTerm: 'Claiming the exact name on the public shelf',
             technicalTerm: 'Public PyPI namespace squatting exploiting dependency confusion (T1195.001)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Automated buyer preferring the public fake',
             technicalTerm: 'pip --extra-index-url resolution precedence favoring public PyPI packages',
+            tone: 'rose',
           },
           {
             storyTerm: 'Lab private parts bin bypassed',
             technicalTerm: 'Official internal index at https://download.pytorch.org/whl/nightly',
+            tone: 'emerald',
           },
         ],
       },
@@ -1212,18 +1412,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Opening the library for routine training work',
             technicalTerm: 'Importing torch or triton on ML developer workstations or GPU nodes',
+            tone: 'amber',
           },
           {
             storyTerm: 'Box startup lid triggering automatically',
             technicalTerm: 'triton/__init__.py executing on module import',
+            tone: 'sky',
           },
           {
             storyTerm: 'Compiled espionage tool inside the box',
             technicalTerm: 'Bundled Linux ELF stealer binary at triton/runtime/triton',
+            tone: 'rose',
           },
           {
             storyTerm: 'Sweeping system keys and home-folder secrets',
             technicalTerm: 'Harvesting /etc/passwd, SSH keys, git configs, and environment variables',
+            tone: 'emerald',
           },
         ],
       },
@@ -1234,18 +1438,22 @@ export const SUPPLY_CHAIN_CICD_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Blocked cargo trucks at the front web gate',
             technicalTerm: 'Corporate HTTP/HTTPS egress proxies restricting direct web exfiltration',
+            tone: 'amber',
           },
           {
             storyTerm: 'Compressing and locking secrets into tiny fragments',
             technicalTerm: 'AES encryption and chunking inside the triton ELF stealer binary',
+            tone: 'sky',
           },
           {
             storyTerm: 'Routine address-book lookup slips',
             technicalTerm: 'DNS query subdomain exfiltration tunneling via wheezy.io to *.h4ck.cfd',
+            tone: 'rose',
           },
           {
             storyTerm: 'Watchful network routers passing lookups freely',
             technicalTerm: 'Uninspected UDP/53 DNS resolution leaking encrypted secrets out of GPU clusters',
+            tone: 'emerald',
           },
         ],
       },

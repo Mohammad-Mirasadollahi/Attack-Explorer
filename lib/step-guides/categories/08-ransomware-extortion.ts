@@ -13,18 +13,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Jamming the mailbox and calling as a helpful technician',
           technicalTerm: 'Email bombing followed by external Microsoft Teams vishing and QuickAssist.exe',
+          tone: 'amber',
         },
         {
           storyTerm: 'Outdated inspector badge unplugging security alarm wires',
           technicalTerm: 'Backstab BYOVD tool abusing signed PROCEXP.SYS to strip EDR handles',
+          tone: 'sky',
         },
         {
           storyTerm: 'Wheeling boxes of records out the back door',
           technicalTerm: 'SoftPerfect network discovery and Rclone cloud data exfiltration',
+          tone: 'rose',
         },
         {
           storyTerm: 'Shredding backup notebooks and padlocking every cabinet',
           technicalTerm: 'vssadmin delete shadows /all /quiet followed by ChaCha20/RSA-4096 (.basta) encryption',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -38,18 +42,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Thousands of noisy junk circulars flooding the inbox',
             technicalTerm: 'Automated SMTP email bombing via mass newsletter subscription forms',
+            tone: 'amber',
           },
           {
             storyTerm: 'External office intercom posing as IT support',
             technicalTerm: 'External tenant Microsoft Teams chat and voice phishing by Storm-1811',
+            tone: 'sky',
           },
           {
             storyTerm: 'Built-in remote-control code',
             technicalTerm: 'Windows QuickAssist.exe interactive remote screen-control session',
+            tone: 'rose',
           },
           {
             storyTerm: 'Bypassing email attachment scanners',
             technicalTerm: 'Human-authorized screen takeover requiring zero malicious email attachments',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -62,18 +70,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pulling down a toolbox through the remote-help window',
             technicalTerm: 'QuickAssist.exe spawning curl.exe or msiexec.exe to stage payloads',
+            tone: 'amber',
           },
           {
             storyTerm: 'Older signed maintenance badge severing alarm monitors',
             technicalTerm: 'backstab.exe loading signed PROCEXP.SYS to close EDR protected process handles',
+            tone: 'sky',
           },
           {
             storyTerm: 'Scanning hallways for open file rooms',
             technicalTerm: 'SoftPerfect Network Scanner enumerating internal servers and SMB shares',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shipping confidential folders through a courier tunnel',
             technicalTerm: 'Rclone exfiltrating staged archives to attacker cloud storage',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -86,18 +98,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Spreading down every connected corridor',
             technicalTerm: 'Domain-wide lateral propagation using PsExec or WMI across enterprise hosts',
+            tone: 'amber',
           },
           {
             storyTerm: 'Shredding every backup recovery ledger',
             technicalTerm: 'vssadmin.exe delete shadows /all /quiet wiping Volume Shadow Copies',
+            tone: 'sky',
           },
           {
             storyTerm: 'Double-keyed locks across every cabinet',
             technicalTerm: 'Black Basta ChaCha20 stream encryption wrapped by RSA-4096 appending .basta',
+            tone: 'rose',
           },
           {
             storyTerm: 'Printed ransom letter on every desk',
             technicalTerm: 'Dropped readme.faa.txt extortion note demanding payment for decryption',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -114,18 +130,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Front lobby door accepting single-factor passwords',
           technicalTerm: 'Cisco ASA / FTD AnyConnect SSLVPN breach via CVE-2023-20269 or CVE-2020-3259',
+          tone: 'amber',
         },
         {
           storyTerm: 'Hidden garden hose threaded out through a back vent',
           technicalTerm: 'chisel.exe reverse SOCKS tunnel bridging attacker tools into the internal LAN',
+          tone: 'sky',
         },
         {
           storyTerm: 'Raiding the backup-vault clerk desk for basement keys',
           technicalTerm: 'Dumping [VeeamBackup].[dbo].[Credentials] via sqlcmd.exe and DPAPI decryption',
+          tone: 'rose',
         },
         {
           storyTerm: 'Shutting off every virtual apartment and padlocking foundation files',
           technicalTerm: 'SSH esxcli vm process kill followed by Rust-based Akira ESXi VMDK encryption',
+          tone: 'emerald',
         },
       ],
     },
@@ -137,18 +157,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Exterior remote-access lobby door',
             technicalTerm: 'WAN-facing Cisco ASA or Firepower Threat Defense (FTD) AnyConnect VPN',
+            tone: 'amber',
           },
           {
             storyTerm: 'Single-password gate flaw',
             technicalTerm: 'CVE-2023-20269 / CVE-2020-3259 or credential stuffing against non-MFA VPN groups',
+            tone: 'sky',
           },
           {
             storyTerm: 'Outside commercial warehouse',
             technicalTerm: 'External VPS and commercial hosting ASNs initiating VPN sessions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Lobby guard book recording the unusual entry',
             technicalTerm: 'Cisco ASA syslog %ASA-6-722022 and %ASA-6-113004 authentication events',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -161,18 +185,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Concealed reverse speaking tube out to the hideout',
             technicalTerm: 'chisel.exe client https://<c2>:8443 R:socks reverse SOCKS proxy',
+            tone: 'amber',
           },
           {
             storyTerm: 'Corporate backup-scheduler credential safe',
             technicalTerm: 'Veeam Backup SQL table [VeeamBackup].[dbo].[Credentials] queried via sqlcmd.exe',
+            tone: 'sky',
           },
           {
             storyTerm: 'Unwrapping the locked backup safe keys',
             technicalTerm: 'DPAPI CryptUnprotectData decryption of stored vCenter and ESXi root passwords',
+            tone: 'rose',
           },
           {
             storyTerm: 'Stairwell leading straight to the basement racks',
             technicalTerm: 'Lateral SSH pivot directly onto VMware ESXi hypervisor management interfaces',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -185,18 +213,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Flipping hard power breakers on running virtual offices',
             technicalTerm: 'Shell loop invoking esxcli vm process list and esxcli vm process kill --type=force',
+            tone: 'amber',
           },
           {
             storyTerm: 'Releasing heavy disk bolts',
             technicalTerm: 'Releasing exclusive hypervisor locks held on *-flat.vmdk virtual disk files',
+            tone: 'sky',
           },
           {
             storyTerm: 'Fast Rust padlocking machine',
             technicalTerm: 'Linux ELF Rust-compiled Akira ESXi encryptor launched from /tmp',
+            tone: 'rose',
           },
           {
             storyTerm: 'Basement audit logs recording the shutdowns',
             technicalTerm: 'ESXi /var/log/shell.log and /var/log/hostd.log forwarded off-host to SIEM',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -213,18 +245,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Custom mechanical scout tucked inside a music closet',
           technicalTerm: 'Grixba .NET reconnaissance scanner (C:\\Users\\Public\\Music\\inf_g.exe)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Custom instant-camera lens photocopying bolted ledgers',
           technicalTerm: 'AlphaVSS.x64.dll and AlphaFS.dll mounting Volume Shadow Copies directly via COM',
+          tone: 'sky',
         },
         {
           storyTerm: 'Bypassing lobby camera tripwires before locking cabinets',
           technicalTerm: 'PEB dynamic API resolution and userland API unhooking inside Play encryptor',
+          tone: 'rose',
         },
         {
           storyTerm: 'Padlocking alternating pages across every cabinet at lightning speed',
           technicalTerm: 'Intermittent 0x100000-byte stride encryption appending .play and 0xdeadbeef footer',
+          tone: 'emerald',
         },
       ],
     },
@@ -236,18 +272,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Self-contained scouting robot in a public media folder',
             technicalTerm: 'Unsigned .NET Costura-packed Grixba scanner staged at C:\\Users\\Public\\Music\\inf_g.exe',
+            tone: 'amber',
           },
           {
             storyTerm: 'Full-sweep scouting orders',
             technicalTerm: 'Command-line flags -m:all or -m:s instructing full domain and AV enumeration',
+            tone: 'sky',
           },
           {
             storyTerm: 'Mapped guard stations and backup vaults',
             technicalTerm: 'Exported CSV inventory of endpoints, AV products, and Veeam/backup servers',
+            tone: 'rose',
           },
           {
             storyTerm: 'Bundled spare parts hidden inside one shell',
             technicalTerm: 'Costura.Fody embedded .NET assemblies loaded directly from memory',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -260,18 +300,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pair of specialized shadow-camera helper lenses',
             technicalTerm: 'AlphaVSS.x64.dll (shadow copy COM wrapper) and AlphaFS.dll (long-path volume I/O)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Clamped-shut corporate ledgers',
             technicalTerm: 'Exclusively locked C:\\Windows\\NTDS\\ntds.dit and live SQL Server .mdf databases',
+            tone: 'sky',
           },
           {
             storyTerm: 'Skipping the noisy standard shadow-copy tool',
             technicalTerm: 'Direct IVssBackupComponents COM invocation bypassing vssadmin.exe CLI alerts',
+            tone: 'rose',
           },
           {
             storyTerm: 'Quiet extraction before extortion',
             technicalTerm: 'Staged database theft fueling Play double-extortion pressure',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -284,18 +328,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Master policy board broadcasting across every floor',
             technicalTerm: 'Active Directory Group Policy Object (GPO) pushing Play ransomware domain-wide',
+            tone: 'amber',
           },
           {
             storyTerm: 'Wiping security inspection tape off its own tools',
             technicalTerm: 'Dynamic PEB API resolution and userland EDR hook removal',
+            tone: 'sky',
           },
           {
             storyTerm: 'Locking alternating one-megabyte blocks at high speed',
             technicalTerm: 'Intermittent 0x100000-byte stride encryption maximizing corruption velocity',
+            tone: 'rose',
           },
           {
             storyTerm: 'Calling card stamped at the bottom of every file',
             technicalTerm: '.play filename extension paired with an embedded 0xdeadbeef file footer marker',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -312,18 +360,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Hidden bulkhead door punching a hole through the security fence',
           technicalTerm: 'PortStarter Golang backdoor adding Windows Firewall allow rules via netsh.exe',
+          tone: 'amber',
         },
         {
           storyTerm: 'Automated script unplugging two hundred guard stations and cameras',
           technicalTerm: 'SilentKill PowerShell script (g.ps1) unhooking AMSI, killing 200+ services, and enabling RestrictedAdmin',
+          tone: 'sky',
         },
         {
           storyTerm: 'Multi-lane mechanical padlocking press rolled across every gallery',
           technicalTerm: 'psexec.exe -d -s deploying MinGW rhysida.exe with LibTomCrypt AES-256-CTR encryption',
+          tone: 'rose',
         },
         {
           storyTerm: 'Bright red warning poster hung over every wall display',
           technicalTerm: 'Desktop wallpaper replacement, .rhysida extensions, and CriticalBreachDetected.pdf',
+          tone: 'emerald',
         },
       ],
     },
@@ -335,18 +387,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Compact custom courier engine in a utility closet',
             technicalTerm: 'PortStarter custom Golang backdoor staged under C:\\ProgramData',
+            tone: 'amber',
           },
           {
             storyTerm: 'Commanding the firewall guard to cut a fresh doorway',
             technicalTerm: 'netsh.exe advfirewall firewall add rule opening attacker listening ports',
+            tone: 'sky',
           },
           {
             storyTerm: 'Building perimeter fence audit log',
             technicalTerm: 'Windows Firewall EventID 2004 logging unauthorized rule additions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Cross-crew shared burglary tool',
             technicalTerm: 'Shared PortStarter backdoor infrastructure linking Rhysida and Vice Society',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -359,18 +415,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Blinding the script-inspection window first',
             technicalTerm: 'SilentKill (g.ps1) patching AMSI in memory before executing payload commands',
+            tone: 'amber',
           },
           {
             storyTerm: 'Switching off two hundred database and backup services',
             technicalTerm: 'PowerShell service-termination loops stopping SQL, backup, and AV services',
+            tone: 'sky',
           },
           {
             storyTerm: 'Altering the security bolt for stolen badge hashes',
             technicalTerm: 'Registry write modifying HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\DisableRestrictedAdmin',
+            tone: 'rose',
           },
           {
             storyTerm: 'Verbatim transcript caught by script cameras',
             technicalTerm: 'PowerShell Operational EventID 4104 capturing SilentKill deobfuscated commands',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -383,18 +443,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pushing the padlocking press down every hallway',
             technicalTerm: 'Domain-wide execution via psexec.exe -d -s launching 64-bit MinGW rhysida.exe',
+            tone: 'amber',
           },
           {
             storyTerm: 'Parallel locking gears sealing every cabinet',
             technicalTerm: 'Multi-threaded statically linked LibTomCrypt AES-256-CTR file encryption',
+            tone: 'sky',
           },
           {
             storyTerm: 'Bright ransom notice stamped on every screen',
             technicalTerm: 'Forced desktop wallpaper lock paired with .rhysida file extensions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Printed extortion booklets dropped in every folder',
             technicalTerm: 'CriticalBreachDetected.pdf ransom demand files generated across directories',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -411,18 +475,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Custom one-of-a-kind secret radio tailored for one victim',
           technicalTerm: 'Per-victim compiled Golang mTLS backdoor with hardcoded X.509 certificate pinning',
+          tone: 'amber',
         },
         {
           storyTerm: 'Splitting one radio line into dozens of parallel whispering corridors',
           technicalTerm: 'In-memory hashicorp/yamux multiplexing paired with armon/go-socks5 lateral proxy',
+          tone: 'sky',
         },
         {
           storyTerm: 'Mapping every shared file room silently',
           technicalTerm: 'SharpShares enumerating accessible SMB shares across internal servers',
+          tone: 'rose',
         },
         {
           storyTerm: 'Trucking out blueprints without breaking a single lock',
           technicalTerm: 'Pure data-exfiltration extortion via renamed rclone.exe (Win.exe) and FTP with zero encryption',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -436,18 +504,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Bespoke compact radio compiled per victim',
             technicalTerm: 'Uniquely compiled 64-bit Golang backdoor masquerading in C:\\Windows\\Temp or ProgramData',
+            tone: 'amber',
           },
           {
             storyTerm: 'Refusing to speak except to one hardcoded wax-sealed tower',
             technicalTerm: 'Mutual TLS (mTLS) authentication with hardcoded X.509 client and server pinning',
+            tone: 'sky',
           },
           {
             storyTerm: 'Distinct internal radio parts stamped inside',
             technicalTerm: 'Embedded Go package symbols main.backconnect, hashicorp/yamux, and armon/go-socks5',
+            tone: 'rose',
           },
           {
             storyTerm: 'Sensor catching the unsigned newcomer',
             technicalTerm: 'Sysmon EventID 1 and EventID 3 flagging unsigned Go binaries making external TLS calls',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -460,18 +532,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Splitting one radio line into dozens of hallway lanes',
             technicalTerm: 'HashiCorp Yamux stream multiplexing layered inside the mTLS connection',
+            tone: 'amber',
           },
           {
             storyTerm: 'Internal doorway relay into corporate rooms',
             technicalTerm: 'Embedded armon/go-socks5 proxy forwarding operator traffic into the internal LAN',
+            tone: 'sky',
           },
           {
             storyTerm: 'Probing internal file rooms and directory cabinets',
             technicalTerm: 'Rapid internal SMB (TCP/445) and LDAP (TCP/389) fan-out from one compromised host',
+            tone: 'rose',
           },
           {
             storyTerm: 'Zero extra proxy tools dropped on disk',
             technicalTerm: 'All-in-one memory-resident proxy evading standalone Chisel/ngrok detections',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -484,18 +560,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Leaving every cabinet unlocked to keep lockdown alarms silent',
             technicalTerm: 'Zero file encryption bypassing behavioral ransomware rollback and entropy detectors',
+            tone: 'amber',
           },
           {
             storyTerm: 'Renamed cloud-sync moving van',
             technicalTerm: 'rclone.exe renamed to Win.exe syncing staged shares to Mega.io or FTP servers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Inventorying valuable corporate rooms first',
             technicalTerm: 'SharpShares mapping readable finance, legal, and HR SMB network shares',
+            tone: 'rose',
           },
           {
             storyTerm: 'Extortion threat without encryption',
             technicalTerm: 'Pure data-theft ransom demand backed by threat of public leak-site publication',
+            tone: 'emerald',
           },
         ],
       },
@@ -510,18 +590,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Unpacking a validly signed disk-partitioning badge from its pocket',
           technicalTerm: 'Extracting signed EaseUS empntdrv.sys driver from PE RCDATA resource (BYOVD)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Disabling backups and shattering the building index directory',
           technicalTerm: 'Stopping Volume Shadow Copy (vss) and fragmenting NTFS $MFT and metadata files',
+          tone: 'sky',
         },
         {
           storyTerm: 'Smashing every drive entrance map with pure random static',
           technicalTerm: 'Overwriting \\\\.\\PhysicalDrive0..100 MBR and NTFS $MFT with CSPRNG bytes',
+          tone: 'rose',
         },
         {
           storyTerm: 'Turning every machine into a permanent brick before sunrise',
           technicalTerm: 'Destructive Sandworm wiper attack forcing unbootable system reboot',
+          tone: 'emerald',
         },
       ],
     },
@@ -533,18 +617,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unlocking special driver-loading clearance',
             technicalTerm: 'Enabling SeLoadDriverPrivilege, SeBackupPrivilege, and SeShutdownPrivilege tokens',
+            tone: 'amber',
           },
           {
             storyTerm: 'Pulling an authentic disk-utility driver from its hidden pocket',
             technicalTerm: 'Decompressing embedded signed EaseUS empntdrv.sys from PE RCDATA resource',
+            tone: 'sky',
           },
           {
             storyTerm: 'Bolting it into the building core engine',
             technicalTerm: 'Registering C:\\Windows\\System32\\drivers\\??dr.sys signed by CHENGDU YIWO Tech',
+            tone: 'rose',
           },
           {
             storyTerm: 'Bypassing modern storage locks',
             technicalTerm: 'Gaining unrestricted Ring-0 raw physical disk write capability via BYOVD',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -557,18 +645,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Pulling power plugs on the backup vault and crash recorder',
             technicalTerm: 'ChangeServiceConfigW and ControlService disabling Volume Shadow Copy (vss) and crash dumps',
+            tone: 'amber',
           },
           {
             storyTerm: 'Shattering the floor index catalog into fragments',
             technicalTerm: 'Fragmenting NTFS metadata structures ($Bitmap, $LogFile, $MFT) across disks',
+            tone: 'sky',
           },
           {
             storyTerm: 'Preventing forensic recovery teams from rebuilding files',
             technicalTerm: 'Destroying filesystem allocation maps prior to raw sector wiping',
+            tone: 'rose',
           },
           {
             storyTerm: 'Covering every internal storage room',
             technicalTerm: 'Targeting all attached local and mounted Windows NTFS volumes',
+            tone: 'emerald',
           },
         ],
       },
@@ -579,18 +671,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Walking from storage bay zero up to bay one hundred',
             technicalTerm: 'Iterating handles across \\\\.\\PhysicalDrive0 through \\\\.\\PhysicalDrive100',
+            tone: 'amber',
           },
           {
             storyTerm: 'Blasting opening directories with irreversible random noise',
             technicalTerm: 'CryptGenRandom CSPRNG bytes overwriting MBR sector 0 and NTFS $MFT',
+            tone: 'sky',
           },
           {
             storyTerm: 'Flipping the building power breaker',
             technicalTerm: 'Forced InitiateSystemShutdownEx locking victims out of unbootable hosts',
+            tone: 'rose',
           },
           {
             storyTerm: 'Pre-emptive shield blocking raw disk strikes',
             technicalTerm: 'WDAC driver blocklist for empntdrv.sys and EDR blocking raw WriteFile to sector 0',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -607,18 +703,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Central management deck pushing one maintenance package to every dish',
           technicalTerm: 'Management plane compromise and mass TR-069 CWMP push of MIPS ELF wiper (ukrop)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Sweeping all ordinary storage cards sequentially',
           technicalTerm: 'Recursive overwrite of /dev/sda, /dev/mmcblk, and non-essential filesystem directories',
+          tone: 'sky',
         },
         {
           storyTerm: 'Firing raw hardware erase bolts into soldered memory chips',
           technicalTerm: 'Raw SPI flash /dev/mtd0..99 destruction via MEMUNLOCK, MEMERASE, and MEMWRITEOOB',
+          tone: 'rose',
         },
         {
           storyTerm: 'Permanently silencing tens of thousands of satellite modems',
           technicalTerm: 'Irrecoverable bricking of Viasat KA-SAT consumer and wind-turbine terminals',
+          tone: 'emerald',
         },
       ],
     },
@@ -630,18 +730,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Satellite ground-station master control room',
             technicalTerm: 'Trusted management segment of the Viasat KA-SAT satellite network',
+            tone: 'amber',
           },
           {
             storyTerm: 'Official remote-update broadcaster',
             technicalTerm: 'TR-069 CPE WAN Management Protocol (CWMP) pushing mass firmware commands',
+            tone: 'sky',
           },
           {
             storyTerm: 'Tiny specialized demolition program',
             technicalTerm: 'Compact MIPS ELF AcidRain wiper binary (ukrop) staged into /tmp',
+            tone: 'rose',
           },
           {
             storyTerm: 'Simultaneous fleet-wide arrival',
             technicalTerm: 'Mass execution across tens of thousands of SurfBeam 2 embedded Linux modems',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -654,18 +758,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Forking quietly into the background with master authority',
             technicalTerm: 'AcidRain daemonizing as root (UID 0) on the embedded Linux modem OS',
+            tone: 'amber',
           },
           {
             storyTerm: 'Sweeping every attached storage partition and memory card',
             technicalTerm: 'Iterative overwrite across /dev/sda*, /dev/mmcblk*, and non-essential directories',
+            tone: 'sky',
           },
           {
             storyTerm: 'Writing straight over raw block devices',
             technicalTerm: 'Opening /dev/mtdblock* and /dev/mmcblk* with O_WRONLY / O_RDWR flags',
+            tone: 'rose',
           },
           {
             storyTerm: 'Embedded system watchman catching the wipe',
             technicalTerm: 'Syscall auditing alerting on raw block-device writes outside firmware upgraders',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -678,18 +786,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Raw soldered flash chips from slot zero through ninety-nine',
             technicalTerm: 'Character-mode Memory Technology Devices /dev/mtd0 through /dev/mtd99',
+            tone: 'amber',
           },
           {
             storyTerm: 'Reading physical geometry and flipping off hardware locks',
             technicalTerm: 'Linux MTD ioctl calls MEMGETINFO followed by MEMUNLOCK',
+            tone: 'sky',
           },
           {
             storyTerm: 'Direct chip-erase pulses destroying startup instructions',
             technicalTerm: 'Raw hardware flash erasure via MEMERASE and MEMWRITEOOB ioctls',
+            tone: 'rose',
           },
           {
             storyTerm: 'Permanently silenced hardware requiring physical replacement',
             technicalTerm: 'Unbootable bricked modems requiring hardware swap across European deployments',
+            tone: 'emerald',
           },
         ],
       },
@@ -704,18 +816,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Disguised repair-tool wrapper pushed from the central policy board',
           technicalTerm: 'Active Directory GPO pushing ArguePatch patched IDA debugger loader from SYSVOL',
+          tone: 'amber',
         },
         {
           storyTerm: 'Checking whether each machine is the dispatch tower so it stays alive',
           technicalTerm: 'DsRoleGetPrimaryDomainInformation check sparing Primary Domain Controllers',
+          tone: 'sky',
         },
         {
           storyTerm: 'Seizing ownership of every drawer and scrubbing documents to blank zeros',
           technicalTerm: 'SeTakeOwnershipPrivilege recursive C:\\Users file zeroing via SetNamedSecurityInfoA',
+          tone: 'rose',
         },
         {
           storyTerm: 'Erasing the floor plan of every hard drive',
           technicalTerm: 'Raw partition table wipe via IOCTL_DISK_SET_DRIVE_LAYOUT_EX (0x0007C054)',
+          tone: 'emerald',
         },
       ],
     },
@@ -727,18 +843,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Central dispatch tower policy board',
             technicalTerm: 'Compromised Domain Controller SYSVOL share and Group Policy Object (GPO) push',
+            tone: 'amber',
           },
           {
             storyTerm: 'Surgically altered known software debugger',
             technicalTerm: 'ArguePatch trojanized legitimate IDA Pro debugger binary (win32_remote.exe)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Hidden trigger spliced into the opening routine',
             technicalTerm: 'Patched entry point decrypting and launching the CaddyWiper shellcode payload',
+            tone: 'rose',
           },
           {
             storyTerm: 'Company-wide synchronized deployment',
             technicalTerm: 'Scheduled task created across all domain-joined workstations and member servers',
+            tone: 'emerald',
           },
         ],
       },
@@ -749,18 +869,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Assembling command labels piece by piece in private',
             technicalTerm: 'Stack-constructed API strings hiding imports from the PE Import Address Table (IAT)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Checking the room nameplate first',
             technicalTerm: 'Calling DsRoleGetPrimaryDomainInformation to inspect machine domain role',
+            tone: 'sky',
           },
           {
             storyTerm: 'Stepping back when standing inside the central dispatch tower',
             technicalTerm: 'Exiting immediately if role equals DsRole_RolePrimaryDomainController',
+            tone: 'rose',
           },
           {
             storyTerm: 'Keeping the dispatch tower alive to spread destruction',
             technicalTerm: 'Preserving Active Directory GPO replication while wiping all member endpoints',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -773,18 +897,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Claiming legal ownership of every locked desk drawer',
             technicalTerm: 'Enabling SeTakeOwnershipPrivilege and calling SetNamedSecurityInfoA across C:\\Users',
+            tone: 'amber',
           },
           {
             storyTerm: 'Overwriting every file with blank zeros',
             technicalTerm: 'Recursive zero-byte file destruction across local folders and mapped network drives',
+            tone: 'sky',
           },
           {
             storyTerm: 'Single raw control blast erasing the drive blueprint',
             technicalTerm: 'DeviceIoControl IOCTL_DISK_SET_DRIVE_LAYOUT_EX (0x0007C054) wiping partition tables',
+            tone: 'rose',
           },
           {
             storyTerm: 'Kernel shield blocking drive layout wipes',
             technicalTerm: 'EDR kernel disk filter blocking zeroed IOCTL_DISK_SET_DRIVE_LAYOUT_EX calls',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -801,18 +929,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Ripping out every single page from every logbook on the shelf',
           technicalTerm: 'wevtutil.exe el loop executing wevtutil.exe cl across all Windows EVTX channels',
+          tone: 'amber',
         },
         {
           storyTerm: 'Automatic brass stamper embossing a fresh Page One receipt',
           technicalTerm: 'Immutable Security EventID 1102 and System EventID 104 audit log cleared records',
+          tone: 'sky',
         },
         {
           storyTerm: 'Building master floor-tile register logging the destruction',
           technicalTerm: 'NTFS Change Journal ($Extend\\$UsnJrnl:$J) recording USN_REASON_DATA_TRUNCATION',
+          tone: 'rose',
         },
         {
           storyTerm: 'Carbon impressions recovered from beneath the floor tiles',
           technicalTerm: 'Carving deleted EVTX XML chunks from unallocated disk clusters during forensics',
+          tone: 'emerald',
         },
       ],
     },
@@ -824,18 +956,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Automated sweeper listing every diary binder',
             technicalTerm: 'cmd.exe /c for /F %i in (wevtutil.exe el) do wevtutil.exe cl %i',
+            tone: 'amber',
           },
           {
             storyTerm: 'Commanding the event clerk to wipe each binder',
             technicalTerm: 'Native Windows utility wevtutil.exe cl invoking EvtClearLog across channels',
+            tone: 'sky',
           },
           {
             storyTerm: 'Security camera catching the sweeper command line',
             technicalTerm: 'Sysmon EventID 1 (Process Creation) recording the exact wevtutil loop before clear',
+            tone: 'rose',
           },
           {
             storyTerm: 'Anti-forensic trace erasure attempt',
             technicalTerm: 'MITRE ATT&CK T1070.001 indicator removal on Windows hosts',
+            tone: 'emerald',
           },
         ],
       },
@@ -846,18 +982,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Event clerk emptying the binder files',
             technicalTerm: 'svchost.exe (-s EventLog) calling EvtClearLog on C:\\Windows\\System32\\winevt\\Logs\\',
+            tone: 'amber',
           },
           {
             storyTerm: 'Unforgeable Page One stamp in the Security binder',
             technicalTerm: 'Windows Security EventID 1102 (The audit log was cleared) naming SubjectUserName',
+            tone: 'sky',
           },
           {
             storyTerm: 'Unforgeable Page One stamp in the System binder',
             technicalTerm: 'Windows System EventID 104 (The log file was cleared) naming the cleared channel',
+            tone: 'rose',
           },
           {
             storyTerm: 'Central SIEM vault keeping copies untouched',
             technicalTerm: 'Real-time log forwarding preserving pre-clear logs off the compromised host',
+            tone: 'emerald',
           },
         ],
       },
@@ -868,18 +1008,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Automatic paper-movement ledger',
             technicalTerm: 'NTFS Change Journal ($Extend\\$UsnJrnl:$J) logging USN_REASON_DATA_TRUNCATION',
+            tone: 'amber',
           },
           {
             storyTerm: 'Intact torn log scraps in the storage bin underneath',
             technicalTerm: 'Deleted 64KB ElfChnk EVTX chunks still residing in unallocated NTFS disk space',
+            tone: 'sky',
           },
           {
             storyTerm: 'Gently lifting and reassembling the scraps',
             technicalTerm: 'Raw disk carving tools recovering cleared binary XML event records',
+            tone: 'rose',
           },
           {
             storyTerm: 'Proving deliberate cover-up with exact timestamps',
             technicalTerm: 'Correlating $UsnJrnl timestamps against EventID 1102 and carved pre-wipe logs',
+            tone: 'emerald',
           },
         ],
       },
@@ -894,18 +1038,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Logging into the warehouse basement console with superintendent keys',
           technicalTerm: 'Root SSH login or DCUI ESXi Shell activation recorded in /var/log/auth.log and shell.log',
+          tone: 'amber',
         },
         {
           storyTerm: 'Pulling the emergency power cord so steel floor bolts spring open',
           technicalTerm: 'esxcli vm process kill freeing exclusive vmx locks on *-flat.vmdk (logged in hostd.log)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Running a partial padlocking tool across every pod shell',
           technicalTerm: 'ELF encryptor from /tmp intermittently encrypting /vmfs/volumes/*/*/*.vmdk, .vmx, and .nvram',
+          tone: 'rose',
         },
         {
           storyTerm: 'Rebuilding undamaged pod maps from partial locks',
           technicalTerm: 'CISA ESXiArgs flat-file descriptor reconstruction recovering unencrypted VMDK blocks',
+          tone: 'emerald',
         },
       ],
     },
@@ -917,18 +1065,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Basement management terminal',
             technicalTerm: 'VMware ESXi SSH daemon or DCUI/vCenter-enabled ESXi Shell',
+            tone: 'amber',
           },
           {
             storyTerm: 'Chief superintendent key',
             technicalTerm: 'Root hypervisor account login logged in /var/log/auth.log',
+            tone: 'sky',
           },
           {
             storyTerm: 'Command ticker recording every keystroke',
             technicalTerm: 'ESXi /var/log/shell.log auditing interactive CLI commands executed by root',
+            tone: 'rose',
           },
           {
             storyTerm: 'Warning bell noting console activation',
             technicalTerm: '/var/log/vobd.log flagging SSH or ESXi Shell enablement events',
+            tone: 'emerald',
           },
         ],
       },
@@ -939,18 +1091,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Live pods clamping locks on their floor foundations',
             technicalTerm: 'Running vmx hypervisor processes holding exclusive locks on *-flat.vmdk disks',
+            tone: 'amber',
           },
           {
             storyTerm: 'Flipping every pod breaker off hard',
             technicalTerm: 'Batch execution of esxcli vm process kill --type=force across active World IDs',
+            tone: 'sky',
           },
           {
             storyTerm: 'Breaker-panel audit book',
             technicalTerm: 'ESXi /var/log/hostd.log documenting abrupt power-off events for every guest VM',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unlocked foundation slabs ready for attack',
             technicalTerm: 'Released datastore file handles under /vmfs/volumes/',
+            tone: 'emerald',
           },
         ],
       },
@@ -961,18 +1117,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Portable padlocking press in a temporary closet',
             technicalTerm: 'Unsigned Linux ELF ransomware encryptor executed from /tmp/',
+            tone: 'amber',
           },
           {
             storyTerm: 'Virtual disks, configuration cards, and memory files',
             technicalTerm: 'Target files matching /vmfs/volumes/*/*/*.vmdk, *.vmx, and *.nvram',
+            tone: 'sky',
           },
           {
             storyTerm: 'Locking slices intermittently for speed',
             technicalTerm: 'Intermittent block encryption corrupting VM files in seconds',
+            tone: 'rose',
           },
           {
             storyTerm: 'Rebuilding intact blueprints from skipped slices',
             technicalTerm: 'CISA ESXiArgs forensic descriptor reconstruction restoring untouched *-flat.vmdk data',
+            tone: 'emerald',
           },
         ],
       },
@@ -987,18 +1147,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Silent courier sweeping folders out and burning its footprints',
           technicalTerm: 'ExMatter .NET exfiltration tool staging data and self-erasing prior to encryption',
+          tone: 'amber',
         },
         {
           storyTerm: 'Unlocking a briefcase with a unique job passcode and opening shortcuts',
           technicalTerm: 'Rust BlackCat/Sphynx -k <access_token>, fsutil R2R symlink enablement, and shadow wipe',
+          tone: 'sky',
         },
         {
           storyTerm: 'Copying itself automatically down every corridor and basement rack',
           technicalTerm: 'Embedded NetExec/Impacket --propagate PsExec worm and ESXi VM termination',
+          tone: 'rose',
         },
         {
           storyTerm: 'Fast modern locks snapped across desks and virtual servers',
           technicalTerm: 'Cross-platform Rust AES-CTR and ChaCha20 encryption across Windows and ESXi',
+          tone: 'emerald',
         },
       ],
     },
@@ -1010,18 +1174,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Quiet file-gathering courier disguised as routine paperwork',
             technicalTerm: 'Compiled .NET ExMatter utility enumerating high-value file extensions',
+            tone: 'amber',
           },
           {
             storyTerm: 'Packing contracts onto an external truck',
             technicalTerm: 'Automated SFTP/WebDAV exfiltration to affiliate-controlled servers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Erasing its own footprints upon completion',
             technicalTerm: 'Self-deletion routine overwriting or removing the ExMatter binary post-theft',
+            tone: 'rose',
           },
           {
             storyTerm: 'Double-extortion leverage secured first',
             technicalTerm: 'Stolen corporate data guaranteed before noisy encryption triggers alarms',
+            tone: 'emerald',
           },
         ],
       },
@@ -1032,18 +1200,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Secret job token unlocking the scrambled briefcase',
             technicalTerm: 'Mandatory -k <access_token> CLI key deriving the internal ChaCha20 config key',
+            tone: 'amber',
           },
           {
             storyTerm: 'Flipping a building shortcut switch for remote hallways',
             technicalTerm: 'fsutil behavior set SymlinkEvaluation R2L:1 R2R:1 enabling remote symlink traversal',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shredding every backup snapshot',
             technicalTerm: 'vssadmin / WMI Volume Shadow Copy deletion and event log clearing',
+            tone: 'rose',
           },
           {
             storyTerm: 'Scrambling the blueprint against casual inspection',
             technicalTerm: 'Encrypted embedded JSON affiliate configuration protecting credentials and keys',
+            tone: 'emerald',
           },
         ],
       },
@@ -1054,18 +1226,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Marching itself down every office hallway',
             technicalTerm: 'Built-in --propagate routine using embedded Impacket/PsExec over SMB with harvested creds',
+            tone: 'amber',
           },
           {
             storyTerm: 'Halting running virtual servers in the basement',
             technicalTerm: 'Automated ESXi esxcli vm process kill releasing virtual disk locks',
+            tone: 'sky',
           },
           {
             storyTerm: 'Locking both Windows offices and Linux pods simultaneously',
             technicalTerm: 'Multi-threaded Rust AES-CTR and ChaCha20 encryption across platforms',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hardware-accelerated locking speed',
             technicalTerm: 'Dynamic selection of AES-NI hardware cipher or ChaCha20 software fallback',
+            tone: 'emerald',
           },
         ],
       },
@@ -1080,18 +1256,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Fake cancellation hotline tricking a worker into opening a remote doorway',
           technicalTerm: 'Callback phishing / BatLoader delivering commercial RMM and Chisel reverse tunnel',
+          tone: 'amber',
         },
         {
           storyTerm: 'Building gentle maintenance-restart clerk releasing locked ledgers',
           technicalTerm: 'Windows Restart Manager API (RstrtMgr.dll) closing processes holding open file handles',
+          tone: 'sky',
         },
         {
           storyTerm: 'Shredding backup recovery binders first',
           technicalTerm: 'vssadmin.exe Volume Shadow Copy deletion prior to encryption',
+          tone: 'rose',
         },
         {
           storyTerm: 'Locking an operator-chosen percentage of every file across parallel lanes',
           technicalTerm: 'OpenSSL AES-256-CBC partial encryption controlled by -ep percentage over 2x-CPU IOCP threads',
+          tone: 'emerald',
         },
       ],
     },
@@ -1103,18 +1283,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Alarming fake renewal invoice urging a phone call',
             technicalTerm: 'Subscription-cancellation callback phishing (TOAD) or trojanized BatLoader SEO lure',
+            tone: 'amber',
           },
           {
             storyTerm: 'Commercial remote-management intercom',
             technicalTerm: 'Legitimate RMM tools (AnyDesk, Atera, ScreenConnect) abused for hands-on access',
+            tone: 'sky',
           },
           {
             storyTerm: 'Quiet reverse tunnel back to the hideout',
             technicalTerm: 'Chisel encrypted SOCKS reverse tunnel traversing corporate egress firewalls',
+            tone: 'rose',
           },
           {
             storyTerm: 'Blending with routine helpdesk work',
             technicalTerm: 'Signed commercial remote-control software evading basic malware blocklists',
+            tone: 'emerald',
           },
         ],
       },
@@ -1125,18 +1309,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Destroying all backup snapshots',
             technicalTerm: 'vssadmin.exe delete shadows wiping Windows recovery points',
+            tone: 'amber',
           },
           {
             storyTerm: 'Building built-in software-update clerk',
             technicalTerm: 'Windows Restart Manager API (RstrtMgr.dll RmStartSession / RmShutdown)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Forcing open editors and databases to drop their file locks',
             technicalTerm: 'Graceful termination of processes holding exclusive handles on target files',
+            tone: 'rose',
           },
           {
             storyTerm: 'Custom operator job switch',
             technicalTerm: 'Command-line flags royal.exe -id <32_char_id> -ep 50 configuring encryption depth',
+            tone: 'emerald',
           },
         ],
       },
@@ -1147,18 +1335,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Twice as many parallel locksmith lanes as processor cores',
             technicalTerm: 'Multi-threaded I/O Completion Port (IOCP) worker queue sized at 2x CPU core count',
+            tone: 'amber',
           },
           {
             storyTerm: 'Exact operator-chosen percentage of each large file',
             technicalTerm: 'Configurable -ep partial encryption mode speeding corruption of huge files',
+            tone: 'sky',
           },
           {
             storyTerm: 'Built-in standard steel padlock library',
             technicalTerm: 'Statically linked OpenSSL AES-256-CBC routines wrapped with RSA public key',
+            tone: 'rose',
           },
           {
             storyTerm: 'Sweeping across both local cabinets and shared hallways',
             technicalTerm: 'Simultaneous encryption of local drives and reachable SMB network shares',
+            tone: 'emerald',
           },
         ],
       },
@@ -1173,18 +1365,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Authentic cleanup utility and shape-shifting driver smuggler',
           technicalTerm: 'Signed Kaspersky TDSSKiller.exe (klbg.sys) and EDRKillShifter BYOVD loader',
+          tone: 'amber',
         },
         {
           storyTerm: 'Asterisk-marked note waking up inside stripped-down maintenance mode',
           technicalTerm: 'Safe-Mode RunOnce persistence (*safemode) paired with bcdedit safeboot reboot',
+          tone: 'sky',
         },
         {
           storyTerm: 'Requiring a long secret passphrase before unpacking locking gear',
           technicalTerm: 'Mandatory 64-character hex -pass <sha256_key> decrypting embedded configuration',
+          tone: 'rose',
         },
         {
           storyTerm: 'Fast modern locking gear sealing every volume',
           technicalTerm: 'Curve25519 key exchange and XChaCha20 multi-platform encryption',
+          tone: 'emerald',
         },
       ],
     },
@@ -1196,18 +1392,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Authentic signed rootkit-removal utility',
             technicalTerm: 'Legitimate Kaspersky TDSSKiller.exe loading signed klbg.sys to disable EDR services',
+            tone: 'amber',
           },
           {
             storyTerm: 'Shape-shifting vulnerable-driver wrapper',
             technicalTerm: 'EDRKillShifter BYOVD loader unpacking vulnerable signed kernel drivers in memory',
+            tone: 'sky',
           },
           {
             storyTerm: 'Silencing every guard station before locking doors',
             technicalTerm: 'Kernel-level termination of EDR and antivirus sensors prior to encryption',
+            tone: 'rose',
           },
           {
             storyTerm: 'Initial perimeter entry',
             technicalTerm: 'Breach via exposed VPN appliances or ZeroLogon lateral compromise',
+            tone: 'emerald',
           },
         ],
       },
@@ -1218,18 +1418,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Special asterisk-prefixed work order on the startup board',
             technicalTerm: 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce entry prefixed with *',
+            tone: 'amber',
           },
           {
             storyTerm: 'Rebooting into stripped-down emergency mode',
             technicalTerm: 'Triggering Windows Safe Mode (-safeboot) where most third-party EDR agents do not load',
+            tone: 'sky',
           },
           {
             storyTerm: 'Mounting hidden storage shelves',
             technicalTerm: 'Enumerating and mounting unmounted local volumes so hidden drives get encrypted',
+            tone: 'rose',
           },
           {
             storyTerm: 'Wiping recovery snapshots before locking',
             technicalTerm: 'Automated Volume Shadow Copy deletion inside the quiet Safe Mode boot',
+            tone: 'emerald',
           },
         ],
       },
@@ -1240,18 +1444,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Refusing to budge without a 64-character secret passkey',
             technicalTerm: 'Mandatory -pass <sha256_key> CLI argument decrypting the embedded config',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tightly sealed against automated sandbox inspection',
             technicalTerm: 'Anti-analysis runtime key check preventing detonation without affiliate credentials',
+            tone: 'sky',
           },
           {
             storyTerm: 'Modern curve-based locking gear',
             technicalTerm: 'Curve25519 asymmetric key exchange paired with XChaCha20 symmetric encryption',
+            tone: 'rose',
           },
           {
             storyTerm: 'Uniform Go/C++ fleet across every server room',
             technicalTerm: 'Cross-platform RansomHub payloads targeting Windows, Linux, and ESXi',
+            tone: 'emerald',
           },
         ],
       },
@@ -1266,18 +1474,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Slipping in via remote-support console and trucking data out',
           technicalTerm: 'ScreenConnect RMM foothold, Advanced IP Scanner discovery, and Rclone exfiltration',
+          tone: 'amber',
         },
         {
           storyTerm: 'Signed laptop-cooling utility blinding security cameras in the core',
           technicalTerm: 'gaze.exe loading signed ThrottleStop.sys (rwdrv.sys) to strip kernel EDR callbacks',
+          tone: 'sky',
         },
         {
           storyTerm: 'Hijacking the company own official software-delivery trolley',
           technicalTerm: 'PDQ Deploy (PDQDeployConsole.exe) or psexec.exe -s mass ransomware rollout',
+          tone: 'rose',
         },
         {
           storyTerm: 'Wiping backups and sealing every office with branded locks',
           technicalTerm: 'VSS deletion and AES-256-CBC encryption appending .medusa extensions',
+          tone: 'emerald',
         },
       ],
     },
@@ -1289,18 +1501,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unpatched perimeter remote-support doorway',
             technicalTerm: 'Exploited ConnectWise ScreenConnect or Fortinet perimeter appliance',
+            tone: 'amber',
           },
           {
             storyTerm: 'Off-the-shelf room scanner',
             technicalTerm: 'Advanced IP Scanner mapping active internal servers and SMB shares',
+            tone: 'sky',
           },
           {
             storyTerm: 'Cloud moving utility shipping out folders',
             technicalTerm: 'Rclone exfiltrating sensitive corporate archives prior to ransomware execution',
+            tone: 'rose',
           },
           {
             storyTerm: 'Dual-purpose remote access',
             technicalTerm: 'Living-off-the-land RMM persistence blending into legitimate IT operations',
+            tone: 'emerald',
           },
         ],
       },
@@ -1311,18 +1527,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Specialized guard-killer tool',
             technicalTerm: 'gaze.exe (Abyss Locker / Medusa EDR killer wrapper)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Legitimately signed laptop-tuning driver',
             technicalTerm: 'Vulnerable signed ThrottleStop.sys / rwdrv.sys kernel driver (BYOVD)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Cutting security cameras master notification wires',
             technicalTerm: 'Patching or wiping Ring-0 kernel EDR callback arrays to blind telemetry',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unmonitored network ready for mass deployment',
             technicalTerm: 'Disabled endpoint protection across domain servers and workstations',
+            tone: 'emerald',
           },
         ],
       },
@@ -1333,18 +1553,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'IT department official software-deployment cart',
             technicalTerm: 'Abused PDQ Deploy (PDQDeployConsole.exe) or psexec.exe -s mass distribution',
+            tone: 'amber',
           },
           {
             storyTerm: 'Shredding shadow backups across the campus',
             technicalTerm: 'Volume Shadow Copy (VSS) deletion blocking native Windows file recovery',
+            tone: 'sky',
           },
           {
             storyTerm: 'Branded padlocks snapped across every document',
             technicalTerm: 'Medusa AES-256-CBC encryption renaming files with the .medusa extension',
+            tone: 'rose',
           },
           {
             storyTerm: 'Coordinated single-wave impact',
             technicalTerm: 'Simultaneous domain-wide detonation maximizing operational disruption',
+            tone: 'emerald',
           },
         ],
       },
@@ -1359,18 +1583,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Pinning a tiny morning-checkin chore onto the welcome board',
           technicalTerm: 'Active Directory GPO PowerShell logon script harvesting Chrome and Edge DPAPI credentials',
+          tone: 'amber',
         },
         {
           storyTerm: 'Unlocking shared vaults with the stolen key ring before shredding backups',
           technicalTerm: 'Rust Qilin binary invoked with -d credentials mounting shares, killing services, and wiping VSS',
+          tone: 'sky',
         },
         {
           storyTerm: 'Sealing both office desktops and basement virtual servers at once',
           technicalTerm: 'Simultaneous Windows and ESXi ChaCha20 or AES-256-GCM encryption',
+          tone: 'rose',
         },
         {
           storyTerm: 'Tailored affiliate locking profile',
           technicalTerm: 'Configurable per-affiliate cipher mode wrapped with RSA public key',
+          tone: 'emerald',
         },
       ],
     },
@@ -1382,18 +1610,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Headquarters policy board',
             technicalTerm: 'Compromised Active Directory Domain Controller Group Policy Object (GPO)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Covert morning login script waiting for employees',
             technicalTerm: 'GPO PowerShell logon script running inside each authenticated user context',
+            tone: 'sky',
           },
           {
             storyTerm: 'Scooping up saved web passwords from browser vaults',
             technicalTerm: 'DPAPI decryption of Chrome and Edge Login Data across hundreds of user sessions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Staged credential harvest for lateral expansion',
             technicalTerm: 'Centralized collection of VPN, SaaS, vCenter, and administrative passwords',
+            tone: 'emerald',
           },
         ],
       },
@@ -1404,18 +1636,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Feeding freshly harvested master keys into the utility',
             technicalTerm: 'Rust Qilin encryptor invoked with -d domain and credential arguments',
+            tone: 'amber',
           },
           {
             storyTerm: 'Automatically unlocking remote shared cabinets',
             technicalTerm: 'Authenticated SMB share mounting across discovered network servers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shutting down database clerks holding files open',
             technicalTerm: 'Automated termination of SQL, mail, and backup Windows services',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shredding every local backup copy',
             technicalTerm: 'Volume Shadow Copy wipe eliminating local restore points',
+            tone: 'emerald',
           },
         ],
       },
@@ -1426,18 +1662,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Tailored locking gears chosen per job',
             technicalTerm: 'Per-affiliate Qilin profile selecting ChaCha20 or AES-256-GCM with RSA wrapping',
+            tone: 'amber',
           },
           {
             storyTerm: 'Basement virtual servers halted and sealed',
             technicalTerm: 'ESXi Linux ELF encryptor stopping VMs and encrypting datastore VMDK images',
+            tone: 'sky',
           },
           {
             storyTerm: 'Office files locked simultaneously',
             technicalTerm: 'Multi-threaded Windows file encryption appending affiliate-specific extensions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Maximized cross-platform extortion pressure',
             technicalTerm: 'Synchronized Windows desktop, file server, and virtualization outage',
+            tone: 'emerald',
           },
         ],
       },
@@ -1452,18 +1692,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Sending remote orders to wipe backup catalogs',
           technicalTerm: 'SharpWMI.exe lateral execution invoking wbadmin delete catalog',
+          tone: 'amber',
         },
         {
           storyTerm: 'Whispering a direct internal delete order instead of shouting',
           technicalTerm: 'Commandless COM IVssBackupComponents::DeleteSnapshots bypassing vssadmin CLI alerts',
+          tone: 'sky',
         },
         {
           storyTerm: 'Upgraded multi-lane Rust padlocking press',
           technicalTerm: 'Hunters International Rust encryptor evolved from Hive codebase (.locked)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Sweeping empty floor space so scraps cannot be recovered',
           technicalTerm: 'Free-space wiping after encryption alongside Contact Us.txt ransom notes',
+          tone: 'emerald',
         },
       ],
     },
@@ -1475,18 +1719,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Hijacked supervisor desk',
             technicalTerm: 'Compromised administrative workstation initiating lateral movement',
+            tone: 'amber',
           },
           {
             storyTerm: 'Lightweight remote management orders',
             technicalTerm: 'SharpWMI.exe executing remote commands over WMI across domain servers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Erasing the official backup directory catalog',
             technicalTerm: 'wbadmin delete catalog removing Windows Backup recovery metadata',
+            tone: 'rose',
           },
           {
             storyTerm: 'Clearing the runway for extortion',
             technicalTerm: 'Eliminating server-level recovery options prior to mass encryption',
+            tone: 'emerald',
           },
         ],
       },
@@ -1497,18 +1745,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Skipping the noisy command line altogether',
             technicalTerm: 'Avoiding vssadmin.exe delete shadows and wmic.exe shadowcopy delete SIEM rules',
+            tone: 'amber',
           },
           {
             storyTerm: 'Speaking directly through the backup clerk private door',
             technicalTerm: 'Direct COM API call to IVssBackupComponents::DeleteSnapshots in memory',
+            tone: 'sky',
           },
           {
             storyTerm: 'Erasing every snapshot in silence',
             technicalTerm: 'Commandless Volume Shadow Copy deletion leaving zero CLI process artifacts',
+            tone: 'rose',
           },
           {
             storyTerm: 'Catching the quiet internal call',
             technicalTerm: 'Monitoring VSS EventID 8224 / COM telemetry rather than CLI strings alone',
+            tone: 'emerald',
           },
         ],
       },
@@ -1519,18 +1771,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Streamlined Rust locking press evolved from Hive',
             technicalTerm: 'Hunters International multi-threaded Rust encryptor simplifying Hive encryption',
+            tone: 'amber',
           },
           {
             storyTerm: 'Scrubbing blank shelf space against undelete tools',
             technicalTerm: 'Post-encryption free-space wiping preventing forensic carving of plaintext files',
+            tone: 'sky',
           },
           {
             storyTerm: 'Locked tag stamped on every file',
             technicalTerm: 'Encrypted documents renamed with the .locked extension',
+            tone: 'rose',
           },
           {
             storyTerm: 'Negotiation cards left in every cabinet',
             technicalTerm: 'Contact Us.txt extortion note directing victims to leak-site chat',
+            tone: 'emerald',
           },
         ],
       },
@@ -1545,18 +1801,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Cracked front-door gateway and cloud storage locker shipment',
           technicalTerm: 'Citrix NetScaler ADC breach, NetScan discovery, and MEGASync cloud exfiltration',
+          tone: 'amber',
         },
         {
           storyTerm: 'Copying a padlocking cartridge down an automated list of rooms',
           technicalTerm: 'WMIC /node:@"hosts.txt" mass DLL staging and rundll32.exe execution',
+          tone: 'sky',
         },
         {
           storyTerm: 'Fast modern locks across every office cabinet',
           technicalTerm: 'INC Ransom / Lynx AES-128-CTR and Curve25519 file encryption',
+          tone: 'rose',
         },
         {
           storyTerm: 'Printing ransom demands straight through every office paper printer',
           technicalTerm: 'Desktop wallpaper change plus physical network printer ransom note printing',
+          tone: 'emerald',
         },
       ],
     },
@@ -1568,18 +1828,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Unpatched edge access gateway',
             technicalTerm: 'Exploited Citrix NetScaler ADC or VPN perimeter appliance',
+            tone: 'amber',
           },
           {
             storyTerm: 'Swift floor scanner charting every active room',
             technicalTerm: 'NetScan discovering live hosts, shares, and IP lists saved to hosts.txt',
+            tone: 'sky',
           },
           {
             storyTerm: 'Outside consumer cloud locker',
             technicalTerm: 'MEGASync client exfiltrating staged corporate documents to Mega.nz',
+            tone: 'rose',
           },
           {
             storyTerm: 'Dual-brand criminal family',
             technicalTerm: 'Shared INC Ransom and Lynx codebase and affiliate playbooks',
+            tone: 'emerald',
           },
         ],
       },
@@ -1590,18 +1854,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Neat roster of every room number',
             technicalTerm: 'Target host list hosts.txt fed into WMIC /node:@"hosts.txt"',
+            tone: 'amber',
           },
           {
             storyTerm: 'Compact padlocking cartridge placed in each closet',
             technicalTerm: 'inc.dll or lynx.dll copied to \\\\<host>\\C$\\Windows\\Temp\\',
+            tone: 'sky',
           },
           {
             storyTerm: 'Built-in remote runner triggering every cartridge',
             technicalTerm: 'WMIC process call create invoking signed rundll32.exe to execute the DLL',
+            tone: 'rose',
           },
           {
             storyTerm: 'Single-command fleet-wide launch',
             technicalTerm: 'Rapid horizontal detonation across Windows workstations and servers',
+            tone: 'emerald',
           },
         ],
       },
@@ -1612,18 +1880,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Modern elliptical-key padlocks',
             technicalTerm: 'AES-128-CTR symmetric file encryption paired with Curve25519 key exchange',
+            tone: 'amber',
           },
           {
             storyTerm: 'Stark warning banner across every monitor',
             technicalTerm: 'Automated Windows desktop wallpaper replacement announcing compromise',
+            tone: 'sky',
           },
           {
             storyTerm: 'Ransom letters pouring out of hallway paper printers',
             technicalTerm: 'Physical network printer job dispatch printing extortion notices on paper',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shared cryptographic DNA',
             technicalTerm: 'Identical encryption workflow shared between INC Ransom and its Lynx rebrand',
+            tone: 'emerald',
           },
         ],
       },
@@ -1638,18 +1910,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Warped side tunnel and permanent hidden skylight on the schedule',
           technicalTerm: 'Qlik Sense CVE-2023-41265 tunneling RCE and persistent OpenSSH scheduled task',
+          tone: 'amber',
         },
         {
           storyTerm: 'Password-locked suitcase unpacking a scrambled inner box at runtime',
           technicalTerm: '7z.exe archive extraction and self-decrypting Cactus binary via -i AES key',
+          tone: 'sky',
         },
         {
           storyTerm: 'Marking each file in-progress then finished while taking tiny sips',
           technicalTerm: 'Multi-stream micro-read encryption renaming files from .cts0 to .cts1',
+          tone: 'rose',
         },
         {
           storyTerm: 'Extortion letter dropped across sealed rooms',
           technicalTerm: 'cAcTuS.readme.txt ransom note generated after completion',
+          tone: 'emerald',
         },
       ],
     },
@@ -1661,18 +1937,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Bent routing tunnel inside an analytics portal',
             technicalTerm: 'Qlik Sense Enterprise HTTP request tunneling and path traversal (CVE-2023-41265)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Repeating scheduled task holding a skylight open',
             technicalTerm: 'Scheduled task maintaining a persistent reverse OpenSSH tunnel',
+            tone: 'sky',
           },
           {
             storyTerm: 'Bypassing inbound perimeter doors',
             technicalTerm: 'Outbound SSH reverse tunnel surviving perimeter IP blocks',
+            tone: 'rose',
           },
           {
             storyTerm: 'Staging ground for enterprise spread',
             technicalTerm: 'Compromised analytics server used to pivot into Active Directory',
+            tone: 'emerald',
           },
         ],
       },
@@ -1683,18 +1963,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Spraying a locked archive across every workstation',
             technicalTerm: 'PowerShell sprayer (s.ps1) and PsExec distributing a password-protected 7-Zip archive',
+            tone: 'amber',
           },
           {
             storyTerm: 'Unzipping with a batch helper script',
             technicalTerm: '7z.exe extracting the encrypted Cactus payload (ntuser.dat) on target hosts',
+            tone: 'sky',
           },
           {
             storyTerm: 'Unlocking key passed on the command line',
             technicalTerm: 'Mandatory -i flag supplying the AES key for runtime self-decryption',
+            tone: 'rose',
           },
           {
             storyTerm: 'Defeating static X-ray inspection on disk',
             technicalTerm: 'Encrypted on-disk payload remaining unreadable to static AV signatures until -i runs',
+            tone: 'emerald',
           },
         ],
       },
@@ -1705,18 +1989,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Taking small sips so disk-thrashing alarms stay calm',
             technicalTerm: 'Multi-stream micro-read encryption under the -r flag evading I/O spike heuristics',
+            tone: 'amber',
           },
           {
             storyTerm: 'Temporary work badge during active locking',
             technicalTerm: 'Target files temporarily renamed to .cts0 while encryption is underway',
+            tone: 'sky',
           },
           {
             storyTerm: 'Final sealed tag upon completion',
             technicalTerm: 'Completed encrypted files renamed from .cts0 to .cts1',
+            tone: 'rose',
           },
           {
             storyTerm: 'Signature cactus ransom card',
             technicalTerm: 'Dropped cAcTuS.readme.txt extortion demand file',
+            tone: 'emerald',
           },
         ],
       },
@@ -1731,18 +2019,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Hidden relay pipe and signed technician wrench disabling guards',
           technicalTerm: 'SmokeLoader, SystemBC SOCKS5 proxy, and Process Hacker (kprocesshacker.sys) BYOVD',
+          tone: 'amber',
         },
         {
           storyTerm: 'Climbing past confirmation prompts to tear down fences and recovery levers',
           technicalTerm: 'UAC bypass, netsh firewall disablement, and vssadmin / bcdedit recovery wipe',
+          tone: 'sky',
         },
         {
           storyTerm: 'Clamping heavy locks onto small files whole and huge files in chunks',
           technicalTerm: 'Phobos AES-256-CBC encryption renaming files with the .8base extension',
+          tone: 'rose',
         },
         {
           storyTerm: 'Popping open a full-screen ransom placard on every desk',
           technicalTerm: 'info.hta HTML Application ransom notice launched via mshta.exe',
+          tone: 'emerald',
         },
       ],
     },
@@ -1754,18 +2046,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Compact delivery agent from a poisoned doorway',
             technicalTerm: 'SmokeLoader delivered via exposed RDP or phishing attachments',
+            tone: 'amber',
           },
           {
             storyTerm: 'Quiet relay pipe bridging back to operators',
             technicalTerm: 'SystemBC SOCKS5 proxy maintaining persistent C2 tunneling',
+            tone: 'sky',
           },
           {
             storyTerm: 'Signed system-diagnostics wrench knocking out guards',
             technicalTerm: 'Abused Process Hacker kernel driver (kprocesshacker.sys) terminating security agents',
+            tone: 'rose',
           },
           {
             storyTerm: 'Clearing the host before lockdown',
             technicalTerm: 'Initial foothold and defense evasion preparing for Phobos/8Base detonation',
+            tone: 'emerald',
           },
         ],
       },
@@ -1776,18 +2072,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Planting copies in the startup folder and launch registry',
             technicalTerm: 'Persistence in %APPDATA%\\...\\Startup and HKLM Run keys',
+            tone: 'amber',
           },
           {
             storyTerm: 'Hopping past user permission prompts',
             technicalTerm: 'User Account Control (UAC) bypass elevating to high integrity',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shutting off the building firewall walls',
             technicalTerm: 'netsh advfirewall set allprofiles state off disabling host firewall rules',
+            tone: 'rose',
           },
           {
             storyTerm: 'Cutting off backups and boot-repair switches',
             technicalTerm: 'Deleting Volume Shadow Copies and disabling Windows recovery via bcdedit',
+            tone: 'emerald',
           },
         ],
       },
@@ -1798,18 +2098,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Sealing small documents whole and giant files in slices',
             technicalTerm: 'Phobos AES-256-CBC full encryption under 1.5 MB and partial encryption on larger files',
+            tone: 'amber',
           },
           {
             storyTerm: 'Stamping every locked item with a branded tag',
             technicalTerm: 'Encrypted files renamed with the .8base suffix and victim identifier',
+            tone: 'sky',
           },
           {
             storyTerm: 'Interactive ransom placard popped onto the desktop',
             technicalTerm: 'info.hta HTML Application rendered automatically on infected hosts',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shared Phobos criminal family lineage',
             technicalTerm: '8Base affiliate configuration running atop the established Phobos encryptor',
+            tone: 'emerald',
           },
         ],
       },
@@ -1824,18 +2128,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Quiet lobby scout unlocking a full remote-control toolkit',
           technicalTerm: 'TrueBot (Silence.Downloader) deploying FlawedGrace and SDBbot RAT implants',
+          tone: 'amber',
         },
         {
           storyTerm: 'Tiny command launcher flipping off six hundred building services',
           technicalTerm: 'TinyMet lateral stager followed by mass net stop termination of 600+ services',
+          tone: 'sky',
         },
         {
           storyTerm: 'Dedicated locking teams sweeping local aisles and shared hallways',
           technicalTerm: 'Multi-threaded CL0P worker threads encrypting local drives and SMB shares',
+          tone: 'rose',
         },
         {
           storyTerm: 'Branded vault locks and printed extortion demand',
           technicalTerm: 'RC4/AES + RSA-1024 encryption appending .CIop and dropping ClopReadMe.txt',
+          tone: 'emerald',
         },
       ],
     },
@@ -1847,18 +2155,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Nimble download scout fingerprinting the network',
             technicalTerm: 'TrueBot (Silence.Downloader) executed after spearphishing or MFT/web zero-days',
+            tone: 'amber',
           },
           {
             storyTerm: 'Full-featured espionage puppets brought inside',
             technicalTerm: 'FlawedGrace and SDBbot Remote Access Trojans establishing interactive C2',
+            tone: 'sky',
           },
           {
             storyTerm: 'Seasoned financial syndicate operators',
             technicalTerm: 'TA505 / FIN11 threat actors orchestrating enterprise-scale intrusion',
+            tone: 'rose',
           },
           {
             storyTerm: 'Mapping high-value servers quietly',
             technicalTerm: 'Active Directory reconnaissance identifying Domain Controllers and file servers',
+            tone: 'emerald',
           },
         ],
       },
@@ -1869,18 +2181,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Featherweight command stager pivoting to core servers',
             technicalTerm: 'TinyMet (minimal Meterpreter/Cobalt Strike stager) reaching Domain Controllers',
+            tone: 'amber',
           },
           {
             storyTerm: 'Massive checklist of six hundred services shut down',
             technicalTerm: 'Automated net stop and process kill loops targeting 600+ DB, backup, and AV services',
+            tone: 'sky',
           },
           {
             storyTerm: 'Releasing every active file lock',
             technicalTerm: 'Ensuring live SQL, Exchange, and backup files can be encrypted cleanly',
+            tone: 'rose',
           },
           {
             storyTerm: 'Distinctive noisy precursor right before impact',
             technicalTerm: 'Rapid burst of Windows Service Control Manager stop events (EventID 7036)',
+            tone: 'emerald',
           },
         ],
       },
@@ -1891,18 +2207,22 @@ export const RANSOMWARE_EXTORTION_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Dedicated parallel locking squads across local and shared halls',
             technicalTerm: 'Dedicated CL0P worker threads for local volumes and enumerated SMB network shares',
+            tone: 'amber',
           },
           {
             storyTerm: 'Fast locks wrapped inside a master asymmetric seal',
             technicalTerm: 'RC4/AES file encryption with per-file keys protected by RSA-1024',
+            tone: 'sky',
           },
           {
             storyTerm: 'Signature deceptive extension tag',
             technicalTerm: 'Encrypted files renamed with the .CIop extension (capital I mimicking lowercase l)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Extortion letter posted on every floor',
             technicalTerm: 'ClopReadMe.txt ransom note placed across affected directories',
+            tone: 'emerald',
           },
         ],
       },

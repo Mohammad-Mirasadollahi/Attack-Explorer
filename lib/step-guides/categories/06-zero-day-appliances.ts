@@ -13,18 +13,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Public certificate window',
           technicalTerm: 'Check Point /clients/MyCRL HTTPS endpoint on vpnd',
+          tone: 'amber',
         },
         {
           storyTerm: 'Stair-stepping folder slip',
           technicalTerm: 'Directory traversal payload (aCSHELL/../../../../../../../etc/shadow)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Local guard password book and courier badge',
           technicalTerm: '/etc/shadow hashes, SSH keys, and AD LDAP service credentials',
+          tone: 'rose',
         },
         {
           storyTerm: 'Kingdom directory vault',
           technicalTerm: 'Active Directory ntds.dit database on the Domain Controller',
+          tone: 'emerald',
         },
       ],
     },
@@ -36,18 +40,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Gatehouse certificate window',
             technicalTerm: 'Unauthenticated POST /clients/MyCRL handler in vpnd',
+            tone: 'amber',
           },
           {
             storyTerm: 'Backward step markers',
             technicalTerm: 'Relative path traversal sequences (../) bypassing web root confinement',
+            tone: 'sky',
           },
           {
             storyTerm: 'Public shelf boundary',
             technicalTerm: 'Check Point CRL directory scope on the Security Gateway',
+            tone: 'rose',
           },
           {
             storyTerm: 'Restricted archive rooms',
             technicalTerm: 'Underlying Gaia Linux root filesystem files (/etc/shadow)',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -60,18 +68,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Open archive chute',
             technicalTerm: 'Repeatable CVE-2024-24919 arbitrary file-read primitive',
+            tone: 'amber',
           },
           {
             storyTerm: 'Local gatehouse password book',
             technicalTerm: '/etc/shadow password hashes for local password-only VPN accounts',
+            tone: 'sky',
           },
           {
             storyTerm: 'Palace courier badge',
             technicalTerm: 'Active Directory LDAP bind service account credentials on the gateway',
+            tone: 'rose',
           },
           {
             storyTerm: 'Spare traveler accounts',
             technicalTerm: 'Legacy password-only Remote Access VPN accounts lacking MFA',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -84,18 +96,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Front drawbridge',
             technicalTerm: 'Remote Access VPN tunnel into the internal corporate network',
+            tone: 'amber',
           },
           {
             storyTerm: 'Stolen palace courier badge',
             technicalTerm: 'Firewall LDAP service account (svc_*) authenticating to the Domain Controller',
+            tone: 'sky',
           },
           {
             storyTerm: 'Royal registry',
             technicalTerm: 'Internal Windows Active Directory Domain Controller',
+            tone: 'rose',
           },
           {
             storyTerm: 'Kingdom master ledger',
             technicalTerm: 'Extracted ntds.dit database dumped via ntdsutil.exe or vssadmin.exe',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -112,18 +128,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Lobby revolving door keypad',
           technicalTerm: 'Internet-exposed SonicWall SonicOS SSLVPN portal (TCP/4433 or 443)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Faulty lock mechanism',
           technicalTerm: 'CVE-2024-40766 improper access control vulnerability in SonicOS',
+          tone: 'sky',
         },
         {
           storyTerm: 'Private remote intercom',
           technicalTerm: 'Unauthorized AnyDesk remote management tool deployed for persistence',
+          tone: 'rose',
         },
         {
           storyTerm: 'Shredding backup binders and padlocking cabinets',
           technicalTerm: 'Win32_ShadowCopy deletion followed by Akira or Fog ransomware encryption',
+          tone: 'emerald',
         },
       ],
     },
@@ -135,18 +155,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Remote visitor door',
             technicalTerm: 'WAN-facing SonicWall SSLVPN service (Gen 5, Gen 6, or Gen 7)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Faulty latch flaw',
             technicalTerm: 'CVE-2024-40766 improper access control bypass',
+            tone: 'sky',
           },
           {
             storyTerm: 'Local staff code without a pocket token',
             technicalTerm: 'Local SonicOS firewall user account lacking TOTP MFA enforcement',
+            tone: 'rose',
           },
           {
             storyTerm: 'Internal building pass',
             technicalTerm: 'Allocated corporate SSLVPN IP lease inside the internal LAN',
+            tone: 'emerald',
           },
         ],
       },
@@ -157,18 +181,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Hallway floor directory',
             technicalTerm: 'Active Directory enumeration via nltest /dclist and net group queries',
+            tone: 'amber',
           },
           {
             storyTerm: 'Remote maintenance orders over service pipes',
             technicalTerm: 'Impacket wmiexec.py lateral execution over SMB and WMI (WmiPrvSE.exe)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Private intercom box',
             technicalTerm: 'Unauthorized AnyDesk.exe installation for out-of-band persistence',
+            tone: 'rose',
           },
           {
             storyTerm: 'Neighboring rooms',
             technicalTerm: 'Internal Windows domain servers and workstations',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -181,18 +209,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Wheeling cartons out the loading dock',
             technicalTerm: 'Data exfiltration using Rclone or WinSCP to attacker-controlled storage',
+            tone: 'amber',
           },
           {
             storyTerm: 'Industrial shredder destroying backup binders',
             technicalTerm: 'PowerShell Get-CimInstance Win32_ShadowCopy | Remove-CimInstance',
+            tone: 'sky',
           },
           {
             storyTerm: 'Heavy combination padlocks on filing cabinets',
             technicalTerm: 'Akira or Fog ransomware mass file encryption (.akira / .fog extensions)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Ransom note demanding payment',
             technicalTerm: 'Double-extortion ransom note dropped after volume shadow copy wipe',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -209,18 +241,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Central switchboard tower',
           technicalTerm: 'FortiManager central management appliance (fgfmsd daemon)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Side telegraph line accepting homemade brass emblems',
           technicalTerm: 'TCP port 541 FGFM protocol lacking certificate validation (CVE-2024-47575)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Blueprint checkout lever',
           technicalTerm: 'Internal action=put_json rcs_checkout command injection handler',
+          tone: 'rose',
         },
         {
           storyTerm: 'Steamer trunk of branch schematics and vault codes',
           technicalTerm: 'Exfiltrated /tmp/.tm.tar.gz archive of /var/fwclient and globaldb configs',
+          tone: 'emerald',
         },
       ],
     },
@@ -232,18 +268,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Tower side telegraph line',
             technicalTerm: 'Internet-exposed FortiManager FGFM service on TCP port 541',
+            tone: 'amber',
           },
           {
             storyTerm: 'Self-stamped brass emblem',
             technicalTerm: 'Arbitrary or self-signed TLS client certificate accepted by fgfmsd',
+            tone: 'sky',
           },
           {
             storyTerm: 'Phantom branch station registration',
             technicalTerm: 'Unauthenticated FGFM device registration request (CVE-2024-47575)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Live switchboard',
             technicalTerm: 'Active fgfmsd management session granted to the rogue peer',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -256,18 +296,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Blueprint-checkout order',
             technicalTerm: 'FGFM action=put_json request invoking rcs_checkout',
+            tone: 'amber',
           },
           {
             storyTerm: 'Hidden commands behind a punctuation break',
             technicalTerm: 'Unsanitized shell metacharacters injected into /usr/bin/rcs -l',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master mechanic with full building authority',
             technicalTerm: '/bin/fgfmsd spawning /bin/sh -c running as root (UID 0)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Secret workshop drop folder',
             technicalTerm: 'Staged attacker payload and staging path in /tmp/.tm',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -280,18 +324,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Branch-station filing cabinets',
             technicalTerm: 'Managed FortiGate configuration stores in /var/fwclient and /var/fds/data',
+            tone: 'amber',
           },
           {
             storyTerm: 'Tightly bound steamer trunk',
             technicalTerm: 'Compressed staging archive /tmp/.tm.tar.gz',
+            tone: 'sky',
           },
           {
             storyTerm: 'Firewall maps and tunnel passphrases',
             technicalTerm: 'FortiOS configurations, IPsec VPN pre-shared keys, and admin password hashes',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shipping the bundle out of the rail yard',
             technicalTerm: 'Exfiltration of managed device configurations by UNC5820',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -308,18 +356,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Locksmith migration workshop',
           technicalTerm: 'Palo Alto Networks Expedition configuration migration server',
+          tone: 'amber',
         },
         {
           storyTerm: 'Unguarded emergency reset button',
           technicalTerm: 'Unauthenticated /OS/startup/restoreAdmin.php endpoint (CVE-2024-5910)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Workshop automated task belt',
           technicalTerm: 'CHECKPOINT.php import handler and MySQL cron job execution (CVE-2024-9463)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Live fortress gate keys in the workshop safe',
           technicalTerm: 'Decrypted PAN-OS XML API keys (LUFRPT1) stored in pandb.devices',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -333,18 +385,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Exposed emergency reset switch',
             technicalTerm: 'Unauthenticated HTTP request to /OS/startup/restoreAdmin.php',
+            tone: 'amber',
           },
           {
             storyTerm: 'Missing employee badge check',
             technicalTerm: 'CVE-2024-5910 missing session authentication check',
+            tone: 'sky',
           },
           {
             storyTerm: 'Factory combination in the public manual',
             technicalTerm: 'Default Expedition admin credentials restored on the appliance',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shop manager padlock',
             technicalTerm: 'Expedition web interface administrative account',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -357,18 +413,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Migration intake form with hidden commands',
             technicalTerm: 'Crafted shell metacharacters submitted to CHECKPOINT.php (CVE-2024-9463)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Automated scheduling belt',
             technicalTerm: 'Expedition MySQL cron job table and periodic task runner',
+            tone: 'sky',
           },
           {
             storyTerm: 'Back-room web clerk',
             technicalTerm: '/usr/sbin/apache2 process running as www-data',
+            tone: 'rose',
           },
           {
             storyTerm: 'Full operating commands across the workshop',
             technicalTerm: 'Spawned /bin/sh -c command execution escalating to root',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -381,18 +441,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Ledger cabinet',
             technicalTerm: 'Expedition pandb.devices MySQL database table',
+            tone: 'amber',
           },
           {
             storyTerm: 'Master decoding key off the wall',
             technicalTerm: 'Stored decryption key extracted from the Expedition PHP codebase',
+            tone: 'sky',
           },
           {
             storyTerm: 'Stored fortress gate keys',
             technicalTerm: 'Decrypted PAN-OS XML API keys (LUFRPT1 administrative bearer tokens)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Backup blueprints for the perimeter walls',
             technicalTerm: 'Imported Cisco ASA, Fortinet, and Check Point firewall configurations',
+            tone: 'emerald',
           },
         ],
       },
@@ -407,18 +471,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Front guard stopping at an invisible blank stamp',
           technicalTerm: 'Java servlet filter stopping validation at a null byte (\\u0000 / %00)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Back-office director obeying hidden orders',
           technicalTerm: 'Privileged backend csc daemon evaluating injected shell commands as root',
+          tone: 'sky',
         },
         {
           storyTerm: 'Secret carbon-copy pad under the login book',
           technicalTerm: 'Trojanized User Portal and Webadmin login scripts logging cleartext credentials',
+          tone: 'rose',
         },
         {
           storyTerm: 'Hidden tunnel into the embassy',
           technicalTerm: 'Persistent socat TLS reverse relay into the internal corporate LAN',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -432,18 +500,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Front reception desk',
             technicalTerm: 'Pre-authentication /userportal/Controller and /webconsole/Controller endpoints',
+            tone: 'amber',
           },
           {
             storyTerm: 'Normal-looking entry slip',
             technicalTerm: 'HTTP POST mode=151 JSON authentication request',
+            tone: 'sky',
           },
           {
             storyTerm: 'Invisible blank stamp',
             technicalTerm: 'Null byte (\\u0000 or %00) triggering the CVE-2022-3236 parser differential',
+            tone: 'rose',
           },
           {
             storyTerm: 'Front guard marking the slip clean',
             technicalTerm: 'Java servlet input filter halting inspection before the injected commands',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -456,18 +528,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Senior controller with master building keys',
             technicalTerm: 'Cyberoam System Controller (/bin/csc) running as root (UID 0)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Executing hidden instructions immediately',
             technicalTerm: 'Unsanitized Perl/shell evaluation spawning /bin/sh -c',
+            tone: 'sky',
           },
           {
             storyTerm: 'Fetching spy tools straight into memory',
             technicalTerm: 'In-memory fetch and execution of DriftingCloud second-stage shell script',
+            tone: 'rose',
           },
           {
             storyTerm: 'Leaving no papers on the desk',
             technicalTerm: 'Minimal on-disk payload footprint during initial memory staging',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -480,18 +556,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Carbon-copy sheet under the sign-in book',
             technicalTerm: 'Trojanized User Portal and Webadmin CGI login authentication scripts',
+            tone: 'amber',
           },
           {
             storyTerm: 'Hidden pocket storing copied badge codes',
             technicalTerm: 'Cleartext credential stash file written to /var/tmp/.auth.log',
+            tone: 'sky',
           },
           {
             storyTerm: 'Private encrypted crawlspace',
             technicalTerm: 'Persistent socat TLS reverse tunnel proxying into the internal corporate LAN',
+            tone: 'rose',
           },
           {
             storyTerm: 'Employee badge codes',
             technicalTerm: 'Harvested VPN and Active Directory credentials remaining valid after patching',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -508,18 +588,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Internal cargo-handling flag on an uninspected manifest',
           technicalTerm: 'Crafted X-AN-FILESHARE flags=00300 HTTP header (CVE-2023-28461)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Harbor master ledger',
           technicalTerm: 'Gateway configuration file /ca/conf/default.ampled with VPN and LDAP secrets',
+          tone: 'sky',
         },
         {
           storyTerm: 'Secret radio clerk behind the crates',
           technicalTerm: 'Dropped PHP webshell and /tmp/s5n proxy listener on ArrayOS',
+          tone: 'rose',
         },
         {
           storyTerm: 'Stowaways boarded onto internal city trains',
           technicalTerm: 'Internal lateral movement deploying LODEINFO and NOOPDOOR in memory',
+          tone: 'emerald',
         },
       ],
       plainSummary:
@@ -533,18 +617,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Stamped internal cargo-sharing tag',
             technicalTerm: 'HTTP request header X-AN-FILESHARE: flags=00300',
+            tone: 'amber',
           },
           {
             storyTerm: 'Berth path with a blank pause',
             technicalTerm: 'Target URI /prx/000/http/localhost/client_sec/%00/add_folder',
+            tone: 'sky',
           },
           {
             storyTerm: 'Automated gatekeeper unlocking the barrier',
             technicalTerm: 'CVE-2023-28461 authentication bypass on ArrayOS SSL VPN gateway',
+            tone: 'rose',
           },
           {
             storyTerm: 'Uninspected external barge',
             technicalTerm: 'Unauthenticated WAN HTTP request from Earth Kasha infrastructure',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -557,18 +645,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Harbor master book',
             technicalTerm: 'Gateway file /ca/conf/default.ampled containing VPN and RADIUS/LDAP secrets',
+            tone: 'amber',
           },
           {
             storyTerm: 'Silent message clerk',
             technicalTerm: 'Dropped PHP webshell written onto the ArrayOS web filesystem',
+            tone: 'sky',
           },
           {
             storyTerm: 'Private relay station behind the crates',
             technicalTerm: 'Unauthorized ELF SOCKS proxy binary running as /tmp/s5n',
+            tone: 'rose',
           },
           {
             storyTerm: 'Inland rail directory keys',
             technicalTerm: 'Extracted internal RADIUS and Active Directory LDAP bind credentials',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -581,18 +673,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Hidden warehouse relay',
             technicalTerm: 'SOCKS pivot through /tmp/s5n into the internal corporate network',
+            tone: 'amber',
           },
           {
             storyTerm: 'Trusted maintenance builder',
             technicalTerm: 'Abused MSBuild.exe executing malicious XML project payloads from C:\\ProgramData',
+            tone: 'sky',
           },
           {
             storyTerm: 'Signed security helper tool carrying hidden gear',
             technicalTerm: 'DLL side-loading of unsigned K7DbgMN.dll by legitimate K7SysMn1.exe',
+            tone: 'rose',
           },
           {
             storyTerm: 'Live espionage gear in memory',
             technicalTerm: 'LODEINFO and NOOPDOOR in-memory backdoor implants',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -609,18 +705,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Lobby receptionist opening folders after a move-along slip',
           technicalTerm: 'Execution-after-redirect (CVE-2026-73696) and module LFI (CVE-2026-73695) on port 2083',
+          tone: 'amber',
         },
         {
           storyTerm: 'Self-starting workshop drawer inside a tenant unit',
           technicalTerm: 'File-scope pre-auth PHP execution in phpini_editor.php (CVE-2026-73697)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Unguarded basement dumbwaiter to the boiler room',
           technicalTerm: 'Loopback root API on 127.0.0.1:2302 lacking authentication (CVE-2026-77877..104080)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Forged pass formula in the superintendent guestbook',
           technicalTerm: 'OAuth SQL injection bypass (CVE-2026-77879) and /v1/newpass/ root RCE (CVE-2026-77880)',
+          tone: 'emerald',
         },
       ],
     },
@@ -632,18 +732,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Buzzer responses revealing a real tenant name',
             technicalTerm: 'Per-user PHP-FPM socket routing oracle on https://host:2083/<username>/',
+            tone: 'amber',
           },
           {
             storyTerm: 'Redirect notice that fails to stop work',
             technicalTerm: 'Missing exit after Location redirect header (CVE-2026-73696)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Pulling the requested folder off the shelf',
             technicalTerm: 'Unauthenticated module parameter local file inclusion (CVE-2026-73695)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Apartment lobby counter',
             technicalTerm: 'Internet-facing cwpsrv nginx proxy forwarding to user PHP-FPM pools',
+            tone: 'emerald',
           },
         ],
       },
@@ -654,18 +758,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Self-running tenant workshop drawer',
             technicalTerm: 'modules/phpini_editor.php and protected_directory.php executing at file scope',
+            tone: 'amber',
           },
           {
             storyTerm: 'Naming the drawer on the lobby request',
             technicalTerm: 'Unauthenticated ?module=phpini_editor dispatch chaining CVE-2026-73697',
+            tone: 'sky',
           },
           {
             storyTerm: 'Command execution inside the tenant apartment',
             technicalTerm: 'Pre-auth remote code execution running under the hosting user UID',
+            tone: 'rose',
           },
           {
             storyTerm: 'Secondary unlocked tool tray',
             technicalTerm: 'protected_directory.php command injection fallback (CVE-2026-77876)',
+            tone: 'emerald',
           },
         ],
       },
@@ -676,18 +784,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Basement dumbwaiter shaft',
             technicalTerm: 'Localhost-only Slim v2 User API listening on https://127.0.0.1:2302',
+            tone: 'amber',
           },
           {
             storyTerm: 'Boiler-room intercom skipping badge checks',
             technicalTerm: 'Missing authentication middleware on /v1/restoredatabase/ and /valid_token/ (CVE-2026-77877)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Maintenance command with hidden separators',
             technicalTerm: 'Root shell injection via unsanitized parameters (CVE-2026-77878 & CVE-2026-104080)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Master building privileges',
             technicalTerm: 'Root PHP-FPM worker pool executing /bin/sh -c as UID 0',
+            tone: 'emerald',
           },
         ],
         detectionAndEvidence:
@@ -700,18 +812,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Locked doors checking a visitor passbook',
             technicalTerm: 'access_token() middleware in services/user_api/v1/index.php',
+            tone: 'amber',
           },
           {
             storyTerm: 'Trick question making the ledger reply yes',
             technicalTerm: 'SQL injection bypass in OAuth token lookup as root@localhost (CVE-2026-77879)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master password reset desk',
             technicalTerm: '/v1/newpass/ endpoint root command injection (CVE-2026-77880)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden yes-or-no ledger peephole',
             technicalTerm: 'Blind SQL injection information disclosure vector (CVE-2026-77881)',
+            tone: 'emerald',
           },
         ],
       },
@@ -726,18 +842,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Unlatched initial setup side window',
           technicalTerm: 'Unauthenticated wizard.fcgi handler exposed on management port 9090 (CVE-2024-7593)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Tower permanent staffing roster',
           technicalTerm: 'Local administrator user file at $ZEUSHOME/zxtm/conf/users',
+          tone: 'sky',
         },
         {
           storyTerm: 'Brand-new supervisor name',
           technicalTerm: 'Unauthorized Full Administrator account (support_svc) written to disk',
+          tone: 'rose',
         },
         {
           storyTerm: 'Swapping automated traffic-routing rules',
           technicalTerm: 'Authenticated upload and execution of custom Action Programs on vTM',
+          tone: 'emerald',
         },
       ],
     },
@@ -749,18 +869,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Exposed management ramp',
             technicalTerm: 'Ivanti vTM management interface reachable on TCP port 9090',
+            tone: 'amber',
           },
           {
             storyTerm: 'Unlatched setup-wizard side window',
             technicalTerm: 'CVE-2024-7593 authentication bypass in wizard.fcgi',
+            tone: 'sky',
           },
           {
             storyTerm: 'Locked main guard booth',
             technicalTerm: 'Normal authenticated vTM Admin UI login workflow',
+            tone: 'rose',
           },
           {
             storyTerm: 'Missing badge check',
             technicalTerm: 'Unauthenticated HTTP POST accepted directly by the setup controller',
+            tone: 'emerald',
           },
         ],
       },
@@ -771,18 +895,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Toll-plaza master employee ledger',
             technicalTerm: '$ZEUSHOME/zxtm/conf/users local administrator configuration file',
+            tone: 'amber',
           },
           {
             storyTerm: 'Brand-new Full Supervisor name',
             technicalTerm: 'Rogue Full Administrator account (support_svc) provisioned via wizard.fcgi',
+            tone: 'sky',
           },
           {
             storyTerm: 'Open setup window',
             technicalTerm: 'Unauthenticated wizard.fcgi account provisioning routine',
+            tone: 'rose',
           },
           {
             storyTerm: 'Surviving ordinary shift changes',
             technicalTerm: 'Persistent local admin access remaining active even after patching',
+            tone: 'emerald',
           },
         ],
       },
@@ -793,18 +921,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Front supervisor door',
             technicalTerm: 'Authenticated vTM Admin UI session on TCP port 9090',
+            tone: 'amber',
           },
           {
             storyTerm: 'Freshly minted supervisor badge',
             technicalTerm: 'Rogue support_svc administrator login credentials',
+            tone: 'sky',
           },
           {
             storyTerm: 'Custom automated lane-switching script',
             technicalTerm: 'Uploaded Custom Action Program executed by the vTM appliance',
+            tone: 'rose',
           },
           {
             storyTerm: 'Control tower machinery',
             technicalTerm: 'Underlying Linux appliance OS and enterprise load-balanced traffic plane',
+            tone: 'emerald',
           },
         ],
       },
@@ -819,18 +951,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
         {
           storyTerm: 'Side emblem chute meant for painted station logos',
           technicalTerm: 'Port 4566 /portalapi change_Dynamic_Favicon upload endpoint (CVE-2024-39717)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Folded clockwork gear disguised as a logo',
           technicalTerm: 'Malicious JAR archive with ZIP magic bytes (50 4B 03 04) saved as favicon_brand.png',
+          tone: 'sky',
         },
         {
           storyTerm: 'Snapping the gear onto the spinning dispatch turntable',
           technicalTerm: 'JVM VirtualMachine.attach loading VersaMem Java Instrumentation Agent into Tomcat',
+          tone: 'rose',
         },
         {
           storyTerm: 'Shredding the paper wrapper while investigators photograph the turntable',
           technicalTerm: 'On-disk unlinkat deletion countered by live jmap JVM heap forensic dump',
+          tone: 'emerald',
         },
       ],
     },
@@ -842,18 +978,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Side coordination chute',
             technicalTerm: 'Exposed Versa Director port 4566 change_Dynamic_Favicon API (CVE-2024-39717)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Metal clockwork assembly painted like a badge',
             technicalTerm: 'Executable JAR payload carrying ZIP magic bytes (50 4B 03 04)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Paper label check without X-raying',
             technicalTerm: 'Filename extension check (.png) without file magic-byte verification',
+            tone: 'rose',
           },
           {
             storyTerm: 'Station emblem drawer',
             technicalTerm: '/var/versa/vnms/web/custom_logo/favicon_brand.png on disk',
+            tone: 'emerald',
           },
         ],
       },
@@ -864,18 +1004,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Official maintenance coupling socket',
             technicalTerm: 'JVM Dynamic Attach Unix domain socket (/tmp/.java_pid2418)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Snapping the gear onto the spinning turntable',
             technicalTerm: 'VirtualMachine.attach loading the VersaMem Java Instrumentation Agent',
+            tone: 'sky',
           },
           {
             storyTerm: 'Spinning traffic-routing turntable',
             technicalTerm: 'Running Apache Tomcat ApplicationFilterChain.internalDoFilter method',
+            tone: 'rose',
           },
           {
             storyTerm: 'Hidden teeth intercepting every message',
             technicalTerm: 'In-memory Javassist bytecode hook harvesting credentials and commands',
+            tone: 'emerald',
           },
         ],
       },
@@ -886,18 +1030,22 @@ export const ZERO_DAY_APPLIANCES_STANDARD_PATCHES: CategoryStandardPatchMap = {
           {
             storyTerm: 'Sweeping the original package into an incinerator',
             technicalTerm: 'Anti-forensic unlinkat (syscall 263) deleting favicon_brand.png from disk',
+            tone: 'amber',
           },
           {
             storyTerm: 'Casual look inside the emblem drawer',
             technicalTerm: 'Standard filesystem antivirus scan missing the memory-resident agent',
+            tone: 'sky',
           },
           {
             storyTerm: 'Photographing the spinning turntable before power-off',
             technicalTerm: 'Live JVM heap acquisition via jmap -dump:live to /cases/versa_tomcat_heap.hprof',
+            tone: 'rose',
           },
           {
             storyTerm: 'Captured turntable blueprint showing foreign teeth',
             technicalTerm: 'Recovered hooked ApplicationFilterChain bytecode attributed to Volt Typhoon',
+            tone: 'emerald',
           },
         ],
       },

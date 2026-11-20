@@ -16,18 +16,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Smart reception ledger',
             technicalTerm: 'Vulnerable Log4j 2 message lookup engine',
+            tone: 'amber',
           },
           {
             storyTerm: 'Guest badge note',
             technicalTerm: 'HTTP User-Agent request header',
+            tone: 'sky',
           },
           {
             storyTerm: 'Outside phone bureau',
             technicalTerm: 'Attacker-controlled LDAP referral server',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unsigned instruction booklet',
             technicalTerm: 'Remote Java bytecode class file',
+            tone: 'emerald',
           },
         ],
       },
@@ -39,18 +43,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Front desk counter',
               technicalTerm: 'Public web application login endpoint',
+              tone: 'amber',
             },
             {
               storyTerm: 'Paper badge note',
               technicalTerm: 'Crafted User-Agent HTTP header string',
+              tone: 'sky',
             },
             {
               storyTerm: 'Special lookup code',
               technicalTerm: 'JNDI lookup expression (CVE-2021-44228)',
+              tone: 'rose',
             },
             {
               storyTerm: 'Smart reception ledger',
               technicalTerm: 'Log4j 2 logging library formatter',
+              tone: 'emerald',
             },
           ],
         },
@@ -61,18 +69,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Built-in ledger dialer',
               technicalTerm: 'Java Naming and Directory Interface client',
+              tone: 'amber',
             },
             {
               storyTerm: 'Lobby switchboard',
               technicalTerm: 'Perimeter egress firewall',
+              tone: 'sky',
             },
             {
               storyTerm: 'Outgoing phone call',
               technicalTerm: 'Outbound LDAP connection on TCP port 389',
+              tone: 'rose',
             },
             {
               storyTerm: 'Outside phone bureau',
               technicalTerm: 'External rogue directory listener',
+              tone: 'emerald',
             },
           ],
         },
@@ -83,18 +95,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Forwarding slip',
               technicalTerm: 'LDAP javaCodeBase reference attribute',
+              tone: 'amber',
             },
             {
               storyTerm: 'Nearby street kiosk',
               technicalTerm: 'External HTTP payload staging server',
+              tone: 'sky',
             },
             {
               storyTerm: 'Unsigned instruction booklet',
               technicalTerm: 'Compiled Exploit.class Java bytecode',
+              tone: 'rose',
             },
             {
               storyTerm: 'Trusting desk clerk',
               technicalTerm: 'Application JVM URLClassLoader',
+              tone: 'emerald',
             },
           ],
         },
@@ -105,18 +121,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Cover page setup checklist',
               technicalTerm: 'Java static initializer block',
+              tone: 'amber',
             },
             {
               storyTerm: 'Back-office handset',
               technicalTerm: 'Spawned /bin/sh command interpreter',
+              tone: 'sky',
             },
             {
               storyTerm: 'Live private line',
               technicalTerm: 'Outbound interactive reverse session',
+              tone: 'rose',
             },
             {
               storyTerm: 'Hotel building staff role',
               technicalTerm: 'Application service user context',
+              tone: 'emerald',
             },
           ],
         },
@@ -131,18 +151,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Front mail slot',
             technicalTerm: 'Permitted UDP port 53 DNS egress path',
+            tone: 'amber',
           },
           {
             storyTerm: 'Coded postcard label',
             technicalTerm: 'Hex-encoded high-entropy DNS subdomain',
+            tone: 'sky',
           },
           {
             storyTerm: 'Local post office relay',
             technicalTerm: 'Internal corporate recursive DNS resolver',
+            tone: 'rose',
           },
           {
             storyTerm: 'Return postage stamp',
             technicalTerm: 'Authoritative DNS TXT response record',
+            tone: 'emerald',
           },
         ],
       },
@@ -154,18 +178,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Rogue archive clerk',
               technicalTerm: 'Compromised sync_agent.exe process',
+              tone: 'amber',
             },
             {
               storyTerm: 'Numbered digit strips',
               technicalTerm: 'Chunked hexadecimal subdomain labels',
+              tone: 'sky',
             },
             {
               storyTerm: 'Outgoing postal lookup card',
               technicalTerm: 'DNS TXT query packet',
+              tone: 'rose',
             },
             {
               storyTerm: 'External mail district',
               technicalTerm: 'Attacker-owned authoritative domain',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -178,18 +206,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Company mailroom',
               technicalTerm: 'Internal recursive DNS resolver (10.50.1.53)',
+              tone: 'amber',
             },
             {
               storyTerm: 'Front gate guard',
               technicalTerm: 'Corporate egress perimeter firewall',
+              tone: 'sky',
             },
             {
               storyTerm: 'Mailroom stamped bag',
               technicalTerm: 'Forwarded upstream UDP/53 recursive query',
+              tone: 'rose',
             },
             {
               storyTerm: 'Remote district office',
               technicalTerm: 'External authoritative DNS nameserver',
+              tone: 'emerald',
             },
           ],
         },
@@ -200,18 +232,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Rebuilt customer ledger',
               technicalTerm: 'Reassembled exfiltrated CSV records',
+              tone: 'amber',
             },
             {
               storyTerm: 'Return slip note',
               technicalTerm: 'DNS TXT response carrying ACK and sleep directives',
+              tone: 'sky',
             },
             {
               storyTerm: 'Immediate expiry stamp',
               technicalTerm: 'Zero-second TTL value preventing resolver caching',
+              tone: 'rose',
             },
             {
               storyTerm: 'Archive room workstation',
               technicalTerm: 'Source database backup host (10.50.1.12)',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -228,18 +264,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Border tollhouse gateway',
             technicalTerm: 'PAN-OS GlobalProtect firewall appliance',
+            tone: 'amber',
           },
           {
             storyTerm: 'Twisted ticket label',
             technicalTerm: 'Path-traversal SESSID cookie string',
+            tone: 'sky',
           },
           {
             storyTerm: 'Automated minute courier',
             technicalTerm: 'Root device telemetry cron job (dt_curl)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Permanent listener card',
             technicalTerm: 'UPSTYLE Python persistence script in system.pth',
+            tone: 'emerald',
           },
         ],
       },
@@ -251,18 +291,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Traveler pass ticket stamp',
               technicalTerm: 'SESSID HTTP cookie header',
+              tone: 'amber',
             },
             {
               storyTerm: 'Climbing backward out of the drawer',
               technicalTerm: 'Directory traversal sequence (CVE-2024-3400)',
+              tone: 'sky',
             },
             {
               storyTerm: 'Hourly courier tray',
               technicalTerm: 'Device telemetry minute staging directory',
+              tone: 'rose',
             },
             {
               storyTerm: 'Instruction spelled in the file label',
               technicalTerm: 'Shell command embedded inside a zero-byte filename',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -275,18 +319,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Privileged automated courier',
               technicalTerm: 'Scheduled root dt_curl telemetry utility',
+              tone: 'amber',
             },
             {
               storyTerm: 'Building command desk',
               technicalTerm: 'Underlying operating system shell interpreter',
+              tone: 'sky',
             },
             {
               storyTerm: 'Master supervisor authority',
               technicalTerm: 'Root privilege execution context',
+              tone: 'rose',
             },
             {
               storyTerm: 'External pickup call',
               technicalTerm: 'Outbound staging retrieval initiated by dt_curl',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -299,18 +347,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Tollhouse startup manual',
               technicalTerm: 'Python site-packages system.pth loader file',
+              tone: 'amber',
             },
             {
               storyTerm: 'Quiet error-log watcher',
               technicalTerm: 'UPSTYLE web error log command handler',
+              tone: 'sky',
             },
             {
               storyTerm: 'Master vault directory',
               technicalTerm: 'Firewall running configuration and credential store',
+              tone: 'rose',
             },
             {
               storyTerm: 'Front gate web counter',
               technicalTerm: 'GlobalProtect SSL portal web server',
+              tone: 'emerald',
             },
           ],
         },
@@ -325,18 +377,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Identical glass booth',
             technicalTerm: 'Evilginx adversary-in-the-middle reverse proxy',
+            tone: 'amber',
           },
           {
             storyTerm: 'Live one-time stamp',
             technicalTerm: 'Real-time multi-factor authentication challenge',
+            tone: 'sky',
           },
           {
             storyTerm: 'Stamped entry pass',
             technicalTerm: 'Stolen ESTSAUTHPERSISTENT session cookie',
+            tone: 'rose',
           },
           {
             storyTerm: 'Customer mailroom',
             technicalTerm: 'Cloud mailbox and inbox forwarding rules',
+            tone: 'emerald',
           },
         ],
       },
@@ -348,18 +404,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Convincing invitation letter',
               technicalTerm: 'Targeted spear-phishing email link',
+              tone: 'amber',
             },
             {
               storyTerm: 'Look-alike glass booth',
               technicalTerm: 'Evilginx transparent reverse-proxy server',
+              tone: 'sky',
             },
             {
               storyTerm: 'Genuine bank lobby',
               technicalTerm: 'Legitimate cloud identity login portal',
+              tone: 'rose',
             },
             {
               storyTerm: 'Freshly rented storefront',
               technicalTerm: 'Attacker-registered phishing domain and TLS cert',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -372,18 +432,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Secret passphrase',
               technicalTerm: 'Captured user account password',
+              tone: 'amber',
             },
             {
               storyTerm: 'Pocket buzzer approval',
               technicalTerm: 'Completed MFA push or TOTP verification',
+              tone: 'sky',
             },
             {
               storyTerm: 'Photocopied entry pass',
               technicalTerm: 'Intercepted Set-Cookie session token',
+              tone: 'rose',
             },
             {
               storyTerm: 'Booth handshake signature',
               technicalTerm: 'Reverse-proxy TLS JA3 client fingerprint',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -396,18 +460,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Flashing the photocopied pass',
               technicalTerm: 'Replaying ESTSAUTHPERSISTENT session cookie',
+              tone: 'amber',
             },
             {
               storyTerm: 'Second city entrance',
               technicalTerm: 'New attacker IP address reusing the same SessionId',
+              tone: 'sky',
             },
             {
               storyTerm: 'Secret forwarding tray',
               technicalTerm: 'Malicious New-InboxRule mailbox rule',
+              tone: 'rose',
             },
             {
               storyTerm: 'Mailroom ledger',
               technicalTerm: 'Cloud Unified Audit Log telemetry',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -424,18 +492,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Fortress gatekeeper',
             technicalTerm: 'Perimeter network security firewall appliance',
+            tone: 'amber',
           },
           {
             storyTerm: 'Clearance envelope message',
             technicalTerm: 'Oversized encoded authentication POST payload',
+            tone: 'sky',
           },
           {
             storyTerm: 'Live workbench rewrite',
             technicalTerm: 'Line Dancer in-memory resident implant',
+            tone: 'rose',
           },
           {
             storyTerm: 'Basement vault archive',
             technicalTerm: 'Line Runner persistent web package across reboots',
+            tone: 'emerald',
           },
         ],
       },
@@ -447,18 +519,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Fortress side window',
               technicalTerm: 'SSL remote-access authentication endpoint',
+              tone: 'amber',
             },
             {
               storyTerm: 'Oversized clearance envelope',
               technicalTerm: 'Crafted host-scan-reply POST body',
+              tone: 'sky',
             },
             {
               storyTerm: 'Folded coded symbols',
               technicalTerm: 'Base64-encoded binary instruction payload',
+              tone: 'rose',
             },
             {
               storyTerm: 'Active guard workbench',
               technicalTerm: 'Running appliance process memory',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -471,18 +547,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Silent workbench agent',
               technicalTerm: 'Line Dancer memory-only implant',
+              tone: 'amber',
             },
             {
               storyTerm: 'Muting the logbook bell',
               technicalTerm: 'Suppression of outbound syslog audit alerts',
+              tone: 'sky',
             },
             {
               storyTerm: 'Guard handbook text',
               technicalTerm: 'Running appliance executable code segment',
+              tone: 'rose',
             },
             {
               storyTerm: 'Custom gate commands',
               technicalTerm: 'Arbitrary memory-dispatched appliance actions',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -495,18 +575,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Basement storage cabinet',
               technicalTerm: 'Persistent flash storage boot filesystem',
+              tone: 'amber',
             },
             {
               storyTerm: 'Concealed spare bundle',
               technicalTerm: 'Line Runner archive exploiting CVE-2024-20359',
+              tone: 'sky',
             },
             {
               storyTerm: 'Fortress shift restart',
               technicalTerm: 'Device reboot and firmware upgrade cycle',
+              tone: 'rose',
             },
             {
               storyTerm: 'Hidden side-door script',
               technicalTerm: 'Persistent unauthorized Lua web handler',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -523,18 +607,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Front lobby receptionist',
             technicalTerm: 'Front-end Apache reverse-proxy web server',
+            tone: 'amber',
           },
           {
             storyTerm: 'Back-office conveyor clerk',
             technicalTerm: 'Internal Tomcat AJP servlet container',
+            tone: 'sky',
           },
           {
             storyTerm: 'Second hidden work order',
             technicalTerm: 'Smuggled AJP administrative request (CVE-2023-46747)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Engine room terminal',
             technicalTerm: 'Root shell execution through management utility',
+            tone: 'emerald',
           },
         ],
       },
@@ -546,18 +634,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Outer parcel wrapper',
               technicalTerm: 'Benign front-end HTTP request headers',
+              tone: 'amber',
             },
             {
               storyTerm: 'Hidden parcel crease',
               technicalTerm: 'AJP request framing desynchronization flaw',
+              tone: 'sky',
             },
             {
               storyTerm: 'Pre-approved manager order',
               technicalTerm: 'Smuggled request targeting /tmui/Control/jspmap/',
+              tone: 'rose',
             },
             {
               storyTerm: 'Back-office clerk',
               technicalTerm: 'Backend Tomcat AJP connector listener',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -570,18 +662,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Staff roster book',
               technicalTerm: 'Appliance configuration user database',
+              tone: 'amber',
             },
             {
               storyTerm: 'Senior supervisor badge',
               technicalTerm: 'Rogue administrator account with role=admin',
+              tone: 'sky',
             },
             {
               storyTerm: 'Workshop master key',
               technicalTerm: 'Assigned advanced interactive shell access',
+              tone: 'rose',
             },
             {
               storyTerm: 'Missing front-desk sign-in',
               technicalTerm: 'Account creation with no prior web login event',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -594,18 +690,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Engine-room command console',
               technicalTerm: 'Management tmshCmd.jsp execution endpoint',
+              tone: 'amber',
             },
             {
               storyTerm: 'Unrestricted maintenance directive',
               technicalTerm: 'Arbitrary root command via util bash -c',
+              tone: 'sky',
             },
             {
               storyTerm: 'Building traffic hub',
               technicalTerm: 'Compromised enterprise load-balancer appliance',
+              tone: 'rose',
             },
             {
               storyTerm: 'Shift audit ledger',
               technicalTerm: 'Control-plane audit log recording shell runs',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -622,18 +722,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Commuter tunnel gate',
             technicalTerm: 'Ivanti Connect Secure VPN gateway appliance',
+            tone: 'amber',
           },
           {
             storyTerm: 'Side stairwell shortcut',
             technicalTerm: 'Path traversal authentication bypass (CVE-2023-46805)',
+            tone: 'sky',
           },
           {
             storyTerm: 'License meter dial',
             technicalTerm: 'Command injection in keys-status endpoint (CVE-2024-21887)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Altered booth manuals',
             technicalTerm: 'Persistent web, library, and integrity-checker implants',
+            tone: 'emerald',
           },
         ],
       },
@@ -645,18 +749,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Public helper window',
               technicalTerm: 'Unauthenticated backup-code API path prefix',
+              tone: 'amber',
             },
             {
               storyTerm: 'Backward hallway steps',
               technicalTerm: 'Relative ../ directory traversal path segments',
+              tone: 'sky',
             },
             {
               storyTerm: 'Restricted control booth',
               technicalTerm: 'Protected internal administrative REST endpoints',
+              tone: 'rose',
             },
             {
               storyTerm: 'Tunnel door guard',
               technicalTerm: 'Gateway URL route authorization filter',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -669,18 +777,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'License status gauge',
               technicalTerm: 'Internal /api/v1/license/keys-status/ parameter',
+              tone: 'amber',
             },
             {
               storyTerm: 'Semicolon extra order',
               technicalTerm: 'OS command injection payload (CVE-2024-21887)',
+              tone: 'sky',
             },
             {
               storyTerm: 'Basement machinery',
               technicalTerm: 'Underlying Linux shell spawned by web daemon',
+              tone: 'rose',
             },
             {
               storyTerm: 'Control booth intercom',
               technicalTerm: 'Appliance syslog and unallocated access logs',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -693,18 +805,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Edited visitor log page',
               technicalTerm: 'WIREFIRE web backdoor inside visits.py',
+              tone: 'amber',
             },
             {
               storyTerm: 'Quiet traffic filter',
               technicalTerm: 'ZIPLINE passive interceptor via LD_PRELOAD',
+              tone: 'sky',
             },
             {
               storyTerm: 'Rewritten inspector checklist',
               technicalTerm: 'Tampered ComponentIntegrity.pm checker module',
+              tone: 'rose',
             },
             {
               storyTerm: 'External auditor snapshot',
               technicalTerm: 'Out-of-band Integrity Checker Tool verification',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -721,18 +837,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Overly long name card',
             technicalTerm: 'Oversized HTTP Host request header (CVE-2023-4966)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Neighboring counter tickets',
             technicalTerm: 'Leaked adjacent NetScaler process memory',
+            tone: 'sky',
           },
           {
             storyTerm: 'Executive coat ticket',
             technicalTerm: '65-character NSC_AAAC authenticated session cookie',
+            tone: 'rose',
           },
           {
             storyTerm: 'Private office floor',
             technicalTerm: 'Internal virtual desktop and remote server tier',
+            tone: 'emerald',
           },
         ],
       },
@@ -744,18 +864,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Public information counter',
               technicalTerm: 'Exposed OpenID discovery endpoint on NetScaler',
+              tone: 'amber',
             },
             {
               storyTerm: 'Unusually long address label',
               technicalTerm: 'Oversized HTTP Host header triggering buffer over-read',
+              tone: 'sky',
             },
             {
               storyTerm: 'Neighboring scratch memory',
               technicalTerm: 'Adjacent uninitialized heap memory disclosure',
+              tone: 'rose',
             },
             {
               storyTerm: 'Thick printed reply',
               technicalTerm: 'Abnormally large HTTP 200 response exceeding 130 KB',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -768,18 +892,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Spilled counter scraps',
               technicalTerm: 'Raw leaked memory buffer contents',
+              tone: 'amber',
             },
             {
               storyTerm: 'Sixty-five-symbol claim ticket',
               technicalTerm: 'Valid NSC_AAAC session cookie token',
+              tone: 'sky',
             },
             {
               storyTerm: 'VIP entrance bypass',
               technicalTerm: 'Authenticated session hijack skipping MFA',
+              tone: 'rose',
             },
             {
               storyTerm: 'Two separate entry gates',
               technicalTerm: 'Same session cookie observed from two distinct client IPs',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -792,18 +920,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Hijacked manager workspace',
               technicalTerm: 'Active remote virtual desktop session',
+              tone: 'amber',
             },
             {
               storyTerm: 'Internal office intercom',
               technicalTerm: 'Remote DCOM management interface',
+              tone: 'sky',
             },
             {
               storyTerm: 'Remote administration order',
               technicalTerm: 'Spawned mmc.exe -Embedding execution on target hosts',
+              tone: 'rose',
             },
             {
               storyTerm: 'Adjacent floor vaults',
               technicalTerm: 'Internal enterprise servers targeted during lateral movement',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -820,18 +952,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Factory assembly hub',
             technicalTerm: 'JetBrains TeamCity build automation server',
+            tone: 'amber',
           },
           {
             storyTerm: 'Old side-door bell',
             technicalTerm: 'Unauthenticated /RPC2 route bypass (CVE-2023-42793)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Factory repair console',
             technicalTerm: 'Internal debug process execution API',
+            tone: 'rose',
           },
           {
             storyTerm: 'Outside courier locker',
             technicalTerm: 'Cloud-hosted command-and-control channel',
+            tone: 'emerald',
           },
         ],
       },
@@ -843,18 +979,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Legacy service bell',
               technicalTerm: 'Appended /RPC2 URL suffix bypassing auth filter',
+              tone: 'amber',
             },
             {
               storyTerm: 'Badge-printer route',
               technicalTerm: 'REST endpoint /app/rest/users/id:1/tokens/',
+              tone: 'sky',
             },
             {
               storyTerm: 'Master supervisor keycard',
               technicalTerm: 'Minted administrator Bearer authentication token',
+              tone: 'rose',
             },
             {
               storyTerm: 'Guard desk exemption',
               technicalTerm: 'Path-matching authentication flaw (CVE-2023-42793)',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -867,18 +1007,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Maintenance switch',
               technicalTerm: 'Internal debug property enabling process execution',
+              tone: 'amber',
             },
             {
               storyTerm: 'Factory supervisor terminal',
               technicalTerm: 'POST /app/rest/debug/processes endpoint',
+              tone: 'sky',
             },
             {
               storyTerm: 'Discovery checklist',
               technicalTerm: 'Executed reconnaissance commands (whoami, nltest, curl)',
+              tone: 'rose',
             },
             {
               storyTerm: 'Assembly controller process',
               technicalTerm: 'Server java.exe runtime spawning child utilities',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -891,18 +1035,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Build locker combinations',
               technicalTerm: 'Harvested CI/CD credentials and repository tokens',
+              tone: 'amber',
             },
             {
               storyTerm: 'Backup supervisor account',
               technicalTerm: 'Newly created rogue TeamCity administrator',
+              tone: 'sky',
             },
             {
               storyTerm: 'Quiet messenger beacon',
               technicalTerm: 'GraphicalProton backdoor implant',
+              tone: 'rose',
             },
             {
               storyTerm: 'Public storage shelf',
               technicalTerm: 'Abused OneDrive cloud C2 communication channel',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -919,18 +1067,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Remote dispatch center',
             technicalTerm: 'ConnectWise ScreenConnect RMM server',
+            tone: 'amber',
           },
           {
             storyTerm: 'Extra slash hallway sign',
             technicalTerm: 'Path-traversal bypass on /SetupWizard.aspx/ (CVE-2024-1709)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master dispatcher roster',
             technicalTerm: 'App_Data\\User.xml administrator credential file',
+            tone: 'rose',
           },
           {
             storyTerm: 'Built-in dispatch radio',
             technicalTerm: 'Backstage administrative command runner',
+            tone: 'emerald',
           },
         ],
       },
@@ -942,18 +1094,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Closed setup-room doorway',
               technicalTerm: 'Initial installation /SetupWizard.aspx page',
+              tone: 'amber',
             },
             {
               storyTerm: 'Trailing slash and random word',
               technicalTerm: 'Path suffix bypass (/SetupWizard.aspx/anything)',
+              tone: 'sky',
             },
             {
               storyTerm: 'Exact-name hallway lock',
               technicalTerm: 'Flawed URL path check (CVE-2024-1709)',
+              tone: 'rose',
             },
             {
               storyTerm: 'Open setup desk',
               technicalTerm: 'HTTP 200 access to setup wizard on a live server',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -966,18 +1122,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Fresh owner registration form',
               technicalTerm: 'Submitted SetupWizard administrator creation POST',
+              tone: 'amber',
             },
             {
               storyTerm: 'Supervisor roster book',
               technicalTerm: 'App_Data\\User.xml credential database',
+              tone: 'sky',
             },
             {
               storyTerm: 'Valid master badge',
               technicalTerm: 'Authenticated administrator session cookie',
+              tone: 'rose',
             },
             {
               storyTerm: 'Custom desk add-on',
               technicalTerm: 'Malicious extension file placed in App_Extensions',
+              tone: 'emerald',
             },
           ],
           howItWorksInPractice:
@@ -992,18 +1152,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Legitimate dispatch intercom',
               technicalTerm: 'ScreenConnect Backstage non-interactive shell',
+              tone: 'amber',
             },
             {
               storyTerm: 'Connected branch offices',
               technicalTerm: 'Managed client endpoints running ClientService',
+              tone: 'sky',
             },
             {
               storyTerm: 'Master building clearance',
               technicalTerm: 'NT AUTHORITY\\SYSTEM execution privilege',
+              tone: 'rose',
             },
             {
               storyTerm: 'Broadcast maintenance order',
               technicalTerm: 'Temporary batch scripts invoking cmd.exe or powershell.exe',
+              tone: 'emerald',
             },
           ],
           howItWorksInPractice:
@@ -1022,18 +1186,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Courier transfer vault',
             technicalTerm: 'Progress MOVEit Transfer managed file server',
+            tone: 'amber',
           },
           {
             storyTerm: 'Hidden database instruction',
             technicalTerm: 'SQL injection via ISAPI session header (CVE-2023-34362)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Self-assembling toolbox',
             technicalTerm: 'Malicious .NET BinaryFormatter gadget payload',
+            tone: 'rose',
           },
           {
             storyTerm: 'Secret back-door teller',
             technicalTerm: 'LEMURLOOT human2.aspx web shell',
+            tone: 'emerald',
           },
         ],
       },
@@ -1045,18 +1213,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Public guest counter',
               technicalTerm: 'POST /guestaccess.aspx session initialization',
+              tone: 'amber',
             },
             {
               storyTerm: 'Internal filing chute',
               technicalTerm: 'POST /moveitisapi/moveitisapi.dll handler',
+              tone: 'sky',
             },
             {
               storyTerm: 'Tampered ledger phrases',
               technicalTerm: 'SQL injection statements inside X-siLock headers',
+              tone: 'rose',
             },
             {
               storyTerm: 'Vault session records',
               technicalTerm: 'Backend MOVEit ActiveSessions database table',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1069,18 +1241,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Folded clockwork package',
               technicalTerm: 'Serialized .NET BinaryFormatter exploit object',
+              tone: 'amber',
             },
             {
               storyTerm: 'Clerk unfolding the entry',
               technicalTerm: 'Unsafe deserialization during session processing',
+              tone: 'sky',
             },
             {
               storyTerm: 'Hidden teller window',
               technicalTerm: 'Dropped /human2.aspx web shell script',
+              tone: 'rose',
             },
             {
               storyTerm: 'Vault wall directory',
               technicalTerm: 'Webroot folder served by IIS',
+              tone: 'emerald',
             },
           ],
         },
@@ -1091,18 +1267,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Hidden teller window',
               technicalTerm: 'Deployed human2.aspx web backdoor',
+              tone: 'amber',
             },
             {
               storyTerm: 'Envelope margin passphrase',
               technicalTerm: 'Custom X-siLock-Comment authentication header',
+              tone: 'sky',
             },
             {
               storyTerm: 'Order slip code',
               technicalTerm: 'X-siLock-Step1 command selector header',
+              tone: 'rose',
             },
             {
               storyTerm: 'Customer storage lockers',
               technicalTerm: 'Stored tenant files and Azure Blob credentials',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1119,18 +1299,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Night watchman service',
             technicalTerm: 'Privileged OpenSSH sshd authentication daemon',
+            tone: 'amber',
           },
           {
             storyTerm: 'Strict wall-clock alarm',
             technicalTerm: 'LoginGraceTime SIGALRM timeout signal handler',
+            tone: 'sky',
           },
           {
             storyTerm: 'Filing cabinet shuffle',
             technicalTerm: 'glibc heap memory allocation and free routines',
+            tone: 'rose',
           },
           {
             storyTerm: 'Redirected alarm routine',
             technicalTerm: 'Hijacked _IO_FILE vtable yielding root execution',
+            tone: 'emerald',
           },
         ],
       },
@@ -1142,18 +1326,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Alternating knock-and-wait packets',
               technicalTerm: 'Crafted SSH public-key authentication messages',
+              tone: 'amber',
             },
             {
               storyTerm: 'Filing cabinet checkerboard',
               technicalTerm: 'Groomed glibc heap chunk layout',
+              tone: 'sky',
             },
             {
               storyTerm: 'Doorway timeout bell',
               technicalTerm: 'Default 120-second LoginGraceTime threshold',
+              tone: 'rose',
             },
             {
               storyTerm: 'Watchman visitor register',
               technicalTerm: 'System /var/log/auth.log authentication log',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1166,18 +1354,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Half-updated index card',
               technicalTerm: 'Interrupted non-reentrant glibc free() operation',
+              tone: 'amber',
             },
             {
               storyTerm: 'Wall-clock alarm interruption',
               technicalTerm: 'Asynchronous SIGALRM signal delivery',
+              tone: 'sky',
             },
             {
               storyTerm: 'Unsafe logging clerk',
               technicalTerm: 'Async-signal-unsafe syslog() call inside handler',
+              tone: 'rose',
             },
             {
               storyTerm: 'Corrupted drawer pointers',
               technicalTerm: 'Overwritten heap metadata and structure pointers',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1190,18 +1382,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Watchman instruction table',
               technicalTerm: 'glibc _IO_FILE _IO_wfile_jumps vtable structure',
+              tone: 'amber',
             },
             {
               storyTerm: 'Forged dispatch card',
               technicalTerm: 'Attacker-controlled fake file stream structure',
+              tone: 'sky',
             },
             {
               storyTerm: 'Master building keys',
               technicalTerm: 'Un-sandboxed root (uid=0) shell execution',
+              tone: 'rose',
             },
             {
               storyTerm: 'Building security camera',
               technicalTerm: 'Linux auditd SYSCALL execve telemetry',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1218,18 +1414,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Private license drop box',
             technicalTerm: 'Exposed GoAnywhere MFT admin console on port 8000/8001',
+            tone: 'amber',
           },
           {
             storyTerm: 'Printed factory padlock key',
             technicalTerm: 'Hardcoded AES encryption key in License Response Handler',
+            tone: 'sky',
           },
           {
             storyTerm: 'Spring-loaded package',
             technicalTerm: 'Serialized Java CommonsBeanutils1 gadget chain',
+            tone: 'rose',
           },
           {
             storyTerm: 'Shipping floor archive',
             technicalTerm: 'Managed customer file transfer repositories',
+            tone: 'emerald',
           },
         ],
       },
@@ -1241,18 +1441,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Fixed factory padlock key',
               technicalTerm: 'Hardcoded "$2" AES/CBC/PKCS5Padding key',
+              tone: 'amber',
             },
             {
               storyTerm: 'Street-facing acceptance slot',
               technicalTerm: 'Unauthenticated POST /goanywhere/lic/accept endpoint',
+              tone: 'sky',
             },
             {
               storyTerm: 'Custom-built trick package',
               technicalTerm: 'Encrypted serialized Java payload bundle',
+              tone: 'rose',
             },
             {
               storyTerm: 'Branch perimeter monitor',
               technicalTerm: 'Network IDS signature monitoring port 8000/8001',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1265,18 +1469,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Sorting table unpacker',
               technicalTerm: 'Java ObjectInputStream.readObject() deserializer',
+              tone: 'amber',
             },
             {
               storyTerm: 'Self-clicking mechanical parts',
               technicalTerm: 'CommonsBeanutils1 BeanComparator gadget chain',
+              tone: 'sky',
             },
             {
               storyTerm: 'Warehouse clerk process',
               technicalTerm: 'Service runtime tomcat9.exe',
+              tone: 'rose',
             },
             {
               storyTerm: 'Fired-up command terminal',
               technicalTerm: 'Spawned cmd.exe child shell process',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1289,18 +1497,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Quiet scouting kit',
               technicalTerm: 'TrueBot (acl.dll) reconnaissance library',
+              tone: 'amber',
             },
             {
               storyTerm: 'Remote courier relay',
               technicalTerm: 'Cobalt Strike post-exploitation beacon',
+              tone: 'sky',
             },
             {
               storyTerm: 'Shared storeroom folder',
               technicalTerm: 'C:\\ProgramData\\ payload staging directory',
+              tone: 'rose',
             },
             {
               storyTerm: 'Partner shipping records',
               technicalTerm: 'Exfiltrated MFT customer archives',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1317,18 +1529,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Front lobby concierge',
             technicalTerm: 'Exchange Client Access front-end proxy',
+            tone: 'amber',
           },
           {
             storyTerm: 'Deceptive hallway address',
             technicalTerm: 'URL confusion path /autodiscover/autodiscover.json (CVE-2021-34473)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Forged supervisor ribbon',
             technicalTerm: 'Crafted X-Rps-CAT Kerberos/Windows token (CVE-2021-34523)',
+            tone: 'rose',
           },
           {
             storyTerm: 'Mail export bag backdoor',
             technicalTerm: 'PST/ASPX polyglot webshell via New-MailboxExportRequest (CVE-2021-31207)',
+            tone: 'emerald',
           },
         ],
       },
@@ -1340,18 +1556,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Public directory desk',
               technicalTerm: '/autodiscover/autodiscover.json prefix',
+              tone: 'amber',
             },
             {
               storyTerm: 'Locked back office',
               technicalTerm: 'Internal /powershell and /mapi/nspi backend endpoints',
+              tone: 'sky',
             },
             {
               storyTerm: 'Front lobby concierge',
               technicalTerm: 'Exchange front-end IIS proxy service',
+              tone: 'rose',
             },
             {
               storyTerm: 'Concierge delivery log',
               technicalTerm: 'IIS W3SVC front-end access logs',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1364,18 +1584,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Hand-crafted supervisor ribbon',
               technicalTerm: 'Forged X-Rps-CAT query string token',
+              tone: 'amber',
             },
             {
               storyTerm: 'Mail administrator status',
               technicalTerm: 'Impersonated Exchange Administrator SID',
+              tone: 'sky',
             },
             {
               storyTerm: 'Activated export privilege',
               technicalTerm: 'Assigned Mailbox Import Export management role',
+              tone: 'rose',
             },
             {
               storyTerm: 'Management policy log',
               technicalTerm: 'MSExchange Management administrative event log',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1388,18 +1612,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Draft message with hidden instructions',
               technicalTerm: 'Encoded webshell payload embedded in mailbox draft',
+              tone: 'amber',
             },
             {
               storyTerm: 'Mailbox export command',
               technicalTerm: 'New-MailboxExportRequest targeting a web-accessible path',
+              tone: 'sky',
             },
             {
               storyTerm: 'Public noticeboard wall',
               technicalTerm: 'Exchange IIS inetpub webroot directory',
+              tone: 'rose',
             },
             {
               storyTerm: 'Web-script label',
               technicalTerm: 'Written .aspx polyglot webshell file',
+              tone: 'emerald',
             },
           ],
         },
@@ -1414,18 +1642,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
           {
             storyTerm: 'Document archive portal',
             technicalTerm: 'On-premises Microsoft SharePoint Server',
+            tone: 'amber',
           },
           {
             storyTerm: 'Blank-seal visitor pass',
             technicalTerm: 'Unsigned "alg": "none" OAuth JWT token (CVE-2023-29357)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Head archivist ID',
             technicalTerm: 'Site administrator nameid claim from siteusers API',
+            tone: 'rose',
           },
           {
             storyTerm: 'Unsigned plug-in cartridge',
             technicalTerm: 'Malicious BCS .bdcm DotNetAssembly model (CVE-2023-24955)',
+            tone: 'emerald',
           },
         ],
       },
@@ -1437,18 +1669,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Homemade unsigned pass',
               technicalTerm: 'Bearer JWT with header {"alg":"none"}',
+              tone: 'amber',
             },
             {
               storyTerm: 'Archive directory window',
               technicalTerm: '/_api/web/siteusers REST endpoint',
+              tone: 'sky',
             },
             {
               storyTerm: 'Skipped wax-seal check',
               technicalTerm: 'Broken signature validation in CVE-2023-29357',
+              tone: 'rose',
             },
             {
               storyTerm: 'Head archivist roster',
               technicalTerm: 'Enumerated administrator NameId and login accounts',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1461,18 +1697,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Second blank-seal pass',
               technicalTerm: 'Spoofed administrator JWT containing stolen nameid',
+              tone: 'amber',
             },
             {
               storyTerm: 'Internal desk call stamp',
               technicalTerm: 'Forged isloopback=true claim in token payload',
+              tone: 'sky',
             },
             {
               storyTerm: 'Archive control room',
               technicalTerm: 'SharePoint Farm Administrator management plane',
+              tone: 'rose',
             },
             {
               storyTerm: 'Security desk trace book',
               technicalTerm: 'SharePoint ULS token validation log',
+              tone: 'emerald',
             },
           ],
           detectionAndEvidence:
@@ -1485,18 +1725,22 @@ export const CATEGORY_03A_NETWORK_WEB_CORE_APT_PATCHES: CategoryStandardPatchMap
             {
               storyTerm: 'Business connector blueprint',
               technicalTerm: 'Imported BCS .bdcm application model file',
+              tone: 'amber',
             },
             {
               storyTerm: 'Hidden assembly code',
               technicalTerm: 'Embedded DotNetAssembly compiled in memory',
+              tone: 'sky',
             },
             {
               storyTerm: 'Archive server workspace',
               technicalTerm: 'SharePoint w3wp.exe application pool process',
+              tone: 'rose',
             },
             {
               storyTerm: 'Direct machine execution',
               technicalTerm: 'Authenticated remote code execution (CVE-2023-24955)',
+              tone: 'emerald',
             },
           ],
         },

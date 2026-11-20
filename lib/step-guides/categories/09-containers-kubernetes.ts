@@ -13,18 +13,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Seaport customs booth testing proposed routing plans',
           technicalTerm: 'ingress-nginx AdmissionReview webhook listening on TCP port 8443',
+          tone: 'amber',
         },
         {
           storyTerm: 'Large parcel parked temporarily in a holding bin',
           technicalTerm: 'NGINX client body buffer held open in /proc/<pid>/fd/<n>',
+          tone: 'sky',
         },
         {
           storyTerm: 'Rigged plan tricking the tabletop verifier into loading the parcel',
           technicalTerm: 'Injected ssl_engine directive evaluated during /usr/bin/nginx -t (CVE-2025-1974)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Master key ring covering every harbor district',
           technicalTerm: 'ingress-nginx ServiceAccount RBAC permissions reading Secrets across all namespaces',
+          tone: 'emerald',
         },
       ],
     },
@@ -36,18 +40,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Customs inspection desk',
             technicalTerm: 'ingress-nginx admission controller webhook endpoint on TCP port 8443',
+            tone: 'amber',
           },
           {
             storyTerm: 'Heavy shipping dossier',
             technicalTerm: 'Oversized HTTP AdmissionReview JSON request containing an embedded shared library',
+            tone: 'sky',
           },
           {
             storyTerm: 'Local holding tray with a live open handle',
             technicalTerm: 'Temporary NGINX buffered body file descriptor reachable under /proc/<pid>/fd/',
+            tone: 'rose',
           },
           {
             storyTerm: 'Uninspected parcel inside the booth',
             technicalTerm: 'Attacker-supplied ELF library staged without needing persistent disk write rights',
+            tone: 'emerald',
           },
         ],
       },
@@ -58,18 +66,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Draft blueprint fed into the dry-run machine',
             technicalTerm: 'Rendered temporary nginx.conf validated by /usr/bin/nginx -t',
+            tone: 'amber',
           },
           {
             storyTerm: 'Hidden instructions slipping past form rules',
             technicalTerm: 'Injected NGINX configuration directives (ssl_engine) via crafted Ingress annotations',
+            tone: 'sky',
           },
           {
             storyTerm: 'Loading the waiting parcel from the holding tray',
             technicalTerm: 'OpenSSL engine loading the buffered ELF payload from /proc/<pid>/fd/<n>',
+            tone: 'rose',
           },
           {
             storyTerm: 'Running code inside the customs booth',
             technicalTerm: 'Unauthenticated remote code execution inside the ingress-nginx controller pod',
+            tone: 'emerald',
           },
         ],
       },
@@ -80,18 +92,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Harbor-wide inspection ring hanging on the peg',
             technicalTerm: 'Mounted ingress-nginx ServiceAccount JWT token at /var/run/secrets/kubernetes.io/',
+            tone: 'amber',
           },
           {
             storyTerm: 'Photocopying sealed vaults across every pier',
             technicalTerm: 'Cluster-wide Kubernetes API Secret enumeration across all namespaces',
+            tone: 'sky',
           },
           {
             storyTerm: 'Official reason the booth held those keys',
             technicalTerm: 'Default RBAC rights required by ingress-nginx to load TLS certificates cluster-wide',
+            tone: 'rose',
           },
           {
             storyTerm: 'Harbor audit log spotting the raid',
             technicalTerm: 'Kubernetes Audit Log capturing anomalous Secret list calls from ingress-nginx',
+            tone: 'emerald',
           },
         ],
       },
@@ -106,18 +122,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Tiny maintenance hatch left open before sealing the crate',
           technicalTerm: 'Leaked host /sys/fs/cgroup file descriptor across chdir() in runc <= 1.1.11 (CVE-2024-21626)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Stepping backward out of the crate onto the main deck',
           technicalTerm: 'Relative path traversal (../../../../) escaping container mount namespace confinement',
+          tone: 'sky',
         },
         {
           storyTerm: 'Wheelhouse credentials and engine schedules',
           technicalTerm: 'Worker node /etc/kubernetes/kubelet.conf and systemd persistence units',
+          tone: 'rose',
         },
         {
           storyTerm: 'Sealed steel shipping crate',
           technicalTerm: 'Isolated Linux container root filesystem managed by runc',
+          tone: 'emerald',
         },
       ],
     },
@@ -129,18 +149,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Dock crane operator launching the crate',
             technicalTerm: 'Vulnerable runc container runtime (<= 1.1.11) initializing the container',
+            tone: 'amber',
           },
           {
             storyTerm: 'Internal corridor door left propped open',
             technicalTerm: 'Unclosed host /sys/fs/cgroup file descriptor (/proc/self/fd/7 or /8)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Setting the starting doorway inside the corridor',
             technicalTerm: 'Container WORKDIR / chdir() pointed to /proc/self/fd/<leaked_fd>',
+            tone: 'rose',
           },
           {
             storyTerm: 'Ship structural walkway outside the crate',
             technicalTerm: 'Underlying host Linux cgroup filesystem mount hierarchy',
+            tone: 'emerald',
           },
         ],
       },
@@ -151,18 +175,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'One foot anchored on the outside walkway',
             technicalTerm: 'Container process CWD anchored inside host /sys/fs/cgroup mount space',
+            tone: 'amber',
           },
           {
             storyTerm: 'Walking backward a few staircases',
             technicalTerm: 'Relative path traversal (../../../../) climbing above the host mount point',
+            tone: 'sky',
           },
           {
             storyTerm: 'Leaving the sealed crate walls behind',
             technicalTerm: 'Complete bypass of the container chroot / pivot_root filesystem isolation',
+            tone: 'rose',
           },
           {
             storyTerm: 'Ship central storage corridors',
             technicalTerm: 'Underlying worker node root filesystem (/) exposed for read and write',
+            tone: 'emerald',
           },
         ],
       },
@@ -173,18 +201,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Captain quarters radio passes',
             technicalTerm: 'Host node /etc/kubernetes/kubelet.conf and /var/lib/kubelet/pki certificates',
+            tone: 'amber',
           },
           {
             storyTerm: 'Engine-room morning checklist',
             technicalTerm: 'Host Linux systemd service units modified for node-level persistence',
+            tone: 'sky',
           },
           {
             storyTerm: 'Escaped stowaway on the main deck',
             technicalTerm: 'Container process operating directly against the underlying Kubernetes node filesystem',
+            tone: 'rose',
           },
           {
             storyTerm: 'Dock security camera catching the breach',
             technicalTerm: 'Host auditd and Falco rules alerting on container access to kubelet.conf and systemd',
+            tone: 'emerald',
           },
         ],
       },
@@ -199,18 +231,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Unguarded floor-manager desk with no sign-in book',
           technicalTerm: 'Kubelet port 10250 running with --anonymous-auth=true and AlwaysAllow',
+          tone: 'amber',
         },
         {
           storyTerm: 'Grabbing the complete tenant directory',
           technicalTerm: 'Unauthenticated GET https://<node>:10250/pods enumeration',
+          tone: 'sky',
         },
         {
           storyTerm: 'Speaking an order straight into the maintenance penthouse',
           technicalTerm: 'Unauthenticated POST /run/<namespace>/<pod>/<container> remote command execution',
+          tone: 'rose',
         },
         {
           storyTerm: 'Photographing the building master safe archive',
           technicalTerm: 'Dumping /var/lib/etcd/member/snap/db via etcdctl snapshot save',
+          tone: 'emerald',
         },
       ],
     },
@@ -222,18 +258,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Unguarded floor-manager desk',
             technicalTerm: 'Misconfigured Kubelet API on TCP port 10250 allowing anonymous requests',
+            tone: 'amber',
           },
           {
             storyTerm: 'Full occupancy clipboard',
             technicalTerm: 'JSON response from GET /pods listing namespaces, pod names, and containers',
+            tone: 'sky',
           },
           {
             storyTerm: 'Zero badge verification',
             technicalTerm: '--anonymous-auth=true paired with --authorization-mode=AlwaysAllow',
+            tone: 'rose',
           },
           {
             storyTerm: 'Suites holding master maintenance keys',
             technicalTerm: 'High-privilege system or control-plane pods scheduled on the node',
+            tone: 'emerald',
           },
         ],
       },
@@ -244,18 +284,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Direct intercom button on the floor desk',
             technicalTerm: 'Kubelet POST /run/<namespace>/<pod>/<container> execution endpoint',
+            tone: 'amber',
           },
           {
             storyTerm: 'Issuing live work orders inside the suite',
             technicalTerm: 'Arbitrary command execution inside a running privileged container',
+            tone: 'sky',
           },
           {
             storyTerm: 'Suite coordinates from the clipboard',
             technicalTerm: 'Target namespace, pod, and container names discovered via /pods',
+            tone: 'rose',
           },
           {
             storyTerm: 'Bypasses the main building lobby',
             technicalTerm: 'Direct node-level execution skipping kube-apiserver RBAC and audit logs',
+            tone: 'emerald',
           },
         ],
       },
@@ -266,18 +310,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Vault certificates on the control floor',
             technicalTerm: 'Mounted /etc/kubernetes/pki/etcd client certificates and keys',
+            tone: 'amber',
           },
           {
             storyTerm: 'Instant photograph of the master ledger cabinet',
             technicalTerm: 'etcdctl snapshot save capturing /var/lib/etcd/member/snap/db',
+            tone: 'sky',
           },
           {
             storyTerm: 'Every resident key and secret across the tower',
             technicalTerm: 'Complete unencrypted Kubernetes cluster Secrets and ServiceAccount tokens in etcd',
+            tone: 'rose',
           },
           {
             storyTerm: 'Total building takeover',
             technicalTerm: 'Full cluster administrative compromise derived offline from the etcd snapshot',
+            tone: 'emerald',
           },
         ],
       },
@@ -292,18 +340,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Master crane console wired onto an open hallway radio channel',
           technicalTerm: 'Unauthenticated Docker daemon (dockerd) listening on TCP port 2375 without TLS',
+          tone: 'amber',
         },
         {
           storyTerm: 'Ordering a glass booth with a direct door into the main vault',
           technicalTerm: 'POST /v1.43/containers/create with Privileged=true and Binds ["/:/hostfs"]',
+          tone: 'sky',
         },
         {
           storyTerm: 'Stepping straight into the warehouse main floor',
           technicalTerm: 'Container entrypoint running chroot /hostfs /bin/sh on the host root filesystem',
+          tone: 'rose',
         },
         {
           storyTerm: 'Planting permanent schedules on the master wall',
           technicalTerm: 'Writing host cron jobs or SSH authorized_keys for persistent root access',
+          tone: 'emerald',
         },
       ],
     },
@@ -315,18 +367,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Unlocked crane radio channel',
             technicalTerm: 'dockerd started with -H tcp://0.0.0.0:2375 and no --tlsverify flag',
+            tone: 'amber',
           },
           {
             storyTerm: 'Crane model number and floor inventory',
             technicalTerm: 'Unauthenticated GET /v1.43/version and GET /v1.43/containers/json responses',
+            tone: 'sky',
           },
           {
             storyTerm: 'Zero padlock or badge check',
             technicalTerm: 'Cleartext HTTP REST API granting equivalent host root authority to any caller',
+            tone: 'rose',
           },
           {
             storyTerm: 'Scanning the warehouse hallways',
             technicalTerm: 'External or lateral network reconnaissance targeting TCP port 2375',
+            tone: 'emerald',
           },
         ],
       },
@@ -337,18 +393,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Lightweight utility box',
             technicalTerm: 'Minimal Alpine Linux container image specified in POST /containers/create',
+            tone: 'amber',
           },
           {
             storyTerm: 'Safety bars removed',
             technicalTerm: 'HostConfig.Privileged=true disabling Linux capability and device restrictions',
+            tone: 'sky',
           },
           {
             storyTerm: 'Back wall hinged directly onto the master storage room',
             technicalTerm: 'HostConfig.Binds ["/:/hostfs"] bind-mounting the entire host root filesystem',
+            tone: 'rose',
           },
           {
             storyTerm: 'Crane obeying without question',
             technicalTerm: 'Docker daemon executing as root creating and starting the breakout container',
+            tone: 'emerald',
           },
         ],
       },
@@ -359,18 +419,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Stepping through the hinged back wall',
             technicalTerm: 'Executing chroot /hostfs /bin/sh to switch root to the host OS',
+            tone: 'amber',
           },
           {
             storyTerm: 'Adding a spare front-door key',
             technicalTerm: 'Appending attacker public keys to host /root/.ssh/authorized_keys',
+            tone: 'sky',
           },
           {
             storyTerm: 'Adding a repeating daily work order',
             technicalTerm: 'Installing malicious host cron tasks under /etc/cron.d or /var/spool/cron',
+            tone: 'rose',
           },
           {
             storyTerm: 'Warehouse floor audit trail',
             technicalTerm: 'Host dockerd audit logs and file integrity alerts on /etc/cron* and ~/.ssh',
+            tone: 'emerald',
           },
         ],
       },
@@ -385,18 +449,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Master crane joystick cable wired through the glass booth wall',
           technicalTerm: 'Host /var/run/docker.sock Unix socket bind-mounted inside a container',
+          tone: 'amber',
         },
         {
           storyTerm: 'Ordering an open-air twin platform outside the booth',
           technicalTerm: 'HTTP POST over docker.sock creating a sibling container with HostPID and Privileged',
+          tone: 'sky',
         },
         {
           storyTerm: 'Stepping directly into the factory central control room',
           technicalTerm: 'nsenter --target 1 entering host PID 1 (systemd) mount and IPC namespaces',
+          tone: 'rose',
         },
         {
           storyTerm: 'Locked glass contractor booth',
           technicalTerm: 'Compromised CI build or management agent container',
+          tone: 'emerald',
         },
       ],
     },
@@ -408,18 +476,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Inspecting the wall conduits',
             technicalTerm: 'Reading /proc/self/mountinfo or running find / -name docker.sock inside the container',
+            tone: 'amber',
           },
           {
             storyTerm: 'Live master crane control cable',
             technicalTerm: 'Mounted host Unix domain socket at /var/run/docker.sock',
+            tone: 'sky',
           },
           {
             storyTerm: 'Locked glass contractor booth',
             technicalTerm: 'Initial foothold inside a CI runner or monitoring agent container',
+            tone: 'rose',
           },
           {
             storyTerm: 'Direct link to the factory outside',
             technicalTerm: 'Socket communicating directly with the root-privileged host dockerd daemon',
+            tone: 'emerald',
           },
         ],
       },
@@ -430,18 +502,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Commanding the crane over the exposed cable',
             technicalTerm: 'HTTP POST to http://localhost/v1.43/containers/create via /var/run/docker.sock',
+            tone: 'amber',
           },
           {
             storyTerm: 'Brand-new twin platform next door',
             technicalTerm: 'Attacker-controlled sibling container launched directly by the host daemon',
+            tone: 'sky',
           },
           {
             storyTerm: 'Full view of every worker badge and hallway',
             technicalTerm: 'HostPID (PidMode=host) and HostNetwork (NetworkMode=host) enabled',
+            tone: 'rose',
           },
           {
             storyTerm: 'Master mechanical overrides turned on',
             technicalTerm: 'Privileged=true granting CAP_SYS_ADMIN inside the sibling container',
+            tone: 'emerald',
           },
         ],
       },
@@ -452,18 +528,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Factory chief supervisor office',
             technicalTerm: 'Host init process PID 1 (systemd) running in the root host namespaces',
+            tone: 'amber',
           },
           {
             storyTerm: 'Master transfer latch',
             technicalTerm: 'nsenter --target 1 --mount --uts --ipc --net --pid command',
+            tone: 'sky',
           },
           {
             storyTerm: 'Authority allowing the latch to open',
             technicalTerm: 'Shared host PID namespace combined with CAP_SYS_ADMIN capability',
+            tone: 'rose',
           },
           {
             storyTerm: 'Complete command over the entire building',
             technicalTerm: 'Unrestricted root shell inside the underlying Linux host OS',
+            tone: 'emerald',
           },
         ],
       },
@@ -478,18 +558,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Two side-by-side conveyor lines sharing one parts cubby',
           technicalTerm: 'Parallel BuildKit stages sharing a --mount=type=cache,id=shared cache directory',
+          tone: 'amber',
         },
         {
           storyTerm: 'Swapping the shelf sign between inspection and latching',
           technicalTerm: 'TOCTOU symlink replacement race between buildkitd subpath check and sys_mount() (CVE-2024-23651)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Hidden shortcut door into the plant central vault',
           technicalTerm: 'Symlink redirecting the host mount source to the builder host root filesystem',
+          tone: 'rose',
         },
         {
           storyTerm: 'Main factory floor opened inside the work cage',
           technicalTerm: 'Builder host filesystem exposed read/write inside an unprivileged build container',
+          tone: 'emerald',
         },
       ],
     },
@@ -501,18 +585,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Multi-stage assembly job',
             technicalTerm: 'Multi-stage Dockerfile or LLB graph processed by docker buildx build',
+            tone: 'amber',
           },
           {
             storyTerm: 'Two parallel work crews grabbing the same cubby',
             technicalTerm: 'Concurrent RUN --mount=type=cache,id=shared stages executing simultaneously',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shared supply cubby',
             technicalTerm: 'Host-backed BuildKit cache mount directory shared across concurrent steps',
+            tone: 'rose',
           },
           {
             storyTerm: 'Setting up a timing race',
             technicalTerm: 'Concurrent execution window required to trigger CVE-2024-23651',
+            tone: 'emerald',
           },
         ],
       },
@@ -523,18 +611,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Inspector verifying the doorway before pulling the lever',
             technicalTerm: 'Vulnerable buildkitd checking cache subpath prior to calling sys_mount()',
+            tone: 'amber',
           },
           {
             storyTerm: 'Swapping the doorway plate in a split-second blink',
             technicalTerm: 'Time-of-Check to Time-of-Use (TOCTOU) race replacing subpath with a symlink',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shortcut sign pointing to the main lobby',
             technicalTerm: 'Malicious symlink targeting the underlying BuildKit host root directory',
+            tone: 'rose',
           },
           {
             storyTerm: 'Pulling the mounting lever blindly',
             technicalTerm: 'Host kernel mount() syscall following the swapped symlink into the container',
+            tone: 'emerald',
           },
         ],
       },
@@ -545,18 +637,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Supply shelf opening onto the main factory floor',
             technicalTerm: 'Container cache mount point bound directly to the builder host root filesystem',
+            tone: 'amber',
           },
           {
             storyTerm: 'Reading builder secrets from an untrusted build step',
             technicalTerm: 'Exfiltrating CI runner credentials, signing keys, and host /etc files during build',
+            tone: 'sky',
           },
           {
             storyTerm: 'Tampering with other tenants assembly jobs',
             technicalTerm: 'Cross-tenant build poisoning on shared CI/CD Docker BuildKit infrastructure',
+            tone: 'rose',
           },
           {
             storyTerm: 'Upgrading the safety latch',
             technicalTerm: 'Patched BuildKit using safe file-descriptor-anchored mounts eliminating TOCTOU',
+            tone: 'emerald',
           },
         ],
       },
@@ -571,18 +667,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Master plumbing key held inside the storage room',
           technicalTerm: 'CAP_SYS_ADMIN capability (CapEff bit 21) granted to a privileged container',
+          tone: 'amber',
         },
         {
           storyTerm: 'Old automated trash-chute control box',
           technicalTerm: 'Mounted Linux cgroup v1 hierarchy (rdma/memory) with release_agent file',
+          tone: 'sky',
         },
         {
           storyTerm: 'Pinning a custom work order onto the empty-bin trigger',
           technicalTerm: 'Setting notify_on_release=1 and writing OverlayFS host upperdir path to release_agent',
+          tone: 'rose',
         },
         {
           storyTerm: 'Chief engineer outside automatically running the order when empty',
           technicalTerm: 'Host kernel cgroup1_release_agent invoking call_usermodehelper as root on host',
+          tone: 'emerald',
         },
       ],
     },
@@ -594,18 +694,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Oversized maintenance key left inside the room',
             technicalTerm: 'CAP_SYS_ADMIN Linux capability (CapEff bit 21) inside the container',
+            tone: 'amber',
           },
           {
             storyTerm: 'Older resource-control switchboard',
             technicalTerm: 'Mounted cgroup v1 controller via mount -t cgroup -o rdma cgroup /tmp/cgrp',
+            tone: 'sky',
           },
           {
             storyTerm: 'Exact street address as seen from the main hallway',
             technicalTerm: 'Host-side OverlayFS upperdir path parsed from /etc/mtab or /proc/mounts',
+            tone: 'rose',
           },
           {
             storyTerm: 'Preparing the external callback target',
             technicalTerm: 'Locating where container-written scripts appear on the underlying host filesystem',
+            tone: 'emerald',
           },
         ],
       },
@@ -616,18 +720,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Tiny sub-bin under the switchboard',
             technicalTerm: 'Child cgroup directory created at /tmp/cgrp/x',
+            tone: 'amber',
           },
           {
             storyTerm: 'Flipping the alert-when-empty toggle to on',
             technicalTerm: 'Writing 1 into /tmp/cgrp/x/notify_on_release',
+            tone: 'sky',
           },
           {
             storyTerm: 'Hallway address written into the cleanup slot',
             technicalTerm: 'Host OverlayFS upperdir script path written to /tmp/cgrp/release_agent',
+            tone: 'rose',
           },
           {
             storyTerm: 'Custom command script waiting to run',
             technicalTerm: 'Executable payload script placed inside the container filesystem',
+            tone: 'emerald',
           },
         ],
       },
@@ -638,18 +746,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'One-second dummy worker stepping into and out of the bin',
             technicalTerm: 'Short-lived process written to /tmp/cgrp/x/cgroup.procs and immediately exiting',
+            tone: 'amber',
           },
           {
             storyTerm: 'Building central kernel seeing the bin go empty',
             technicalTerm: 'Linux kernel cgroup1_release_agent workqueue firing on zero active tasks',
+            tone: 'sky',
           },
           {
             storyTerm: 'Launching the script directly in the main hallway',
             technicalTerm: 'Kernel call_usermodehelper executing the payload in the host root namespace',
+            tone: 'rose',
           },
           {
             storyTerm: 'Complete escape to full master keys',
             technicalTerm: 'Arbitrary root command execution on the underlying container host',
+            tone: 'emerald',
           },
         ],
       },
@@ -664,18 +776,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Elevator-mechanic clearance on a tenant badge',
           technicalTerm: 'CAP_SYS_MODULE capability (CapEff bit 16) in /proc/self/status',
+          tone: 'amber',
         },
         {
           storyTerm: 'Homemade gear matching the exact engine model',
           technicalTerm: 'Compiled Linux kernel module (.ko) built for host uname -r version',
+          tone: 'sky',
         },
         {
           storyTerm: 'Bolting the gear straight into the central basement machinery',
           technicalTerm: 'insmod invoking finit_module (syscall 313) or init_module (syscall 175)',
+          tone: 'rose',
         },
         {
           storyTerm: 'Permanent red warning lamp on the engineering console',
           technicalTerm: 'Kernel taint flag (/proc/sys/kernel/tainted OOT_MODULE and UNSIGNED_MODULE bits)',
+          tone: 'emerald',
         },
       ],
     },
@@ -687,18 +803,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Checking the badge stamp list',
             technicalTerm: 'Reading /proc/self/status to confirm CapEff bit 16 (CAP_SYS_MODULE)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Central elevator nameplate',
             technicalTerm: 'Host Linux kernel version string discovered via uname -r',
+            tone: 'sky',
           },
           {
             storyTerm: 'Shared basement engine beneath every suite',
             technicalTerm: 'Single Linux host kernel shared across all running containers on the node',
+            tone: 'rose',
           },
           {
             storyTerm: 'Rare engine-room installation rights',
             technicalTerm: 'Privilege allowing a container to insert Ring-0 kernel code into the host',
+            tone: 'emerald',
           },
         ],
       },
@@ -709,18 +829,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Custom metal gear tailored to the engine',
             technicalTerm: 'Malicious kernel object /tmp/net_diag.ko compiled for the host kernel',
+            tone: 'amber',
           },
           {
             storyTerm: 'Feeding it through the installation slot',
             technicalTerm: 'Executing insmod /tmp/net_diag.ko invoking finit_module (313) or init_module (175)',
+            tone: 'sky',
           },
           {
             storyTerm: 'Spinning central elevator core',
             technicalTerm: 'Host Linux kernel Ring-0 execution space with total control over all nodes',
+            tone: 'rose',
           },
           {
             storyTerm: 'Bypassing every suite wall at once',
             technicalTerm: 'Full container escape executing privileged kernel-space callbacks on the host',
+            tone: 'emerald',
           },
         ],
       },
@@ -731,18 +855,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Two unmistakable warning lamps on the master dashboard',
             technicalTerm: '/proc/sys/kernel/tainted bit 12 (O = OOT_MODULE) and bit 13 (E = UNSIGNED_MODULE)',
+            tone: 'amber',
           },
           {
             storyTerm: 'Permanent engine diary',
             technicalTerm: 'Host /proc/modules list and kernel dmesg ring-buffer audit entries',
+            tone: 'sky',
           },
           {
             storyTerm: 'Uncertified foreign gear',
             technicalTerm: 'Unsigned out-of-tree kernel module loaded without lockdown signature verification',
+            tone: 'rose',
           },
           {
             storyTerm: 'Safety inspectors spotting the tampering',
             technicalTerm: 'CNCF Tetragon eBPF runtime policy blocking or alerting on sys_finit_module',
+            tone: 'emerald',
           },
         ],
       },
@@ -757,18 +885,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Internal switchboard printed address directory',
           technicalTerm: 'Kubernetes kube-system/coredns Corefile ConfigMap',
+          tone: 'amber',
         },
         {
           storyTerm: 'Automated switchboard reloading the poisoned entry in seconds',
           technicalTerm: 'CoreDNS reload plugin detecting MD5/SHA-512 change in /etc/coredns/Corefile',
+          tone: 'sky',
         },
         {
           storyTerm: 'Fake payroll booth answering redirected calls',
           technicalTerm: 'Attacker-controlled pod IP mapped to payments-api.prod.svc.cluster.local',
+          tone: 'rose',
         },
         {
           storyTerm: 'Couriers handing over their secret badges on arrival',
           technicalTerm: 'Intercepted service-to-service Authorization: Bearer tokens and credentials',
+          tone: 'emerald',
         },
       ],
     },
@@ -780,18 +912,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Over-generous badge for the directory room',
             technicalTerm: 'RBAC permissions allowing ConfigMap updates inside kube-system',
+            tone: 'amber',
           },
           {
             storyTerm: 'Central telephone address book',
             technicalTerm: 'Corefile stored in the kube-system/coredns ConfigMap',
+            tone: 'sky',
           },
           {
             storyTerm: 'Custom redirect line for the payments bank',
             technicalTerm: 'Injected hosts or rewrite directive redirecting payments-api.prod.svc.cluster.local',
+            tone: 'rose',
           },
           {
             storyTerm: 'Intruder hidden booth',
             technicalTerm: 'Rogue pod IP receiving hijacked internal cluster DNS traffic',
+            tone: 'emerald',
           },
         ],
       },
@@ -802,18 +938,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Built-in auto-refresh bellboy',
             technicalTerm: 'Default CoreDNS reload plugin polling /etc/coredns/Corefile',
+            tone: 'amber',
           },
           {
             storyTerm: 'Noticing the page checksum changed',
             technicalTerm: 'MD5/SHA-512 digest change triggering automatic CoreDNS hot-reload',
+            tone: 'sky',
           },
           {
             storyTerm: 'No switchboard restart required',
             technicalTerm: 'Zero pod eviction or restart events hiding the change from naive monitors',
+            tone: 'rose',
           },
           {
             storyTerm: 'Poisoned directory live across campus',
             technicalTerm: 'Cluster-wide DNS resolution returning the rogue pod IP for production services',
+            tone: 'emerald',
           },
         ],
       },
@@ -824,18 +964,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Departments dialing the familiar payments name',
             technicalTerm: 'Production workloads resolving payments-api.prod.svc.cluster.local',
+            tone: 'amber',
           },
           {
             storyTerm: 'Presenting secret inter-office identity passes',
             technicalTerm: 'Workloads transmitting Authorization: Bearer tokens to the rogue pod',
+            tone: 'sky',
           },
           {
             storyTerm: 'Hidden booth harvesting every caller pass',
             technicalTerm: 'Man-in-the-middle credential capture inside the cluster network',
+            tone: 'rose',
           },
           {
             storyTerm: 'Campus corridor checkpoints catching the detour',
             technicalTerm: 'Strict Kubernetes NetworkPolicy egress rules and mTLS verifying peer identity',
+            tone: 'emerald',
           },
         ],
       },
@@ -850,18 +994,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Registering an unauthorized inspection counter on the belt',
           technicalTerm: 'Creating a cluster-scoped MutatingWebhookConfiguration targeting Pods and Secrets',
+          tone: 'amber',
         },
         {
           storyTerm: 'Mailroom handing copies of every sealed secret pouch across the desk',
           technicalTerm: 'kube-apiserver dispatching serialized Secret objects in AdmissionReview JSON',
+          tone: 'sky',
         },
         {
           storyTerm: 'Slipping a silent spy passenger into every new delivery truck',
           technicalTerm: 'AdmissionResponse JSONPatch injecting a malicious sidecar container into new Pods',
+          tone: 'rose',
         },
         {
           storyTerm: 'Dismantling the rogue counter',
           technicalTerm: 'Auditing and deleting unauthorized MutatingWebhookConfiguration objects',
+          tone: 'emerald',
         },
       ],
     },
@@ -873,18 +1021,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'High-level registration rights',
             technicalTerm: 'admissionregistration.k8s.io/v1 RBAC permissions to create webhooks',
+            tone: 'amber',
           },
           {
             storyTerm: 'Rogue review booth bolted onto the conveyor',
             technicalTerm: 'Cluster-scoped MutatingWebhookConfiguration pointing to an attacker endpoint',
+            tone: 'sky',
           },
           {
             storyTerm: 'Stopping every vehicle and secret envelope',
             technicalTerm: 'Webhook rules matching CREATE and UPDATE operations on Pods and Secrets',
+            tone: 'rose',
           },
           {
             storyTerm: 'Central intake conveyor',
             technicalTerm: 'Kubernetes kube-apiserver admission controller pipeline',
+            tone: 'emerald',
           },
         ],
       },
@@ -895,18 +1047,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Obedient front-desk dispatcher',
             technicalTerm: 'kube-apiserver forwarding AdmissionReview payloads over HTTPS',
+            tone: 'amber',
           },
           {
             storyTerm: 'Entire unsealed package placed on the counter',
             technicalTerm: 'Full base64-encoded Kubernetes Secret objects serialized inside AdmissionReview JSON',
+            tone: 'sky',
           },
           {
             storyTerm: 'Copying every secret silently',
             technicalTerm: 'Passive cluster-wide credential harvesting without alerting normal users',
+            tone: 'rose',
           },
           {
             storyTerm: 'Normal approvals continuing smoothly',
             technicalTerm: 'Webhook returning allowed: true so cluster operations remain uninterrupted',
+            tone: 'emerald',
           },
         ],
       },
@@ -917,18 +1073,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Subtle modification slip returned by the booth',
             technicalTerm: 'AdmissionResponse specifying patchType: JSONPatch',
+            tone: 'amber',
           },
           {
             storyTerm: 'Welding a stowaway compartment onto the chassis',
             technicalTerm: 'Injecting a rogue sidecar container or malicious environment variables into Pods',
+            tone: 'sky',
           },
           {
             storyTerm: 'Persistent rider across fresh deployments',
             technicalTerm: 'Self-healing cluster persistence surviving individual pod deletions',
+            tone: 'rose',
           },
           {
             storyTerm: 'Tearing out the rogue booth',
             technicalTerm: 'Deleting the malicious MutatingWebhookConfiguration and rotating exposed Secrets',
+            tone: 'emerald',
           },
         ],
       },
@@ -943,18 +1103,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Rogue staffing order with a pass-all-restrictions seal',
           technicalTerm: 'apps/v1 DaemonSet using wildcard tolerations (operator: Exists)',
+          tone: 'amber',
         },
         {
           storyTerm: 'Placing a master-keyed spy onto every single floor automatically',
           technicalTerm: 'DaemonSet controller scheduling pods with hostNetwork, hostPID, and hostPath on all nodes',
+          tone: 'sky',
         },
         {
           storyTerm: 'Locked executive penthouse',
           technicalTerm: 'Tainted Kubernetes control-plane nodes bypassed by wildcard tolerations',
+          tone: 'rose',
         },
         {
           storyTerm: 'Photocopying building core blueprints and master certificates',
           technicalTerm: 'Inspecting /etc/kubernetes/manifests and /etc/kubernetes/pki from the hostPath mount',
+          tone: 'emerald',
         },
       ],
     },
@@ -966,18 +1130,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Fake building-maintenance schedule',
             technicalTerm: 'POST /apis/apps/v1/namespaces/kube-system/daemonsets disguised as node-log-sync',
+            tone: 'amber',
           },
           {
             storyTerm: 'Universal ignore-all-warnings sticker',
             technicalTerm: 'Wildcard toleration spec.template.spec.tolerations: [{operator: "Exists"}]',
+            tone: 'sky',
           },
           {
             storyTerm: 'Restricted executive floors',
             technicalTerm: 'Control-plane nodes protected by NoSchedule taints',
+            tone: 'rose',
           },
           {
             storyTerm: 'Central staffing office',
             technicalTerm: 'Kubernetes API server accepting the privileged workload manifest',
+            tone: 'emerald',
           },
         ],
       },
@@ -988,18 +1156,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Automated dispatcher placing one spy per floor',
             technicalTerm: 'DaemonSet controller spawning node-log-sync-<hash> pods on every cluster node',
+            tone: 'amber',
           },
           {
             storyTerm: 'Direct access to floor switchboards and hallways',
             technicalTerm: 'hostNetwork: true and hostPID: true exposing host sockets and processes',
+            tone: 'sky',
           },
           {
             storyTerm: 'Direct door into the floor master filing room',
             technicalTerm: 'hostPath volume mounting host /etc or / directly inside each DaemonSet pod',
+            tone: 'rose',
           },
           {
             storyTerm: 'Self-healing staffing loop',
             technicalTerm: 'Controller automatically respawning deleted pods until the DaemonSet itself is removed',
+            tone: 'emerald',
           },
         ],
       },
@@ -1010,18 +1182,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Spy stationed inside the executive penthouse',
             technicalTerm: 'DaemonSet pod running on the Kubernetes control-plane node',
+            tone: 'amber',
           },
           {
             storyTerm: 'Architectural blueprints in the wall cabinet',
             technicalTerm: 'Static pod manifests in /etc/kubernetes/manifests/',
+            tone: 'sky',
           },
           {
             storyTerm: 'Master vault seals',
             technicalTerm: 'Cluster root CA and signing keys stored in /etc/kubernetes/pki/',
+            tone: 'rose',
           },
           {
             storyTerm: 'Canceling the staffing order',
             technicalTerm: 'Deleting the rogue DaemonSet and enforcing Pod Security Admission restricted policies',
+            tone: 'emerald',
           },
         ],
       },
@@ -1036,18 +1212,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Armored cash van with zero door handles or toolboxes',
           technicalTerm: 'Hardened distroless production container lacking /bin/sh or utilities',
+          tone: 'amber',
         },
         {
           storyTerm: 'Bolting a temporary diagnostic side cabin onto the van',
           technicalTerm: 'PATCH /api/v1/namespaces/<ns>/pods/<pod>/ephemeralcontainers (kubectl debug)',
+          tone: 'sky',
         },
         {
           storyTerm: 'Reading secret notes taped beside the driver seat',
           technicalTerm: 'Process namespace sharing (--target) reading /proc/<pid>/environ secrets',
+          tone: 'rose',
         },
         {
           storyTerm: 'Permanent weld scar forcing full vehicle replacement',
           technicalTerm: 'Append-only spec.ephemeralContainers requiring full Pod rollout replacement',
+          tone: 'emerald',
         },
       ],
     },
@@ -1059,18 +1239,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Armored payments van with no shell or tools',
             technicalTerm: 'Hardened distroless production pod with /bin/sh removed',
+            tone: 'amber',
           },
           {
             storyTerm: 'Specialized roadside-debug permit',
             technicalTerm: 'RBAC permission on pods/ephemeralcontainers subresource',
+            tone: 'sky',
           },
           {
             storyTerm: 'Welding a temporary service booth onto the live van',
             technicalTerm: 'PATCH request creating an ephemeral debug container via kubectl debug',
+            tone: 'rose',
           },
           {
             storyTerm: 'Live vehicle continuing down the highway',
             technicalTerm: 'Running production pod mutated without restarting the target app',
+            tone: 'emerald',
           },
         ],
       },
@@ -1081,18 +1265,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Linking directly into the main driver cabin wall',
             technicalTerm: 'targetContainerName="payment-app" sharing the PID namespace via containerd',
+            tone: 'amber',
           },
           {
             storyTerm: 'Active driver workspace',
             technicalTerm: 'Target application process space visible under /proc/<pid>/',
+            tone: 'sky',
           },
           {
             storyTerm: 'Vault keys and database passwords taped inside',
             technicalTerm: 'Runtime secrets harvested from /proc/<pid>/environ and open file descriptors',
+            tone: 'rose',
           },
           {
             storyTerm: 'Tools brought along inside the service booth',
             technicalTerm: 'Attacker-chosen debug container image carrying shells and forensic utilities',
+            tone: 'emerald',
           },
         ],
       },
@@ -1103,18 +1291,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Diagnostic booth that can never be unbolted on the road',
             technicalTerm: 'Immutable append-only spec.ephemeralContainers array on a running Pod',
+            tone: 'amber',
           },
           {
             storyTerm: 'Live radio session log',
             technicalTerm: 'Kubernetes Audit logs recording interactive SPDY/WebSocket pods/attach sessions',
+            tone: 'sky',
           },
           {
             storyTerm: 'Dispatching a clean replacement van',
             technicalTerm: 'Full Pod eviction and clean Deployment rollout replacement',
+            tone: 'rose',
           },
           {
             storyTerm: 'Locking down roadside-debug permits',
             technicalTerm: 'Restricting RBAC access to pods/ephemeralcontainers and pods/attach',
+            tone: 'emerald',
           },
         ],
       },
@@ -1129,18 +1321,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
         {
           storyTerm: 'Slipping a tampered modular layer onto the warehouse shelf',
           technicalTerm: 'Uploading trojanized OCI layer blob via POST /v2/<repo>/blobs/uploads/',
+          tone: 'amber',
         },
         {
           storyTerm: 'Moving the floating production tag onto the poisoned stack',
           technicalTerm: 'Overwriting mutable :prod tag via PUT /v2/corp/payment-api/manifests/prod',
+          tone: 'sky',
         },
         {
           storyTerm: 'Loading-dock cryptographic seal inspector',
           technicalTerm: 'Kubernetes Sigstore Policy Controller verifying Cosign image signatures',
+          tone: 'rose',
         },
         {
           storyTerm: 'Missing official wax stamp blocking deployment',
           technicalTerm: 'Failed Cosign digest signature check halting tampered image rollout',
+          tone: 'emerald',
         },
       ],
     },
@@ -1152,18 +1348,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Stolen warehouse stocking pass',
             technicalTerm: 'Compromised OCI container registry token with repository push scope',
+            tone: 'amber',
           },
           {
             storyTerm: 'Altered crate layer carrying hidden spy gear',
             technicalTerm: 'Trojanized filesystem layer tarball containing backdoored binaries',
+            tone: 'sky',
           },
           {
             storyTerm: 'Depot upload dock',
             technicalTerm: 'OCI Distribution API POST /v2/<repo>/blobs/uploads/ endpoint',
+            tone: 'rose',
           },
           {
             storyTerm: 'New fingerprint registered in the bin',
             technicalTerm: 'New SHA-256 content-addressable blob digest stored in the registry',
+            tone: 'emerald',
           },
         ],
       },
@@ -1174,18 +1374,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Brand-new packing list referencing the tampered layer',
             technicalTerm: 'OCI image manifest (application/vnd.oci.image.manifest.v1+json) listing the rogue digest',
+            tone: 'amber',
           },
           {
             storyTerm: 'Movable production tag hung on the poisoned stack',
             technicalTerm: 'PUT /v2/corp/payment-api/manifests/prod overwriting mutable :prod tag',
+            tone: 'sky',
           },
           {
             storyTerm: 'Automatic deliveries configured to pull the latest tag',
             technicalTerm: 'Kubernetes Deployments referencing mutable :prod with imagePullPolicy: Always',
+            tone: 'rose',
           },
           {
             storyTerm: 'Clean historical stack left unreferenced',
             technicalTerm: 'Original clean manifest digest replaced as the active tag target',
+            tone: 'emerald',
           },
         ],
       },
@@ -1196,18 +1400,22 @@ export const CONTAINERS_KUBERNETES_STANDARD_PATCHES: CategoryStandardPatchMap = 
           {
             storyTerm: 'Factory floor pulling the refreshed crate',
             technicalTerm: 'Kubernetes scheduling pods with imagePullPolicy: Always on :prod',
+            tone: 'amber',
           },
           {
             storyTerm: 'Loading-dock seal inspector checking the wax stamp',
             technicalTerm: 'Sigstore Policy Controller validating Cosign signatures and Rekor transparency logs',
+            tone: 'sky',
           },
           {
             storyTerm: 'Halting the unsealed shipment',
             technicalTerm: 'Admission rejection blocking deployment of the unsigned tampered digest',
+            tone: 'rose',
           },
           {
             storyTerm: 'Flagging the exact swapped layer for investigators',
             technicalTerm: 'OCI manifest and layer diff forensics isolating the injected malicious blob',
+            tone: 'emerald',
           },
         ],
       },
