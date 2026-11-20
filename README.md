@@ -1,8 +1,8 @@
 # Attack Explorer
 
-# [https://www.attackexplorer.com/](https://www.attackexplorer.com/)
+# [https://www.attackexplorer.com/](https://www.attackexplorer.com)
 
-Live product: **[www.attackexplorer.com](https://www.attackexplorer.com/)**
+Live product: **[www.attackexplorer.com](https://www.attackexplorer.com)**
 
 Interactive workbench for exploring cyber-attack scenarios: kill-chain visuals, Sysmon/SIEM-style telemetry, and MITRE ATT&CK mapping.
 
