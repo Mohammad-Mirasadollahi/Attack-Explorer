@@ -10,5 +10,10 @@
   },
   "observability": {
     "enabled": true
+  },
+  // Paid Workers: raise CPU ceiling so cold paths / Markdown API stay under Error 1102.
+  // Free plan remains capped by Cloudflare; SSG cache interception is the primary fix.
+  "limits": {
+    "cpu_ms": 60000
   }
 }

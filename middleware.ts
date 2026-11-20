@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildAgentMarkdownResponse } from '@/lib/seo-metadata';
 
 export function middleware(request: NextRequest) {
   const acceptHeader = request.headers.get('accept') || '';
 
   // Module 06 (ax/markdown-response): When AI agents request `Accept: text/markdown`,
-  // serve a clean, token-efficient Markdown representation instead of the heavy HTML bundle.
+  // rewrite to a Node route handler instead of importing the scenario corpus here.
+  // Bundling seo-metadata into Edge middleware previously produced a ~4MB isolate
+  // that exceeded Cloudflare Worker CPU/memory limits (Error 1102) on page loads.
   if (
     acceptHeader.includes('text/markdown') ||
     request.nextUrl.searchParams.get('format') === 'markdown'
   ) {
-    const markdown = buildAgentMarkdownResponse(
-      request.nextUrl.pathname,
-      request.nextUrl.searchParams
-    );
-    return new NextResponse(markdown, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/markdown; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-        Vary: 'Accept',
-      },
-    });
+    const rewriteUrl = request.nextUrl.clone();
+    const originalPath = request.nextUrl.pathname;
+    rewriteUrl.pathname = '/api/agent-markdown';
+    rewriteUrl.searchParams.set('path', originalPath);
+    rewriteUrl.searchParams.delete('format');
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   return NextResponse.next();
