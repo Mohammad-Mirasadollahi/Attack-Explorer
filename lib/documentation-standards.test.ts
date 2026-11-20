@@ -80,7 +80,7 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-11)',
     const generated = generateMarkdownDocumentTemplate({
       moduleId: 'MOD-TEST',
       title: 'Test Forensic Telemetry Specification',
-      scope: 'All synthetic Sysmon and Linux Auditd logs in /lib/scenarios/*.ts',
+      scope: 'All synthetic Sysmon and Linux Auditd logs in /modules/scenarios/*.ts',
       enforcedBy: '/lib/documentation-standards.test.ts',
       purposeParagraph:
         'Ensures every forensic log entry maps deterministically to a MITRE ATT&CK technique and stage flow.',

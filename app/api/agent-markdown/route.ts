@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      // Longer cache: Markdown is build-derived and Free plan Worker CPU is scarce.
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
       Vary: 'Accept',
     },
   });

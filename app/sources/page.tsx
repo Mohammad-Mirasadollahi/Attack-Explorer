@@ -16,6 +16,8 @@ import {
 } from '@/lib/seo-metadata';
 import { ArrowLeft, ExternalLink, Scale, ShieldCheck } from 'lucide-react';
 
+export const dynamic = 'force-static';
+
 const siteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {

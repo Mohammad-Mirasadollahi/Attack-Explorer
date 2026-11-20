@@ -78,7 +78,7 @@ Based on authoritative search engineering standards from **Google Search Central
 ### Rule 11 — 100% English Technical Corpus & Zero Localization Contamination
 - **Research Finding:** Mixing non-English characters into technical metadata, JSON-LD, or scenario descriptions corrupts language detection (`inLanguage: "en-US"`) and degrades vector embedding similarity for English cybersecurity queries.
 - **Implementation Requirement:**
-  - Every string in `/lib/scenarios/**`, `/lib/seo-metadata.ts`, `/app/**`, and `/public/llms*.txt` must remain 100% English (enforced by automated regex assertions in the test suite).
+  - Every string in `/modules/scenarios/**`, `/lib/seo-metadata.ts`, `/app/**`, and `/public/llms*.txt` must remain 100% English (enforced by automated regex assertions in the test suite).
 
 ### Rule 12 — Automated CI/CD SEO & GEO Guardrail Verification
 - **Research Finding:** Manual SEO checklists regress over time unless enforced by automated unit tests that fail the build when a scenario is missing from the sitemap, JSON-LD, or `llms-full.txt`.
@@ -91,7 +91,7 @@ Based on authoritative search engineering standards from **Google Search Central
 
 Follow these 7 steps in exact order whenever adding one or more scenarios/articles:
 
-### Step 1: Author the Scenario with SEO-Ready Slug & Copy (`/lib/scenarios/...`)
+### Step 1: Author the Scenario with SEO-Ready Slug & Copy (`/modules/scenarios/...`)
 1. **`id` (URL Slug):** Must be lowercase, URL-safe, hyphen-separated (`kebab-case`) containing the primary threat actor, malware/tool, CVE (if applicable), and technique keyword.
    - *Good:* `'pikered-clr-profiler-trusted-binary-loader-chain'`
    - *Good:* `'jetbrains-teamcity-cve-2024-27198-supply-chain-build-poisoning'`

@@ -3,7 +3,7 @@ import type {
   AttackScenario,
   AttackStage,
   TelemetryEvent,
-  TelemetrySourceType } from './scenarios/types';
+  TelemetrySourceType } from '@/modules/scenarios/types';
 import {
   formatAttackCategoryLabel,
   getAttackCategoryGroupMeta,

@@ -1,7 +1,7 @@
 # Scenario & Narrative Writing Blueprint (`MOD-11`)
 
 > **Module ID**: `MOD-11` · **Parent Index**: [`/docs/standards/README.md`](./README.md)  
-> **Scope**: Field-by-field text authoring standard, sentence formulas, structural blueprints, length budgets, and reusable copy-paste templates for writing every narrative and technical field of an Attack Explorer scenario (`/lib/scenarios/*.ts`, `/lib/step-guides/*.ts`, and `/lib/section-3d-registry.ts`).  
+> **Scope**: Field-by-field text authoring standard, sentence formulas, structural blueprints, length budgets, and reusable copy-paste templates for writing every narrative and technical field of an Attack Explorer scenario (`/modules/scenarios/*.ts`, `/lib/step-guides/*.ts`, and `/lib/section-3d-registry.ts`).  
 > **Status**: Mandatory Permanent Standard · Paired with `MOD-02`, `MOD-03`, `MOD-08`, and `MOD-10`.
 
 ---

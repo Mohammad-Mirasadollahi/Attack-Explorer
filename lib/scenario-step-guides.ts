@@ -1,21 +1,27 @@
-import { AttackScenario, TelemetryEvent } from './scenarios/types';
+/**
+ * Workbench projection of scenario guides onto diagrams, telemetry, and playback.
+ * Authoring shapes live in `@/modules/scenarios/contracts`. This module stays in
+ * `lib/` because it depends on the simulation and sketch engines.
+ */
+import { AttackScenario, TelemetryEvent } from '@/modules/scenarios/types';
+import type {
+  RawScenarioBriefingGuide,
+  RawScenarioStepGuideData,
+  RawScenarioStepGuideItem,
+} from '@/modules/scenarios/contracts';
+
+export type {
+  RawScenarioBriefingGuide,
+  RawScenarioStepGuideData,
+  RawScenarioStepGuideItem,
+} from '@/modules/scenarios/contracts';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
 } from './simulation-engine';
 import { buildWhiteboardSchematic } from './sketch-zones-and-drilldown';
 import { CinematicPhase } from './cinematic-camera-director';
-import { CORE_AND_PALOALTO_STEP_GUIDES } from './step-guides/core-and-paloalto-guides';
-import { MS_CISCO_KASPERSKY_STEP_GUIDES } from './step-guides/ms-cisco-kaspersky-guides';
-import { BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES } from './step-guides/batch1-supplychain-mft-guides';
-import { BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES } from './step-guides/batch2-ad-exchange-windows-guides';
-import { BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES } from './step-guides/batch3-virtualization-appliances-guides';
-import { BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES } from './step-guides/batch4-enterprise-os-zerodays-guides';
-import { BATCH5_CLOUD_SAAS_STEP_GUIDES } from './step-guides/batch5-cloud-saas-guides';
-import { BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES } from './step-guides/batch6-supplychain-cicd-guides';
-import { BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES } from './step-guides/batch7-zeroday-appliances-guides';
-import { BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES } from './step-guides/batch8-kernel-firmware-byovd-guides';
-import { BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES } from './step-guides/batch9-ransomware-extortion-guides';
+import { STATIC_SCENARIO_STEP_GUIDES } from '@/modules/scenarios/all-step-guides';
 import { VULNCHECK_CWP_AND_DFIR_STEP_GUIDES } from './step-guides/vulncheck-cwp-and-dfir-guides';
 import {
   buildStageCommandBreakdowns,
@@ -24,36 +30,8 @@ import {
 import {
   getSection3DDescriptor,
   stepNumberToSectionKey,
-  type StoryTechnicalMapping,
 } from './section-3d-registry';
 import { ALL_CATEGORY_STANDARD_PATCHES } from './step-guides/categories';
-
-export interface RawScenarioBriefingGuide {
-  headline: string;
-  storyAnalogy: string;
-  storyMappings?: StoryTechnicalMapping[];
-  plainSummary: string;
-  diagramTopologySummary: string;
-  documentedAdvisory: string;
-}
-
-export interface RawScenarioStepGuideItem {
-  stepNumber: number;
-  mitreId: string;
-  plainTitle: string;
-  storyAnalogy: string;
-  storyMappings?: StoryTechnicalMapping[];
-  simpleExplanation: string;
-  howItWorksInPractice: string;
-  diagramAlignment: string;
-  detectionAndEvidence: string;
-}
-
-export interface RawScenarioStepGuideData {
-  scenarioId: string;
-  briefing: RawScenarioBriefingGuide;
-  steps: RawScenarioStepGuideItem[];
-}
 
 export interface StructuredExplanationClause {
   clauseCode: string;
@@ -388,17 +366,7 @@ function mergeStepGuidesFirstWins(
 
 export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> =
   mergeStepGuidesFirstWins(
-    CORE_AND_PALOALTO_STEP_GUIDES,
-    MS_CISCO_KASPERSKY_STEP_GUIDES,
-    BATCH1_SUPPLYCHAIN_MFT_STEP_GUIDES,
-    BATCH2_AD_EXCHANGE_WINDOWS_STEP_GUIDES,
-    BATCH3_VIRTUALIZATION_APPLIANCES_STEP_GUIDES,
-    BATCH4_ENTERPRISE_OS_ZERODAYS_STEP_GUIDES,
-    BATCH5_CLOUD_SAAS_STEP_GUIDES,
-    BATCH6_SUPPLYCHAIN_CICD_STEP_GUIDES,
-    BATCH7_ZERODAY_APPLIANCES_STEP_GUIDES,
-    BATCH8_KERNEL_FIRMWARE_BYOVD_STEP_GUIDES,
-    BATCH9_RANSOMWARE_EXTORTION_STEP_GUIDES,
+    STATIC_SCENARIO_STEP_GUIDES,
     VULNCHECK_CWP_AND_DFIR_STEP_GUIDES
   );
 

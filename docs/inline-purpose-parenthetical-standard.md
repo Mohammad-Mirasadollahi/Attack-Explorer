@@ -115,7 +115,7 @@ In complex attack steps, a single sentence or short paragraph often chains **2 t
 
 ## 5. Checklist for Writing or Updating Any Scenario Step
 
-When authoring or reviewing any step in `lib/step-guides/*.ts` or `lib/scenarios/*.ts`, verify every sentence against these 5 checks:
+When authoring or reviewing any step in `lib/step-guides/*.ts` or `modules/scenarios/*.ts`, verify every sentence against these 5 checks:
 
 - [ ] **Check 1 — Target Selection Clarity:** If a specific process, file, port, or service is named, does an inline parenthetical explain *why* the attacker targeted or abused that specific component?
 - [ ] **Check 2 — Flag / Parameter Clarity:** If a command-line switch (`-enc`, `/quiet`), hex flag (`0x00000004`, `0x40`, `0x17`), or protocol option is mentioned, does an inline parenthetical state *what happens when that flag is set* and *how it aids evasion or execution*?

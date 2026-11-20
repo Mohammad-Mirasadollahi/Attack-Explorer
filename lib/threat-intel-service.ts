@@ -1,4 +1,4 @@
-import { AttackScenario, MITRE_PHASES } from './scenarios/types';
+import { AttackScenario, MITRE_PHASES } from '@/modules/scenarios/types';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
 import { BATCH_1_TO_4_CURATED_INTEL } from './batch1-to-4-attributions-and-intel';
 import { VULNCHECK_CWP_AND_DFIR_CURATED_INTEL } from './vulncheck-cwp-and-dfir-attributions-intel';

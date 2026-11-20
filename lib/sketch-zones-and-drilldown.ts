@@ -1,4 +1,4 @@
-import type { AttackScenario, DiagramNode, TelemetryEvent } from './scenarios/types';
+import type { AttackScenario, DiagramNode, TelemetryEvent } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,

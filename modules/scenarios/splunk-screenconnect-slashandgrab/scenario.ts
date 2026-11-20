@@ -1,0 +1,363 @@
+import type { AttackScenario } from '../types';
+
+export const scenario: AttackScenario = {
+  id: 'splunk-screenconnect-slashandgrab',
+  code: 'CVE-2024-1709',
+  name: 'Splunk STRT & Huntress — ConnectWise ScreenConnect "SlashAndGrab" Auth Bypass & RMM RCE',
+  shortSubtitle: 'Splunk STRT / Huntress · CVE-2024-1709 /SetupWizard.aspx/ Traversal, User.xml Overwrite & .ashx RCE',
+  category: 'NETWORK_WEB',
+  severity: 'CRITICAL',
+  primaryMitrePhase: 1,
+  overview:
+    'Documented by Huntress Labs ("SlashAndGrab") and the Splunk Threat Research Team (STRT, February 2024), CVE-2024-1709 (CVSS 10.0) is a trivial path-confusion authentication bypass in ConnectWise ScreenConnect. By simply appending a trailing slash or path segment to the setup wizard URL (/SetupWizard.aspx/anything), an unauthenticated attacker accesses the initial setup wizard on an already-configured server, overwrites User.xml with a new administrator account, uploads a malicious .ashx extension to execute commands as SYSTEM, and pushes ransomware/Cobalt Strike to managed endpoints.',
+  specs: [
+    {
+      term: 'PRIMARY SOURCE',
+      value: 'Splunk Threat Research Team (STRT) & Huntress Labs — CVE-2024-1709 SlashAndGrab Analysis',
+    },
+    {
+      term: 'MITRE TECHNIQUES',
+      value: 'T1190 (CVE-2024-1709 SetupWizard.aspx/) · T1505.003 (.ashx Webshell Extension) · T1219 (RMM Abuse)',
+    },
+    {
+      term: 'OVERWRITTEN DB',
+      value: 'C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml',
+    },
+    {
+      term: 'RCE ARTIFACT',
+      value: 'App_Extensions\\<GUID>\\*.ashx compiled by csc.exe under ScreenConnect.Service.exe',
+    },
+  ],
+  nodes: [
+    {
+      id: 'slashandgrab_actor',
+      label: 'Threat Actor (BlackBasta / LockBit)',
+      sublabel: '198.51.100.129 (RMM Exploit Operator)',
+      role: 'attacker',
+      x: 15,
+      y: 44,
+      details: {
+        osOrType: 'Ransomware Affiliate / Initial Access Broker',
+        pidOrPort: 'HTTP/S :8040 / :443 -> ScreenConnect Server',
+        privilege: 'Unauthenticated External',
+        artifacts: [
+          'GET /SetupWizard.aspx/ HTTP/1.1',
+          'POST /Services/ExtensionService.ashx/InstallExtension',
+        ],
+        description:
+          'Attacker sending a trailing-slash request to /SetupWizard.aspx/ to reset the ScreenConnect administrator database.',
+      },
+    },
+    {
+      id: 'screenconnect_srv',
+      label: 'ConnectWise ScreenConnect Server',
+      sublabel: '172.16.15.20 · RMM-SRV-01',
+      role: 'victim_host',
+      x: 44,
+      y: 28,
+      details: {
+        osOrType: 'Windows Server 2022 · ScreenConnect RMM Host',
+        pidOrPort: 'ScreenConnect.Service.exe (TCP 8040 / 8041)',
+        privilege: 'NT AUTHORITY\\SYSTEM',
+        artifacts: [
+          'C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml',
+          'C:\\Program Files (x86)\\ScreenConnect\\App_Extensions\\',
+        ],
+        description:
+          'On-premises ConnectWise ScreenConnect server managing hundreds of enterprise endpoints.',
+      },
+    },
+    {
+      id: 'ashx_extension_rce',
+      label: 'Malicious .ashx Extension & csc.exe',
+      sublabel: 'App_Extensions\\<GUID>\\payload.ashx',
+      role: 'process',
+      x: 54,
+      y: 72,
+      details: {
+        osOrType: 'ASP.NET Dynamic Web Handler (.ashx) in ScreenConnect',
+        pidOrPort: 'PID 5912 · ScreenConnect.Service.exe -> csc.exe -> cmd.exe',
+        privilege: 'NT AUTHORITY\\SYSTEM',
+        artifacts: [
+          'App_Extensions\\e3a1c8...\\handler.ashx',
+          'Process.Start("cmd.exe", "/c powershell -enc ...")',
+        ],
+        description:
+          'Malicious ScreenConnect extension ZIP uploaded by the attacker containing an ASP.NET .ashx webshell that executes as SYSTEM.',
+      },
+    },
+    {
+      id: 'managed_fleet_hosts',
+      label: 'Managed Endpoint Fleet (Relay)',
+      sublabel: '10.10.20.0/24 (TCP 8041 Agent Channel)',
+      role: 'server',
+      x: 78,
+      y: 30,
+      details: {
+        osOrType: 'Enterprise Endpoints Running ScreenConnect Client',
+        pidOrPort: 'C:\\Windows\\Temp\\ScreenConnect\\<Version>\\*.cmd',
+        privilege: 'SYSTEM Across All Managed Hosts',
+        artifacts: [
+          'Mass Command Dispatch from Compromised RMM Server',
+          'nltest /dclist: & Cobalt Strike Stager Deployment',
+        ],
+        description:
+          'Downstream enterprise endpoints that automatically execute commands pushed over TCP 8041 from the compromised ScreenConnect server.',
+      },
+    },
+    {
+      id: 'splunk_huntress_siem',
+      label: 'Splunk Enterprise Security (STRT)',
+      sublabel: 'Sysmon EID 1, 11 & IIS/HTTP Logs',
+      role: 'firewall_siem',
+      x: 86,
+      y: 68,
+      details: {
+        osOrType: 'Splunk SIEM running STRT ESCU Detections',
+        pidOrPort: 'Sysmon EID 1, 11 (User.xml / .ashx)',
+        privilege: 'SOC Detection Engine',
+        artifacts: [
+          'Splunk ESCU: ConnectWise ScreenConnect User.xml Modification',
+          'Splunk ESCU: ScreenConnect.Service.exe Spawning Shell',
+        ],
+        description:
+          'Detects modifications to App_Data\\User.xml, new .ashx files in App_Extensions\\, and ScreenConnect.Service.exe child processes.',
+      },
+    },
+  ],
+  processTree: [
+    {
+      pid: 1890,
+      ppid: 680,
+      name: 'ScreenConnect.Service.exe',
+      commandLine: '"C:\\Program Files (x86)\\ScreenConnect\\ScreenConnect.Service.exe"',
+      user: 'NT AUTHORITY\\SYSTEM',
+      integrity: 'SYSTEM',
+      status: 'suspicious',
+      activeFromStage: 1,
+      apiCalls: [
+        'WriteFile("C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml")',
+        'CreateProcessW("csc.exe") [Compile .ashx Extension]',
+      ],
+    },
+    {
+      pid: 5912,
+      ppid: 1890,
+      name: 'cmd.exe',
+      commandLine:
+        'cmd.exe /c "whoami & nltest /dclist:corp.local & powershell -nop -w hidden -enc ..."',
+      user: 'NT AUTHORITY\\SYSTEM',
+      integrity: 'SYSTEM',
+      status: 'malicious',
+      activeFromStage: 2,
+      apiCalls: ['CreateProcessW("nltest.exe")', 'CreateProcessW("powershell.exe")'],
+    },
+  ],
+  stages: [
+    {
+      index: 1,
+      title: 'SETUPWIZARD.ASPX/ TRAVERSAL & USER.XML OVERWRITE (CVE-2024-1709)',
+      subtitle: 'Accessing /SetupWizard.aspx/ to overwrite App_Data\\User.xml',
+      description:
+        'As detailed by Huntress and Splunk STRT, ScreenConnect checks whether /SetupWizard.aspx is requested directly, but fails when a trailing slash (/SetupWizard.aspx/) is appended (CVE-2024-1709). The attacker completes the setup wizard, overwriting C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml with a new SuperAdmin account.',
+      mitreTacticPhase: 1,
+      mitreTechniqueId: 'T1190',
+      mitreTechniqueName: 'Exploit Public-Facing Application',
+      activeNodeIds: ['slashandgrab_actor', 'screenconnect_srv', 'splunk_huntress_siem'],
+      compromisedNodeIds: ['screenconnect_srv'],
+      keySpecs: [
+        { term: 'VULNERABILITY', value: 'CVE-2024-1709 (CVSS 10.0 Authentication Bypass)' },
+        { term: 'BYPASS URI', value: 'GET /SetupWizard.aspx/ (or /SetupWizard.aspx/anything)' },
+        { term: 'MODIFIED FILE', value: 'C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml' },
+      ],
+    },
+    {
+      index: 2,
+      title: 'MALICIOUS .ASHX EXTENSION UPLOAD & SYSTEM RCE',
+      subtitle: 'Installing rogue extension in App_Extensions\\ to spawn cmd.exe as SYSTEM',
+      description:
+        'Logged in as the newly created ScreenConnect administrator, the attacker uploads a malicious extension ZIP via /Services/ExtensionService.ashx. ScreenConnect extracts a .ashx web handler into App_Extensions\\<GUID>\\, compiles it with csc.exe, and spawns cmd.exe / powershell.exe under ScreenConnect.Service.exe as NT AUTHORITY\\SYSTEM.',
+      mitreTacticPhase: 3,
+      mitreTechniqueId: 'T1505.003',
+      mitreTechniqueName: 'Server Software Component: Web Shell',
+      activeNodeIds: ['screenconnect_srv', 'ashx_extension_rce', 'splunk_huntress_siem'],
+      compromisedNodeIds: ['screenconnect_srv', 'ashx_extension_rce'],
+      keySpecs: [
+        { term: 'EXTENSION PATH', value: 'C:\\Program Files (x86)\\ScreenConnect\\App_Extensions\\<GUID>\\*.ashx' },
+        { term: 'PARENT PROCESS', value: 'ScreenConnect.Service.exe (NT AUTHORITY\\SYSTEM)' },
+        { term: 'COMPILER ARTIFACT', value: 'csc.exe compiling dynamic ASP.NET handler DLL' },
+      ],
+    },
+    {
+      index: 3,
+      title: 'DOWNSTREAM FLEET COMMAND PUSH OVER TCP 8041',
+      subtitle: 'Pushing .cmd scripts to managed endpoints via ScreenConnect ClientService',
+      description:
+        'Using the compromised ScreenConnect console, the attacker selects connected enterprise workstations and servers and dispatches batch commands over the TCP 8041 relay channel, executing payloads out of C:\\Windows\\Temp\\ScreenConnect\\<Version>\\*.cmd across the fleet.',
+      mitreTacticPhase: 6,
+      mitreTechniqueId: 'T1219',
+      mitreTechniqueName: 'Remote Access Software',
+      activeNodeIds: ['ashx_extension_rce', 'managed_fleet_hosts', 'splunk_huntress_siem'],
+      compromisedNodeIds: ['screenconnect_srv', 'ashx_extension_rce', 'managed_fleet_hosts'],
+      keySpecs: [
+        { term: 'FLEET ARTIFACT', value: 'C:\\Windows\\Temp\\ScreenConnect\\<Version>\\*.cmd / *.ps1' },
+        { term: 'CLIENT SERVICE', value: 'ScreenConnect.ClientService.exe spawning cmd.exe' },
+        { term: 'SPLUNK ESCU', value: 'ConnectWise ScreenConnect Path Traversal CVE-2024-1709' },
+      ],
+    },
+  ],
+  telemetry: [
+    {
+      id: 'spl-sc-1',
+      no: 1,
+      stageIndex: 1,
+      timestamp: '13:08:11.204',
+      sourceNodeId: 'slashandgrab_actor',
+      targetNodeId: 'screenconnect_srv',
+      sourceLabel: '198.51.100.129',
+      targetLabel: 'ScreenConnect User.xml',
+      sourceType: 'SYSMON',
+      protocolOrEventId: 'Sysmon EID 11',
+      shortAction: 'OVERWRITE USER.XML',
+      info: 'Image=ScreenConnect.Service.exe TargetFilename=C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml',
+      sizeOrCode: 'CVE-2024-1709',
+      severity: 'CRITICAL',
+      mitreId: 'T1190',
+      explanation:
+        'Splunk STRT and Huntress note that exploiting /SetupWizard.aspx/ causes ScreenConnect.Service.exe to overwrite App_Data\\User.xml.',
+      rawLog: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>11</EventID>
+    <Computer>RMM-SRV-01.corp.local</Computer>
+  </System>
+  <EventData>
+    <Data Name="Image">C:\\Program Files (x86)\\ScreenConnect\\ScreenConnect.Service.exe</Data>
+    <Data Name="TargetFilename">C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml</Data>
+    <Data Name="User">NT AUTHORITY\\SYSTEM</Data>
+  </EventData>
+</Event>`,
+      detectionRule: {
+        type: 'SIGMA',
+        title: 'Splunk STRT — ConnectWise ScreenConnect User.xml or .ashx Creation (CVE-2024-1709)',
+        ruleCode: `title: ConnectWise ScreenConnect CVE-2024-1709 User.xml or Extension Creation
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\\ScreenConnect.Service.exe'
+    TargetFilename|contains:
+      - '\\ScreenConnect\\App_Data\\User.xml'
+      - '\\ScreenConnect\\App_Extensions\\'
+  condition: selection
+level: critical`,
+        mitigation:
+          'Upgrade ConnectWise ScreenConnect to version 23.9.8 or later immediately and audit App_Data\\User.xml and App_Extensions\\ for unauthorized modifications.',
+      },
+    },
+    {
+      id: 'spl-sc-2',
+      no: 2,
+      stageIndex: 2,
+      timestamp: '13:08:19.650',
+      sourceNodeId: 'screenconnect_srv',
+      targetNodeId: 'ashx_extension_rce',
+      sourceLabel: 'ScreenConnect.Service.exe',
+      targetLabel: 'cmd.exe (PID 5912)',
+      sourceType: 'SYSMON',
+      protocolOrEventId: 'Sysmon EID 1',
+      shortAction: 'ASHX EXTENSION RCE',
+      info: 'ParentImage=ScreenConnect.Service.exe Image=cmd.exe CommandLine="cmd.exe /c whoami & nltest /dclist:corp.local"',
+      sizeOrCode: 'PID 5912',
+      severity: 'CRITICAL',
+      mitreId: 'T1505.003',
+      explanation:
+        'ScreenConnect.Service.exe (the server daemon, as opposed to the client agent) should never directly spawn cmd.exe or powershell.exe.',
+      rawLog: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>1</EventID>
+    <Computer>RMM-SRV-01.corp.local</Computer>
+  </System>
+  <EventData>
+    <Data Name="ProcessId">5912</Data>
+    <Data Name="Image">C:\\Windows\\System32\\cmd.exe</Data>
+    <Data Name="CommandLine">cmd.exe /c "whoami &amp; nltest /dclist:corp.local &amp; powershell -nop -w hidden -enc ..."</Data>
+    <Data Name="ParentProcessId">1890</Data>
+    <Data Name="ParentImage">C:\\Program Files (x86)\\ScreenConnect\\ScreenConnect.Service.exe</Data>
+    <Data Name="User">NT AUTHORITY\\SYSTEM</Data>
+  </EventData>
+</Event>`,
+      detectionRule: {
+        type: 'SIGMA',
+        title: 'ScreenConnect Server Service Spawning Command Shell (CVE-2024-1709 RCE)',
+        ruleCode: `title: ConnectWise ScreenConnect Server Spawning Shell Process
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith: '\\ScreenConnect.Service.exe'
+    Image|endswith:
+      - '\\cmd.exe'
+      - '\\powershell.exe'
+      - '\\pwsh.exe'
+  condition: selection
+level: critical`,
+        mitigation:
+          'Isolate the ScreenConnect server if ScreenConnect.Service.exe spawns a command shell and inspect App_Extensions\\ for rogue .ashx files.',
+      },
+    },
+    {
+      id: 'spl-sc-3',
+      no: 3,
+      stageIndex: 3,
+      timestamp: '13:10:04.112',
+      sourceNodeId: 'ashx_extension_rce',
+      targetNodeId: 'managed_fleet_hosts',
+      sourceLabel: 'ScreenConnect Relay :8041',
+      targetLabel: 'Temp\\ScreenConnect\\*.cmd',
+      sourceType: 'SYSMON',
+      protocolOrEventId: 'Sysmon EID 11 & 1',
+      shortAction: 'FLEET MASS PUSH',
+      info: 'ScreenConnect.ClientService.exe writes and executes C:\\Windows\\Temp\\ScreenConnect\\23.9.7\\8f2a1c.cmd across endpoints',
+      sizeOrCode: 'Fleet Push',
+      severity: 'CRITICAL',
+      mitreId: 'T1219',
+      explanation:
+        'When commands are pushed from the ScreenConnect server to managed endpoints, ScreenConnect.ClientService.exe writes temporary .cmd/.ps1 scripts into C:\\Windows\\Temp\\ScreenConnect\\<version>\\.',
+      rawLog: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>11</EventID>
+    <Computer>WKS-CORP-22.corp.local</Computer>
+  </System>
+  <EventData>
+    <Data Name="Image">C:\\Program Files (x86)\\ScreenConnect Client (3a9f)\\ScreenConnect.ClientService.exe</Data>
+    <Data Name="TargetFilename">C:\\Windows\\Temp\\ScreenConnect\\23.9.7.8804\\8f2a1c90-b412.cmd</Data>
+  </EventData>
+</Event>`,
+      detectionRule: {
+        type: 'SIGMA',
+        title: 'ScreenConnect Client Executing Script from Windows Temp Directory',
+        ruleCode: `title: ScreenConnect ClientService Script Execution in Temp
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\\ScreenConnect.ClientService.exe'
+    TargetFilename|contains: '\\Windows\\Temp\\ScreenConnect\\'
+    TargetFilename|endswith:
+      - '.cmd'
+      - '.bat'
+      - '.ps1'
+  condition: selection
+level: high`,
+        mitigation:
+          'Audit all .cmd and .ps1 scripts executed out of C:\\Windows\\Temp\\ScreenConnect\\ across managed endpoints.',
+      },
+    },
+  ],
+};

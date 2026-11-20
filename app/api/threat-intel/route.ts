@@ -22,9 +22,20 @@ export async function POST(req: NextRequest) {
     ATTACK_SCENARIOS.find((s) => s.id === scenarioId) || ATTACK_SCENARIOS[0];
   const curated = getCuratedThreatIntel(scenario);
 
+  const cacheHeaders = {
+    // Curated intel is static data — cache hard so Free-plan Worker invocations stay low.
+    'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+  };
+
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey.trim() === '') {
-    return NextResponse.json(curated);
+  // Live Gemini + googleSearch grounding can exceed Workers Free 10ms CPU (Error 1102)
+  // after loading the scenario corpus. Opt-in with FORCE_LIVE_INTEL=1 on Paid, or
+  // keep unset on Free and serve curated multi-source intel instead.
+  const allowLiveIntel =
+    Boolean(apiKey?.trim()) && process.env.FORCE_LIVE_INTEL === '1';
+
+  if (!allowLiveIntel) {
+    return NextResponse.json(curated, { headers: cacheHeaders });
   }
 
   try {
@@ -94,8 +105,12 @@ Keep the synthesized briefing under 125 words in clear, technical DFIR prose.`;
       fetchedAt: new Date().toISOString(),
     };
 
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, {
+      headers: {
+        'Cache-Control': 'private, max-age=60',
+      },
+    });
   } catch {
-    return NextResponse.json(curated);
+    return NextResponse.json(curated, { headers: cacheHeaders });
   }
 }

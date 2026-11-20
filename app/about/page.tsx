@@ -11,6 +11,8 @@ import { ArrowLeft, ExternalLink, ShieldCheck, UserRound } from 'lucide-react';
 
 const siteUrl = resolveSiteUrl();
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'About the Creator — Mohammad Mirasadollahi',
   description:

@@ -1,4 +1,4 @@
-import type { AttackScenario } from './scenarios/types';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import {
   EntityDrillDownData,
   WhiteboardSketchNode } from './sketch-zones-and-drilldown';

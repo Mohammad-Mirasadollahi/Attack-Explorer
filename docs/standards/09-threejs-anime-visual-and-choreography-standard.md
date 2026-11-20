@@ -2,7 +2,7 @@
 
 > **Module ID**: `MOD-09` · **Parent Index**: [`/docs/standards/README.md`](./README.md)  
 > **Scope**: All Three.js 3D scenes, cel-shaded toon materials, post-processing bloom pipelines, CSS anime canvas frames, floating 3D callout overlays, and camera framing inside `/components/three/**`.  
-> **Status**: Mandatory Permanent Standard · Enforced by `/lib/section-3d-registry.test.ts` and `/lib/process-hollowing-3d-choreography.test.ts`.
+> **Status**: Mandatory Permanent Standard · Enforced by `/lib/section-3d-registry.test.ts` and `/modules/scenarios/process-hollowing/choreography.test.ts`.
 
 ---
 
@@ -43,7 +43,7 @@ User testing confirmed that decorative floating sparkles, spinning glitter stars
    - **Two-Line Educational Hierarchy**:
      - **Top Title**: Plain-language Story label (`Bank Truck`, `Hidden Intruder`, `Official Factory Truck`, `Reprogrammed Truck GPS`).
      - **Bottom Subtitle**: Exact Technical translation in monospace (`Trusted Host · svchost.exe`, `SetThreadContext · RCX → 0x004014A0`).
-   - Users can toggle floating labels on or off with the **Labels** button, and the layout helper (`/lib/hollowing-3d-overlay-layout.ts`) clamps coordinates safely inside the viewport margins away from the HUD chrome.
+   - Users can toggle floating labels on or off with the **Labels** button, and the layout helper (`/components/three/floating-callout-layout.ts`) clamps coordinates safely inside the viewport margins away from the HUD chrome.
 
 ---
 

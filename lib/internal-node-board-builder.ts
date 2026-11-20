@@ -1,4 +1,4 @@
-import type { AttackScenario, TelemetryEvent } from './scenarios/types';
+import type { AttackScenario, TelemetryEvent } from '@/modules/scenarios/types';
 import {
   createBidirectionalFlowGeometry,
   NetworkBackboneLink,

@@ -1,5 +1,11 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
+  // Cloudflare Workers FREE plan constraints this config respects:
+  // - No "limits.cpu_ms" (deploy error 100328 on Free; Free cap is fixed at 10ms)
+  // - No R2 / KV / D1 / Durable Objects / Queues bindings (not required for SSG)
+  // - HTML/ISR served via Workers Static Assets + OpenNext cache interception
+  // - Static asset requests are free/unlimited; only Worker invocations burn the
+  //   100k req/day + 10ms CPU Free quotas
   "name": "attack-explorer",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-11-13",
@@ -9,6 +15,9 @@
     "binding": "ASSETS"
   },
   "observability": {
-    "enabled": true
+    // Workers Logs is included on Free (200k events/day, 3-day retention).
+    // Sample to stay under the Free log budget on traffic spikes.
+    "enabled": true,
+    "head_sampling_rate": 0.1
   }
 }

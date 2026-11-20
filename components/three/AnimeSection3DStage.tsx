@@ -13,17 +13,22 @@ import {
   computeActivePhaseIndex,
   getPhaseMidpointNormalized,
   type Anime3DSceneKind,
-  type Section3DCalloutSpec,
   type Section3DDescriptor,
   type StandardCameraPresetId,
   type StandardCutawayMode,
 } from '@/lib/section-3d-registry';
-import { computeFloatingCalloutLayout } from '@/lib/hollowing-3d-overlay-layout';
+import { computeFloatingCalloutLayout } from './floating-callout-layout';
 import {
   createAnimeMaterialLibrary,
   createAnimeSkyDome,
 } from './anime-toon-materials';
-import { buildBespokeSectionScene } from './hollowing-step-scene-builders';
+import { detectSoftwareWebGL } from './detectSoftwareWebGL';
+import { useCanvasPlayToggle } from './useCanvasPlayToggle';
+import { CALLOUT_CARD_STYLES } from './calloutCardStyles';
+import {
+  loadBespokeSectionSceneFactory,
+  type BespokeSectionSceneFactory,
+} from '@/modules/scenarios/three-registry';
 import {
   Camera,
   ChevronDown,
@@ -46,49 +51,6 @@ const _scratchCamTarget = new THREE.Vector3();
 const _scratchPrimary = new THREE.Vector3();
 const _scratchSecondary = new THREE.Vector3();
 
-function detectSoftwareWebGL(): boolean {
-  if (typeof document === 'undefined') return false;
-  try {
-    const probeCanvas = document.createElement('canvas');
-    const gl =
-      probeCanvas.getContext('webgl2') || probeCanvas.getContext('webgl');
-    if (!gl) return true;
-    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
-    const gpu = String(gl.getParameter(param) || '');
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-    return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
-  } catch {
-    return true;
-  }
-}
-
-const CALLOUT_CARD_STYLES: Record<
-  Section3DCalloutSpec['tone'],
-  { card: string; icon: string; sub: string }
-> = {
-  sky: {
-    card: 'bg-slate-950/84 border-sky-400/90 text-sky-400',
-    icon: 'text-sky-300',
-    sub: 'text-sky-200/95',
-  },
-  rose: {
-    card: 'bg-slate-950/86 border-rose-500/90 text-rose-400',
-    icon: 'text-rose-400',
-    sub: 'text-rose-200/95',
-  },
-  amber: {
-    card: 'bg-slate-950/86 border-amber-400/90 text-amber-400',
-    icon: 'text-amber-300',
-    sub: 'text-amber-200/95',
-  },
-  emerald: {
-    card: 'bg-slate-950/86 border-emerald-400/90 text-emerald-400',
-    icon: 'text-emerald-300',
-    sub: 'text-emerald-200/95',
-  },
-};
-
 interface AnimeSection3DStageProps {
   descriptor: Section3DDescriptor;
   className?: string;
@@ -96,7 +58,7 @@ interface AnimeSection3DStageProps {
 
 /**
  * Canonical Three.js Anime 3D Stage modeled identically on the Process Hollowing
- * Overview stage (`ProcessHollowingBankScene.tsx`):
+ * Overview stage (`modules/scenarios/process-hollowing/three/BankScene.tsx`):
  * - Exact light/dark manga Top-Left Storyboard Card (Story first, Technical right below)
  * - Exact Top-Right Actions (`Cutaway: AUTO/OPEN/SEALED` + Amber `Full Page`)
  * - Exact Collapsible 2-Row Bottom Control Dock (`Hide/Show Controls`, `Pause/Play`, `Restart`,
@@ -114,7 +76,8 @@ export function AnimeSection3DStage({
   const primaryLabelRef = useRef<HTMLDivElement | null>(null);
   const secondaryLabelRef = useRef<HTMLDivElement | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  // Start paused — user must press Play; do not auto-loop when the timeline ends.
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [activePhaseIndex, setActivePhaseIndex] = useState<number>(0);
   const [timelinePct, setTimelinePct] = useState<number>(4);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
@@ -123,6 +86,8 @@ export function AnimeSection3DStage({
     useState<StandardCameraPresetId>('DIRECTOR');
   const [dockExpanded, setDockExpanded] = useState<boolean>(true);
   const [isFullPage, setIsFullPage] = useState<boolean>(false);
+  const [bespokeSceneFactory, setBespokeSceneFactory] =
+    useState<BespokeSectionSceneFactory | null>(null);
   const [bloomEnabled, setBloomEnabled] = useState<boolean>(true);
   const [labelsEnabled, setLabelsEnabled] = useState<boolean>(true);
   const [webglError, setWebglError] = useState<string | null>(null);
@@ -130,7 +95,7 @@ export function AnimeSection3DStage({
 
   const simRef = useRef({
     normalizedTime: 0.04,
-    isPlaying: true,
+    isPlaying: false,
     playbackSpeed: 1,
     cutawayMode: 'AUTO' as StandardCutawayMode,
     cameraPreset: 'DIRECTOR' as StandardCameraPresetId,
@@ -205,8 +170,19 @@ export function AnimeSection3DStage({
   }, [isFullPage]);
 
   useEffect(() => {
+    let live = true;
+    loadBespokeSectionSceneFactory().then((factory) => {
+      if (live) setBespokeSceneFactory(() => factory);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const mountEl = canvasMountRef.current;
     if (!mountEl) return;
+    if (!bespokeSceneFactory) return;
     if (descriptor.sceneKind === 'bank-truck-briefing') return;
 
     const sceneKind = descriptor.sceneKind as Exclude<
@@ -295,7 +271,7 @@ export function AnimeSection3DStage({
     rimLight.position.set(-20, 14, -18);
     scene.add(rimLight);
 
-    const bespoke = buildBespokeSectionScene(sceneKind, materials, isSoftwareGl);
+    const bespoke = bespokeSceneFactory(sceneKind, materials, isSoftwareGl);
     scene.add(bespoke.root);
 
     const pixelRatio = renderer.getPixelRatio();
@@ -390,10 +366,18 @@ export function AnimeSection3DStage({
       sim.elapsed += dt;
 
       if (sim.isPlaying) {
-        sim.normalizedTime =
-          (sim.normalizedTime +
-            (dt * sim.playbackSpeed) / descriptor.durationSec) %
-          1;
+        const next =
+          sim.normalizedTime +
+          (dt * sim.playbackSpeed) / descriptor.durationSec;
+        if (next >= 1) {
+          // Stay on the final frame; user must press Play/Restart to run again.
+          sim.normalizedTime = 1;
+          sim.isPlaying = false;
+          setIsPlaying(false);
+          setTimelinePct(100);
+        } else {
+          sim.normalizedTime = next;
+        }
       }
 
       const timeSec = sim.normalizedTime * descriptor.durationSec;
@@ -712,7 +696,7 @@ export function AnimeSection3DStage({
       envTarget.dispose();
       renderer.dispose();
     };
-  }, [descriptor]);
+  }, [descriptor, bespokeSceneFactory]);
 
   const handleSelectPhase = useCallback(
     (phaseIdx: number) => {
@@ -745,6 +729,26 @@ export function AnimeSection3DStage({
     [descriptor]
   );
 
+  const handleTogglePlay = useCallback(() => {
+    setIsPlaying((prev) => {
+      if (prev) return false;
+      // If the timeline already finished, rewind so Play runs the story again.
+      if (simRef.current.normalizedTime >= 0.999) {
+        simRef.current.normalizedTime = 0.01;
+        simRef.current.snapCamera = true;
+        setActivePhaseIndex(0);
+        setTimelinePct(1);
+      }
+      return true;
+    });
+  }, []);
+
+  const handleToggleFullPage = useCallback(() => {
+    setIsFullPage((prev) => !prev);
+  }, []);
+
+  useCanvasPlayToggle(canvasMountRef, handleTogglePlay, handleToggleFullPage);
+
   const handleRestart = useCallback(() => {
     simRef.current.normalizedTime = 0.01;
     simRef.current.manualOrbit = false;
@@ -754,7 +758,8 @@ export function AnimeSection3DStage({
     setManualOrbitActive(false);
     setActivePhaseIndex(0);
     setTimelinePct(1);
-    setIsPlaying(true);
+    // Restart only seeks to the start; user presses Play to run again.
+    setIsPlaying(false);
     simRef.current.requestRender();
   }, []);
 
@@ -791,9 +796,15 @@ export function AnimeSection3DStage({
       }
     >
       <div className="anime-3d-canvas-bezel relative w-full h-full bg-[#0B0F17]">
-        {/* Isolated WebGL Canvas Mount Container */}
+        {/* Canvas: click = Pause/Resume, double-click = full page, drag = orbit */}
         <div
           ref={canvasMountRef}
+          data-testid={`section-3d-canvas-toggle-${descriptor.sectionKey}`}
+          aria-label={
+            isPlaying
+              ? 'Pause 3D animation. Double-click for full page.'
+              : 'Play 3D animation. Double-click for full page.'
+          }
           className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
         />
 
@@ -918,7 +929,7 @@ export function AnimeSection3DStage({
           <button
             type="button"
             data-testid={`section-3d-fullpage-btn-${descriptor.sectionKey}`}
-            onClick={() => setIsFullPage((prev) => !prev)}
+            onClick={handleToggleFullPage}
             aria-label={
               isFullPage
                 ? 'Exit full page 3D view'
@@ -974,7 +985,7 @@ export function AnimeSection3DStage({
                   <button
                     type="button"
                     data-testid={`section-3d-play-btn-${descriptor.sectionKey}`}
-                    onClick={() => setIsPlaying((prev) => !prev)}
+                    onClick={handleTogglePlay}
                     aria-label={
                       isPlaying ? 'Pause 3D animation' : 'Play 3D animation'
                     }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { computeFloatingCalloutLayout } from './hollowing-3d-overlay-layout';
+import { computeFloatingCalloutLayout } from '../components/three/floating-callout-layout';
 
 test('keeps well-separated Bank Truck and Hidden Intruder labels near projected anchors', () => {
   const layout = computeFloatingCalloutLayout({

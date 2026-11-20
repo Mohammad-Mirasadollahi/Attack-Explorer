@@ -25,5 +25,10 @@ export async function GET(req: NextRequest) {
     severity: severityParam,
     search });
 
-  return NextResponse.json(result);
+  // Short CDN/browser cache — reduces repeat Worker invocations on Free (100k/day).
+  return NextResponse.json(result, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    },
+  });
 }

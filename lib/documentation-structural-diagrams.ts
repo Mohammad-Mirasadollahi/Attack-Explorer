@@ -4,7 +4,7 @@ import {
   AttackStage,
   ProcessTreeNode,
   TelemetryEvent,
-} from './scenarios/types';
+} from '@/modules/scenarios/types';
 import { InspectorScopeContext } from './inspector-scope';
 import { WhiteboardSketchNode } from './sketch-zones-and-drilldown';
 

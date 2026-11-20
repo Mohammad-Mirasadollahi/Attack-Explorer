@@ -1,3 +1,7 @@
+import type { StoryTechnicalMapping } from '@/modules/scenarios/contracts';
+
+export type { StoryTechnicalMapping };
+
 export type Section3DKey =
   | 'briefing'
   | 'step-1'
@@ -26,14 +30,6 @@ export interface Section3DCalloutSpec {
   title: string;
   /** Direct technical equivalent rendered underneath (e.g. "Trusted Host · svchost.exe") */
   subtitle: string;
-  tone: 'sky' | 'rose' | 'amber' | 'emerald';
-}
-
-export interface StoryTechnicalMapping {
-  /** Plain-language story character, prop, or action */
-  storyTerm: string;
-  /** Exact technical OS / API / telemetry counterpart */
-  technicalTerm: string;
   tone: 'sky' | 'rose' | 'amber' | 'emerald';
 }
 

@@ -5,7 +5,7 @@ import type {
   AttackScenario,
   AttackStage,
   ProcessTreeNode,
-} from '@/lib/scenarios/types';
+} from '@/modules/scenarios/types';
 import {
   explainCommandLine,
   explainProcessNodeCommandLine,

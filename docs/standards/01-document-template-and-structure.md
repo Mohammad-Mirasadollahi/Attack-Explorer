@@ -12,7 +12,7 @@ Every document and scenario in **Attack Explorer** must be immediately recogniza
 
 This module defines the **three canonical templates** used across the codebase:
 1. **Template A**: Markdown Engineering & Architecture Standard Document (`/docs/**/*.md`)
-2. **Template B**: Attack Scenario Data Module (`/lib/scenarios/*.ts`)
+2. **Template B**: Attack Scenario Data Module (`/modules/scenarios/*.ts`)
 3. **Template C**: Step-by-Step Operational Guide Module (`/lib/step-guides/*.ts`)
 
 ---
@@ -68,7 +68,7 @@ Every Markdown document added to `/docs/**` or `/seo-audit/**` **must** follow t
 
 ---
 
-## 3. Template B — Attack Scenario Definition Blueprint (`/lib/scenarios/*.ts`)
+## 3. Template B — Attack Scenario Definition Blueprint (`/modules/scenarios/*.ts`)
 
 Every scenario object (`AttackScenario` / `LegacyDraftScenario`) must declare its properties in the exact order below and satisfy the **Character & Cardinality Budgets**:
 
@@ -77,7 +77,7 @@ Every scenario object (`AttackScenario` / `LegacyDraftScenario`) must declare it
 | **1** | `id` | `string` | `15–75 chars` (`^[a-z0-9-]+$`) | Lowercase `kebab-case` URL slug combining `<actor-or-vendor>-<cve-or-tool>-<technique-vector>`. |
 | **2** | `code` | `string` | `5–12 chars` | Unique prefix + number (`SC-xxx`, `RW-xxx`, `SUP-xxx`, `CLR-xxx`, `APT-xxx`, `DFIR-xxx`). |
 | **3** | `name` | `string` | **`35–85 chars`** (Ideal SERP: `35–65`) | Front-loads Primary Entity (Actor/Product/CVE) + Attack Vector. Never starts with generic words like `"A scenario about..."`. |
-| **4** | `category` | `AttackCategory` | Exact Enum | One of the official categories in `lib/scenarios/types.ts` (e.g., `'RANSOMWARE'`, `'SUPPLY_CHAIN'`, `'MALWARE'`). |
+| **4** | `category` | `AttackCategory` | Exact Enum | One of the official categories in `modules/scenarios/types.ts` (e.g., `'RANSOMWARE'`, `'SUPPLY_CHAIN'`, `'MALWARE'`). |
 | **5** | `severity` | `'CRITICAL' \| 'HIGH' \| 'MEDIUM'` | Exact Enum | Must reflect real CVSS / operational impact. |
 | **6** | `mitreTactics` | `string[]` | `2–5 tactics` | Canonical MITRE Enterprise tactics (`'Initial Access'`, `'Execution'`, `'Defense Evasion'`, `'Impact'`, etc.). |
 | **7** | `shortSubtitle` | `string` | **`80–160 chars`** (Ideal SERP: `85–140`) | Single-sentence summary of the 3-stage progression (`Vector -> Mechanism -> Impact/Detection`). |

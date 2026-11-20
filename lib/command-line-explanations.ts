@@ -3,7 +3,7 @@ import {
   AttackStage,
   ProcessTreeNode,
   TelemetryEvent,
-} from './scenarios/types';
+} from '@/modules/scenarios/types';
 
 export interface CommandParameterExplanation {
   token: string;

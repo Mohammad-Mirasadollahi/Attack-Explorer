@@ -5,7 +5,7 @@
  * TypeScript contracts, validators, and document template generators.
  */
 
-import { AttackScenario } from './scenarios/types';
+import { AttackScenario } from '@/modules/scenarios/types';
 import './attack-scenarios';
 import { buildDiagramStepGuideModel } from './scenario-step-guides';
 import { getScenarioAttribution } from './attack-sources-and-legal';

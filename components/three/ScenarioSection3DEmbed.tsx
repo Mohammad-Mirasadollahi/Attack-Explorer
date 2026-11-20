@@ -16,18 +16,10 @@ import {
   subscribeActiveWebGLStage,
 } from '@/lib/webgl-stage-coordinator';
 
-const ProcessHollowingBankScene = dynamic(
-  () =>
-    import('./ProcessHollowingBankScene').then(
-      (mod) => mod.ProcessHollowingBankScene
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <SceneLoadingPlaceholder label="Armored Bank Truck — Process Hollowing 3D Scene" />
-    ),
-  }
-);
+import {
+  SCENARIO_OVERVIEW_3D_LOADERS,
+  SCENARIO_OVERVIEW_SCENE_KINDS,
+} from '@/modules/scenarios/three-registry';
 
 const AnimeSection3DStage = dynamic(
   () =>
@@ -38,6 +30,18 @@ const AnimeSection3DStage = dynamic(
       <SceneLoadingPlaceholder label="Interactive Cel-Shaded Anime 3D Stage" />
     ),
   }
+);
+
+const OVERVIEW_SCENES: Record<string, React.ComponentType> = Object.fromEntries(
+  Object.entries(SCENARIO_OVERVIEW_3D_LOADERS).map(([scenarioId, loader]) => [
+    scenarioId,
+    dynamic(loader, {
+      ssr: false,
+      loading: () => (
+        <SceneLoadingPlaceholder label="Scenario overview 3D scene" />
+      ),
+    }),
+  ])
 );
 
 function SceneLoadingPlaceholder({ label }: { label: string }) {
@@ -190,6 +194,13 @@ export function ScenarioSection3DEmbed({
   if (!descriptor) return null;
 
   const isActive = activeId === instanceId;
+  const OverviewScene = descriptor
+    ? OVERVIEW_SCENES[descriptor.scenarioId]
+    : undefined;
+  const showOverview =
+    Boolean(OverviewScene) &&
+    SCENARIO_OVERVIEW_SCENE_KINDS[descriptor.scenarioId] ===
+      descriptor.sceneKind;
 
   return (
     <div
@@ -200,8 +211,8 @@ export function ScenarioSection3DEmbed({
       className={`w-full ${className}`}
     >
       {isActive ? (
-        descriptor.sceneKind === 'bank-truck-briefing' ? (
-          <ProcessHollowingBankScene />
+        showOverview && OverviewScene ? (
+          <OverviewScene />
         ) : (
           <AnimeSection3DStage descriptor={descriptor} />
         )

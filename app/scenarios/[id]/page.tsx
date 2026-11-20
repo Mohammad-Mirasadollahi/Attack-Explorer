@@ -37,6 +37,9 @@ interface ScenarioPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Prerender every scenario HTML into Workers Static Assets (Free-plan safe).
+export const dynamic = 'force-static';
+
 export async function generateStaticParams() {
   return ATTACK_SCENARIOS.map((sc) => ({
     id: sc.id,

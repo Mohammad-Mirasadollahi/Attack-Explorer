@@ -2,13 +2,14 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: false,
-  },
+  // Allow LAN access during local/dev (host IP / hostname).
+  allowedDevOrigins: ['192.168.1.199', 'localhost', '127.0.0.1'],
+  // Smaller responses; Cloudflare already strips some fingerprint headers.
+  poweredByHeader: false,
+  // Workers Free has no Next.js Image Optimization runtime — serve as-is.
+  // (Cloudflare Images / Polish would be a paid add-on.)
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,6 +18,16 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  // Tree-shake heavy icon/chart barrels for smaller client + worker graphs.
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
   },
   transpilePackages: ['motion'],
   async headers() {
