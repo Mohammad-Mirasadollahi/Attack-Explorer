@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a building with a strict front-door security guard (Apache httpd) and a trusting back-office clerk (Apache Tomcat) who talk to each other over an internal pneumatic tube (AJP protocol). A visitor sends a single long envelope whose outer label says it is just a public login-page check, so the front-door guard lets it through. Inside the pneumatic tube, however, the oversized message spills over and creates a brand-new second internal work order marked REMOTE_USER = admin. The back-office clerk reads that second forged work order and believes the front guard already verified the visitor as the building’s master administrator.',
       plainSummary:
-        'Documented by ProjectDiscovery, Praetorian, and CISA (October–November 2023), CVE-2023-46747 is a critical unauthenticated Remote Code Execution vulnerability in the F5 BIG-IP Traffic Management User Interface (TMUI). The BIG-IP management web interface uses a two-tier architecture: a front-end Apache httpd server checks authentication and forwards requests over the binary Apache JServ Protocol (AJP) to a back-end Apache Tomcat server. By sending an HTTP request with a carefully sized header to a public .jsp page, the attacker triggers AJP Request Smuggling, injecting a forged second AJP packet straight into Tomcat with SC_A_REMOTE_USER=admin (tricking Tomcat into believing the front-end Apache server already authenticated the attacker as the master administrator).',
+        'In this scenario (CVE-2023-46747, F5 Security & Mandiant - F5 BIG-IP TMUI AJP Request Smuggling to Root RCE), the attacker follows one continuous arc: smuggling a Forged Second AJP Request Past Front-End, then using the Smuggled Admin Context to Create a Rogue, then executing Arbitrary root Commands via tmshCmd.jsp. Steps #1–#3 examine #1 Smuggling a Forged Second AJP Request Past Front-End; #2 Using the Smuggled Admin Context to Create a Rogue; #3 Executing Arbitrary root Commands via tmshCmd.jsp. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for CVE-2023-46747 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (Attacker), send the crafted HTTP request to Node ②/③ (F5 BIG-IP TMUI Front-End Apache :443), trace the smuggled AJP packet (0x1234 prefix + SC_A_REMOTE_USER = admin) entering Node ④ (Back-End Tomcat & tmsh Engine), and watch the tmsh root command execution on Node ⑤ detected by Node ⑥ (BIG-IP Audit & SIEM).',
       documentedAdvisory: 'F5 Security Advisory K000137353 · ProjectDiscovery CVE-2023-46747 Analysis · CISA KEV · MITRE T1190',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① to Node ②/③ (F5 BIG-IP Apache mod_proxy_ajp), and return arrow ⇠#1 smuggling the forged REMOTE_USER=admin AJP packet into Node ④ (Tomcat :8009).',
         detectionAndEvidence:
-          'Documented by ProjectDiscovery & F5 K000137353: /var/log/httpd/httpd_errors and Tomcat logs showing anomalous AJP header parsing and unauthenticated hits to /tmui/Control/jspmap/.',
+          'Documented by ProjectDiscovery and F5 K000137353 (vendor advisory detailing authentication bypass traces): /var/log/httpd/httpd_errors and Tomcat logs showing anomalous AJP header parsing and unauthenticated hits to /tmui/Control/jspmap/ (indicating a smuggled request reached the internal management servlet). Correlate Sysmon or Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ inside Node ④ invokes the TMUI UserCreate handler as admin, and ⇠#2 registers the rogue administrator in /config/bigip_user.conf.',
         detectionAndEvidence:
-          'Documented in /var/log/audit & /var/log/ltm: creation of a new user account with role=admin and shell=bash without a preceding interactive web login.',
+          'Documented in /var/log/audit and /var/log/ltm (local appliance configuration audit trails): creation of a new user account with role=admin and shell=bash without a preceding interactive web login (a high-confidence indicator of administrative authentication bypass). Correlate Sysmon or Windows Security Event telemetry for T1136.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ executes tmsh run /util bash on Node ⑤ (BIG-IP Root OS & SSL Vault) while Node ⑥ (SIEM) alerts on auditd tmsh bash execution.',
         detectionAndEvidence:
-          'Documented in F5 K000137353 (/var/log/audit): mcpd / tmsh audit log entries showing run /util bash -c executed from tmui / tomcat.',
+          'Documented in F5 K000137353 (/var/log/audit appliance command logs): mcpd / tmsh audit log entries showing run /util bash -c executed from tmui / tomcat (confirming that the web management interface spawned underlying root shell commands). Correlate Sysmon or Windows Security Event telemetry for T1059.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

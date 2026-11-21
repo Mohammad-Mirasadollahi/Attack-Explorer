@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a video-game referee (mhyprot2.sys) who was given a real police badge by the city (Microsoft WHCP Signature) so they could stop players from cheating on home PCs. A bank robber realizes that this referee will also obey orders inside a corporate bank vault, even if the video game isn’t installed, and commands the referee (IOCTL 0x81034000) to knock out every bank security guard in the building.',
       plainSummary:
-        'Investigated by Trend Micro in August 2022 and subsequently tracked by Mandiant and Kaspersky across multiple ransomware campaigns, mhyprot2.sys (CVE-2020-36603) is the kernel-mode anti-cheat driver for the popular game Genshin Impact. Because it carries a valid digital signature from miHoYo Co., Ltd., attackers drop the standalone .sys file onto enterprise Windows servers alongside a controller binary (kill_svc.exe), complete its MT19937-64 XOR handshake via IOCTL 0x80034000, and invoke IOCTL 0x81034000 (ZwTerminateProcess in Ring 0) to mass-terminate EDR/AV processes.',
+        'In this scenario (T1068, Genshin Impact Anti-Cheat Driver (mhyprot2.sys) Ransomware BYOVD (CVE-2020-36603)), the attacker follows one continuous arc: dropping Standalone Signed mhyprot2.sys on, then opening \\\\.\\mhyprot2, then ring-0 ZwTerminateProcess Massacre via IOCTL. Steps #1–#3 examine #1 Dropping Standalone Signed mhyprot2.sys on; #2 Opening \\\\.\\mhyprot2; #3 Ring-0 ZwTerminateProcess Massacre via IOCTL. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 6 with the documented host and network chain.',
       diagramTopologySummary:
         'kill_svc.exe Ransomware Dropper -> Signed Anti-Cheat Driver (mhyprot2.sys) -> IOCTL 0x80034000 MT64 Handshake -> IOCTL 0x81034000 Ring-0 AV Wipe & Lock -> Trend Micro / Mandiant EDR Sensor.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the kill_svc.exe Ransomware Dropper to the Signed Anti-Cheat Driver (mhyprot2.sys) as it loads onto the server.',
         detectionAndEvidence:
-          'Sysmon EventID 6 (DriverLoaded) alerting whenever mhyprot2.sys (or any driver signed by miHoYo Co., Ltd.) is loaded on an enterprise workstation or server.',
+          'Sysmon EventID 6 (DriverLoaded) alerting whenever mhyprot2.sys (or any driver signed by miHoYo Co., Ltd.) is loaded on an enterprise workstation or server. Preserve the raw event fields and the related containment ticket for forensic replay.',
       },
       {
         stepNumber: 2,
@@ -54,7 +54,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Once the 0x80034000 handshake succeeded, kill_svc.exe enumerated running endpoint security processes (Ntrtscan.exe, TmCCSF.exe, uiWatchDog.exe, MsMpEng.exe), XOR-encrypted each target Process ID with the MT19937-64 stream, and invoked IOCTL 0x81034000 (CVE-2020-36603, which calls PsLookupProcessByProcessId and ZwTerminateProcess in Ring 0 to forcefully terminate any process regardless of PPL status), immediately followed by mass ransomware encryption across the Domain Controller’s shares.',
         howItWorksInPractice:
-          'mhyprot2.sys also exposes IOCTL 0x81054000 and 0x81064000 for arbitrary kernel/process memory reads (MmCopyVirtualMemory), giving attackers both an EDR killer and a kernel memory reader in a single signed binary.',
+          'mhyprot2.sys also exposes IOCTL 0x81054000 and 0x81064000 for arbitrary kernel/process memory reads (MmCopyVirtualMemory), giving attackers both an EDR killer and a kernel memory reader in a single signed binary. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the MT64 Handshake invoking IOCTL 0x81034000 Ring-0 AV Wipe & Lock.',
         detectionAndEvidence:

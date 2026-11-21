@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented by Splunk SURGe and Huntress (web access log detections for SlashAndGrab): HTTP GET/POST requests matching /SetupWizard.aspx/* returning status 200 on an already provisioned server (proving an unauthenticated caller reopened the initial configuration wizard).',
+            'Documented by Splunk SURGe and Huntress (web access log detections for SlashAndGrab): HTTP GET/POST requests matching /SetupWizard.aspx/* returning status 200 on an already provisioned server (proving an unauthenticated caller reopened the initial configuration wizard). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         2: {
           storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           howItWorksInPractice:
-            'Because the Setup Wizard was designed for a fresh installation, completing the wizard resets App_Data\\User.xml from scratch (overwriting existing administrator hashes with attacker-chosen credentials) and returns an authenticated administrator session cookie to the caller (granting full web console control without knowing prior passwords).',
+            'Because the Setup Wizard was designed for a fresh installation, completing the wizard resets App_Data\\User.xml from scratch (overwriting existing administrator hashes with attacker-chosen credentials) and returns an authenticated administrator session cookie to the caller (granting full web console control without knowing prior passwords). Mechanically, defenders treat this stage as complete only after the T1505.003 control point is observed as live runtime state (the concrete checkpoint proving prior-stage output now drives the next action) and confirmed in host or network telemetry (the channel that timestamps the handoff).',
           detectionAndEvidence:
             'Documented in Sysmon EventID 11 (file creation and overwrite telemetry) and ScreenConnect Audit Logs: Modification of C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml and App_Extensions\\*.ashx by ScreenConnect.Service.exe (confirming administrator credential replacement and extension deployment).',
         },
@@ -114,7 +114,7 @@ export const standardPatch: ScenarioStandardPatch = {
           howItWorksInPractice:
             'Without needing a single exploit on the client workstations, the operator uses the built-in Backstage command runner (a legitimate remote-management console hidden from the logged-in desktop user) to execute arbitrary commands as NT AUTHORITY\\SYSTEM across hundreds or thousands of managed endpoints simultaneously (turning one RMM server compromise into fleet-wide code execution).',
           detectionAndEvidence:
-            'Documented by Huntress and Splunk SURGe (endpoint process creation indicators for abused RMM sessions): ScreenConnect.ClientService.exe spawning cmd.exe / powershell.exe from C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd (signaling mass Backstage command execution across managed workstations).',
+            'Documented by Huntress and Splunk SURGe (endpoint process creation indicators for abused RMM sessions): ScreenConnect.ClientService.exe spawning cmd.exe / powershell.exe from C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd (signaling mass Backstage command execution across managed workstations). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1219 (pairing parent/child process and destination fields) and contain the offending session.',
         },
       },
     };

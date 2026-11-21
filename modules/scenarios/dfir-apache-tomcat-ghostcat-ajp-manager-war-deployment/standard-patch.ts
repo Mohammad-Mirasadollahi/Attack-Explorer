@@ -56,7 +56,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       2: {
         storyAnalogy:
-          'Armed with valid manager passcodes, the outsider walks up to the package loading dock and uploads a zipped application crate containing a hidden web control page.',
+          'Armed with valid manager passcodes, the outsider walks up to the package loading dock and uploads a zipped application crate containing a hidden web control page. Continuing the same characters and room from the previous beat, the operator performs two more concrete physical movements that an animator can stage without guessing, and each newly introduced prop has one explicit job.',
         storyMappings: [
           {
             storyTerm: 'Package loading dock',

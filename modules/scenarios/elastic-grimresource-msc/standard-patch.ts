@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Deploy behavioral rules matching Elastic execution_via_mmc_apds_dll (correlating module loads with cross-process injection telemetry) flagging mmc.exe after loading apds.dll spawning or injecting memory sections into dllhost.exe.',
+          'Deploy behavioral rules matching Elastic execution_via_mmc_apds_dll (correlating module loads with cross-process injection telemetry) flagging mmc.exe after loading apds.dll spawning or injecting memory sections into dllhost.exe. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1055.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a parasite that doesn’t walk around the building on its own legs (so no guard ever sees an intruder on the hallway cameras). Instead, it slips a pair of augmented-reality glasses (/etc/ld.so.preload) onto every single employee in the building the moment they wake up. When an administrator looks at the room directory (ls) or the network monitor (tcpdump), the glasses digitally erase the parasite and its network wires from the administrator’s field of view.',
       plainSummary:
-        'Jointly disclosed by BlackBerry and Intezer in June 2022 targeting Latin American financial institutions, Symbiote is a userland Linux rootkit compiled as a shared object (.so) library rather than a standalone executable. By injecting itself into /etc/ld.so.preload, it infects every dynamically linked process on the machine, hooking libc (fopen, getdents64, read) to conceal its files and harvest ssh/scp keystrokes, hooking pam_authenticate for backdoor root SSH access, and hooking libpcap to rewrite BPF packet filters on the fly so tcpdump cannot see its C2 traffic.',
+        'In this scenario (T1574.006, Symbiote Parasitic Linux LD_PRELOAD Rootkit & libpcap eBPF Bytecode Hooking), the attacker follows one continuous arc: global Dynamic Linker Injection, then pAM Backdoor Authentication, then libpcap Function Hooking. Steps #1–#3 examine #1 Global Dynamic Linker Injection; #2 PAM Backdoor Authentication; #3 libpcap Function Hooking. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on auditd telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'Symbiote DNS / HTTPS C2 Operator -> /etc/ld.so.preload (liblinux.so) -> Hooked sshd / PAM Credential Harvester -> Hooked tcpdump / libpcap BPF Scrubber -> BlackBerry / Intezer Static ELF Scanner.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Symbiote C2 Operator to /etc/ld.so.preload (liblinux.so) as the shared library infects all dynamic processes.',
         detectionAndEvidence:
-          'Inspecting /etc/ld.so.preload and /proc/1/maps using a statically compiled binary (which does not use ld-linux.so and is immune to LD_PRELOAD userland hooks) or kernel-level eBPF sensors.',
+          'Inspecting /etc/ld.so.preload and /proc/1/maps using a statically compiled binary (which does not use ld-linux.so and is immune to LD_PRELOAD userland hooks) or kernel-level eBPF sensors. Correlate Sysmon or Windows Security Event telemetry for T1574.006 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces /etc/ld.so.preload hooking the tcpdump / libpcap BPF Scrubber while exfiltrating data to the Symbiote DNS / HTTPS C2 Operator.',
         detectionAndEvidence:
-          'Capturing network traffic from an out-of-band switch SPAN port / network tap rather than on the host, and comparing ss output against raw kernel socket tables via eBPF.',
+          'Capture network traffic from an out-of-band switch SPAN port or hardware network tap (which observes raw wire frames outside the compromised OS so host userland hooks cannot scrub them) and compare ss output against raw kernel socket tables via eBPF. Correlate Sysmon or Windows Security Event telemetry for T1014 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

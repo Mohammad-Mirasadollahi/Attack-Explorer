@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a high-security cloud storage facility (Snowflake) where the vault doors themselves are unbreakable, but several corporate tenants told the front desk: "Let our contractors walk in with just a written password, don’t ask them for a second security badge (MFA = NULL) or check what taxi (IP Network Policy) they arrived in." A thief (UNC5537) buys old boxes of stolen home-computer diaries (Lumma / RedLine / Vidar infostealer logs), searches those diaries for the word snowflakecomputing.com, walks right through the front door with a high-speed robotic inventory scanner (FROSTBITE / Rapeflake), packs gigabytes of customer ledgers into zip bags (COPY INTO @~), and carries them out.',
       plainSummary:
-        'Synthesizing Mandiant’s UNC5537 investigation, Snowflake’s joint security advisory, and CISA guidance (June 2024), this scenario models how financially motivated threat actor UNC5537 breached over 165 enterprise Snowflake customer tenants without exploiting any vulnerability in Snowflake itself. The actors extracted valid corporate credentials from historical infostealer malware logs (RedLine, Vidar, LummaC2), logged into single-factor accounts lacking Multi-Factor Authentication (SECOND_AUTHENTICATION_FACTOR = NULL) and Network Policies, ran the custom .NET utility FROSTBITE (Rapeflake) to enumerate schemas, and used DBeaver Ultimate to stage (COPY INTO) and download multi-gigabyte customer tables.',
+        'In this scenario (T1078.004, Mandiant & Snowflake - UNC5537 Campaign: Infostealer Credential Replay & FROSTBITE (Rapeflake) Exfiltration), the attacker follows one continuous arc: replaying Infostealer-Harvested Credentials Against, then running the FROSTBITE Utility for Rapid Schema, then staging Multi-GB Tables via COPY INTO @~. Steps #1–#3 examine #1 Replaying Infostealer-Harvested Credentials Against; #2 Running the FROSTBITE Utility for Rapid Schema; #3 Staging Multi-GB Tables via COPY INTO @~. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1078.004 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (UNC5537 Mullvad VPN Operator), follow the single-factor password login into Node ②/③ (Snowflake Cloud Auth Gateway), trace the automated SHOW TABLES discovery inside Node ④ (FROSTBITE / Rapeflake), and watch bulk COPY INTO staging and GET exfiltration from Node ⑤ (Snowflake Warehouse) monitored by Node ⑥ (ACCOUNT_USAGE SIEM).',
       documentedAdvisory: 'Mandiant UNC5537 Joint Report · Snowflake Security Advisory · CISA Alert (June 2024) · MITRE T1078.004',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① (UNC5537 Operator) to Node ②/③ (Snowflake Cloud Auth Gateway), and return arrow ⇠#1 issuing the authenticated session token.',
         detectionAndEvidence:
-          'Documented by Mandiant & Snowflake: SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY showing FIRST_AUTHENTICATION_FACTOR = PASSWORD and SECOND_AUTHENTICATION_FACTOR IS NULL from Mullvad VPN IPs.',
+          'Query SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY (the warehouse immutable sign-in audit table) for sessions where FIRST_AUTHENTICATION_FACTOR = PASSWORD and SECOND_AUTHENTICATION_FACTOR IS NULL originating from Mullvad VPN or commercial proxy IP ranges (pinpointing UNC5537 single-factor credential replay). Correlate Sysmon or Windows Security Event telemetry for T1078.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ dispatches the automated metadata discovery burst inside Node ④ (FROSTBITE / Rapeflake), and ⇠#2 returns the high-value table catalog.',
         detectionAndEvidence:
-          'Documented by Mandiant: CLIENT_ENVIRONMENT in SNOWFLAKE.ACCOUNT_USAGE.SESSIONS containing "APPLICATION": "Rapeflake" or "DBeaver_DBeaverUltimate".',
+          'Inspect CLIENT_ENVIRONMENT metadata inside SNOWFLAKE.ACCOUNT_USAGE.SESSIONS (which records exact client software identifiers for every authenticated connection) for "APPLICATION": "Rapeflake" or "DBeaver_DBeaverUltimate" (high-confidence UNC5537 tooling signatures). Correlate Sysmon or Windows Security Event telemetry for T1087.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ executes COPY INTO @~ and GET against Node ⑤ (Snowflake Virtual Warehouse) while Node ⑥ (SIEM) flags the anomalous multi-gigabyte export.',
         detectionAndEvidence:
-          'Documented by Mandiant & Snowflake: QUERY_HISTORY showing QUERY_TYPE IN (\'COPY\', \'GET\') with high BYTES_WRITTEN_TO_RESULT from DBeaver_DBeaverUltimate.',
+          'Alert on SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY (which logs every executed SQL statement and data volume) where QUERY_TYPE IN (COPY, GET) exhibits anomalous spikes in BYTES_WRITTEN_TO_RESULT from DBeaver_DBeaverUltimate sessions (catching bulk data staging and exfiltration). Correlate Sysmon or Windows Security Event telemetry for T1530 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

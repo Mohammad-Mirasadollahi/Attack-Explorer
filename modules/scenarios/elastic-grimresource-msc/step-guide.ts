@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a company that banned employees from opening .exe packages, but still trusts official-looking "Settings Binder" files (.msc) opened by the built-in Windows Management Console (mmc.exe). The attacker hides a legacy 1990s self-running gadget (apds.dll XSS) inside a Settings Binder; when opened, mmc.exe automatically runs the hidden script inside its own trusted process.',
       plainSummary:
-        'Synthesizing research from Elastic Security Labs (who discovered "GrimResource" in June 2024), MDSec (DotNetToJScript), and Microsoft MSRC (CVE-2024-43572), this technique achieves arbitrary code execution inside Windows Management Console (mmc.exe, the signed Microsoft binary used for Event Viewer and Device Manager) when a user opens a crafted Microsoft Saved Console (.msc) file. By abusing a cross-site scripting (XSS) flaw in the legacy Windows apds.dll library (res://apds.dll/redirect.html, which blindly executes javascript: URLs inside mmc.exe’s HTML view) together with DotNetToJScript (deserializing a .NET assembly directly in RAM via BinaryFormatter) and RwSection injection into dllhost.exe, the attacker runs Cobalt Strike inside a trusted system process.',
+        'In this scenario (T1218.014, Elastic Security Labs - GrimResource: MMC & apds.dll XSS-to-RCE Execution), the attacker follows one continuous arc: opening a Malicious .msc File Triggers the Legacy, then using DotNetToJScript to Reconstruct a .NET Loader, then spawning dllhost.exe. Steps #1–#3 examine #1 Opening a Malicious .msc File Triggers the Legacy; #2 Using DotNetToJScript to Reconstruct a .NET Loader; #3 Spawning dllhost.exe. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 7 with the documented host and network chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ①/② (Phishing Delivery of invoice_audit.msc), follow user execution on Node ③ (Windows Workstation mmc.exe), trace the apds.dll DOM XSS and DotNetToJScript memory injection inside Node ④ (mmc.exe / dllhost.exe), and watch the final C2 connection to Node ⑤ detected by Node ⑥ (Elastic Defend / SIEM).',
       documentedAdvisory: 'Elastic Security Labs "GrimResource" Report · Microsoft MSRC CVE-2024-43572 · MDSec DotNetToJScript · MITRE T1218.014',
@@ -22,7 +22,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'The victim double-clicks a weaponized console file (invoice_audit.msc, an XML-based Windows Management Console file used to bypass email and browser blocks on .exe and .lnk files), which Windows automatically opens using the trusted system binary C:\\Windows\\System32\\mmc.exe. Inside the .msc XML structure, the <StringTables> section points an embedded HTML panel to res://C:\\Windows\\System32\\apds.dll/redirect.html?target=javascript:eval(...) (abusing an ancient HTML page baked inside Microsoft’s own apds.dll library that blindly passes its "target=" parameter into a browser redirect, CVE-2024-43572, immediately executing the attacker’s VBScript/JavaScript inside mmc.exe).',
         howItWorksInPractice:
-          'C:\\Windows\\System32\\apds.dll (the legacy Microsoft Help Center library shipped on every Windows installation) contains an embedded resource (redirect.html) that passes the target query parameter directly to document.location.replace() without sanitizing javascript: or vbscript: URI schemes, giving the .msc file full script execution inside mmc.exe’s privileged MSHTML Zone.',
+          'C:\\Windows\\System32\\apds.dll (the legacy Microsoft Help Center library shipped on every Windows installation) contains an embedded resource (redirect.html) that passes the target query parameter directly to document.location.replace() without sanitizing javascript: or vbscript: URI schemes, giving the .msc file full script execution inside mmc.exe’s privileged MSHTML Zone. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ①/② into Node ③ (mmc.exe loading invoice_audit.msc and apds.dll), and return arrow ⇠#1 triggering JScript execution inside mmc.exe.',
         detectionAndEvidence:
@@ -37,7 +37,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Plain JScript cannot call low-level Windows memory APIs directly, so the script inside mmc.exe uses the DotNetToJScript technique: it creates a .NET BinaryFormatter COM object via ActiveX (new ActiveXObject("System.Runtime.Serialization.Formatters.Binary.BinaryFormatter")) and deserializes a Base64-encoded .NET assembly ("GrimLoader") directly in RAM (allowing the attacker to bridge from limited JScript into a full .NET program with complete Win32 API access inside mmc.exe, without ever dropping a .dll or .exe file onto the hard drive).',
         howItWorksInPractice:
-          'Deserializing a crafted gadget chain via BinaryFormatter loads the .NET Common Language Runtime (clr.dll / mscoree.dll) into mmc.exe and invokes Assembly.Load(byte[]) in memory (giving the attacker full P/Invoke access to kernel32.dll and ntdll.dll from inside a Microsoft-signed console process).',
+          'Deserializing a crafted gadget chain via BinaryFormatter loads the .NET Common Language Runtime (clr.dll / mscoree.dll) into mmc.exe and invokes Assembly.Load(byte[]) in memory (giving the attacker full P/Invoke access to kernel32.dll and ntdll.dll from inside a Microsoft-signed console process). Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, arrow #2→ deserializes the .NET assembly inside Node ④ (mmc.exe CLR Runtime clr.dll / mscoree.dll), and return arrow ⇠#2 initializes the in-memory injector.',
         detectionAndEvidence:
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ injects from Node ④ (mmc.exe) into dllhost.exe and connects out to Node ⑤ (C2 Server), while Node ⑥ (Elastic Defend / SIEM) correlates the .msc → apds.dll → dllhost.exe chain.',
         detectionAndEvidence:
-          'Documented in Elastic Detection Rule execution_via_mmc_apds_dll: mmc.exe loading apds.dll and spawning or injecting into dllhost.exe.',
+          'Deploy behavioral rules matching Elastic execution_via_mmc_apds_dll (correlating module loads with cross-process injection telemetry) flagging mmc.exe after loading apds.dll spawning or injecting memory sections into dllhost.exe. Correlate Sysmon or Windows Security Event telemetry for T1055.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

@@ -80,7 +80,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Enforce PyPI provenance attestation verification (PEP 740 cryptographic proof linking a package strictly to its trusted CI build) and diff published wheel contents against signed Git repository tags using tools like git-pypi-diff (catching unauthorized release tampering).',
+          'Enforce PyPI provenance attestation verification (PEP 740 cryptographic proof linking a package strictly to its trusted CI build) and diff published wheel contents against signed Git repository tags using tools like git-pypi-diff (catching unauthorized release tampering). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1195.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:

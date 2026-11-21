@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Correlate CloudWatch MetadataNoToken metric spikes (proving IMDSv1 access occurred) with reverse-proxy access logs returning ~1.3 KB responses from /latest/meta-data/iam/security-credentials/ (confirming live EC2 IAM role key extraction).',
+          'Correlate CloudWatch MetadataNoToken metric spikes (proving IMDSv1 access occurred) with reverse-proxy access logs returning ~1.3 KB responses from /latest/meta-data/iam/security-credentials/ (confirming live EC2 IAM role key extraction). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1552.005 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:

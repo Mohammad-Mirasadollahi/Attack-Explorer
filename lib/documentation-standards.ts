@@ -1,5 +1,5 @@
 /**
- * Programmatic Modular Documentation & Content Authoring Standard Engine (`MOD-00` .. `MOD-11`)
+ * Programmatic Modular Documentation & Content Authoring Standard Engine (`MOD-00` .. `MOD-12`)
  *
  * Codifies the modular documentation standards in `/docs/standards/` as executable
  * TypeScript contracts, validators, and document template generators.
@@ -32,7 +32,8 @@ export type DocumentationModuleId =
   | 'MOD-08'
   | 'MOD-09'
   | 'MOD-10'
-  | 'MOD-11';
+  | 'MOD-11'
+  | 'MOD-12';
 
 export type AuthoringTaskType =
   | 'NEW_SCENARIO'
@@ -40,7 +41,8 @@ export type AuthoringTaskType =
   | 'MARKDOWN_TECHNICAL_DOC'
   | 'TELEMETRY_AND_CLI'
   | 'UI_COMPONENT_COPY'
-  | 'INTERACTIVE_3D_STORY_SECTION';
+  | 'INTERACTIVE_3D_STORY_SECTION'
+  | 'INSPECTOR_PANEL_SHELL';
 
 export interface DocumentationStandardModuleSpec {
   id: DocumentationModuleId;
@@ -58,7 +60,7 @@ export const DOCUMENTATION_STANDARD_MODULES: readonly DocumentationStandardModul
       title: 'Master Documentation Router & Architecture Index',
       domain: 'Modular Architecture & Task Routing',
       keyRules: [
-        'Routes every authoring task to a deterministic chain of specialized modules (MOD-01..MOD-11).',
+        'Routes every authoring task to a deterministic chain of specialized modules (MOD-01..MOD-12).',
         'Links modular standards to domain reference documents in /docs/ and /seo-audit/.',
       ],
     },
@@ -137,10 +139,11 @@ export const DOCUMENTATION_STANDARD_MODULES: readonly DocumentationStandardModul
       id: 'MOD-08',
       filePath: 'docs/standards/08-story-technical-section-standard.md',
       title: 'Canonical Story-to-Technical & 3D Section Standard',
-      domain: 'Story-First Ordering, Prop-Purpose Key & Per-Token Inline Clarity',
+      domain:
+        'Story → 3D Film → Technical Ordering, Prop-Purpose Key & Per-Token Inline Clarity',
       keyRules: [
-        'Keep Story Analogy 100% jargon-free (findTechnicalJargonInStory === []), explicitly state what every named Story prop does (validateStoryPropClarity), and render 4 or 6 explicit Story-to-Technical Key mappings inside the Story card.',
-        'Render numbered Technical Forensic Explanation strictly below Story with zero duplicated sentences and per-token inline plain-English why parentheticals across every part (validateTechnicalSectionInlineClarity).',
+        'Keep Story Analogy 100% jargon-free (findTechnicalJargonInStory === []), explicitly state what every named Story prop does (validateStoryPropClarity), and render 4 or 6 explicit Story-to-Technical Key mappings inside the Story card when Story is shown.',
+        'Canonical sectionOrder is Story → Interactive 3D film → Technical clauses (ANIME_3D_STAGE_STANDARD); Technical never sits above the film. Steps #0 Scenario Briefing uses omitStory (Overview owns Story) and expands technical detail instead.',
       ],
     },
     {
@@ -169,8 +172,18 @@ export const DOCUMENTATION_STANDARD_MODULES: readonly DocumentationStandardModul
       title: 'Scenario & Narrative Writing Blueprint (Field-by-Field Manual & Templates)',
       domain: 'Field-Level Writing Formulas, Prop-Purpose & Per-Token Clarity',
       keyRules: [
-        'Follow deterministic field-by-field writing formulas (Formulas A-E) across briefing.storyAnalogy, briefing.plainSummary, storyMappings, steps[i].simpleExplanation, steps[i].howItWorksInPractice, callouts, and phases.',
-        'Enforce Prop-Purpose Clarity (explain what each prop/key does) and Per-Token Inline Why Parentheticals across every single section via validateSectionFullClarityStandard().',
+        'Follow deterministic field-by-field writing formulas (Formulas A-E / A2) across briefing.storyAnalogy, briefing.plainSummary (Overview roadmap), storyMappings, steps[i].simpleExplanation, steps[i].howItWorksInPractice, callouts, and phases.',
+        'Enforce Prop-Purpose Clarity on Story, Overview roadmap altitude on briefing.plainSummary, and Per-Token Inline Why Parentheticals on Step/Memory deep-dives via validateSectionFullClarityStandard().',
+      ],
+    },
+    {
+      id: 'MOD-12',
+      filePath: 'docs/standards/12-inspector-panel-ownership-and-ui-shell.md',
+      title: 'Inspector Panel Ownership, Tab Shell, Single-Card Merge & Chrome Standard',
+      domain: 'Inspector Tab Ownership, Single-Card Merges, Stage Filter, Sidebar Labels & Modular Shell',
+      keyRules: [
+        'Overview owns Story Analogy + roadmap; Steps #0 omits Story and expands technical briefing; Process Hierarchy owns Cascading Process; Memory owns VAD; Stage Filter is hidden on Overview/Steps/Process Hierarchy shells.',
+        'Single-Card Merge Law: Overview title+Story, Steps stage pills, and Process Hierarchy title+pills+embedded tree each occupy one card — never stacked redundant white cards; sidebar labels never include (N) counts.',
       ],
     },
   ];
@@ -188,6 +201,7 @@ const TASK_TO_MODULE_CHAIN: Record<
     'MOD-05',
     'MOD-06',
     'MOD-07',
+    'MOD-12',
   ],
   STEP_BY_STEP_GUIDE: [
     'MOD-01',
@@ -198,10 +212,11 @@ const TASK_TO_MODULE_CHAIN: Record<
     'MOD-06',
     'MOD-07',
     'MOD-08',
+    'MOD-12',
   ],
   MARKDOWN_TECHNICAL_DOC: ['MOD-01', 'MOD-02', 'MOD-03', 'MOD-07'],
   TELEMETRY_AND_CLI: ['MOD-03', 'MOD-04', 'MOD-05', 'MOD-07'],
-  UI_COMPONENT_COPY: ['MOD-02', 'MOD-06', 'MOD-07', 'MOD-08'],
+  UI_COMPONENT_COPY: ['MOD-02', 'MOD-06', 'MOD-07', 'MOD-08', 'MOD-12'],
   INTERACTIVE_3D_STORY_SECTION: [
     'MOD-02',
     'MOD-03',
@@ -211,6 +226,7 @@ const TASK_TO_MODULE_CHAIN: Record<
     'MOD-10',
     'MOD-07',
   ],
+  INSPECTOR_PANEL_SHELL: ['MOD-11', 'MOD-08', 'MOD-12', 'MOD-07'],
 };
 
 /**
@@ -268,11 +284,156 @@ function extractDistinctTechnicalTokensOutsideParens(text: string): string[] {
 }
 
 /**
- * Permanent `MOD-03` & `MOD-11` validator: guarantees that technical sections
- * (`plainSummary`, `simpleExplanation`, `howItWorksInPractice`, `underTheHood`,
+ * Permanent `MOD-03` & `MOD-11` validator: guarantees that Step/Memory deep-dive
+ * technical sections (`simpleExplanation`, `howItWorksInPractice`, `underTheHood`,
  * `stages[].description`) never dump chains of unexplained technical APIs, structs,
  * flags, handles, or hex addresses without plain-English inline purpose parentheticals.
+ *
+ * Overview `briefing.plainSummary` is a roadmap (`MOD-11` Formula A2) and must NOT
+ * be held to this Step-level API-density gate — use `validateOverviewRoadmapAltitude`.
  */
+
+/** Memory-forensics tokens that must stay out of Overview roadmap prose. */
+const OVERVIEW_FORBIDDEN_MEMORY_TOKEN_REGEX =
+  /\b(?:VAD|SEC_IMAGE|MEM_PRIVATE|PEB\s*\+\s*0x|Virtual Address Descriptor)\b/i;
+
+/**
+ * Attack categories whose Overview `plainSummary` must satisfy MOD-11 Formula A2.
+ * All live AttackCategory values (except `ALL`) are enforced after the full rollout.
+ */
+export const OVERVIEW_ROADMAP_ENFORCED_CATEGORIES: ReadonlySet<string> = new Set([
+  'MALWARE',
+  'NETWORK_WEB',
+  'ACTIVE_DIRECTORY',
+  'CLOUD_SAAS',
+  'SUPPLY_CHAIN_CICD',
+  'ZERO_DAY_APPLIANCES',
+  'KERNEL_FIRMWARE_BYOVD',
+  'RANSOMWARE_EXTORTION',
+  'CONTAINERS_KUBERNETES',
+  'ICS_OT_SCADA',
+  'MOBILE_TELECOM_SPYWARE',
+  'DATABASE_DATA_PLATFORMS',
+  'AI_LLM_MLOPS_SECURITY',
+  'ICS_OT_MOBILE',
+]);
+
+/**
+ * Extra scenario IDs (outside enforced categories) that must already satisfy
+ * Formula A2. Prefer expanding `OVERVIEW_ROADMAP_ENFORCED_CATEGORIES` instead.
+ */
+export const OVERVIEW_ROADMAP_PILOT_SCENARIO_IDS: ReadonlySet<string> = new Set([
+  // Covered by MALWARE category enforcement after rollout.
+]);
+
+export function isOverviewRoadmapEnforced(scenario: {
+  id: string;
+  category: string;
+}): boolean {
+  return (
+    OVERVIEW_ROADMAP_ENFORCED_CATEGORIES.has(scenario.category) ||
+    OVERVIEW_ROADMAP_PILOT_SCENARIO_IDS.has(scenario.id)
+  );
+}
+
+/**
+ * Permanent `MOD-11` Formula A2 validator: Overview `plainSummary` must stay at
+ * roadmap altitude (WHO/WHERE + arc + later-section map) and must not host
+ * Memory forensics dumps or Step-length API walkthroughs.
+ */
+export function validateOverviewRoadmapAltitude(
+  plainSummary: string,
+  sectionLabel = 'briefing.plainSummary'
+): StandardValidationResult {
+  const violations: string[] = [];
+  const trimmed = plainSummary.trim();
+  const length = trimmed.length;
+
+  if (length < 120) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview plainSummary must be >= 120 chars (roadmap altitude).`
+    );
+  }
+  if (length > 950) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview plainSummary is ${length} chars (target 350–850, hard max 950). It must stay a clear roadmap, not a Step-by-Step API deep-dive.`
+    );
+  }
+
+  if (OVERVIEW_FORBIDDEN_MEMORY_TOKEN_REGEX.test(trimmed)) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview must not host Memory forensics tokens (VAD, SEC_IMAGE, MEM_PRIVATE, PEB+offset). Move those facts to the Memory section.`
+    );
+  }
+
+  const outsideTokens = extractDistinctTechnicalTokensOutsideParens(trimmed);
+  if (outsideTokens.length >= 12) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview introduces ${outsideTokens.length} distinct technical tokens outside parentheticals (max 11 at roadmap altitude). Move per-step API chains into Steps.`
+    );
+  }
+
+  // Require an explicit later-section map (not incidental words like "in memory" / "overwriting").
+  const mentionsLaterSections =
+    /\bSteps?\s*#/i.test(trimmed) ||
+    /\bSteps?\s+\d/i.test(trimmed) ||
+    /\bMemory\s+tab\b/i.test(trimmed) ||
+    /\bProcess Hierarchy\b/i.test(trimmed) ||
+    /\bsection map\b/i.test(trimmed);
+  if (length >= 200 && !mentionsLaterSections) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview roadmap should tell the reader what later Steps and/or Memory sections will examine.`
+    );
+  }
+
+  // Formula A2 readability: reject telegraphic word-truncation ("PQescapeString...", "Frame to TCP Port...").
+  // Allow spaced SQL-style omits ("COPY ... FROM") which are not title cutoffs.
+  if (/\w{4,}\.\.\.(?:\s|[;,]|$)/.test(trimmed)) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview plainSummary contains ellipsis truncation. Rewrite step titles into short readable phrases instead of cutting them with "...".`
+    );
+  }
+
+  // Formula A2 clause #1: Answer-First WHO/WHAT/WHERE/MITRE framing.
+  const hasWhoFrame =
+    /^In this scenario\s*\(/i.test(trimmed) ||
+    /\((?:MITRE(?:\s+ATT&CK)?|CVE-\d{4}-\d+|T\d{4}(?:\.\d{3})?)[^)]*\)/i.test(
+      trimmed
+    );
+  if (length >= 200 && !hasWhoFrame) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview roadmap must open with Answer-First WHO/WHAT/WHERE/MITRE framing (e.g. "In this scenario (MITRE/CVE, Name)...").`
+    );
+  }
+
+  // Formula A2 clause #2: one continuous attack arc in prose.
+  const hasArc =
+    /\b(?:one continuous arc|unfolds in one continuous arc|follows one continuous arc)\b/i.test(
+      trimmed
+    ) ||
+    /,\s*then\s+/i.test(trimmed);
+  if (length >= 200 && !hasArc) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview roadmap must describe one continuous attack arc in plain language (not a cryptic shorthand dump).`
+    );
+  }
+
+  // Formula A2 clause #4: concrete detection pivot — reject the bulk-roll generic filler.
+  if (
+    /Primary detection pivots on correlated host and network telemetry for .+ across the documented kill chain/i.test(
+      trimmed
+    )
+  ) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview detection pivot is generic filler. Name the concrete SIEM/EDR/log source (and Event ID when known) instead of "correlated host and network telemetry".`
+    );
+  }
+
+  return {
+    valid: violations.length === 0,
+    violations,
+  };
+}
 export function validateTechnicalSectionInlineClarity(
   text: string,
   sectionLabel = 'TechnicalSection'
@@ -542,10 +703,10 @@ export function validateScenarioAgainstModularStandards(
   const guide = buildDiagramStepGuideModel(scenario, 1);
   if (
     !guide.briefing.storyAnalogy ||
-    guide.briefing.storyAnalogy.trim().length < 60
+    guide.briefing.storyAnalogy.trim().length < 260
   ) {
     violations.push(
-      `[${scenario.id}] MOD-02 Violation: Scenario briefing.storyAnalogy must be >= 60 chars.`
+      `[${scenario.id}] MOD-11 Violation: Scenario briefing.storyAnalogy must be >= 260 chars (whole-scenario Formula A story).`
     );
   }
   if (
@@ -586,18 +747,70 @@ export function validateScenarioAgainstModularStandards(
     );
   }
 
-  // Per-step MOD-03 baseline across ALL scenarios: every step's simpleExplanation & howItWorksInPractice must contain substantive inline parentheticals
+  // Per-step MOD-03 / MOD-11 baseline across ALL scenarios (not only 3D-upgraded).
+  const DETECT_CONCRETE_SOURCE_REGEX =
+    /\b(?:Event(?:\s*ID)?\s*\d+|EID\s*\d+|Sysmon|auditd|CloudTrail|Suricata|Security Event|Bits-Client|Okta|Azure AD|Windows Security|cwpsrv|Sigma|journalctl|kube-apiserver|Zeek|EDR|pcap|W3SVC|IIS|Tomcat|nginx|httpd|mcpd|tmsh|access[_-]?log|auth\.log|syslog)\b|\/var\/log/i;
+
   for (const step of guide.steps) {
-    if (!/\([^)]{15,}\)/.test(step.simpleExplanation)) {
+    const stepLabel = `${scenario.id} Step ${step.stepNumber}`;
+
+    if ((step.storyAnalogy || '').trim().length < 180) {
       violations.push(
-        `[${scenario.id}] Step ${step.stepNumber} MOD-03 Violation: simpleExplanation must include a substantive inline purpose parenthetical (...) explaining technical terms.`
+        `[${stepLabel}] MOD-11 Violation: steps[].storyAnalogy must be >= 180 chars (stage story beat).`
       );
     }
-    if (!/\([^)]{15,}\)/.test(step.howItWorksInPractice)) {
+    if ((step.simpleExplanation || '').trim().length < 320) {
       violations.push(
-        `[${scenario.id}] Step ${step.stepNumber} MOD-03 Violation: howItWorksInPractice must include a substantive inline purpose parenthetical (...) explaining technical terms.`
+        `[${stepLabel}] MOD-11 Violation: steps[].simpleExplanation must be >= 320 chars (Formula C bridge).`
       );
     }
+    if ((step.howItWorksInPractice || '').trim().length < 380) {
+      violations.push(
+        `[${stepLabel}] MOD-11 Violation: steps[].howItWorksInPractice must be >= 380 chars (Formula E deep-dive).`
+      );
+    }
+    if ((step.detectionAndEvidence || '').trim().length < 160) {
+      violations.push(
+        `[${stepLabel}] MOD-11 Violation: steps[].detectionAndEvidence must be >= 160 chars (blue-team catch).`
+      );
+    } else if (
+      !DETECT_CONCRETE_SOURCE_REGEX.test(step.detectionAndEvidence || '')
+    ) {
+      violations.push(
+        `[${stepLabel}] MOD-11 Violation: steps[].detectionAndEvidence must name a concrete telemetry source or Event ID (not generic advice).`
+      );
+    }
+
+    if (!/\([^)]{25,}\)/.test(step.simpleExplanation || '')) {
+      violations.push(
+        `[${stepLabel}] MOD-03 Violation: simpleExplanation must include a substantive inline purpose parenthetical (>= 25 chars) explaining technical terms.`
+      );
+    }
+    if (!/\([^)]{25,}\)/.test(step.howItWorksInPractice || '')) {
+      violations.push(
+        `[${stepLabel}] MOD-03 Violation: howItWorksInPractice must include a substantive inline purpose parenthetical (>= 25 chars) explaining technical terms.`
+      );
+    }
+
+    const simpleClarity = validateTechnicalSectionInlineClarity(
+      step.simpleExplanation || '',
+      `${stepLabel}::simpleExplanation`
+    );
+    violations.push(...simpleClarity.violations);
+    const howClarity = validateTechnicalSectionInlineClarity(
+      step.howItWorksInPractice || '',
+      `${stepLabel}::howItWorksInPractice`
+    );
+    violations.push(...howClarity.violations);
+  }
+
+  // MOD-11 Formula A2: Overview roadmap altitude for every enforced category (3D and non-3D).
+  if (isOverviewRoadmapEnforced(scenario)) {
+    const overviewRoadmapCheck = validateOverviewRoadmapAltitude(
+      guide.briefing.plainSummary,
+      `${scenario.id}#briefing::plainSummary`
+    );
+    violations.push(...overviewRoadmapCheck.violations);
   }
 
   // Strict per-section Prop-Purpose + Per-Token Inline Why gate for all 3D-upgraded scenarios (MOD-03 + MOD-08 + MOD-11)
@@ -607,17 +820,13 @@ export function validateScenarioAgainstModularStandards(
       (s) => s.sectionKey === 'briefing'
     );
     if (briefingSection) {
-      const briefingCheck = validateSectionFullClarityStandard(
-        {
-          storyAnalogy: guide.briefing.storyAnalogy,
-          storyMappings: briefingSection.storyMappings,
-          technicalTexts: [
-            { label: 'briefing.plainSummary', text: guide.briefing.plainSummary },
-          ],
-        },
-        `${scenario.id}#briefing`
+      // Overview briefing: Story/mapping clarity only (not Step-level API density on plainSummary)
+      const briefingStoryCheck = validateStoryPropClarity(
+        guide.briefing.storyAnalogy,
+        briefingSection.storyMappings,
+        `${scenario.id}#briefing::Story`
       );
-      violations.push(...briefingCheck.violations);
+      violations.push(...briefingStoryCheck.violations);
     }
 
     for (const step of guide.steps) {

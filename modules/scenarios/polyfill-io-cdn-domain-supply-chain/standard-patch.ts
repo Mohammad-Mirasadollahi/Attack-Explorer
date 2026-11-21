@@ -80,7 +80,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Run multi-User-Agent synthetic browser monitoring comparing script payloads delivered to mobile versus desktop headers over execution windows longer than 20 seconds (exposing conditional, time-delayed CDN supply-chain payloads that evade single-pass scanners).',
+          'Run multi-User-Agent synthetic browser monitoring comparing script payloads delivered to mobile versus desktop headers over execution windows longer than 20 seconds (exposing conditional, time-delayed CDN supply-chain payloads that evade single-pass scanners). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1027 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -108,7 +108,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor Content-Security-Policy (CSP) violation reports (browser-emitted telemetry alerting whenever a page tries to load scripts from unapproved hosts) for unauthorized loads from www.googie-anaiytics.com and audit all templates to eliminate polyfill.io references.',
+          'Monitor Content-Security-Policy (CSP) violation reports (browser-emitted telemetry alerting whenever a page tries to load scripts from unapproved hosts) for unauthorized loads from www.googie-anaiytics.com and audit all templates to eliminate polyfill.io references. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1185 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

@@ -25,7 +25,7 @@ Import domain code as `@/modules/scenarios/...`. `npm run scenarios:registry` re
 
 Because **Attack Explorer** unifies interactive 2D network diagrams, kernel/process memory maps, raw SIEM/Sysmon telemetry, 3-layer pedagogical narratives, multi-vendor threat intelligence citations, and programmatic SEO/GEO structured data, **a single monolithic style guide cannot govern every artifact effectively**.
 
-Instead, the Attack Explorer Documentation & Content Authoring Standard is architected as **11 specialized, composable modules (`MOD-01` through `MOD-11`)**. Authors and automated tools load only the modules relevant to their current task while maintaining 100% consistency across the entire platform.
+Instead, the Attack Explorer Documentation & Content Authoring Standard is architected as **12 specialized, composable modules (`MOD-01` through `MOD-12`)**. Authors and automated tools load only the modules relevant to their current task while maintaining 100% consistency across the entire platform.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -45,6 +45,9 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
  │   Why & CLI Tokens  │         │   & URL Deep-Links  │         │   3D Rollout Guide  │
  │ • MOD-11: Scenario  │         │                     │         │                     │
  │   Writing Blueprint │         │                     │         │                     │
+ │ • MOD-12: Inspector │         │                     │         │                     │
+ │   Tab Ownership &   │         │                     │         │                     │
+ │   UI Shell          │         │                     │         │                     │
  └──────────┬──────────┘         └──────────┬──────────┘         └──────────┬──────────┘
             │                               │                               │
             └───────────────────────────────┼───────────────────────────────┘
@@ -57,7 +60,7 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 
 ---
 
-## 2. Directory of Standard Modules (`MOD-01` .. `MOD-11`)
+## 2. Directory of Standard Modules (`MOD-01` .. `MOD-12`)
 
 | Module ID | File Path | Title & Domain Responsibility | When You MUST Load This Module |
 | :--- | :--- | :--- | :--- |
@@ -68,10 +71,11 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 | **`MOD-05`** | [`/docs/standards/05-sources-attribution-and-eeat.md`](./05-sources-attribution-and-eeat.md) | **Multi-Source Threat Intelligence Attribution & E-E-A-T Triangulation** | Whenever citing advisories (`>= 3 sources`), CVEs (`CVSS v3.1`), threat actors, or `multiSourceSynthesis`. |
 | **`MOD-06`** | [`/docs/standards/06-seo-geo-and-url-deeplinking.md`](./06-seo-geo-and-url-deeplinking.md) | **SEO, GEO, Schema.org (`TechArticle`/`HowTo`/`BreadcrumbList`) & URL Deep-Linking** | Whenever publishing a scenario route (`/scenarios/[id]`), updating `llms-full.txt`, or wiring shareable URL anchors (`#step-N`, `#clause-X.Y`). |
 | **`MOD-07`** | [`/docs/standards/07-ui-copy-and-ci-validation.md`](./07-ui-copy-and-ci-validation.md) | **UI Copy Discipline, Zero-Truncation Law & Automated CI Guardrails** | Whenever adding UI labels/tooltips or running pre-commit verification tests (`lib/*.test.ts`). |
-| **`MOD-08`** | [`/docs/standards/08-story-technical-section-standard.md`](./08-story-technical-section-standard.md) | **Canonical Story → Story-to-Technical Key → Technical → 3D Section Standard** | Whenever authoring or refactoring Overview, Stage, Memory Forensics, Node Inspector, or Scenario Landing Page sections. |
+| **`MOD-08`** | [`/docs/standards/08-story-technical-section-standard.md`](./08-story-technical-section-standard.md) | **Canonical Story → Story-to-Technical Key → 3D → Technical Section Standard** | Whenever authoring or refactoring Overview, Stage, Memory Forensics, Node Inspector, or Scenario Landing Page sections. |
 | **`MOD-09`** | [`/docs/standards/09-threejs-anime-visual-and-choreography-standard.md`](./09-threejs-anime-visual-and-choreography-standard.md) | **Three.js Cel-Shaded Anime Visual, HUD & Clean-Scene Standard** | Whenever building or updating Three.js cel-shaded scenes, bloom, CSS anime frames, floating labels, or camera framing. |
 | **`MOD-10`** | [`/docs/standards/10-scenario-adaptive-3d-storytelling-and-rollout-playbook.md`](./10-scenario-adaptive-3d-storytelling-and-rollout-playbook.md) | **Scenario-Adaptive 3D Storytelling & Cross-Scenario Rollout Playbook** | Whenever designing bespoke metaphor worlds and rolling out Story + Technical + 3D upgrades to additional scenarios. |
 | **`MOD-11`** | [`/docs/standards/11-scenario-writing-and-narrative-blueprint.md`](./11-scenario-writing-and-narrative-blueprint.md) | **Scenario & Narrative Writing Blueprint (Field-by-Field Manual & Templates)** | Whenever writing or revising scenario text fields (`storyAnalogy`, `plainSummary`, `storyMappings`, `simpleExplanation`, `howItWorksInPractice`, `callouts`, `phases`). |
+| **`MOD-12`** | [`/docs/standards/12-inspector-panel-ownership-and-ui-shell.md`](./12-inspector-panel-ownership-and-ui-shell.md) | **Inspector Panel Ownership, Tab Shell, Single-Card Merge & Chrome Standard** | Whenever changing Inspector tabs, merging title/Stage Filter/body cards, Stage Filter placement, Overview/Steps/Process Hierarchy/Memory ownership, sidebar labels, or `/components/inspector/**`. |
 
 ---
 
@@ -82,11 +86,12 @@ Before writing or editing any content, identify your task type in the table belo
 | Task Type | Required Modules (Execute in Order) | Primary Target Files |
 | :--- | :--- | :--- |
 | **1. Adding a New Cyber Attack / DFIR Scenario** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-05` → `MOD-06` → `MOD-07` | `/modules/scenarios/*.ts`, `/lib/attack-scenarios.ts`, `/lib/attack-sources-and-legal.ts`, `/lib/threat-intel-service.ts`, `/public/llms-full.txt` |
-| **2. Writing or Revising a Step-by-Step Operational Guide** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-06` → `MOD-07` → `MOD-08` | `/lib/step-guides/*.ts`, `/lib/scenario-step-guides.ts`, `/components/StepByStepGuidePanel.tsx` |
+| **2. Writing or Revising a Step-by-Step Operational Guide** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-06` → `MOD-07` → `MOD-08` → `MOD-12` | `/lib/step-guides/*.ts`, `/lib/scenario-step-guides.ts`, `/components/step-guide/**`, `/components/StepByStepGuidePanel.tsx`, `/components/inspector/tabs/StepsTab.tsx` |
 | **3. Writing a New Engineering / Architecture Markdown Document** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-07` | `/docs/**/*.md`, `/seo-audit/**/*.md` |
 | **4. Adding Raw SIEM Logs, Memory Maps, or CLI Explanations** | `MOD-03` → `MOD-04` → `MOD-05` → `MOD-07` | `/lib/command-line-explanations.ts`, `/modules/scenarios/*.ts` |
-| **5. Updating Workbench UI Components, Badges, or Tooltips** | `MOD-02` → `MOD-06` → `MOD-07` → `MOD-08` | `/components/**/*.tsx`, `/lib/ui-text-standards.ts`, `/lib/diagram-memory-store.ts` |
+| **5. Updating Workbench UI Components, Badges, or Tooltips** | `MOD-02` → `MOD-06` → `MOD-07` → `MOD-08` → `MOD-12` | `/components/**/*.tsx`, `/lib/ui-text-standards.ts`, `/lib/diagram-memory-store.ts` |
 | **6. Upgrading a Scenario with Bespoke Story-to-Technical + Three.js 3D Scenes** | `MOD-02` → `MOD-03` → `MOD-11` → `MOD-08` → `MOD-09` → `MOD-10` → `MOD-07` | `/lib/section-3d-registry.ts`, `/lib/step-guides/*.ts`, `/components/three/**`, `/components/StandardStoryTechnicalSection.tsx` |
+| **7. Refactoring Inspector Tabs / Overview Cleanup / Process Hierarchy Placement** | `MOD-11` → `MOD-08` → `MOD-12` → `MOD-07` | `/components/inspector/**`, `/components/InspectorPanel.tsx`, `/components/step-guide/**`, `/components/StepByStepGuidePanel.tsx`, `/components/inspector-minimap/**`, `/components/InspectorContextMiniMap.tsx` |
 
 ---
 
@@ -104,12 +109,14 @@ The modular standards in `/docs/standards/` unify and govern the existing deep-d
 
 ## 5. Programmatic Enforcement & Universal Per-Section Clarity Law (`/lib/documentation-standards.ts`)
 
-Every rule in `MOD-01` through `MOD-11` is backed by executable contracts in [`/lib/documentation-standards.ts`](../../lib/documentation-standards.ts) and [`/lib/section-3d-registry.ts`](../../lib/section-3d-registry.ts), and verified automatically by [`/lib/documentation-standards.test.ts`](../../lib/documentation-standards.test.ts), [`/lib/section-3d-registry.test.ts`](../../lib/section-3d-registry.test.ts), [`/lib/scenario-step-guides.test.ts`](../../lib/scenario-step-guides.test.ts), and [`/lib/inspector-scope.test.ts`](../../lib/inspector-scope.test.ts).
+Every rule in `MOD-01` through `MOD-12` is backed by executable contracts in [`/lib/documentation-standards.ts`](../../lib/documentation-standards.ts) and [`/lib/section-3d-registry.ts`](../../lib/section-3d-registry.ts), and verified automatically by [`/lib/documentation-standards.test.ts`](../../lib/documentation-standards.test.ts), [`/lib/section-3d-registry.test.ts`](../../lib/section-3d-registry.test.ts), [`/lib/scenario-step-guides.test.ts`](../../lib/scenario-step-guides.test.ts), and [`/lib/inspector-scope.test.ts`](../../lib/inspector-scope.test.ts).
 
 **Permanent Universal Per-Section Clarity Law (Enforced Automatically Across Every Section)**:
 1. **Prop-Purpose Clarity (`validateStoryPropClarity`)**: Whenever a Story Analogy introduces key props or paired objects (such as *"two golden master keys"*), both the Story prose and `storyMappings[]` must explicitly state what **each** prop unlocks or does—with zero technical jargon in Story text.
-2. **Per-Token Inline Plain-English Why (`validateTechnicalSectionInlineClarity`)**: Across **every** technical block (`briefing.plainSummary`, `steps[].simpleExplanation`, `steps[].howItWorksInPractice`, `stages[].description`, and Sequence `underTheHood`), every technical API, syscall, kernel struct, hex flag, handle, or Event ID must carry an immediate plain-English parenthetical explaining **what it is and why it is used**. Dense jargon-dump sentences fail CI automatically.
-3. **One-Stop Section Gate (`validateSectionFullClarityStandard`)**: Automatically enforced by `validateScenarioAgainstModularStandards()` for every upgraded scenario section so the standard never regresses.
+2. **Per-Token Inline Plain-English Why (`validateTechnicalSectionInlineClarity`)**: Across **Step and Memory deep-dive** technical blocks (`steps[].simpleExplanation`, `steps[].howItWorksInPractice`, `stages[].description`, and Sequence `underTheHood`), every technical API, syscall, kernel struct, hex flag, handle, or Event ID must carry an immediate plain-English parenthetical explaining **what it is and why it is used**. Dense jargon-dump sentences fail CI automatically. Overview `briefing.plainSummary` is a **roadmap** (`MOD-11` Formula A2), not a Step-level API dump, and is not held to the same API-density gate.
+3. **Overview Ownership**: The Inspector tab is labeled **Overview**. Overview must not replay every kill-chain step or host Memory forensics (VAD/`SEC_IMAGE`/`MEM_PRIVATE`); migrate unique Overview facts into Steps/Memory before shortening (see `MOD-11` §7 Migration Protocol).
+4. **Inspector Tab Shell (`MOD-12`)**: Cascading Process → Process Hierarchy; VAD → Memory; Stage Filter off Overview; sidebar labels without `(N)` counts; Steps without Auto-Play / legend cards; code under `/components/inspector/**`.
+5. **One-Stop Section Gate (`validateSectionFullClarityStandard`)**: Automatically enforced by `validateScenarioAgainstModularStandards()` for every upgraded Step/Memory section so the standard never regresses.
 
 Run the full verification suite:
 

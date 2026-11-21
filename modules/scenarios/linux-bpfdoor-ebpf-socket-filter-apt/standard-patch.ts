@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Scan /proc/[0-9]*/exe symbolic links across Linux hosts for targets pointing to /dev/shm/* (deleted) (which exposes memory-backed binaries that erased themselves from disk) and compare /proc/[pid]/comm against the actual resolved binary path in /proc/[pid]/exe.',
+          'Scan /proc/[0-9]*/exe symbolic links across Linux hosts for targets pointing to /dev/shm/* (deleted) (which exposes memory-backed binaries that erased themselves from disk) and compare /proc/[pid]/comm against the actual resolved binary path in /proc/[pid]/exe. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1036.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:

@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in CISA ED 24-01 and Splunk SURGe (emergency federal directive and detection rules for gateway traversal): HTTP requests containing /api/v1/totp/user-backup-code/.. or /api/v1/cav/client/status/.. (which reveal attempts to step out of public routes into restricted administrative handlers).',
+            'Documented in CISA ED 24-01 and Splunk SURGe (emergency federal directive and detection rules for gateway traversal): HTTP requests containing /api/v1/totp/user-backup-code/.. or /api/v1/cav/client/status/.. (which reveal attempts to step out of public routes into restricted administrative handlers). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         2: {
           storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented by Volexity (UTA0178) and Mandiant (UNC5221) (forensic artifact lists for persistent gateway backdoors): modification of visits.py, libsecure.so (ZIPLINE), and ComponentIntegrity.pm discovered via external Integrity Checker Tool (ICT) snapshots (because on-box checkers can be blinded by the intruder).',
+            'Documented by Volexity (UTA0178) and Mandiant (UNC5221) (forensic artifact lists for persistent gateway backdoors): modification of visits.py, libsecure.so (ZIPLINE), and ComponentIntegrity.pm discovered via external Integrity Checker Tool (ICT) snapshots (because on-box checkers can be blinded by the intruder). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1556 (pairing parent/child process and destination fields) and contain the offending session.',
         },
       },
     };

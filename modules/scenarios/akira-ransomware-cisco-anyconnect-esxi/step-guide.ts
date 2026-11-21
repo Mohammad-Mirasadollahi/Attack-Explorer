@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a heist crew slips through an old side gate (DefaultWEBVPNGroup) on the perimeter wall that forgot to ask for a second ID factor, digs an underground tunnel (Chisel), steals the master key ring from the backup vault (Veeam SQL DB), walks straight into the power plant running all the virtual offices (VMware ESXi), flips the main breaker on every running virtual office (esxcli vm process kill), and padlocks their hard drives.',
       plainSummary:
-        'Tracked in joint CISA/FBI/Europol Advisory AA24-109A and Sophos X-Ops research, Akira ransomware affiliates frequently breach enterprises via Cisco ASA/FTD AnyConnect SSL VPNs (exploiting CVE-2023-20269 or CVE-2020-3259 to compromise single-factor VPN accounts). Once inside, they establish a reverse SOCKS5 proxy with chisel.exe, extract privileged credentials from Veeam Backup & Replication SQL databases, SSH into VMware ESXi hypervisors, forcefully kill running VMs via esxcli vm process kill, and execute their Rust/C++ Linux encryptor (akira_esxi) against /vmfs/volumes.',
+        'In this scenario (T1133, Akira Ransomware Cisco ASA VPN Breach & ESXi Hypervisor Encryption (AA24-109A)), the attacker follows one continuous arc: cisco ASA / AnyConnect Single-Factor VPN Breach, then chisel SOCKS Tunneling, Veeam Credential Dumping, then esxcli vm process kill. Steps #1–#3 examine #1 Cisco ASA / AnyConnect Single-Factor VPN Breach; #2 Chisel SOCKS Tunneling, Veeam Credential Dumping; #3 esxcli vm process kill. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
       diagramTopologySummary:
         'Akira Affiliate Operator -> Cisco ASA / AnyConnect VPN Appliance -> Windows Jump Host (Chisel & Mimikatz) -> VMware ESXi Host (esxcli + Rust Akira) -> CISA AA24-109A / Sophos MDR Sensor.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Akira Affiliate Operator to the Cisco ASA / AnyConnect VPN Appliance over TCP/UDP 443.',
         detectionAndEvidence:
-          'Cisco ASA syslog %ASA-6-722022 and %ASA-6-113004 events showing logins to DefaultWEBVPNGroup or DefaultRAGroup from external hosting ASNs.',
+          'Monitor Cisco ASA syslog events %ASA-6-722022 and %ASA-6-113004 (which log AnyConnect IP assignment and group authentication) for logins hitting DefaultWEBVPNGroup or DefaultRAGroup from external hosting ASNs without MFA (detecting initial Akira perimeter entry). Correlate Sysmon or Windows Security Event telemetry for T1133 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the SSH pivot from the Windows Jump Host to the VMware ESXi Host (esxcli + Rust Akira).',
         detectionAndEvidence:
-          'Forwarding ESXi /var/log/shell.log and /var/log/hostd.log to a SIEM to alert immediately on esxcli vm process kill and unauthorized ELF execution from /tmp.',
+          'Forward ESXi /var/log/shell.log and /var/log/hostd.log off-host to a central SIEM (preserving hypervisor audit records before local wipe) and alert immediately on esxcli vm process kill bursts paired with unsigned ELF binaries executing from /tmp. Correlate Sysmon or Windows Security Event telemetry for T1489 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

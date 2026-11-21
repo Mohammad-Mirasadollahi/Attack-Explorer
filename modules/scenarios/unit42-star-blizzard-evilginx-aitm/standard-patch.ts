@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented by Microsoft Threat Intelligence (cloud identity telemetry linking phishing clicks to proxy sign-ins): Entra Sign-in Logs showing login initiation from an untrusted proxy IP/ASN shortly after an email link click in Defender for Office 365 (revealing that a middleman host relayed the authentication session).',
+            'Documented by Microsoft Threat Intelligence (cloud identity telemetry linking phishing clicks to proxy sign-ins): Entra Sign-in Logs showing login initiation from an untrusted proxy IP/ASN shortly after an email link click in Defender for Office 365 (revealing that a middleman host relayed the authentication session). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1539 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         2: {
           storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in MITRE T1539 and Microsoft Entra Identity Protection (risk analytics focused on session token theft): high-risk AiTM sign-in alert where the TLS fingerprint (JA3) and IP of the MFA step belong to a reverse-proxy server (indicating the user did not communicate directly with the identity provider).',
+            'Documented in MITRE T1539 and Microsoft Entra Identity Protection (risk analytics focused on session token theft): high-risk AiTM sign-in alert where the TLS fingerprint (JA3) and IP of the MFA step belong to a reverse-proxy server (indicating the user did not communicate directly with the identity provider). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1550.004 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         3: {
           storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in Microsoft Sentinel and Entra Sign-in Logs (post-compromise session correlation queries): identical UniqueTokenIdentifier / SessionId replayed from a second IP address followed by New-InboxRule creation in Unified Audit Logs (demonstrating session cookie hijack and mailbox persistence).',
+            'Documented in Microsoft Sentinel and Entra Sign-in Logs (post-compromise session correlation queries): identical UniqueTokenIdentifier / SessionId replayed from a second IP address followed by New-InboxRule creation in Unified Audit Logs (demonstrating session cookie hijack and mailbox persistence). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1564.008 (pairing parent/child process and destination fields) and contain the offending session.',
         },
       },
     };

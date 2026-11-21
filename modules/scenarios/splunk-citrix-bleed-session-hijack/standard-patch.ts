@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in CISA AA23-325A and Mandiant (post-hijack lateral movement indicators): mmc.exe -Embedding spawned on remote servers via DCOM following Citrix ICA session IP change (linking the hijacked remote session to internal network movement).',
+            'Documented in CISA AA23-325A and Mandiant (post-hijack lateral movement indicators): mmc.exe -Embedding spawned on remote servers via DCOM following Citrix ICA session IP change (linking the hijacked remote session to internal network movement). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1550.004 (pairing parent/child process and destination fields) and contain the offending session.',
         },
       },
     };

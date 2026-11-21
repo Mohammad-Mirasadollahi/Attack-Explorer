@@ -81,7 +81,7 @@ Every scenario object (`AttackScenario` / `LegacyDraftScenario`) must declare it
 | **5** | `severity` | `'CRITICAL' \| 'HIGH' \| 'MEDIUM'` | Exact Enum | Must reflect real CVSS / operational impact. |
 | **6** | `mitreTactics` | `string[]` | `2–5 tactics` | Canonical MITRE Enterprise tactics (`'Initial Access'`, `'Execution'`, `'Defense Evasion'`, `'Impact'`, etc.). |
 | **7** | `shortSubtitle` | `string` | **`80–160 chars`** (Ideal SERP: `85–140`) | Single-sentence summary of the 3-stage progression (`Vector -> Mechanism -> Impact/Detection`). |
-| **8** | `overview` | `string` | **`220–650 chars`** (`2–4 sentences`) | **Answer-First Lead Paragraph**: Sentence 1 states Actor + Advisory/CVE + Core Technique; Sentence 2 explains the under-the-hood mechanism with inline parentheticals; Sentence 3 names the exact forensic/SIEM detection pivot. |
+| **8** | `overview` | `string` | **`220–850 chars`** (`2–4 sentences`; hard max ~950) | **Answer-First Overview Roadmap** (aligned with `briefing.plainSummary` / `MOD-11` Formula A2): Sentence 1 states Actor + Advisory/CVE + Core Technique + host + why the disguise works; Sentence 2 gives a readable one-breath attack arc **without** replaying every Step API; Sentence 3 maps what later Steps/Memory examine and names the primary SIEM/EDR pivot. Memory forensics (VAD/`SEC_IMAGE`/`MEM_PRIVATE`) must not live here. |
 | **9** | `nodes` | `ScenarioNode[]` | `5–6 nodes` | Ordered from external/initial vector (`①`) to target host/process (`③/④`), core asset (`⑤`), and SOC SIEM/EDR sensor (`⑥`). |
 | **10** | `stages` | `ScenarioStage[]` | **`>= 3 stages`** (`1..N`) | Sequential `index: 1..N`, valid `mitreTechniqueId` (`^T\d{4}(\.\d{3})?$`), `title`, rich `description` (`>= 140 chars`), `>= 2` `keySpecs`, and `activeFlows`. |
 | **11** | `telemetry` | `TelemetryEvent[]` | **`>= 3 events`** (1+ per stage) | Realistic raw log payload (`rawLog`), `eventId`, `source`, `mitreId`, and `keyFields`. |
@@ -97,7 +97,7 @@ Every step-guide object (`ScenarioStepGuide` / `RawScenarioStepGuideData`) must 
 | :--- | :--- | :--- | :--- |
 | **`briefing` (`#step-0`)** | `headline` | `>= 25 chars` | Action-oriented briefing title naming the core technique and target. |
 | **`briefing` (`#step-0`)** | `storyAnalogy` | **`>= 100 chars`** | **Layer 1**: Cohesive real-world metaphor introducing the entire attack chain. |
-| **`briefing` (`#step-0`)** | `plainSummary` | **`>= 120 chars`** | **Layer 2**: Maps the story directly to the scenario's processes, CVEs, IPs, and MITRE IDs. |
+| **`briefing` (`#step-0`)** | `plainSummary` | **`280–520 chars`** (min `>= 120`) | **Layer 2 Overview Roadmap**: WHO/WHERE/MITRE + one-breath arc + what Steps `#1..#N` (and Memory if present) will examine + one detection pivot. Not a Step-by-Step API deep-dive. UI: Overview shows Story + this roadmap; Steps `#0` omits Story and expands technical briefing (`MOD-08` / `MOD-12`). |
 | **`briefing` (`#step-0`)** | `diagramTopologySummary` | **`>= 80 chars`** | **Layer 3**: Maps the narrative to Diagram Nodes `①..⑥` and flow numbers (`#1.1→` / `⇠#1.2`). |
 | **`briefing` (`#step-0`)** | `documentedAdvisory` | **`>= 40 chars`** | Lists the 3+ authoritative vendor/CERT advisories grounding the scenario. |
 | **`steps[i]` (`#step-N`)** | `plainTitle` | `>= 20 chars` | Combines human-readable action + exact technical artifact. |

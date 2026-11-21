@@ -82,14 +82,15 @@ export interface Section3DDescriptor {
 
 /**
  * Canonical UI & 3D Stage Standard modeled directly on the Process Hollowing
- * Overview section so every scenario section uses identical layout order,
- * jargon-free story-then-technical mapping, HUD chrome, button placement, and display modes.
+ * Overview section so every scenario section uses identical layout order
+ * (Story → 3D film → Technical), jargon-free story-then-technical mapping,
+ * HUD chrome, button placement, and display modes.
  */
 export const ANIME_3D_STAGE_STANDARD = {
   sectionOrder: [
     'STORY_ANALOGY',
-    'TECHNICAL_EXPLANATION',
     'INTERACTIVE_3D_STAGE',
+    'TECHNICAL_EXPLANATION',
   ] as const,
   speedMultipliers: [0.5, 1, 1.5] as const,
   cutawayModes: ['AUTO', 'OPEN', 'SEALED'] as const,

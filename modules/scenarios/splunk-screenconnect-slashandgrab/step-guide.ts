@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a smart-lock system on an office building where the "First-Time Factory Setup Screen" (/SetupWizard.aspx) is supposed to be permanently locked after Day 1. However, the guard only checks if the visitor’s request ends with the exact letters /SetupWizard.aspx. By simply adding one extra forward slash at the end (/SetupWizard.aspx/), the guard says "That doesn’t end with .aspx, go right ahead!" while the web server behind the guard still opens /SetupWizard.aspx, letting any stranger on the internet re-run the Day-1 Factory Setup Wizard, overwrite the building’s master administrator database (User.xml), and broadcast commands to every computer managed by the IT team.',
       plainSummary:
-        'Synthesizing Huntress ("SlashAndGrab"), ConnectWise Security Advisory (CVE-2024-1709 & CVE-2024-1708), and Splunk SURGe (February 2024), CVE-2024-1709 is one of the simplest yet most devastating authentication bypass bugs ever found in remote monitoring and management (RMM) software. On ConnectWise ScreenConnect servers, the initial installation wizard (/SetupWizard.aspx) is supposed to be blocked once the server is configured. However, appending a trailing slash or path suffix (/SetupWizard.aspx/anything, which fools the custom security check while ASP.NET still loads SetupWizard.aspx) reopens the first-time setup wizard, allowing anyone on the internet to overwrite the server’s primary administrator database (User.xml) and push SYSTEM commands to all connected customer endpoints.',
+        'In this scenario (CVE-2024-1709, Splunk STRT & Huntress - ConnectWise ScreenConnect "SlashAndGrab" Auth Bypass & RMM RCE), the attacker follows one continuous arc: accessing "/SetupWizard.aspx/anything" to Reopen, then submitting the Setup Form to Overwrite the Server’s, then abusing the RMM Console to Push SYSTEM Commands. Steps #1–#3 examine #1 Accessing "/SetupWizard.aspx/anything" to Reopen; #2 Submitting the Setup Form to Overwrite the Server’s; #3 Abusing the RMM Console to Push SYSTEM Commands. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 11 with the documented host and network chain.',
       diagramTopologySummary:
         'On the diagram: Node ① (Threat Actor) sends the /SetupWizard.aspx/ request through Node ② (Edge Firewall :8040/:443) to Node ③ (ScreenConnect RMM Server). Inside the server, Node ④ (SetupWizard User.xml Overwrite & Extension Engine) resets the admin account and pushes remote PowerShell/MSI payloads to Node ⑤ (Managed Client Endpoints), alerted by Node ⑥ (Splunk SIEM).',
       documentedAdvisory: 'CISA KEV CVE-2024-1709 & CVE-2024-1708 · Huntress SlashAndGrab & Splunk SURGe Analysis · MITRE ATT&CK T1190 / T1219',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #1→ sends GET /SetupWizard.aspx/anything from Node ①/② to Node ③ (ScreenConnect Server), and ⇠#1 returns HTTP 200 SetupWizard form.',
         detectionAndEvidence:
-          'Documented by Splunk SURGe & Huntress: HTTP GET/POST requests matching /SetupWizard.aspx/* returning status 200 on an already provisioned server.',
+          'Documented by Splunk SURGe and Huntress (web access log detections for SlashAndGrab): HTTP GET/POST requests matching /SetupWizard.aspx/* returning status 200 on an already provisioned server (proving an unauthenticated caller reopened the initial configuration wizard). Correlate Sysmon or Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -37,7 +37,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'With the first-time setup wizard open in their browser, the attacker submits a new administrator username and password. ScreenConnect immediately overwrites C:\\Program Files (x86)\\ScreenConnect\\App_Data\\User.xml (the local XML database file that stores all administrator accounts and password hashes on the server, wiping out the company’s legitimate IT administrators and logging the attacker straight in as the sole Super-Admin). Furthermore, attackers can chain CVE-2024-1708 (a ZipSlip path-traversal flaw in ScreenConnect’s Extension uploader that writes .ashx webshells directly into App_Extensions\\ for server-side persistence).',
         howItWorksInPractice:
-          'Because the Setup Wizard was designed for a fresh installation, completing the wizard resets App_Data\\User.xml from scratch and returns an authenticated administrator session cookie to the attacker’s browser.',
+          'Because the Setup Wizard was designed for a fresh installation, completing the wizard resets App_Data\\User.xml from scratch (overwriting existing administrator hashes with attacker-chosen credentials) and returns an authenticated administrator session cookie to the caller (granting full web console control without knowing prior passwords). Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, arrow #2→ inside Node ④ overwrites App_Data\\User.xml with the rogue admin account, and ⇠#2 returns an authenticated admin session cookie.',
         detectionAndEvidence:
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ pushes remote commands from Node ④ to Node ⑤ (Managed Endpoints running ScreenConnect.ClientService.exe) while Node ⑥ (Splunk SIEM) alerts.',
         detectionAndEvidence:
-          'Documented by Huntress & Splunk SURGe: ScreenConnect.ClientService.exe spawning cmd.exe / powershell.exe from C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd.',
+          'Documented by Huntress and Splunk SURGe (endpoint process creation indicators for abused RMM sessions): ScreenConnect.ClientService.exe spawning cmd.exe / powershell.exe from C:\\Windows\\Temp\\ScreenConnect\\<version>\\*.cmd (signaling mass Backstage command execution across managed workstations). Correlate Sysmon or Windows Security Event telemetry for T1219 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

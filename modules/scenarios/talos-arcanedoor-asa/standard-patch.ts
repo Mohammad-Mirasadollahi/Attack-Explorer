@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented by Cisco Talos (CVE-2024-20353 advisory covering perimeter firewall exploitation): anomalous POST requests to /CSCOSSLC/config-auth with oversized <host-scan-reply> payloads from non-VPN client IPs (flagging malformed pre-authentication requests used to trigger the flaw).',
+            'Documented by Cisco Talos (CVE-2024-20353 advisory covering perimeter firewall exploitation): anomalous POST requests to /CSCOSSLC/config-auth with oversized <host-scan-reply> payloads from non-VPN client IPs (flagging malformed pre-authentication requests used to trigger the flaw). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1542 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         2: {
           storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in Cisco Advisory CVE-2024-20359 and NCSC Guidance (post-incident persistence checks for edge firewalls): unauthorized files on disk0: boot paths and system:memory/text integrity verification failure (confirming that a persistent archive survived appliance reboots).',
+            'Documented in Cisco Advisory CVE-2024-20359 and NCSC Guidance (post-incident persistence checks for edge firewalls): unauthorized files on disk0: boot paths and system:memory/text integrity verification failure (confirming that a persistent archive survived appliance reboots). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1562.001 (pairing parent/child process and destination fields) and contain the offending session.',
         },
       },
     };

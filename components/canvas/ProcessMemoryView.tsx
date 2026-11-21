@@ -154,7 +154,17 @@ export function ProcessMemoryView({
           );
         })()}
 
-        {/* 1. RIGHT BELOW STORY: Technical Documented Virtual Memory Forensics Briefing */}
+        {/* 1. FULL-WIDTH STANDARD ANIME 3D VIRTUAL MEMORY DIFF STAGE (directly below Story) */}
+        {getSection3DDescriptor(scenario.id, 'memory-forensics') && (
+          <section data-testid="memory-story-and-3d-section">
+            <ScenarioSection3DEmbed
+              scenarioId={scenario.id}
+              sectionKey="memory-forensics"
+            />
+          </section>
+        )}
+
+        {/* 2. BELOW FILM: Technical Documented Virtual Memory Forensics Briefing */}
         <section
           data-testid="memory-scope-briefing"
           className="p-4 rounded-xl bg-zinc-50/90 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-3"
@@ -215,17 +225,7 @@ export function ProcessMemoryView({
           )}
         </section>
 
-        {/* 1A. FULL-WIDTH STANDARD ANIME 3D VIRTUAL MEMORY DIFF STAGE */}
-        {getSection3DDescriptor(scenario.id, 'memory-forensics') && (
-          <section data-testid="memory-story-and-3d-section">
-            <ScenarioSection3DEmbed
-              scenarioId={scenario.id}
-              sectionKey="memory-forensics"
-            />
-          </section>
-        )}
-
-        {/* 1B. Visual Memory Analysis Flowchart (Dump -> String Analysis -> Forensic Extraction) */}
+        {/* 3. Visual Memory Analysis Flowchart (Dump -> String Analysis -> Forensic Extraction) */}
         <MemoryForensicsFlowchart flowchart={scopedMemory.flowchart} />
 
         {/* 2. Step-by-Step Memory Analysis & VAD Mutation Waterfall */}

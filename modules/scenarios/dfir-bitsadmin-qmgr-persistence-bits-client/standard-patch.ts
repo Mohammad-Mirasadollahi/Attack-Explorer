@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'The moment the parcel touches down on disk, the delivery service stamps the job complete and its own trusted system host process immediately executes the stapled command line.',
+          'The moment the parcel touches down on disk, the delivery service stamps the job complete and its own trusted system host process immediately executes the stapled command line. Continuing the same characters and room from the previous beat, the operator performs two more concrete physical movements that an animator can stage without guessing, and each newly introduced prop has one explicit job.',
         storyMappings: [
           {
             storyTerm: 'Stamping the delivery job complete',

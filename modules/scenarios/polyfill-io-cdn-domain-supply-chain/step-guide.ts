@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine 100,000 retail stores hiring an outside translator who stands inside their checkout lane to help older customers read the signs. Years later, a syndicate buys the translator agency. Whenever a store manager looks, the translator behaves normally, but whenever a customer walks in on a mobile phone after hours, the translator slips a forged receipt into their bag.',
       plainSummary:
-        'For years, web developers embedded <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> to support older browsers. In February 2024, the polyfill.io domain was acquired by a third party (Funnull). By June 2024, Sansec discovered that cdn.polyfill.io was inspecting incoming HTTP headers and conditionally injecting obfuscated malware (www.googie-anaiytics.com/gtags.js) into mobile visitors while serving clean code to desktop admins.',
+        'In this scenario (T1195.002, cdn.polyfill.io CDN Domain Takeover & Conditional JS Injection (CVE-2024-38526)), the attacker follows one continuous arc: unpinned Third-Party <script> Tag Without, then hTTP User-Agent Fingerprinting, then first-Party DOM Execution. Steps #1–#3 examine #1 Unpinned Third-Party <script> Tag Without; #2 HTTP User-Agent Fingerprinting; #3 First-Party DOM Execution. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1195.002 across the documented kill chain.',
       diagramTopologySummary:
         'Rogue CDN Operator (cdn.polyfill.io) -> Enterprise Web Portal (<script src=...>) -> End-User Mobile Browser Session -> DOM Session Context & Redirect Target -> Sansec Scanner / Cloudflare Page Shield.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Rogue CDN Operator (cdn.polyfill.io) to the Enterprise Web Portal embedding the unverified <script> tag.',
         detectionAndEvidence:
-          'Client-side script inventory scanners (Cloudflare Page Shield, Sansec) enumerating external <script> tags lacking integrity attributes or referencing deprecated domains.',
+          'Client-side script inventory scanners (Cloudflare Page Shield, Sansec) enumerating external <script> tags lacking integrity attributes or referencing deprecated domains. Correlate Sysmon or Windows Security Event telemetry for T1195.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -43,7 +43,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the Rogue CDN Operator to the End-User Mobile Browser Session and triggers the Sansec Scanner / Cloudflare Page Shield alert.',
         detectionAndEvidence:
-          'Multi-User-Agent synthetic monitoring comparing script payloads returned for mobile vs. desktop headers over extended execution windows (>20 seconds).',
+          'Run multi-User-Agent synthetic browser monitoring comparing script payloads delivered to mobile versus desktop headers over execution windows longer than 20 seconds (exposing conditional, time-delayed CDN supply-chain payloads that evade single-pass scanners). Correlate Sysmon or Windows Security Event telemetry for T1027 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the End-User Mobile Browser Session executing the payload inside the DOM Session Context & Redirect Target.',
         detectionAndEvidence:
-          'Content-Security-Policy (CSP) violation telemetry alerting on unauthorized script loads from www.googie-anaiytics.com and removal of all polyfill.io references.',
+          'Monitor Content-Security-Policy (CSP) violation reports (browser-emitted telemetry alerting whenever a page tries to load scripts from unapproved hosts) for unauthorized loads from www.googie-anaiytics.com and audit all templates to eliminate polyfill.io references. Correlate Sysmon or Windows Security Event telemetry for T1185 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

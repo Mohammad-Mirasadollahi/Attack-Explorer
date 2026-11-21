@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a cloud office building (GCP Project) where every virtual machine comes with a default janitor robot (<project-number>-compute@developer.gserviceaccount.com) that was accidentally given a master key to every room in the building (roles/editor). A contractor (ci-runner service account) doesn’t have access to the financial vault (gs://corp-financial-ledger-prod), but their badge allows them to print new ID cards for any robot in the building (iam.serviceAccountKeys.create). The contractor walks up to the card printer (iam.googleapis.com), prints a brand-new JSON private key card (loot_key.json) in the name of the Editor janitor robot, puts on that card, and empties the financial vault!',
       plainSummary:
-        'Synthesizing research by Mandiant (Google Cloud Threat Intelligence), Wiz Research, and Rhino Security Labs, this scenario models the classic Google Cloud Platform (GCP) IAM privilege escalation chain abusing iam.serviceAccountKeys.create (or iam.serviceAccounts.actAs) against the over-privileged Default Compute Engine Service Account (<project-number>-compute@developer.gserviceaccount.com). Because GCP projects historically granted the Default Compute Service Account the broad primitive role roles/editor, any identity with project-wide Service Account Key Admin permissions can mint a persistent user-managed RSA private key JSON file for that account and inherit full read/write control over Cloud Storage (GCS) and BigQuery.',
+        'In this scenario (T1098.001, Mandiant, Wiz & Google Cloud - GCP iam.serviceAccountKeys.create & serviceAccounts.actAs Impersonation Escalation), the attacker follows one continuous arc: discovering the Over-Privileged Default Compute, then minting a Persistent User-Managed JSON Key, then activating loot_key.json Outside GCP to Exfiltrate. Steps #1–#3 examine #1 Discovering the Over-Privileged Default Compute; #2 Minting a Persistent User-Managed JSON Key; #3 Activating loot_key.json Outside GCP to Exfiltrate. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1098.001 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (Compromised GCP Workload Caller ci-runner), invoke CreateServiceAccountKey on Node ②/③ (GCP IAM Control Plane API) targeting Node ④ (Default Compute Service Account with roles/editor), and use the downloaded loot_key.json to bulk-copy Node ⑤ (GCP Cloud Storage & BigQuery Prod) monitored by Node ⑥ (Google Cloud SCC & Audit Logs).',
       documentedAdvisory: 'Mandiant / Google Cloud IAM Security Best Practices · Wiz Cloud Threat Research · MITRE ATT&CK T1098.001',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① (ci-runner) to Node ②/③ (GCP IAM API), and return arrow ⇠#1 listing 482910492810-compute@developer.gserviceaccount.com.',
         detectionAndEvidence:
-          'Documented by Google Cloud Audit Logs: google.iam.admin.v1.ListServiceAccounts called from an external non-GCP IP address (198.51.100.73).',
+          'Monitor Google Cloud IAM Audit Logs (central control-plane logs tracking identity queries and mutations) for google.iam.admin.v1.ListServiceAccounts calls originating from unexpected external non-GCP IP addresses such as 198.51.100.73 (early cloud reconnaissance). Correlate Sysmon or Windows Security Event telemetry for T1087.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ calls CreateServiceAccountKey on Node ④ (Default Compute Service Account), and ⇠#2 downloads loot_key.json (keyId 9f8e7d6c5b).',
         detectionAndEvidence:
-          'Documented by Google Cloud SCC & Mandiant: Admin Activity Audit Log google.iam.admin.v1.CreateServiceAccountKey where principalEmail != resourceName.',
+          'Alert on Google Cloud Admin Activity Audit Logs and Security Command Center (SCC) findings for google.iam.admin.v1.CreateServiceAccountKey (permanent key minting) especially where principalEmail != resourceName (indicating cross-identity key creation for persistence). Correlate Sysmon or Windows Security Event telemetry for T1098.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ executes storage.objects.get against Node ⑤ (GCS Bucket) while Node ⑥ (Google Cloud SCC & Chronicle SIEM) alerts on external key usage.',
         detectionAndEvidence:
-          'Documented by Mandiant & Google Cloud SCC: Data Access Audit Log storage.objects.get by *-compute@developer.gserviceaccount.com with non-empty authenticationInfo.serviceAccountKeyName from an external IP.',
+          'Correlate Google Cloud Data Access Audit Logs (which track individual bucket object downloads) for storage.objects.get invoked by *-compute@developer.gserviceaccount.com carrying a non-empty authenticationInfo.serviceAccountKeyName from an external IP address (confirming off-cloud exfiltration). Correlate Sysmon or Windows Security Event telemetry for T1530 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

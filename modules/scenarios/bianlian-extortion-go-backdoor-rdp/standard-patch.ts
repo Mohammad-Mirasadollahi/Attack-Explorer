@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'Documented in joint CISA, FBI, and ASD Advisory AA23-136A alongside Red Canary and Avast research, BianLian shifted by 2023 and 2024 to a pure data-exfiltration extortion model (stealing sensitive records to threaten public release while skipping file encryption completely to bypass anti-ransomware sensors). After breaching a network via RDP or edge flaws, BianLian drops a per-victim Golang backdoor using mutual TLS (mTLS) multiplexed with hashicorp/yamux and an embedded armon/go-socks5 proxy, maps shares with SharpShares, and exfiltrates archives to Mega.io or FTP via a renamed rclone.exe (Win.exe).',
+        'In this scenario (T1573.002, BianLian Custom Golang mTLS Backdoor, Built-In SOCKS5 & Pure Extortion (AA23-136A)), the attacker follows one continuous arc: deploying Custom Golang mTLS Backdoor with Hardcoded, then in-Memory Yamux Multiplexing, then pure Data-Exfiltration Extortion via Rclone. Steps #1–#3 examine #1 Deploying Custom Golang mTLS Backdoor with Hardcoded; #2 In-Memory Yamux Multiplexing; #3 Pure Data-Exfiltration Extortion via Rclone. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {

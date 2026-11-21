@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Deploy filesystem minifilter behavioral monitors (kernel-level disk I/O sensors that inspect write patterns in real time) to detect rapid 0x100000-byte stride partial file overwrites, .play extension renames, and trailing 0xdeadbeef file footers.',
+          'Deploy filesystem minifilter behavioral monitors (kernel-level disk I/O sensors that inspect write patterns in real time) to detect rapid 0x100000-byte stride partial file overwrites, .play extension renames, and trailing 0xdeadbeef file footers. Correlate Sysmon Event 11 and Windows Security Event telemetry for T1486 (pairing write patterns with parent/child process fields) and contain the offending session.',
       },
     },
   };

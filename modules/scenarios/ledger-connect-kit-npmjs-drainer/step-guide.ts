@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a former bank courier who left the company a year ago, but nobody canceled their keycard to the central brochure rack. A scammer tricks the former courier into handing over the keycard, puts counterfeit deposit slips into the rack, and because hundreds of local branches automatically restock from the "latest" slot on the rack every hour, customers at those branches are handed forms that wire their funds to the scammer.',
       plainSummary:
-        'In December 2023, a threat actor phished a former Ledger employee whose npmjs account still had publish rights to @ledgerhq/connect-kit. The attacker published versions 1.1.5, 1.1.6, and 1.1.7 containing the Angel Drainer wallet-draining script and a rogue WalletConnect project ID. Because @ledgerhq/connect-kit-loader fetched https://cdn.jsdelivr.net/npm/@ledgerhq/connect-kit@1 without version pinning, hundreds of DeFi dApps immediately served the drainer to users.',
+        'In this scenario (T1195.001, Ledger Connect-Kit NPM Compromise & Web3 WalletConnect Drainer), the attacker follows one continuous arc: former Employee NPM Token Phishing, then unpinned jsDelivr CDN Propagation, then rogue WalletConnect Modal. Steps #1–#3 examine #1 Former Employee NPM Token Phishing; #2 Unpinned jsDelivr CDN Propagation; #3 Rogue WalletConnect Modal. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1195.001 across the documented kill chain.',
       diagramTopologySummary:
         'Angel Drainer Operator -> NPM & jsDelivr CDN (@ledgerhq/connect-kit) -> Downstream Web3 dApp Frontend -> User Web3 Wallet (Permit2 / SetApprovalForAll) -> Blockaid Web3 Runtime Scanner.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Angel Drainer Operator to the NPM & jsDelivr CDN (@ledgerhq/connect-kit) as the unauthorized versions are published.',
         detectionAndEvidence:
-          'Registry monitors (Socket / Checkmarx / Phylum) alerting when an npm package version is published without a matching GitHub tag or OIDC provenance attestation.',
+          'Registry monitors (Socket / Checkmarx / Phylum) alerting when an npm package version is published without a matching GitHub tag or OIDC provenance attestation. Correlate Sysmon or Windows Security Event telemetry for T1195.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -43,7 +43,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the NPM & jsDelivr CDN to the Downstream Web3 dApp Frontend and triggers the Blockaid Web3 Runtime Scanner.',
         detectionAndEvidence:
-          'Frontend runtime monitoring (Blockaid) detecting unexpected script changes and newly injected WalletConnect Project IDs in live dApp DOMs.',
+          'Deploy frontend runtime integrity monitors such as Blockaid (continuous browser-side sensors that hash live third-party scripts and flag DOM mutations) to alert immediately on unexpected script changes or newly injected WalletConnect Project IDs inside live dApp frontends. Correlate Sysmon or Windows Security Event telemetry for T1059.007 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the Downstream Web3 dApp Frontend prompting the User Web3 Wallet (Permit2 / SetApprovalForAll) to authorize the Angel Drainer operator.',
         detectionAndEvidence:
-          'Wallet-level transaction simulation (Blockaid) flagging eth_signTypedData_v4 (Permit2) and setApprovalForAll calls targeting known drainer spender addresses.',
+          'Enable wallet-level transaction simulation tools such as Blockaid (which dry-run cryptographic signing prompts before user confirmation) to flag malicious eth_signTypedData_v4 (Permit2) and setApprovalForAll approvals targeting known drainer spender contracts. Correlate Sysmon or Windows Security Event telemetry for T1657 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

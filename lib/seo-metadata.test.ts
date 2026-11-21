@@ -17,6 +17,7 @@ import {
 } from './seo-metadata';
 import { formatAttackCategoryLabel } from './attack-category-labels';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
+import { readInspectorSources } from './read-inspector-sources';
 import robots from '../app/robots';
 import sitemap from '../app/sitemap';
 import manifest from '../app/manifest';
@@ -194,10 +195,7 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
       path.join(rootDir, 'components/AttackHeader.tsx'),
       'utf8'
     );
-    const inspectorSource = fs.readFileSync(
-      path.join(rootDir, 'components/InspectorPanel.tsx'),
-      'utf8'
-    );
+    const inspectorSource = readInspectorSources(rootDir);
 
     assert.ok(
       headerSource.includes('<h1 className="sr-only">'),

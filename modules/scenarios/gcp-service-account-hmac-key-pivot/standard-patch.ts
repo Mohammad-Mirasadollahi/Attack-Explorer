@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor Google Cloud IAM Audit Logs (central control-plane logs tracking identity queries and mutations) for google.iam.admin.v1.ListServiceAccounts calls originating from unexpected external non-GCP IP addresses such as 198.51.100.73 (early cloud reconnaissance).',
+          'Monitor Google Cloud IAM Audit Logs (central control-plane logs tracking identity queries and mutations) for google.iam.admin.v1.ListServiceAccounts calls originating from unexpected external non-GCP IP addresses such as 198.51.100.73 (early cloud reconnaissance). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1087.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Alert on Google Cloud Admin Activity Audit Logs and Security Command Center (SCC) findings for google.iam.admin.v1.CreateServiceAccountKey (permanent key minting) especially where principalEmail != resourceName (indicating cross-identity key creation for persistence).',
+          'Alert on Google Cloud Admin Activity Audit Logs and Security Command Center (SCC) findings for google.iam.admin.v1.CreateServiceAccountKey (permanent key minting) especially where principalEmail != resourceName (indicating cross-identity key creation for persistence). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1098.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Correlate Google Cloud Data Access Audit Logs (which track individual bucket object downloads) for storage.objects.get invoked by *-compute@developer.gserviceaccount.com carrying a non-empty authenticationInfo.serviceAccountKeyName from an external IP address (confirming off-cloud exfiltration).',
+          'Correlate Google Cloud Data Access Audit Logs (which track individual bucket object downloads) for storage.objects.get invoked by *-compute@developer.gserviceaccount.com carrying a non-empty authenticationInfo.serviceAccountKeyName from an external IP address (confirming off-cloud exfiltration). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1530 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

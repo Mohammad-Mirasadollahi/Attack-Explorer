@@ -27,6 +27,9 @@ The `InspectorPanel` header must always display the active scope badge (`resolve
 - **`EXPANDED_NODE`**: Amber badge (`"Expanded: Node #N · <Label>"`) — displays the expanded node's internal 5-node sub-board (`#N.1..#N.5`) and scoped logs.
 - **`INTERNAL_SUBNODE`**: Rose/Crimson badge (`"Internal: #N.M · <SubNode Label>"`) — displays only the selected internal sub-node's activity summary, related sub-flows, and connected SIEM logs.
 
+### Law 3 — Inspector Sidebar Labels Without Count Suffixes (`MOD-12`)
+Left-nav tab labels must be bare names (`Overview`, `Step-by-Step Guide`, `Process Hierarchy`, `Memory`, `SIEM Logs`, `Sources & Intel`). Never append `(N)` stage/block/log counts to the tab label. See **`MOD-12`** for full Inspector ownership and Steps chrome rules (no Auto-Play, no legend cards, Stage Filter off Overview).
+
 ---
 
 ## 3. Master Pre-Commit Verification & Automated CI Test Suite
@@ -37,16 +40,16 @@ No new document, scenario, or UI change may be merged until all **6 automated te
 npx --yes tsx --test --test-reporter=spec lib/*.test.ts
 ```
 
-### What the Automated Test Suite Verifies Across Modules `MOD-01` .. `MOD-11`
+### What the Automated Test Suite Verifies Across Modules `MOD-01` .. `MOD-12`
 
 | Test Suite File | Governed Modules | Key Automated Assertions |
 | :--- | :--- | :--- |
-| **`lib/documentation-standards.test.ts`** | `MOD-00` .. `MOD-11` | Verifies that all 12 modular standard documents exist in `/docs/standards/`, adhere to `MOD-01`/`MOD-02`, validates all 188 scenarios via `validateScenarioAgainstModularStandards()`, and enforces **Prop-Purpose Clarity** (`validateStoryPropClarity`) and **Per-Token Inline Plain-English Why** (`validateTechnicalSectionInlineClarity`) across every upgraded section. |
-| **`lib/section-3d-registry.test.ts`** | `MOD-08`, `MOD-09`, `MOD-10`, `MOD-11` | Verifies bespoke 3D descriptors, 100% jargon-free Story strings (`findTechnicalJargonInStory`), zero Japanese characters, separate mapping of paired props (e.g., Master Key #1 vs. Key #2), and per-token inline parenthetical density in deep-dive steps. |
+| **`lib/documentation-standards.test.ts`** | `MOD-00` .. `MOD-12` | Verifies that all modular standard documents exist in `/docs/standards/`, adhere to `MOD-01`/`MOD-02`, validates all 188 scenarios via `validateScenarioAgainstModularStandards()`, and enforces **Prop-Purpose Clarity** (`validateStoryPropClarity`) and **Per-Token Inline Plain-English Why** (`validateTechnicalSectionInlineClarity`) across every upgraded section. |
+| **`lib/section-3d-registry.test.ts`** | `MOD-08`, `MOD-09`, `MOD-10`, `MOD-11` | Verifies `ANIME_3D_STAGE_STANDARD.sectionOrder` = Story → 3D → Technical, bespoke 3D descriptors, 100% jargon-free Story strings (`findTechnicalJargonInStory`), zero Japanese characters, separate mapping of paired props (e.g., Master Key #1 vs. Key #2), and per-token inline parenthetical density in deep-dive steps. |
 | **`lib/scenario-step-guides.test.ts`** | `MOD-01`, `MOD-02`, `MOD-03`, `MOD-11` | Verifies 3-Layer Story-to-Spec completeness (`storyAnalogy`, `plainSummary`, `simpleExplanation`, `howItWorksInPractice`, `diagramAlignment`, `detectionAndEvidence`), substantive inline parentheticals, and 100% English-only strings across all 188 scenarios. |
 | **`lib/command-line-explanations.test.ts`** | `MOD-03` | Verifies token-by-token CLI command explanations and flag coverage. |
 | **`lib/simulation-engine.test.ts`** | `MOD-04`, `MOD-07` | Verifies scenario topology integrity, stage counts, telemetry correlation, and zero forbidden `truncate` classes in guarded UI components. |
-| **`lib/inspector-scope.test.ts`** | `MOD-06`, `MOD-07`, `MOD-08` | Verifies `MAIN_SCENARIO` / `EXPANDED_NODE` / `INTERNAL_SUBNODE` scope resolution, zero duplicate Story vs. Technical overview text, and URL state round-tripping (`serializeWorkbenchUrlState` ↔ `parseWorkbenchUrlState`). |
+| **`lib/inspector-scope.test.ts`** | `MOD-06`, `MOD-07`, `MOD-08`, `MOD-12` | Verifies Inspector scope resolution, Overview/Process Hierarchy/Memory ownership, Steps `#0` `omitStory` (no Overview Story repeat), Stage Filter gating, sidebar chrome, zero duplicate Story vs. Technical overview text, and URL state round-tripping. |
 | **`lib/seo-metadata.test.ts`** | `MOD-05`, `MOD-06` | Verifies XML sitemap coverage, Schema.org `TechArticle` (`citation >= 3`, `mentions`, `keywords`) + `HowTo` + `BreadcrumbList`, Topic Cluster lateral links, `Accept: text/markdown` output, and `/public/llms-full.txt` parity across all scenarios. |
 
 ---

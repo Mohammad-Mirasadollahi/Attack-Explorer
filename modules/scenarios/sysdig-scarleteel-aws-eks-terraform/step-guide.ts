@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a burglar (SCARLETEEL) who slips through an open window into a small workshop annex (Kubernetes Pod in AWS EKS). The workshop annex only has keys to a hallway supply closet (S3 DevOps Bucket). However, sitting inside that supply closet is the master architectural blueprint book (terraform.tfstate) that the building’s engineers used to construct the entire corporate campus! Because the blueprint tool (Terraform) writes down the actual cleartext combination (aws_iam_access_key.attributes.secret) of every vault it builds right inside that book, reading terraform.tfstate hands the burglar the permanent master keys to the company’s main production bank vaults across the street.',
       plainSummary:
-        'Discovered and analyzed by the Sysdig Threat Research Team (SCARLETEEL & SCARLETEEL 2.0), Permiso P0 Labs, and Palo Alto Unit 42, this scenario models a sophisticated cloud-native intrusion chain that pivots from a single Kubernetes container into multi-account AWS dominance. After exploiting an internet-facing workload pod in Amazon EKS, the attacker queries the worker node’s Instance Metadata Service (169.254.169.254), uses the node role to download terraform.tfstate from an S3 backend bucket, extracts plaintext aws_iam_access_key secret keys belonging to privileged cross-account administrators, and uses the Pacu framework to steal proprietary source code and S3 datasets.',
+        'In this scenario (T1610, Sysdig TRT, Permiso & Unit 42 - SCARLETEEL Operation: Kubernetes Pod RCE, AWS Terraform .tfstate Theft & Pacu Pivot), the attacker follows one continuous arc: exploiting an Exposed EKS Workload Pod, then extracting Plaintext AWS IAM Secret Keys from S3, then pivoting Across AWS Accounts with Pacu to Exfiltrate. Steps #1–#3 examine #1 Exploiting an Exposed EKS Workload Pod; #2 Extracting Plaintext AWS IAM Secret Keys from S3; #3 Pivoting Across AWS Accounts with Pacu to Exfiltrate. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on CloudTrail S3 Data Events (object-level storage au telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (SCARLETEEL Operator), exploit the public container on Node ②/③ (EKS Workload Pod), download and parse s3://corp-devops-tfstate-prod/terraform.tfstate from Node ④ (S3 Terraform State Backend), and replay the extracted AKIA admin keys via Pacu against Node ⑤ (Peered Production AWS Account) monitored by Node ⑥ (Sysdig Falco & CloudTrail SIEM).',
       documentedAdvisory: 'Sysdig Threat Research Team (SCARLETEEL Report) · Permiso P0 Labs · MITRE ATT&CK T1610 / T1552.001',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① (SCARLETEEL Operator) to Node ②/③ (EKS Workload Pod), and return arrow ⇠#1 harvesting the eks-node-role STS token.',
         detectionAndEvidence:
-          'Documented by Sysdig TRT: Falco eBPF alert for downloading/executing aws or trufflehog inside a running container (container_drift).',
+          'Documented by Sysdig TRT: Falco eBPF alert for downloading/executing aws or trufflehog inside a running container (container_drift). Correlate Sysmon or Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,

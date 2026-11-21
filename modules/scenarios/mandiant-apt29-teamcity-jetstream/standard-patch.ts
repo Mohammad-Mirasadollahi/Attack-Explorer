@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in TeamCity teamcity-javaLogging and access logs (web server audit records of token minting): POST /app/rest/users/id:1/tokens/RPC2 returning HTTP 200 followed by DELETE /app/rest/users/id:1/tokens/RPC2 (showing unauthenticated creation and cleanup of an administrator bearer token).',
+            'Documented in TeamCity teamcity-javaLogging and access logs (web server audit records of token minting): POST /app/rest/users/id:1/tokens/RPC2 returning HTTP 200 followed by DELETE /app/rest/users/id:1/tokens/RPC2 (showing unauthenticated creation and cleanup of an administrator bearer token). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         2: {
           storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented by Mandiant (post-exploitation telemetry from build server compromises): POST /app/rest/debug/processes in teamcity-server.log and java.exe spawning whoami / nltest / curl (confirming remote command execution from the build management service).',
+            'Documented by Mandiant (post-exploitation telemetry from build server compromises): POST /app/rest/debug/processes in teamcity-server.log and java.exe spawning whoami / nltest / curl (confirming remote command execution from the build management service). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1059.003 (pairing parent/child process and destination fields) and contain the offending session.',
         },
         3: {
           storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
             },
           ],
           detectionAndEvidence:
-            'Documented in Joint CISA Advisory and Mandiant (long-term persistence and C2 indicators): Creation of new TeamCity admin accounts in teamcity-activities.log and GraphicalProton OneDrive C2 beacons (revealing persistent administrative access and covert cloud exfiltration).',
+            'Documented in Joint CISA Advisory and Mandiant (long-term persistence and C2 indicators): Creation of new TeamCity admin accounts in teamcity-activities.log and GraphicalProton OneDrive C2 beacons (revealing persistent administrative access and covert cloud exfiltration). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1102.002 (pairing parent/child process and destination fields) and contain the offending session.',
         },
       },
     };

@@ -17,7 +17,8 @@ When authoring a brand-new scenario or upgrading an existing one, authors need m
 │  A. SCENARIO BRIEFING (#0 — Overview / Main Page)                                 │
 │     1. briefing.storyAnalogy       -> 100% plain-language real-world story        │
 │     2. briefing.storyMappings (4+) -> Explicit [Story Piece] -> [Real Tech] key   │
-│     3. briefing.plainSummary       -> Answer-First technical overview (#0.1..#0.3)│
+│     3. briefing.plainSummary       -> High-level technical roadmap (#0.1..#0.3)   │
+│        (WHO/WHERE + arc + what Steps/Memory will cover — NOT a step deep-dive)    │
 ├───────────────────────────────────────────────────────────────────────────────────┤
 │  B. KILL-CHAIN STAGES (Stage 1 .. Stage N — 1 Block per Real Attack Step)         │
 │     1. step.storyAnalogy           -> Same metaphor world, zero jargon, 1-2 beats │
@@ -30,6 +31,7 @@ When authoring a brand-new scenario or upgrading an existing one, authors need m
 │     1. memory.storyAnalogy         -> Side-by-side physical contrast story        │
 │     2. memory.storyMappings (4+)   -> Clean Disk vs. Live RAM prop translations   │
 │     3. memory.technicalDiff        -> Exact VAD/SEC_IMAGE vs MEM_PRIVATE proof    │
+│        (Memory detail MUST live here — never inside Overview plainSummary)        │
 ├───────────────────────────────────────────────────────────────────────────────────┤
 │  D. 3D STAGE MICRO-COPY (Synchronized directly to the written Story & Technical)  │
 │     1. callouts[0..1]              -> Top: Jargon-free story title                │
@@ -49,7 +51,7 @@ Every scenario text field has a strict purpose, target length, voice, and conten
 | **`scenario.name`** | Headline title of the intrusion chain | 35–85 chars | Concrete technique + payload/vector name (e.g., `Process Hollowing & Cobalt Strike Beacon Loader`). | Marketing adjectives (`Ultimate`, `Advanced`). |
 | **`scenario.shortSubtitle`** | Compact forensic scope line | 30–80 chars | `Domain · Primary Technical Mechanism` (e.g., `Malware Analysis · svchost.exe Memory Unmapping & PE Injection`). | Full sentences or vague claims. |
 | **`briefing.storyAnalogy`** | Executive real-world mental model (Layer 1) | 260–480 chars (2–4 sentences) | Starts with `"Imagine ..."` or a vivid physical scene; summarizes the **entire** attack arc from entry to objective inside **one** concrete real-world world. | **Zero** API names, hex values, filenames, PIDs, Event IDs, or parenthetical technical translations. |
-| **`briefing.plainSummary`** | Technical architecture & forensic overview (Layer 2/3) | 450–950 chars (3–4 numbered clauses `#0.1..#0.4`) | Answer-First lead naming MITRE ID, target host/IP, exact initial binary/vector, each step's API/protocol + return values, and final objective/telemetry. | Repeating sentences from `briefing.storyAnalogy`. |
+| **`briefing.plainSummary`** | Technical Overview roadmap (Layer 2) — **not** a Steps/Memory deep-dive | **350–850 chars** (3–4 clear sentences → clauses `#0.1..#0.4`; hard max 950) | Answer-First WHO/WHAT/WHERE/WHY (MITRE/CVE, host/IP, loader, trusted host process, why the disguise works); one continuous attack arc in plain language without per-step API chains; explicit **section map** naming what Steps `#1..#N` and Memory (if present) will examine; one primary detection pivot. Prose must be readable, not telegraphic fragments. | Replaying every kill-chain step with APIs/handles/hex/return codes; VAD / `SEC_IMAGE` / `MEM_PRIVATE` / PEB offset Memory forensics; repeating `briefing.storyAnalogy`; cryptic shorthand (`Arc: freeze…`). |
 | **`storyMappings[]`** | Bridge table directly inside every Story card | 4 or 6 pairs per section (balanced 2-col grid) | `storyTerm` (2–6 words, pure story noun/action) → `technicalTerm` (exact API, PID, hex flag, file path, or Event ID + brief role/why). When a section introduces paired props (e.g., two Master Keys), map **each** prop separately with its exact purpose. | Technical jargon inside `storyTerm`; lumping distinct keys/handles together without explaining what each one does. |
 | **`steps[i].plainTitle`** | Action-oriented stage headline | 25–60 chars | Clear verb phrase describing what happens in this step. | Bare MITRE IDs without explanation. |
 | **`steps[i].storyAnalogy`** | Stage-specific continuation of the exact same story | 180–420 chars (1–3 sentences) | Continues the **exact same characters, props, and setting** from `briefing.storyAnalogy`; narrates 2–3 concrete physical movements that the 3D scene will literally animate AND explicitly states what each newly introduced prop (e.g., Key #1 vs. Key #2) is used for. | Switching to an unrelated metaphor; naming a prop ("master keys") without stating what it unlocks; leaking any technical jargon (`findTechnicalJargonInStory() === []`). |
@@ -71,6 +73,16 @@ Use these repeatable formulas so every author writes with identical clarity and 
 >
 > **Example**:
 > *"Imagine an intruder who wants to enter a high-security bank without raising an alarm. Instead of breaking down the front door in a ski mask, they hire an official armored bank truck, freeze it inside the garage before the driver even starts the route, and pocket two golden master keys: the first master key unlocks the rear cargo doors so they can empty all the legal bank gold and load their own covert crew inside, and the second master key unlocks the driver cab so they can reprogram the GPS route and release the brake. When the truck rolls out, every security camera and guard at the gate still sees the bank's own trusted license plate and uniform."*
+
+### Formula A2 — Writing `briefing.plainSummary` (Overview Roadmap Only)
+> **Structure**: `[1. WHO / WHAT / WHERE / MITRE]` + `[2. One-breath attack arc, no per-step API chains]` + `[3. Section map: what Steps #1..#N and Memory will cover]` + `[4. One primary detection pivot]`.
+>
+> **Purpose**: Orient the reader so they know what later sections examine. Deep-dive APIs, return codes, handles, hex constants, VAD/`SEC_IMAGE`/`MEM_PRIVATE` contrasts, and PEB offsets belong in **Steps** or **Memory**, never here.
+>
+> **Canonical Example (Process Hollowing)**:
+> *"In this scenario (MITRE ATT&CK T1055.012, Process Hollowing), the attacker uses Invoice_Q4.exe on Victim Laptop WKS-04 (10.10.4.15) to run Cobalt Strike Beacon inside a Microsoft-signed svchost.exe so antivirus and application-allowlisting treat the implant as a trusted Windows service host. The attack unfolds in one continuous arc: start a real svchost.exe paused, empty its legitimate code from RAM, write Beacon into that same process, wake its thread so Beacon runs under the trusted name, then open encrypted HTTPS C2 to 185.220.101.42:443. Steps #1–#4 walk that process and thread mechanics end-to-end; Step #5 covers the outbound C2 beacon and blend-in network profile; the Memory tab shows why the live process no longer matches the signed file on disk. Primary detection correlates Sysmon ProcessCreate, ProcessAccess, and ProcessTampering with bare svchost.exe opening anomalous HTTPS."*
+>
+> **Anti-Pattern (Rejected)**: A single Overview paragraph that walks CreateProcessW → NtUnmapViewOfSection → VirtualAllocEx → WriteProcessMemory → SetThreadContext → ResumeThread with every handle, hex flag, and return code (that content belongs in Steps #1–#4 / Memory).
 
 ### Formula B — Writing `steps[i].storyAnalogy` (Single-Stage Story Beat + Prop-Purpose Clarity)
 > **Structure**: `[1. Continuity link from previous stage]` + `[2. Physical action A on a concrete prop]` + `[3. Explicit job of every new prop introduced + visible consequence ready for 3D animation]`.
@@ -106,13 +118,19 @@ Use these repeatable formulas so every author writes with identical clarity and 
 Follow these wiring laws whenever connecting written text to React components and data builders:
 
 1. **Briefing Separation (`briefing.storyAnalogy` vs. `briefing.plainSummary`)**:
-   - Store the pure Story in `guide.briefing.storyAnalogy` and the pure Technical Overview in `guide.briefing.plainSummary`.
-   - Even if `scenario.overview` concatenates both for search/SEO indexing, **UI components (`InspectorPanel`, `StepByStepGuidePanel`, `app/scenarios/[id]/page.tsx`) must always pass `briefing.storyAnalogy` to `storyAnalogy` and `briefing.plainSummary` to `technicalText`**.
-2. **Stage Separation (`step.storyAnalogy` vs. `step.simpleExplanation`)**:
+   - Store the pure Story in `guide.briefing.storyAnalogy` and the pure Technical Overview roadmap in `guide.briefing.plainSummary`.
+   - Even if `scenario.overview` concatenates both for search/SEO indexing, **Overview / SEO landing pages** must pass `briefing.storyAnalogy` to `storyAnalogy` and `briefing.plainSummary` to `technicalText`.
+   - **Steps `#0` Scenario Briefing** must **not** re-pass Overview Story: use `omitStory` on `StandardStoryTechnicalSection` and expand technical briefing from `plainSummary` + `diagramTopologySummary` + step examination map (`MOD-08` §4.3 / `MOD-12`).
+2. **Overview vs Steps vs Memory Ownership (No Cross-Section Dumps)**:
+   - **Overview (`plainSummary` + Overview tab UI)**: owns whole-scenario Story Analogy + Story-to-Technical Key + high-level technical roadmap only. Never replay every Step’s APIs/handles/hex, and never host Memory forensics (VAD, `SEC_IMAGE`, `MEM_PRIVATE`, PEB offsets, RWX page proofs). The Overview tab must not embed full stage deep-dives, command breakdowns, or Memory block grids — only pointers into Steps/Memory.
+   - **Steps**: own Scenario Briefing `#0` technical expansion (no Story repeat) plus per-stage deep-dives (`storyAnalogy` continuation, `simpleExplanation`, `howItWorksInPractice`, `detectionAndEvidence`) and stage structural conduits.
+   - **Memory**: owns on-disk vs live-RAM forensic contrast when `memoryBlocks` exist (VAD cards, WHY notes, memory timeline).
+   - **Cascading Process Execution Hierarchy** belongs on the dedicated **Process Hierarchy** Inspector tab; **Virtual Address Space (VAD) State Mutation** belongs on the Memory tab. Never leave either block on Overview.
+3. **Stage Separation (`step.storyAnalogy` vs. `step.simpleExplanation`)**:
    - Never copy the opening story sentence into `simpleExplanation` or `howItWorksInPractice`. Instead, refer back to specific story nouns in short quotes (`"official armored bank truck"`, `"secret cargo bay"`).
-3. **Node Inspector Ordering**:
+4. **Node Inspector Ordering**:
    - Dedicated Node Inspector views must render the Plain-English Story Analogy card first and the Technical Forensic Role card directly underneath.
-4. **Language & Character Hygiene**:
+5. **Language & Character Hygiene**:
    - 100% standard technical English (`en-US`) across every scenario file, step guide, and 3D texture. Zero Persian, Arabic, or Japanese characters.
    - Replace literal `(why: ...)` prefixes with natural explanatory parentheticals: `(... so the host firewall treats the traffic as legitimate)`.
    - Inside `/lib/step-guides/*.ts` strings, avoid raw em-dashes (`—`), backticks, and `**bold**` markers (enforced automatically by `lib/scenario-step-guides.test.ts`).
@@ -130,7 +148,7 @@ briefing: {
   storyAnalogy:
     'Imagine <protagonist & goal in a concrete real-world setting>. Instead of <obvious noisy approach>, they <physical action 1>, <physical action 2 explaining what each key prop does>, and <physical action 3>. <Why ordinary guards/checks initially trust it>.',
   plainSummary:
-    'In this scenario (<MITRE ID / CVE, plain meaning>), <attacker actor/IP> targets <victim host + synthetic RFC 1918 IP> by invoking <exact API/vector> (<inline plain-English why>). Next, <exact mechanism 2 with API/protocol/hex flag + per-token inline why> and receives <returned handle/artifact explaining its exact role>. Finally, <objective + primary SIEM/EDR telemetry catch>.',
+    'In this scenario (<MITRE ID / CVE, plain meaning>), <attacker/loader> on <victim host + IP> achieves <high-level objective> inside <trusted host process/service>, so <why the disguise works for AV/allowlisting/network trust>. The attack unfolds in one continuous arc: <readable stage-level beats without API/handle/hex dumps>. Steps #1–#N walk <what each later section examines>; <Memory tab shows why live state diverges from the trusted on-disk image if present>. Primary detection correlates <named SIEM/EDR signals> with <the anomalous trusted-host behavior>.',
 },
 
 // 2. BRIEFING STORY-TO-TECHNICAL KEY (4 or 6 Pairs)
@@ -169,6 +187,21 @@ Before marking any scenario's texts complete, verify every item below:
 - [ ] **Zero Jargon in Story**: Do `briefing.storyAnalogy`, every `steps[i].storyAnalogy`, every `phases[k].storyExcerpt`, and every `callouts[k].title` pass `findTechnicalJargonInStory(text).length === 0`?
 - [ ] **Explicit Story-to-Technical Mappings**: Does every section have 4 or 6 concrete `storyTerm → technicalTerm` pairs where distinct handles/props are mapped separately with their exact purpose?
 - [ ] **Zero Duplication**: Are `briefing.storyAnalogy` and `briefing.plainSummary` 100% distinct (zero repeated sentences between Story and Technical)?
-- [ ] **Per-Token Inline Purpose Parentheticals Everywhere**: Does **every** technical token inside `plainSummary`, `simpleExplanation`, `howItWorksInPractice`, `underTheHood`, and `stages[i].description` immediately include a plain-English parenthetical explaining WHAT it is and WHY it is used (with zero literal `(why:` prefixes)?
+- [ ] **Steps `#0` Does Not Repeat Overview Story**: Does Steps Scenario Briefing use `omitStory` and expand technical detail instead of re-showing Overview Story / Story-to-Technical Key?
+- [ ] **Overview Is Roadmap-Only**: Does `briefing.plainSummary` stay within 350–850 chars (hard max 950), clearly name WHO/WHERE/WHY/MITRE, give a readable one-breath arc, map what Steps (and Memory if present) will cover, and avoid replaying every Step’s APIs/handles/hex?
+- [ ] **Memory Stays in Memory**: Are VAD / `SEC_IMAGE` / `MEM_PRIVATE` / PEB-offset forensic proofs absent from Overview and present only in Memory (and matching Step execution text where needed)?
+- [ ] **Per-Token Inline Purpose Parentheticals in Deep-Dive Blocks**: Does **every** technical token inside `simpleExplanation`, `howItWorksInPractice`, `underTheHood`, and `stages[i].description` immediately include a plain-English parenthetical explaining WHAT it is and WHY it is used (with zero literal `(why:` prefixes)? Overview `plainSummary` is roadmap altitude and is **not** held to Step-level API density.
 - [ ] **3D Animatability Check**: Does every stage's `storyAnalogy` describe concrete physical actions that a bespoke Three.js scene can literally animate without inventing unrelated props?
 - [ ] **CI Tests Passing**: Do `lib/documentation-standards.test.ts`, `lib/scenario-step-guides.test.ts`, `lib/inspector-scope.test.ts`, and `lib/section-3d-registry.test.ts` all pass with zero failures?
+
+---
+
+## 7. Overview Migration Protocol (Inventory → Migrate → Rewrite → Verify)
+
+Use this protocol whenever shortening an existing Overview that still dumps Steps/Memory deep-dive content. **Never delete first.** After a pilot is approved, expand enforcement by adding the next `AttackCategory` to `OVERVIEW_ROADMAP_ENFORCED_CATEGORIES` in `/lib/documentation-standards.ts` (MALWARE first).
+
+1. **Inventory**: List every concrete fact in the current `briefing.plainSummary` (and authored `scenario.overview` if it still carries unique detail) clause-by-clause.
+2. **Compare**: For each fact, mark whether it already exists in Steps `#1..#N`, Memory (`memoryBlocks` / Memory Story-Technical), or nowhere else.
+3. **Migrate**: Move Overview-only facts into the correct owner section (Step deep-dive or Memory). Strengthen weak Step/Memory wording if Overview was the stronger source.
+4. **Rewrite**: Replace Overview with Formula A2 (roadmap only). If a Cascading Process Execution Hierarchy exists, place it on the **Process Hierarchy** tab — never leave it on Overview. Full Inspector shell rules (Stage Filter, sidebar labels, Steps chrome) live in **`MOD-12`**.
+5. **Verify**: Confirm every inventoried fact still appears somewhere; Overview has no Memory forensics dump; Steps still pass per-token clarity; UI tab label is **Overview** (not Overview & Deep-Dive); `MOD-12` checklist passes.

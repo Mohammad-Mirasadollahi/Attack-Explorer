@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a saboteur disguised with a genuine business license (Hermetica Digital Ltd) who wants to demolish a library’s card catalog ($MFT) and front entrance (MBR) so not a single book can ever be found again. Because the library’s operating system guards the master card catalog, the saboteur unpacks a genuine, licensed bulldozer (Signed EaseUS Partition Master Driver empntdrv.sys) from their suitcase, drives it straight into the foundation, shreds the master index with random noise, and pulls the main power plug.',
       plainSummary:
-        'Discovered by ESET and analyzed by SentinelOne and CISA (AA22-057A / MAR-10375867-1) on February 23, 2022, HermeticWiper (FoxBlade) is a destructive wiper deployed by Russia’s GRU Sandworm group against Ukrainian ministries and financial institutions. Signed with a code-signing certificate issued to Hermetica Digital Ltd, the binary carries compressed 32/64-bit copies of the legitimate, Microsoft-signed EaseUS Partition Master kernel driver (empntdrv.sys) in its RCDATA resource section. It loads the driver, disables Volume Shadow Copies and crash dumps, and uses CryptGenRandom to overwrite the Master Boot Record (MBR), partition tables, and NTFS metadata ($MFT, $LogFile, $Bitmap) across \\\\.\\PhysicalDrive0..100 before forcing a reboot.',
+        'In this scenario (T1068, Sandworm HermeticWiper Signed EaseUS Driver (empntdrv.sys) MBR & NTFS $MFT Destruction), the attacker follows one continuous arc: extracting, then disabling Volume Shadow Copy , Crash Dumps, then raw \\\\.\\PhysicalDrive0..100 MBR. Steps #1–#3 examine #1 Extracting; #2 Disabling Volume Shadow Copy , Crash Dumps; #3 Raw \\\\.\\PhysicalDrive0..100 MBR. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 6 with the documented host and network chain.',
       diagramTopologySummary:
         'Sandworm GPO / WMI Deployment -> HermeticWiper (conhost.dll / Hermetica) -> Signed EaseUS Driver (empntdrv.sys) -> PhysicalDrive0 MBR & NTFS $MFT Wiped -> ESET / SentinelOne / CISA MAR Sensor.',
       documentedAdvisory:
@@ -24,7 +24,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Upon execution via Active Directory GPO or WMI, HermeticWiper enabled SeLoadDriverPrivilege, SeBackupPrivilege, and SeShutdownPrivilege in its process token, checked the OS architecture and Windows version, decompressed an MSZIP-compressed resource (DRV_X64 / DRV_XP_X64) from its PE RCDATA section into C:\\Windows\\System32\\drivers\\<2_random_chars>dr.sys (a legitimate, Microsoft-signed copy of empntdrv.sys from EaseUS Partition Master), and loaded it into the kernel.',
         howItWorksInPractice:
-          'Both the outer HermeticWiper executable (signed by Hermetica Digital Ltd until revoked) and the inner empntdrv.sys kernel driver (signed by CHENGDU YIWO Tech Development Co., Ltd.) carried valid Authenticode signatures at the time of the attack.',
+          'Both the outer HermeticWiper executable (signed by Hermetica Digital Ltd until revoked) and the inner empntdrv.sys kernel driver (signed by CHENGDU YIWO Tech Development Co., Ltd.) carried valid Authenticode signatures at the time of the attack. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Sandworm GPO Deployment and HermeticWiper binary to the Signed EaseUS Driver (empntdrv.sys).',
         detectionAndEvidence:
@@ -43,7 +43,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the Signed EaseUS Driver to the ESET / SentinelOne / CISA MAR Sensor as vss and CrashControl are disabled.',
         detectionAndEvidence:
-          'Windows System EventID 7040 (vss service disabled) and Registry EventID 13 (CrashControl\\CrashDumpEnabled set to 0).',
+          'Windows System EventID 7040 (vss service disabled) and Registry EventID 13 (CrashControl\\CrashDumpEnabled set to 0). Preserve the raw event fields and the related containment ticket for forensic replay.',
       },
       {
         stepNumber: 3,
@@ -54,7 +54,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Iterating through \\\\.\\PhysicalDrive0 up to \\\\.\\PhysicalDrive100, HermeticWiper generated cryptographically random bytes via CryptGenRandom and overwrote the Master Boot Record (MBR) (first 512 bytes of sector 0), GPT partition headers, and the mapped physical sector extents of $MFT, $LogFile, and C:\\Users, before invoking ExitWindowsEx(EWX_REBOOT | EWX_FORCE) to immediately reboot the machine into an unrecoverable, unbootable state.',
         howItWorksInPractice:
-          'Because the $MFT (which maps where every file resides on an NTFS volume) and $MFTMirr are overwritten with random bytes from CryptGenRandom, carving or recovering filesystem structure is rendered impossible in seconds without having to overwrite every gigabyte of the disk.',
+          'Because the $MFT (which maps where every file resides on an NTFS volume) and $MFTMirr are overwritten with random bytes from CryptGenRandom, carving or recovering filesystem structure is rendered impossible in seconds without having to overwrite every gigabyte of the disk. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the EaseUS driver and HermeticWiper overwriting PhysicalDrive0 MBR & NTFS $MFT Wiped.',
         detectionAndEvidence:

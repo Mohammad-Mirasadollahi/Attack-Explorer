@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor ETW Microsoft-Windows-Kernel-File and IOCTL telemetry (kernel tracing that records user-mode binaries opening protected device links) for non-Sysinternals processes opening \\Device\\PROCEXP152 and issuing IOCTL 0x8335003C or 0x83350004 (capturing the live privilege abuse handshake).',
+          'Monitor ETW Microsoft-Windows-Kernel-File and IOCTL telemetry (kernel tracing that records user-mode binaries opening protected device links) for non-Sysinternals processes opening \\Device\\PROCEXP152 and issuing IOCTL 0x8335003C or 0x83350004 (capturing the live privilege abuse handshake). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1562.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:

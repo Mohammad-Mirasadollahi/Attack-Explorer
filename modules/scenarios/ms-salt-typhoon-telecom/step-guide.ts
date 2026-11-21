@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a telephone company’s central switching building. Instead of bugging a single office phone, the attacker slips into the core highway router (Cisco IOS XE), enables a hidden Linux maintenance room built right inside the router (Guest Shell), and taps the core fiber backbone (RADIUS / TACACS+ and packet capture pipes) so they can harvest network engineer credentials and silently copy traffic passing through the ISP.',
       plainSummary:
-        'Documented by CISA, FBI, NSA, and Microsoft Threat Intelligence (2024), the Salt Typhoon APT campaign targeted major telecommunications and ISP core networks. Rather than attacking regular office workstations, Salt Typhoon compromised internet-facing edge and core routing appliances (such as Cisco IOS XE routers), abused the router’s built-in Linux container environment ("Guest Shell", a legitimate Linux environment inside the router where processes are invisible to standard router CLI commands) to run persistent implants and SSH tunnels, captured network administrator TACACS+ / RADIUS credentials in transit, and accessed sensitive core routing planes.',
+        'In this scenario (T1014, Microsoft & Kaspersky - Salt Typhoon (GhostEmperor): Demodex Rootkit & Telecom Core Capture) on NOC-WIN-01 (10.30.1), the attacker follows one continuous arc: compromising the Edge Router Web UI, then activating the Router’s Linux "Guest Shell", then sniffing Core TACACS+ / RADIUS Credentials. Steps #1–#3 examine #1 Compromising the Edge Router Web UI; #2 Activating the Router’s Linux "Guest Shell"; #3 Sniffing Core TACACS+ / RADIUS Credentials. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1014 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ①/② (Salt Typhoon Operator & Edge Telecom Router), trace the IOS XE privilege escalation and Linux Guest Shell container activation on Node ③/④ (Core ISP Router & Guest Shell Container), and follow the credential capture and core network pivot to Node ⑤, monitored by Node ⑥ (Telecom SOC / NetFlow & Syslog SIEM).',
       documentedAdvisory: 'Joint CISA/NSA/FBI Telecom Infrastructure Advisory (2024) · Microsoft Salt Typhoon · MITRE T1190 / T1610 / T1040',
@@ -20,13 +20,13 @@ export const stepGuide: RawScenarioStepGuideData = {
         storyAnalogy:
           'The intruder exploits a flaw in the router’s front management web desk (webui_wsma_http) to forge a "Privilege 15 Master Engineer" badge right inside the router’s local user roster.',
         simpleExplanation:
-          'The attacker exploits an exposed management interface or captured configuration credential on a telecom edge router (such as the Cisco IOS XE Web UI / webui_wsma_http endpoint) to execute privileged configuration commands and create a hidden local user account with privilege 15 (in Cisco IOS XE, Privilege Level 15 is the highest "enable" administrative tier, granting unrestricted control over routing tables, packet capture, and system containers).',
+          'From NOC jump host NOC-WIN-01 (10.30.1.10), with stolen data later staged toward C2 203.0.113.195:443, the attacker exploits an exposed management interface or captured configuration credential on a telecom edge router (such as the Cisco IOS XE Web UI / webui_wsma_http endpoint) to execute privileged configuration commands and create a hidden local user account with privilege 15 (in Cisco IOS XE, Privilege Level 15 is the highest "enable" administrative tier, granting unrestricted control over routing tables, packet capture, and system containers).',
         howItWorksInPractice:
           'Creating a local fallback account with username <name> privilege 15 secret <hash> allows the attacker to log directly into the router with full administrative authority whenever local authentication fallback is enabled or by bypassing centralized AAA checks. In the documented Sysmon EID 6 exchange from Salt Typhoon C2 Relay to Perimeter Firewall & NDR Tap, Perimeter Firewall & NDR Tap responds with ACK Event 6 (confirming that the BYOVD DRIVER LOAD request succeeded on Perimeter Firewall & NDR Tap and establishing the runtime state required for Step #2 DEMODEX KERNEL ROOTKIT MINIFILTER & REGISTRY HIDING).',
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ①/② into Node ③ (Telecom Edge/Core Router IOS XE), and return arrow ⇠#1 granting Privilege 15 CLI execution.',
         detectionAndEvidence:
-          'Documented in CISA/Cisco IOS XE advisories: %SYS-5-CONFIG_I: Configured from http by console and unexpected username ... privilege 15 entries in AAA accounting logs.',
+          'Correlate Cisco IOS XE syslog %SYS-5-CONFIG_I: Configured from http by console (which proves a configuration change arrived through the web UI rather than authorized SSH/CLI) with unexpected username ... privilege 15 entries in central AAA accounting logs. Correlate Sysmon or Windows Security Event telemetry for T1068 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ enables iox / guestshell inside Node ④ (Router Linux Guest Shell Container), and ⇠#2 launches the persistent Linux C2 tunnel.',
         detectionAndEvidence:
-          'Documented in CISA Telecom Hardening Guide: IOS XE syslog %IOX-6-GUESTSHELL_ENABLED and unexpected guestshell NAT/VirtualPortGroup interfaces when Guest Shell is not used by operations.',
+          'Alert immediately on Cisco IOS XE syslog %IOX-6-GUESTSHELL_ENABLED (which fires whenever the embedded Linux Guest Shell container starts) and audit configurations for unexpected guestshell NAT or VirtualPortGroup interfaces where operations do not use IOx containers. Correlate Sysmon or Windows Security Event telemetry for T1014 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ captures credentials and pivots from Node ④ into Node ⑤ (Core Telecom Management & Routing Plane), while Node ⑥ (Telecom SIEM) correlates AAA and Guest Shell anomalies.',
         detectionAndEvidence:
-          'Documented in CISA Telecom Advisory: unauthorized monitor capture (EPC) sessions, GRE/IPsec tunnel creation, and TACACS+ logins from router loopback addresses.',
+          'Audit carrier routers for unauthorized monitor capture (Embedded Packet Capture) sessions, unexplained GRE or IPsec tunnel interfaces, and anomalous TACACS+ logins originating from router loopback addresses (CISA Telecom Hardening Guide high-priority indicators). Correlate Sysmon or Windows Security Event telemetry for T1040 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

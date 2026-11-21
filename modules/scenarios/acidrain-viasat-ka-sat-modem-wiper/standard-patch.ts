@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor SATCOM management-plane telemetry for sudden mass TR-069 Download or firmware execution broadcasts (which deviate sharply from staged maintenance waves) paired with embedded host alerts for unsigned ELF binaries executing out of /tmp.',
+          'Monitor SATCOM management-plane telemetry for sudden mass TR-069 Download or firmware execution broadcasts (which deviate sharply from staged maintenance waves) paired with embedded host alerts for unsigned ELF binaries executing out of /tmp. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1199 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Enable embedded Linux syscall auditing (monitoring low-level kernel open and write calls) alerting whenever processes other than signed firmware upgrade daemons open /dev/mtdblock* or /dev/mmcblk* with O_WRONLY or O_RDWR write flags.',
+          'Enable embedded Linux syscall auditing (monitoring low-level kernel open and write calls) alerting whenever processes other than signed firmware upgrade daemons open /dev/mtdblock* or /dev/mmcblk* with O_WRONLY or O_RDWR write flags. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1561.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:

@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a building where normal workers are forbidden from touching the security cameras (Protected Process Light). However, an old master maintenance robot built by the building’s own manufacturer (Sysinternals PROCEXP152.SYS) has a valid master badge and will obey anyone who pushes its buttons (IOCTL 0x8335003C). A burglar wheels the old maintenance robot out of a backpack and orders it to unplug every security camera in the building.',
       plainSummary:
-        'Dissected by Sophos X-Ops and Elastic Security Labs in 2023 across Medusa Locker and LockBit intrusions, AuKill is a C++ Bring Your Own Vulnerable Driver (BYOVD) tool. It drops version 16.32 of Microsoft’s signed Sysinternals Process Explorer kernel driver (PROCEXP152.SYS) into System32\\drivers and issues DeviceIoControl codes 0x8335003C (open protected process handle) and 0x83350004 (close handle) to strip handles and kill PPL-protected EDR/AV services from Ring 0.',
+        'In this scenario (T1543.003, AuKill EDR Killer Abusing Signed Sysinternals PROCEXP152.SYS (BYOVD)), the attacker follows one continuous arc: dropping, then opening \\\\.\\PROCEXP152, then ring-0 Termination of PPL EDR Sensors. Steps #1–#3 examine #1 Dropping; #2 Opening \\\\.\\PROCEXP152; #3 Ring-0 Termination of PPL EDR Sensors. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 6 with the documented host and network chain.',
       diagramTopologySummary:
         'AuKill User-Mode Controller -> SCM Service (PROCEXP152.SYS v16.32) -> DeviceIoControl (0x8335003C / 0004) -> Terminated PPL EDR & AV Services -> Sophos X-Ops / Elastic WDAC Blocklist.',
       documentedAdvisory:
@@ -39,11 +39,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'AuKill opened a file handle to \\\\.\\PROCEXP152 and spawned multiple worker threads that enumerated running processes and handles, invoking DeviceIoControl with IOCTL 0x8335003C (IOCTL_OPEN_PROTECTED_PROCESS_HANDLE, which calls ZwOpenProcess from Ring-0 kernel mode to return a full-access handle to any Protected Process Light PID) and IOCTL 0x83350004 (IOCTL_CLOSE_HANDLE, which forces the kernel to close every active handle held by the target security service).',
         howItWorksInPractice:
-          'Normally, Windows blocks user-mode administrators from opening PROCESS_TERMINATE handles to PsProtectedSignerAntimalware-Light (PPL) processes, but a ZwOpenProcess call originating from a Ring-0 kernel driver (KernelMode previous mode) bypasses PPL checks completely.',
+          'Normally, Windows blocks user-mode administrators from opening PROCESS_TERMINATE handles to PsProtectedSignerAntimalware-Light (PPL) processes, but a ZwOpenProcess call originating from a Ring-0 kernel driver (KernelMode previous mode) bypasses PPL checks completely. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the PROCEXP152.SYS service to the DeviceIoControl (0x8335003C / 0004) dispatch handler and triggers the Sophos X-Ops / Elastic WDAC sensor.',
         detectionAndEvidence:
-          'ETW Microsoft-Windows-Kernel-File events showing non-Sysinternals binaries opening \\Device\\PROCEXP152 and issuing IOCTLs 0x8335003C or 0x83350004.',
+          'Monitor ETW Microsoft-Windows-Kernel-File and IOCTL telemetry (kernel tracing that records user-mode binaries opening protected device links) for non-Sysinternals processes opening \\Device\\PROCEXP152 and issuing IOCTL 0x8335003C or 0x83350004 (capturing the live privilege abuse handshake). Correlate Sysmon or Windows Security Event telemetry for T1562.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the DeviceIoControl handler neutralizing Terminated PPL EDR & AV Services.',
         detectionAndEvidence:
-          'Enabling Microsoft’s Vulnerable Driver Blocklist (SiPolicy.p7b + HVCI) to prevent PROCEXP152.SYS v16.32 from loading in the first place.',
+          'Enabling Microsoft’s Vulnerable Driver Blocklist (SiPolicy.p7b + HVCI) to prevent PROCEXP152.SYS v16.32 from loading in the first place. Correlate Sysmon or Windows Security Event telemetry for T1486 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

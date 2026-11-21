@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In late 2021, threat actors compromised the NPM publishing accounts of the maintainers of ua-parser-js, coa, and rc (foundational transitive JavaScript dependencies pulled automatically by React, Webpack, and millions of Node.js builds). They published poisoned patch versions containing a package.json preinstall lifecycle hook (a script that NPM executes automatically before package installation completes) that ran preinstall.js and compile.bat to download sdd.dll (saved as create.dll) and silently execute the DanaBot banking and password stealer via regsvr32.exe -s.',
+        'In this scenario (T1195.001, NPM High-Impact Package Hijack (ua-parser-js / coa / rc) & DanaBot Stealer), the attacker follows one continuous arc: maintainer Account Takeover, then automatic preinstall Execution, then silent regsvr32.exe -s Execution. Steps #1–#3 examine #1 Maintainer Account Takeover; #2 Automatic preinstall Execution; #3 Silent regsvr32.exe -s Execution. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {

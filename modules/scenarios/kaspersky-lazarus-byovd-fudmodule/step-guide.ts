@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'In the past, attackers who wanted to cut the security cameras inside the Windows kernel had to smuggle an old, flawed third-party security guard (Bring Your Own Vulnerable Driver) into the building, which modern Windows blocklists immediately spot at gate. In this scenario, Lazarus Group found a zero-day flaw (CVE-2024-21338) in a guard who is already hired and pre-installed inside every Windows building (appid.sys, the built-in AppLocker driver). By whispering a forged instruction (IOCTL 0x22A018) to appid.sys, the attacker tricks the driver into flipping their own clearance badge from "Visitor (UserMode = 1)" to "Supreme Kernel Architect (KernelMode = 0)", and then quietly unplugs the EDR security agent’s cameras (Kernel Callbacks & ETW) without turning the EDR light off.',
       plainSummary:
-        'Discovered by Avast and analyzed by Kaspersky and Microsoft (February 2024), this scenario shows how the Lazarus Group upgraded their FudModule rootkit. Previously, attackers had to drop a vulnerable third-party driver onto the system (Bring Your Own Vulnerable Driver, which Microsoft’s Vulnerable Driver Blocklist now blocks). Here, Lazarus exploited a zero-day flaw inside Windows’ own built-in AppLocker driver (appid.sys, CVE-2024-21338, pre-installed and signed by Microsoft on every Windows machine). By sending a crafted IOCTL control code (0x22A018) to appid.sys, the attacker flips their thread’s kernel privilege bit (PreviousMode = 0) and zeroes out the kernel callback tables and ETW sensors that EDR agents rely on.',
+        'Per Avast, Kaspersky, and Microsoft (February 2024, MITRE T1068 and T1562.001), Lazarus FudModule abandons third-party vulnerable drivers and instead abuses built-in AppLocker driver appid.sys (CVE-2024-21338) from a local admin foothold on a Windows host. A crafted kernel IOCTL flips thread privilege, then clears kernel callback tables and threat-intelligence ETW that EDR products depend on. Steps #1 through #3 cover opening the inbox driver, privilege flip via IOCTL, and blinding kernel sensors; the Memory tab shows altered callback arrays. Primary detection correlates appid.sys device traffic with sudden loss of kernel process-create telemetry while user activity continues.',
       diagramTopologySummary:
         'On the diagram: From a local admin/service foothold (Node ①/②), the attacker runs the FudModule DLL on Node ③ (Windows Host). Node ④ (FudModule IOCTL Exploit) targets the built-in Windows driver appid.sys (CVE-2024-21338) to overwrite Node ⑤ (Kernel PspCreateProcessNotifyRoutine & ETW Ti-Sensor), detected via pre-blind telemetry on Node ⑥ (SIEM).',
       documentedAdvisory: 'Avast / Kaspersky Lazarus FudModule Report · Microsoft CVE-2024-21338 · MITRE ATT&CK T1068 / T1562.001',
@@ -22,11 +22,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Because modern Windows blocks untrusted kernel drivers via Driver Signature Enforcement (DSE) and Microsoft’s Vulnerable Driver Blocklist, the attacker does not drop any third-party .sys file onto the disk. Instead, they elevate a user-mode process to LOCAL SERVICE privileges (required because \\Device\\AppId’s access control list only lets LOCAL SERVICE, rather than standard Administrators, open a communication handle to it) and open a device handle to Windows’ own built-in AppLocker driver: C:\\Windows\\System32\\drivers\\appid.sys.',
         howItWorksInPractice:
-          'Abusing a pre-installed inbox Windows driver (appid.sys, Living off the Land in the Kernel) completely sidesteps HVCI / Vulnerable Driver Blocklist checks because appid.sys is an official part of the Windows operating system.',
+          'Abusing a pre-installed inbox Windows driver (appid.sys, Living off the Land in the Kernel) completely sidesteps HVCI / Vulnerable Driver Blocklist checks because appid.sys is an official part of the Windows operating system. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, arrow #1→ shows Node ③ (Userland Service Loader) opening a device handle to Node ④ (appid.sys Kernel Driver), with ⇠#1 returning the valid driver handle.',
         detectionAndEvidence:
-          'Documented in Avast & Microsoft CVE-2024-21338 Analysis: Non-standard service process opening device handle to \\Device\\AppId and issuing IOCTL 0x22A018.',
+          'Monitor kernel handle and IOCTL telemetry (tracking user-mode processes talking to protected OS device links) for any non-standard service opening \\Device\\AppId and issuing IOCTL 0x22A018 (the exact CVE-2024-21338 Lazarus FUDModule trigger). Correlate Sysmon or Windows Security Event telemetry for T1068 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -37,11 +37,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'FudModule calls DeviceIoControl with control code IOCTL 0x22A018 (which invokes the internal function AipSmartHashImageFile inside appid.sys) and passes a crafted structure containing a spoofed function/object pointer (CVE-2024-21338). This tricks the kernel driver into decrementing the attacker thread’s KTHREAD.PreviousMode byte in kernel memory from 1 (UserMode, where Windows blocks the thread from touching kernel RAM) to 0 (KernelMode, telling the Windows kernel to treat every subsequent NtReadVirtualMemory and NtWriteVirtualMemory call from this thread as if it came from the kernel itself, granting unlimited Ring-0 memory read/write).',
         howItWorksInPractice:
-          'When a thread calls NtWriteVirtualMemory, the kernel checks KTHREAD->PreviousMode: if it is 1 (UserMode), the kernel rejects any target address above 0x7FFFFFFEFFFF (protecting kernel space). Once CVE-2024-21338 flips PreviousMode to 0 (KernelMode), the thread can read and overwrite any address in the Windows kernel directly from user mode.',
+          'When a thread calls NtWriteVirtualMemory, the kernel checks KTHREAD->PreviousMode: if it is 1 (UserMode), the kernel rejects any target address above 0x7FFFFFFEFFFF (protecting kernel space). Once CVE-2024-21338 flips PreviousMode to 0 (KernelMode), the thread can read and overwrite any address in the Windows kernel directly from user mode. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, arrow #2→ sends IOCTL 0x22A018 inside Node ④ (appid.sys!AipSmartHashImageFile), and ⇠#2 flips KTHREAD.PreviousMode = 0.',
         detectionAndEvidence:
-          'Documented in Kernel Crash/ETW Telemetry: IOCTL 0x22A018 targeting appid.sys followed by KTHREAD PreviousMode modification.',
+          'Correlate kernel ETW and crash-analysis telemetry (low-level kernel integrity monitoring) flagging IOCTL 0x22A018 dispatched to appid.sys followed immediately by anomalous KTHREAD PreviousMode transitions from 1 to 0. Correlate Sysmon or Windows Security Event telemetry for T1562.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ overwrites Node ⑤ (Kernel Callback Arrays & ETW Handle) from Node ④ while Node ⑥ (SIEM) logs the sudden telemetry heartbeat drop.',
         detectionAndEvidence:
-          'Documented by Kaspersky & Avast: Kernel Patch Protection (PatchGuard) / Defender Kernel Integrity alert on PspCreateProcessNotifyRoutine and EtwThreatIntProvRegHandle tampering.',
+          'Monitor Kernel Patch Protection (PatchGuard) and Defender Kernel Integrity alerts (ring-0 self-protection checks validating kernel callback arrays) for tampering against PspCreateProcessNotifyRoutine and EtwThreatIntProvRegHandle. Correlate Sysmon or Windows Security Event telemetry for T1003.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

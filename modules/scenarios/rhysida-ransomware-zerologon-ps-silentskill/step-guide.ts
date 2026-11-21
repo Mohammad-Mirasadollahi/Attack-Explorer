@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a burglary crew that first props open a secret window in the building’s outer wall (PortStarter), then sends in an advance demolition script (SilentKill / g.ps1) that runs down a checklist of 214 security guards, database clerks, and backup systems, knocking every single one unconscious and unlocking all the interior doors (RestrictedAdmin RDP), before the main vault-locking team (Rhysida) marches through.',
       plainSummary:
-        'Covered in joint CISA/FBI/MS-ISAC Advisory AA23-319A and Sekoia/Cisco Talos intelligence reports linking Rhysida to Vice Society (DEV-0832), Rhysida intrusions follow a disciplined three-phase playbook: (1) deploying PortStarter (a Golang backdoor that adds an inbound Windows Firewall rule via netsh for mTLS C2), (2) executing SilentKill (g.ps1, a PowerShell script that unhooks AMSI, stops 200+ AV/SQL/backup services, and enables RestrictedAdmin RDP), and (3) pushing rhysida.exe via PsExec to encrypt files using LibTomCrypt AES-256-CTR and RSA-4096 (.rhysida + CriticalBreachDetected.pdf).',
+        'In this scenario (T1562.004, Rhysida Ransomware SilentKill PowerShell Preparation, PortStarter & LibTomCrypt AES-CTR (AA23-319A)) on DEV-0832, the attacker follows one continuous arc: portStarter Golang Backdoor, then silentKill PowerShell Script Disabling 200+ Services, then multi-Threaded LibTomCrypt AES-256-CTR Encryption. Steps #1–#3 examine #1 PortStarter Golang Backdoor; #2 SilentKill PowerShell Script Disabling 200+ Services; #3 Multi-Threaded LibTomCrypt AES-256-CTR Encryption. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
       diagramTopologySummary:
         'Rhysida Affiliate (Vice Society Nexus) -> PortStarter Go Backdoor (Firewall Rule) -> SilentKill PowerShell Script (g.ps1) -> LibTomCrypt AES-256-CTR (.rhysida) -> CISA AA23-319A / Sekoia XDR Sensor.',
       documentedAdvisory:
@@ -39,7 +39,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'To prepare the environment for unobstructed encryption, the operator ran SilentKill (g.ps1), which first patched AmsiScanBuffer in amsi.dll memory, iterated through a hardcoded list of over 200 Windows services (Stop-Service -Force targeting Sophos, Symantec, Veeam, SQL Server, Exchange, and shadow copies so database files were unlocked for encryption), and set HKLM\\System\\CurrentControlSet\\Control\\Lsa\\DisableRestrictedAdmin = 0 (enabling RestrictedAdmin RDP mode so the attacker could log into downstream servers via RDP using NTLM password hashes without cleartext passwords).',
         howItWorksInPractice:
-          'Enabling DisableRestrictedAdmin = 0 across the domain allows the operator to Pass-the-Hash over RDP (mstsc.exe /restrictedadmin) without exposing their own cleartext credentials on target hosts.',
+          'Enabling DisableRestrictedAdmin = 0 across the domain allows the operator to Pass-the-Hash over RDP (mstsc.exe /restrictedadmin) without exposing their own cleartext credentials on target hosts. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the PortStarter host to the SilentKill PowerShell Script (g.ps1) and triggers the CISA AA23-319A / Sekoia XDR Sensor.',
         detectionAndEvidence:
@@ -54,7 +54,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Pushed domain-wide via psexec.exe -d -s, the 64-bit MinGW-compiled rhysida.exe binary invoked its statically linked LibTomCrypt v1.18.2 cryptographic library (aes_setup and ctr_start in AES-256-CTR mode paired with a hardcoded 4096-bit RSA public key) to encrypt files across all local drives, appending .rhysida, writing a PDF ransom note (CriticalBreachDetected.pdf), and modifying HKCU\\Control Panel\\Desktop\\Wallpaper to display an extortion warning.',
         howItWorksInPractice:
-          'Unlike most ransomware families that drop .txt or .hta ransom notes, Rhysida generates a standalone .pdf document (CriticalBreachDetected.pdf) in every encrypted directory.',
+          'Unlike most ransomware families that drop .txt or .hta ransom notes, Rhysida generates a standalone .pdf document (CriticalBreachDetected.pdf) in every encrypted directory. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces SilentKill handing off to the LibTomCrypt AES-256-CTR (.rhysida) encryption stage across the enterprise.',
         detectionAndEvidence:

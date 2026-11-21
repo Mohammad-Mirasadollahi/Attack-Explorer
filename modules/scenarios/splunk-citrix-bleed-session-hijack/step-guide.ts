@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine asking a hotel clerk to write your name on six lines of a 1-page welcome form, and then photocopy that page for you. Instead of giving a normal 10-letter name, you hand the clerk a 24,000-letter name (Host: header). The clerk’s 1-page form runs out of space after line 5, so the clerk stops writing, but when they walk over to the photocopier, they tell the machine: "Copy 147,000 letters worth of paper from my desk!" The photocopier copies the 1-page welcome form PLUS the confidential ledger sitting right next to it on the desk, which contains the active VIP room key (NSC_AAAC session cookie) of an administrator who already passed MFA.',
       plainSummary:
-        'Synthesizing Assetnote’s vulnerability root-cause research, CISA/Mandiant Advisory AA23-325A, and Splunk SURGe detection telemetry, "Citrix Bleed" (CVE-2023-4966) is a memory over-read flaw in Citrix NetScaler ADC and Gateway appliances. When an attacker sends an HTTP GET request to the OpenID Connect configuration page with an abnormally long Host header (~24,576 characters), the appliance constructs a JSON response using snprintf() without checking that the buffer overflowed, causing it to dump ~16 KB of raw adjacent server RAM back in the HTTP response. Inside that leaked memory sits the plaintext NSC_AAAC session cookie (the active post-MFA session token of a logged-in user or administrator).',
+        'In this scenario (CVE-2023-4966, Splunk STRT, Mandiant & CISA - Citrix Bleed: NetScaler OOB Memory Leak & NSC_AAAC Hijack), the attacker follows one continuous arc: sending an Oversized HTTP "Host" Header to Leak, then extracting the 65-Character "NSC_AAAC" Cookie, then pivoting from the Hijacked Citrix VDI Desktop. Steps #1–#3 examine #1 Sending an Oversized HTTP "Host" Header to Leak; #2 Extracting the 65-Character "NSC_AAAC" Cookie; #3 Pivoting from the Hijacked Citrix VDI Desktop. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on Suricata telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Node ① (Attacker) sends the oversized Host header request to Node ②/③ (Citrix NetScaler Gateway nsppe). Node ④ (nsppe Memory Buffer & Session Replay) leaks the 65-byte NSC_AAAC token, allowing the attacker to hijack a Virtual Desktop session and pivot via DCOM to Node ⑤ (Internal Domain Server), alerted by Node ⑥ (Splunk SIEM).',
       documentedAdvisory: 'Assetnote CVE-2023-4966 Root-Cause · CISA/Mandiant AA23-325A · Splunk SURGe Citrix Bleed Analysis · MITRE T1539',
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ replays the leaked NSC_AAAC cookie on Node ③/④ (NetScaler Session Engine), and ⇠#2 grants VDI ICA desktop access without MFA.',
         detectionAndEvidence:
-          'Documented in Splunk SURGe & NetScaler AAA Syslog (ns.log): Same NSC_AAAC session identifier active across two different client IP addresses / ASNs without a new authentication event.',
+          'Documented in Splunk SURGe and NetScaler AAA Syslog (ns.log session tracking records): Same NSC_AAAC session identifier active across two different client IP addresses / ASNs without a new authentication event (confirming that a stolen session cookie was replayed from an external host). Correlate Sysmon or Windows Security Event telemetry for T1539 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -52,11 +52,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Inside the hijacked Citrix Virtual Desktop (VDI) session, the attacker runs Active Directory discovery tools (adfind / SoftPerfect netscan), deploys remote management tunnels (AnyDesk / eHorus), and uses Distributed COM (DCOM, invoking the MMC20.Application COM object over RPC port 135, which instructs a remote Windows server to silently launch mmc.exe -Embedding and execute commands via Document.ActiveView.ExecuteShellCommand without creating a noisy new Windows service).',
         howItWorksInPractice:
-          'Unlike PsExec or sc.exe (which register a new Windows Service and trigger System EventID 7045 on the target server), lateral movement via DCOM MMC20.Application abuses an already-registered Microsoft COM class over TCP/135.',
+          'Unlike PsExec or sc.exe (which register a new Windows Service and trigger System EventID 7045 on the target server), lateral movement via DCOM MMC20.Application abuses an already-registered Microsoft COM class over TCP/135. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, arrow #3→ pivots from Node ④ (VDI Session) to Node ⑤ (Internal Server via DCOM :135) while Node ⑥ (Splunk SIEM) correlates the session hijack.',
         detectionAndEvidence:
-          'Documented in CISA AA23-325A & Mandiant: mmc.exe -Embedding spawned on remote servers via DCOM following Citrix ICA session IP change.',
+          'Documented in CISA AA23-325A and Mandiant (post-hijack lateral movement indicators): mmc.exe -Embedding spawned on remote servers via DCOM following Citrix ICA session IP change (linking the hijacked remote session to internal network movement). Correlate Sysmon or Windows Security Event telemetry for T1550.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a modern heist crew that realizes blowing up the bank vault (ransomware encryption) sets off every alarm in the city and forces the bank to rebuild from backups anyway. Instead, they slip in quietly, install a single custom-built periscope (Golang mTLS + SOCKS5 Backdoor) that lets them peer into every room from across the ocean, photocopy every confidential legal and financial contract (rclone), and leave a quiet note on the CEO’s desk without touching a single lock.',
       plainSummary:
-        'Documented in joint CISA/FBI/ASD Advisory AA23-136A and Red Canary / Avast research, BianLian shifted by 2023–2024 to a pure data-exfiltration extortion model, skipping file encryption entirely. Upon breaching an environment via RDP or edge vulnerabilities, BianLian deploys a per-victim compiled Golang backdoor that establishes a mutual TLS (mTLS) session multiplexed with hashicorp/yamux and an internal armon/go-socks5 proxy, enumerates shares with SharpShares, and exfiltrates sensitive data to Mega.io or FTP servers using a renamed rclone.exe binary (Win.exe).',
+        'In this scenario (T1573.002, BianLian Custom Golang mTLS Backdoor, Built-In SOCKS5 & Pure Extortion (AA23-136A)), the attacker follows one continuous arc: deploying Custom Golang mTLS Backdoor with Hardcoded, then in-Memory Yamux Multiplexing, then pure Data-Exfiltration Extortion via Rclone. Steps #1–#3 examine #1 Deploying Custom Golang mTLS Backdoor with Hardcoded; #2 In-Memory Yamux Multiplexing; #3 Pure Data-Exfiltration Extortion via Rclone. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
       diagramTopologySummary:
         'BianLian Extortion C2 & Mega/FTP Drop -> Golang mTLS Backdoor (Windows/Linux) -> Embedded go-socks5 Memory Proxy -> Pure Exfiltration (rclone / SharpShares) -> CISA AA23-136A / Red Canary Sensor.',
       documentedAdvisory:
@@ -54,11 +54,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Skipping file encryption completely (thereby evading all EDR behavioral ransomware sensors that watch for mass file-rename or high-entropy overwrite loops), BianLian staged a renamed copy of rclone.exe (e.g., C:\\ProgramData\\Win.exe) or FileZilla to stream sensitive intellectual property, financial records, and PII to Mega.io cloud storage or attacker FTP servers, leaving behind Look_at_this_file.txt demanding payment to prevent public disclosure.',
         howItWorksInPractice:
-          'Even when rclone.exe is renamed to Win.exe or svchost.exe, its PE version-info header (OriginalFileName: rclone.exe) and Go symbol table remain intact and detectable by YARA/Sysmon.',
+          'Even when rclone.exe is renamed to Win.exe or svchost.exe, its PE version-info header (OriginalFileName: rclone.exe) and Go symbol table remain intact and detectable by YARA/Sysmon. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the go-socks5 proxy and SharpShares discovery into Pure Exfiltration (rclone / SharpShares) out to the BianLian Mega/FTP Drop.',
         detectionAndEvidence:
-          'Sysmon EventID 1 matching OriginalFileName=rclone.exe or command-line flags (copy, --bwlimit, mega:) and egress firewall blocks on *.mega.co.nz.',
+          'Sysmon EventID 1 matching OriginalFileName=rclone.exe or command-line flags (copy, --bwlimit, mega:) and egress firewall blocks on *.mega.co.nz. Preserve the raw event fields and the related containment ticket for forensic replay.',
       },
     ],
   };

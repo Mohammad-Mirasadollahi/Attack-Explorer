@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine 40,000 remote satellite dishes across Europe that all listen to a single central control tower (TR-069 ACS) for automatic software updates. Saboteurs break into the control tower and broadcast a tiny self-destruct program (AcidRain / ukrop) that tells every satellite modem not just to delete its files, but to use a blowtorch (MEMERASE / MEMWRITEOOB IOCTLs) to melt the permanent flash memory chip (/dev/mtd*) holding its startup brain, turning the hardware into a dead brick.',
       plainSummary:
-        'Reverse-engineered by SentinelOne (SentinelLabs) in March 2022 and addressed in joint CISA/NSA/FBI SATCOM advisories, AcidRain (ukrop) is a 32-bit big-endian MIPS ELF wiper deployed by Russian GRU threat actors against Viasat’s KA-SAT network on February 24, 2022. Pushed over the legitimate TR-069 CWMP management channel to over 40,000 SurfBeam2 satellite modems (knocking out Ukrainian communications and 5,800 German wind turbines), AcidRain exhaustively iterates Linux block devices (/dev/sd*, /dev/mmcblk*) and raw Memory Technology Devices (/dev/mtd0..99), issuing MEMUNLOCK, MEMERASE, and MEMWRITEOOB IOCTLs to permanently erase the onboard SPI NOR/NAND flash.',
+        'In this scenario (T1199, AcidRain MIPS ELF Satellite Modem Wiper (/dev/mtd MEMERASE / Viasat KA-SAT)), the attacker follows one continuous arc: management Plane Compromise, then block Device Enumeration, then raw SPI Flash /dev/mtd0..99 Destruction. Steps #1–#3 examine #1 Management Plane Compromise; #2 Block Device Enumeration; #3 Raw SPI Flash /dev/mtd0..99 Destruction. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1199 across the documented kill chain.',
       diagramTopologySummary:
         'Compromised SATCOM TR-069 ACS Server -> KA-SAT SurfBeam2 Modem (ukrop ELF) -> Linux MTD Subsystem (/dev/mtd0..99) -> Bricked SPI NOR/NAND Flash & Turbines -> SentinelOne / Viasat SATCOM Telemetry.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Compromised SATCOM TR-069 ACS Server to the KA-SAT SurfBeam2 Modem (ukrop ELF).',
         detectionAndEvidence:
-          'SATCOM management plane anomaly detection flagging mass TR-069 Download / command pushes and unsigned ELF execution in /tmp.',
+          'Monitor SATCOM management-plane telemetry for sudden mass TR-069 Download or firmware execution broadcasts (which deviate sharply from staged maintenance waves) paired with embedded host alerts for unsigned ELF binaries executing out of /tmp. Correlate Sysmon or Windows Security Event telemetry for T1199 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -43,7 +43,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the SurfBeam2 Modem (ukrop ELF) to the Linux MTD & Block Subsystem and triggers the SentinelOne / Viasat SATCOM Telemetry sensor.',
         detectionAndEvidence:
-          'Embedded Linux syscall monitoring for processes opening /dev/mtdblock* or /dev/mmcblk* with O_WRONLY/O_RDWR outside legitimate firmware upgrade daemons.',
+          'Enable embedded Linux syscall auditing (monitoring low-level kernel open and write calls) alerting whenever processes other than signed firmware upgrade daemons open /dev/mtdblock* or /dev/mmcblk* with O_WRONLY or O_RDWR write flags. Correlate Sysmon or Windows Security Event telemetry for T1561.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the Linux MTD Subsystem (/dev/mtd0..99) executing MEMERASE to leave Bricked SPI NOR/NAND Flash & Turbines.',
         detectionAndEvidence:
-          'Hardware write-protect strapping (WP# pin grounded) on bootloader SPI NOR flash regions so software MEMUNLOCK/MEMERASE IOCTLs are rejected by the flash chip hardware.',
+          'Hardware write-protect strapping (WP# pin grounded) on bootloader SPI NOR flash regions so software MEMUNLOCK/MEMERASE IOCTLs are rejected by the flash chip hardware. Correlate Sysmon or Windows Security Event telemetry for T1495 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

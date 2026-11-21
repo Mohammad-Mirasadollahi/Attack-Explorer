@@ -8,6 +8,7 @@ import {
   getRequiredModulesForTask,
   validateMarkdownDocumentStandard,
   validateScenarioAgainstModularStandards,
+  validateOverviewRoadmapAltitude,
   validateSectionFullClarityStandard,
   validateStoryPropClarity,
   validateTechnicalSectionInlineClarity,
@@ -18,9 +19,9 @@ import {
   resolveInspectorScopeContext,
 } from './inspector-scope';
 
-describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-11)', () => {
-  it('registers all 12 modular standard files (MOD-00 through MOD-11) and verifies each exists on disk and passes MOD-01/MOD-02 validation', () => {
-    assert.equal(DOCUMENTATION_STANDARD_MODULES.length, 12);
+describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-12)', () => {
+  it('registers all 13 modular standard files (MOD-00 through MOD-12) and verifies each exists on disk and passes MOD-01/MOD-02 validation', () => {
+    assert.equal(DOCUMENTATION_STANDARD_MODULES.length, 13);
 
     for (const mod of DOCUMENTATION_STANDARD_MODULES) {
       const fullPath = path.join(process.cwd(), mod.filePath);
@@ -56,6 +57,7 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-11)',
         'MOD-05',
         'MOD-06',
         'MOD-07',
+        'MOD-12',
       ]
     );
 
@@ -73,6 +75,14 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-11)',
     assert.deepEqual(
       interactive3dChain.map((m) => m.id),
       ['MOD-02', 'MOD-03', 'MOD-11', 'MOD-08', 'MOD-09', 'MOD-10', 'MOD-07']
+    );
+
+    const inspectorShellChain = getRequiredModulesForTask(
+      'INSPECTOR_PANEL_SHELL'
+    );
+    assert.deepEqual(
+      inspectorShellChain.map((m) => m.id),
+      ['MOD-11', 'MOD-08', 'MOD-12', 'MOD-07']
     );
   });
 
@@ -228,5 +238,55 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-11)',
         `Sequence #${ex.stepNumber} failed permanent clarity standard:\n${seqCheck.violations.join('\n')}`
       );
     }
+  });
+
+  it('enforces Overview roadmap altitude (MOD-11 Formula A2) and rejects Memory dumps / Step API replays', () => {
+    const deepDiveDump =
+      'In this scenario (MITRE ATT&CK T1055.012), Invoice_Q4.exe calls CreateProcessW with CREATE_SUSPENDED = 0x00000004, receives hProcess = 0x01C4 and hThread = 0x01C8, reads PEB+0x10, calls NtUnmapViewOfSection, VirtualAllocEx with PAGE_EXECUTE_READWRITE = 0x40 creating MEM_PRIVATE RWX over former SEC_IMAGE VAD pages, WriteProcessMemory, SetThreadContext, ResumeThread, then HTTPS C2.';
+    const dumpCheck = validateOverviewRoadmapAltitude(
+      deepDiveDump,
+      'anti-pattern-overview'
+    );
+    assert.equal(
+      dumpCheck.valid,
+      false,
+      `Expected deep-dive Overview dump to fail roadmap altitude, got: ${dumpCheck.violations.join('; ')}`
+    );
+
+    const roadmap =
+      'In this scenario (MITRE ATT&CK T1055.012, Process Hollowing), the attacker uses Invoice_Q4.exe on Victim Laptop WKS-04 (10.10.4.15) to run Cobalt Strike Beacon inside a Microsoft-signed svchost.exe so antivirus and application-allowlisting treat the implant as a trusted Windows service host. The attack unfolds in one continuous arc: start a real svchost.exe paused, empty its legitimate code from RAM, write Beacon into that same process, wake its thread so Beacon runs under the trusted name, then open encrypted HTTPS C2 to 185.220.101.42:443. Steps #1–#4 walk that process and thread mechanics end-to-end; Step #5 covers the outbound C2 beacon and blend-in network profile; the Memory tab shows why the live process no longer matches the signed file on disk. Primary detection correlates Sysmon ProcessCreate, ProcessAccess, and ProcessTampering with bare svchost.exe opening anomalous HTTPS.';
+    const roadmapCheck = validateOverviewRoadmapAltitude(
+      roadmap,
+      'canonical-overview'
+    );
+    assert.equal(
+      roadmapCheck.valid,
+      true,
+      `Expected canonical Overview roadmap to pass: ${roadmapCheck.violations.join('; ')}`
+    );
+
+    const truncatedBulk =
+      'In this scenario (T1558.003, Kerberoasting), the attacker follows one continuous arc: Enumerating SPNs & Requesting an RC4-Downgraded Kerberos TGS Ticket (..., then Offline Hashcat Cracking.... Steps #1–#2 examine #1 Enumerating SPNs...; #2 Offline Hashcat.... Primary detection pivots on correlated host and network telemetry for T1558.003 across the documented kill chain.';
+    const truncatedCheck = validateOverviewRoadmapAltitude(
+      truncatedBulk,
+      'anti-pattern-truncated-bulk'
+    );
+    assert.equal(
+      truncatedCheck.valid,
+      false,
+      'Expected ellipsis truncation + generic detection filler to fail Formula A2 quality gates'
+    );
+
+    const sqlOmitOk =
+      'In this scenario (T1190, PostgreSQL COPY FROM PROGRAM), the attacker follows one continuous arc: escape a quote, run COPY ... FROM PROGRAM, then drop a shared library. Steps #1–#3 examine #1 Quote Escaping; #2 COPY FROM PROGRAM; #3 Shared Library Drop. Primary detection pivots on PostgreSQL logs and Linux auditd execve telemetry correlated across the documented kill chain.';
+    const sqlOmitCheck = validateOverviewRoadmapAltitude(
+      sqlOmitOk,
+      'sql-omit-allowed'
+    );
+    assert.equal(
+      sqlOmitCheck.valid,
+      true,
+      `Expected spaced SQL-style "COPY ... FROM" omit to pass: ${sqlOmitCheck.violations.join('; ')}`
+    );
   });
 });

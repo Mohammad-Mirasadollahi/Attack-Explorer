@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine an army of demolition robots dispatched from a central radio tower (Primary Domain Controller) to tear down every building in a compound. If the first robot to wake up accidentally demolishes the central radio tower itself, none of the remaining buildings will ever receive the demolition signal! So the robot’s first instruction (DsRoleGetPrimaryDomainInformation) is: "Check if I am standing inside the central radio tower. If yes, go to sleep immediately; if no, erase every room and smash the foundation."',
       plainSummary:
-        'Analyzed by ESET, Cisco Talos, and CERT-UA in March–April 2022 during Sandworm attacks against Ukrainian financial and energy organizations (including alongside Industroyer2), CaddyWiper is a compact 9KB C++ destructive wiper often loaded in memory by ArguePatch (a patched version of Hex-Rays IDA Pro’s signed/legitimate win32_remote.exe debugger server). Pushed via Active Directory GPO Scheduled Tasks, CaddyWiper first calls DsRoleGetPrimaryDomainInformation and exits immediately if running on a Primary Domain Controller (DsRole_RolePrimaryDomainController), then recursively zeroes out C:\\Users and drives D:..Z: before wiping disk partition tables on \\\\.\\PhysicalDrive9..0 via IOCTL_DISK_SET_DRIVE_LAYOUT_EX (0x0007C054).',
+        'In this scenario (T1053.005, Sandworm ArguePatch Loader & CaddyWiper Domain-Aware Disk Wiper (T1561.001)), the attacker follows one continuous arc: gPO Mass Deployment, then dsRoleGetPrimaryDomainInformation Check to Spare, then takeOwnership Recursive File Zeroing. Steps #1–#3 examine #1 GPO Mass Deployment; #2 DsRoleGetPrimaryDomainInformation Check to Spare; #3 TakeOwnership Recursive File Zeroing. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
       diagramTopologySummary:
         'Sandworm GPO Scheduled Task Push -> ArguePatch Loader (Patched win32_remote.exe) -> CaddyWiper (DsRole Domain Controller Check) -> IOCTL_DISK_SET_DRIVE_LAYOUT_EX Zeroing -> ESET / Cisco Talos / CERT-UA Sensor.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Sandworm GPO Scheduled Task Push to the ArguePatch Loader (Patched win32_remote.exe).',
         detectionAndEvidence:
-          'Sysmon EventID 1 for win32_remote.exe or caddy.exe spawned by the Task Scheduler (svchost.exe -k netsvcs -p -s Schedule) from C:\\Users\\Public or SYSVOL.',
+          'Sysmon EventID 1 for win32_remote.exe or caddy.exe spawned by the Task Scheduler (svchost.exe -k netsvcs -p -s Schedule) from C:\\Users\\Public or SYSVOL. Preserve the raw event fields and the related containment ticket for forensic replay.',
       },
       {
         stepNumber: 2,

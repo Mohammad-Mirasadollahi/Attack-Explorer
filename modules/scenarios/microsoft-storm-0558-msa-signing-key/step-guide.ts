@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a global hotel chain (Microsoft Cloud) that runs two completely separate divisions: a casual Public Gym (Consumer MSA / Outlook.com) and a classified Diplomatic Embassy Tower (Enterprise Azure AD / Exchange Online). Each division has its own wax signet ring (cryptographic signing key) for stamping visitor passes. One day in 2021, a Public Gym printing machine crashes, and a photo of the trash bin (crash dump) accidentally includes the Public Gym’s wax signet ring (2016 MSA consumer signing key). A spy (Storm-0558) finds that ring in the crash dump and stamps a fake VIP pass claiming to be an Embassy Ambassador. When the spy hands that pass to the Embassy Tower’s mailroom guard (Exchange Online / OWA), the guard carefully checks with a magnifying glass that the wax seal came from a real Microsoft ring, yet forgets to check that a Public Gym ring is never allowed to sign an Embassy Tower pass!',
       plainSummary:
-        'Synthesizing Microsoft Threat Intelligence’s technical post-mortem, Joint CISA/FBI Advisory AA23-193A, and Wiz Research (July–September 2023), China-nexus espionage actor Storm-0558 acquired an inactive 2016 Microsoft Account (MSA) consumer signing private key that had been inadvertently written into a 2021 process crash dump. By exploiting a cross-realm signature validation bug in Outlook Web Access (OWA) and Exchange Online where enterprise relying parties verified token signatures against a shared key store without checking whether the signing key belonged to the consumer (MSA) vs. enterprise (Entra ID) trust realm, Storm-0558 forged access tokens to silently exfiltrate emails from 25 organizations including government agencies.',
+        'In this scenario (T1606.002, Microsoft Threat Intel, Wiz & CISA - Storm-0558: Acquired MSA Consumer Signing Key & Forged OWA/Exchange Online Tokens), the attacker follows one continuous arc: extracting the 2016 MSA Consumer Signing Key, then bypassing Enterprise Realm Isolation in Exchange, then exfiltrating Diplomatic Mailboxes via OWA GetItem. Steps #1–#3 examine #1 Extracting the 2016 MSA Consumer Signing Key; #2 Bypassing Enterprise Realm Isolation in Exchange; #3 Exfiltrating Diplomatic Mailboxes via OWA GetItem. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on Microsoft 365 telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (Storm-0558 Forgery Engine with the 2016 MSA Key), present the forged token to Node ②/③ (Exchange Online / OWA Validator), trace the OWA token exchange (AppId 00000002-0000-0ff1-ce00-000000000000) inside Node ④, and watch the GetItem mailbox collection on Node ⑤ caught by Node ⑥ (Purview MailItemsAccessed & CISA AA23-193A Hunter).',
       documentedAdvisory: 'CISA/FBI Joint Advisory AA23-193A · Microsoft Threat Intelligence Post-Mortem · Wiz Research · MITRE T1606.002',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① (Storm-0558 Forgery Engine) to Node ②/③ (OWA Token Validator), and return arrow ⇠#1 accepting the MSA-signed signature.',
         detectionAndEvidence:
-          'Documented by Microsoft Threat Intel & CISA AA23-193A: Token headers referencing the retired 2016 MSA consumer signing kid presented against enterprise Exchange Online endpoints.',
+          'Inspect OWA and Exchange Online token validation telemetry alongside CISA AA23-193A indicators (forensic guidance on Storm-0558) flagging JWT headers referencing the retired 2016 MSA consumer signing kid presented to enterprise Exchange Online tenants. Correlate Sysmon or Windows Security Event telemetry for T1552.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ exchanges the forged token inside Node ④ (OWA Actor Token Broker), and ⇠#2 issues an active Exchange Online session cookie.',
         detectionAndEvidence:
-          'Documented in CISA AA23-193A: Exchange audit records showing AppId == "00000002-0000-0ff1-ce00-000000000000" with an empty ClientAppId and no corresponding Entra ID SignInLogs entry.',
+          'Audit Exchange Online Unified Audit Logs (central Microsoft 365 activity records) for AppId == "00000002-0000-0ff1-ce00-000000000000" paired with an empty ClientAppId and zero matching Entra ID SignInLogs entries (the exact Storm-0558 token forgery gap). Correlate Sysmon or Windows Security Event telemetry for T1606.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ downloads mailbox items from Node ⑤ (Enterprise Mailboxes) while Node ⑥ (Purview & CISA AA23-193A Hunter) flags the MailItemsAccessed anomaly.',
         detectionAndEvidence:
-          'Documented in CISA AA23-193A: KQL query on OfficeActivity / CloudAppEvents where Operation == "MailItemsAccessed", AppId == "00000002-0000-0ff1-ce00-000000000000", and ClientInfoString contains Action=ViaProxy.',
+          'Run KQL hunting queries across OfficeActivity and CloudAppEvents (Microsoft Purview advanced mailbox audit streams) filtering for Operation == "MailItemsAccessed", AppId == "00000002-0000-0ff1-ce00-000000000000", and ClientInfoString containing Action=ViaProxy (isolating Storm-0558 diplomatic mailbox theft). Correlate Sysmon or Windows Security Event telemetry for T1114.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

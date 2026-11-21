@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Audit carrier routers for unauthorized monitor capture (Embedded Packet Capture) sessions, unexplained GRE or IPsec tunnel interfaces, and anomalous TACACS+ logins originating from router loopback addresses (CISA Telecom Hardening Guide high-priority indicators).',
+          'Audit carrier routers for unauthorized monitor capture (Embedded Packet Capture) sessions, unexplained GRE or IPsec tunnel interfaces, and anomalous TACACS+ logins originating from router loopback addresses (CISA Telecom Hardening Guide high-priority indicators). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1040 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

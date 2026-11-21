@@ -8,7 +8,7 @@
 
 ## 1. Core Principle — Scenario-Adaptive Storytelling (Never Copy-Paste One Structure)
 
-While the **UI container shell** (Story Card → Story-to-Technical Key → Numbered Technical Clauses → Full-Width 3D Stage) is standardized by `MOD-08` and the **cel-shaded visual craft** is standardized by `MOD-09`, **the 3D world, props, layout, and animation choreography MUST be uniquely designed for each scenario's technical nature and story**.
+While the **UI container shell** (Story Card → Story-to-Technical Key → Full-Width 3D Stage → Numbered Technical Clauses) is standardized by `MOD-08` and the **cel-shaded visual craft** is standardized by `MOD-09`, **the 3D world, props, layout, and animation choreography MUST be uniquely designed for each scenario's technical nature and story**.
 
 1. **No Uniform 3D Template Across Scenarios**:
    - Do **not** force every scenario into a vehicle-on-a-road diorama or reuse the Armored Bank Truck outside Process Hollowing.

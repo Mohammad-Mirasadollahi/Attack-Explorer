@@ -15,6 +15,7 @@ export type PersistedCanvasViewMode =
 export type PersistedInspectorTab =
   | 'OVERVIEW'
   | 'STEP_GUIDE'
+  | 'PROCESS_HIERARCHY'
   | 'SEQUENCE'
   | 'MEMORY'
   | 'SIEM_LOGS'
@@ -81,6 +82,7 @@ function isValidInspectorTab(value: unknown): value is PersistedInspectorTab {
   return (
     value === 'OVERVIEW' ||
     value === 'STEP_GUIDE' ||
+    value === 'PROCESS_HIERARCHY' ||
     value === 'SEQUENCE' ||
     value === 'MEMORY' ||
     value === 'SIEM_LOGS' ||

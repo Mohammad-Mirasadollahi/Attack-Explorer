@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Instead of tricking an old maintenance robot, a syndicate sets up a fake hardware company, submits their own custom-built assassin robot to the official city licensing office (WHQL Attestation Signing), gets an official holographic seal stamped onto it, and walks it right into the central nervous system of the building where it erases the phone numbers of every security guard on the emergency call list (PspCreateProcessNotifyRoutine).',
       plainSummary:
-        'Uncovered by Mandiant, CrowdStrike, and Sophos and addressed in Microsoft Security Advisory ADV220005, STONESTOP (user-mode loader) and POORTRY / BURNTCIGAR (kernel-mode rootkit) represent an evolution beyond traditional BYOVD. Rather than exploiting a bug in a legitimate third-party driver, attackers submitted their own purpose-built malicious kernel driver to Microsoft’s Windows Hardware Developer Program (WHQL attestation signing) to obtain a genuine Microsoft signature, using it to zero out kernel telemetry callbacks (PspCreateProcessNotifyRoutine) and strip EPROCESS PPL flags.',
+        'In this scenario (T1553.002, STONESTOP & POORTRY / BURNTCIGAR WHQL-Signed Kernel Callback Wiper), the attacker follows one continuous arc: loading Custom Malicious Driver POORTRY Signed, then authenticated IOCTL Handshake, then ePROCESS Protection Bit Stripping, EDR Termination. Steps #1–#3 examine #1 Loading Custom Malicious Driver POORTRY Signed; #2 Authenticated IOCTL Handshake; #3 EPROCESS Protection Bit Stripping, EDR Termination. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 6 with the documented host and network chain.',
       diagramTopologySummary:
         'STONESTOP User-Mode Loader -> WHQL-Signed POORTRY.sys Driver -> ntoskrnl PspCreateProcessNotifyRoutine -> Blinded Kernel Telemetry & LSASS Dump -> Mandiant / CrowdStrike Falcon Sensor.',
       documentedAdvisory:
@@ -39,7 +39,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Before executing commands, POORTRY required STONESTOP to complete a cryptographic challenge-response handshake over DeviceIoControl (preventing security analysts or competing malware from invoking its IOCTLs without the matching STONESTOP loader). Once authenticated, POORTRY scanned ntoskrnl.exe memory to locate the PspCreateProcessNotifyRoutine, PspCreateThreadNotifyRoutine, and PspLoadImageNotifyRoutine kernel callback arrays and overwrote the registered EDR driver callback pointers with NULL (blinding EDR kernel drivers so the Windows kernel no longer notified them when new processes, threads, or DLLs were created).',
         howItWorksInPractice:
-          'POORTRY also unlinked registry (CmUnRegisterCallback) and object (ObUnRegisterCallbacks) filter callbacks and removed minifilter filesystem callbacks registered by endpoint security sensors.',
+          'POORTRY also unlinked registry (CmUnRegisterCallback) and object (ObUnRegisterCallbacks) filter callbacks and removed minifilter filesystem callbacks registered by endpoint security sensors. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the WHQL-Signed POORTRY.sys Driver to ntoskrnl PspCreateProcessNotifyRoutine and triggers the Mandiant / CrowdStrike Falcon Sensor.',
         detectionAndEvidence:
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the ntoskrnl tampering node to the Blinded Kernel Telemetry & LSASS Dump stage.',
         detectionAndEvidence:
-          'Enabling Windows Credential Guard (Virtualization-Based Security LsaIso.exe) so LSASS secrets reside in VTL1 hypervisor memory unreachable even from Ring-0 VTL0 kernel drivers.',
+          'Enabling Windows Credential Guard (Virtualization-Based Security LsaIso.exe) so LSASS secrets reside in VTL1 hypervisor memory unreachable even from Ring-0 VTL0 kernel drivers. Correlate Sysmon or Windows Security Event telemetry for T1003.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

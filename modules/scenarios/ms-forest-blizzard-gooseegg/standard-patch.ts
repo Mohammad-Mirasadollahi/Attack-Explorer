@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor file integrity and registry auditing for unauthorized edits to mpdw-constraints.js inside DriverStore\\FileRepository paired with anomalous Print Spooler registry key modifications (the exact CVE-2022-38028 GooseEgg staging signature documented by Microsoft).',
+          'Monitor file integrity and registry auditing for unauthorized edits to mpdw-constraints.js inside DriverStore\\FileRepository paired with anomalous Print Spooler registry key modifications (the exact CVE-2022-38028 GooseEgg staging signature documented by Microsoft). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1068 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:

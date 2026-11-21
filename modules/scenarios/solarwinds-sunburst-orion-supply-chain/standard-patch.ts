@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'Rather than editing source code in Git where developers would immediately spot the pull-request diff, APT29 installed a custom C++ service called SUNSPOT on the SolarWinds Orion build server (the automated compilation host that turns source code into shipped releases). SUNSPOT monitored running processes for MsBuild.exe and transiently swapped InventoryManager.cs for milliseconds during compilation so the trojanized SolarWinds.Orion.Core.BusinessLayer.dll received SolarWinds legitimate Authenticode digital signature (the cryptographic seal proving vendor authenticity) before shipping to thousands of enterprise networks.',
+        'In this scenario (T1195.002, SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29)), the attacker follows one continuous arc: sUNSPOT Build-Time Source Injection into MSBuild, then sUNBURST Dormancy, FNV-1a Blocklist Check, then tEARDROP Memory-Only Dropper. Steps #1–#3 examine #1 SUNSPOT Build-Time Source Injection into MSBuild; #2 SUNBURST Dormancy, FNV-1a Blocklist Check; #3 TEARDROP Memory-Only Dropper. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 11 with the documented host and network chain.',
     },
     steps: {
       1: {

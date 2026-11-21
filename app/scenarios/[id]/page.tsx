@@ -213,7 +213,7 @@ export default async function ScenarioLandingPage({
                 ''
               }
               storyMappings={stepGuideData?.briefing?.storyMappings}
-              technicalHeading="Technical Architecture & Forensic Overview"
+              technicalHeading="Technical Overview"
               technicalText={
                 stepGuideData?.briefing?.plainSummary || scenario.overview
               }

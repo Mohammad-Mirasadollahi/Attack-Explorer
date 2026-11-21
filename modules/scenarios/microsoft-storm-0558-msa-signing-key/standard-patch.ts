@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Inspect OWA and Exchange Online token validation telemetry alongside CISA AA23-193A indicators (forensic guidance on Storm-0558) flagging JWT headers referencing the retired 2016 MSA consumer signing kid presented to enterprise Exchange Online tenants.',
+          'Inspect OWA and Exchange Online token validation telemetry alongside CISA AA23-193A indicators (forensic guidance on Storm-0558) flagging JWT headers referencing the retired 2016 MSA consumer signing kid presented to enterprise Exchange Online tenants. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1552.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Audit Exchange Online Unified Audit Logs (central Microsoft 365 activity records) for AppId == "00000002-0000-0ff1-ce00-000000000000" paired with an empty ClientAppId and zero matching Entra ID SignInLogs entries (the exact Storm-0558 token forgery gap).',
+          'Audit Exchange Online Unified Audit Logs (central Microsoft 365 activity records) for AppId == "00000002-0000-0ff1-ce00-000000000000" paired with an empty ClientAppId and zero matching Entra ID SignInLogs entries (the exact Storm-0558 token forgery gap). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1606.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Run KQL hunting queries across OfficeActivity and CloudAppEvents (Microsoft Purview advanced mailbox audit streams) filtering for Operation == "MailItemsAccessed", AppId == "00000002-0000-0ff1-ce00-000000000000", and ClientInfoString containing Action=ViaProxy (isolating Storm-0558 diplomatic mailbox theft).',
+          'Run KQL hunting queries across OfficeActivity and CloudAppEvents (Microsoft Purview advanced mailbox audit streams) filtering for Operation == "MailItemsAccessed", AppId == "00000002-0000-0ff1-ce00-000000000000", and ClientInfoString containing Action=ViaProxy (isolating Storm-0558 diplomatic mailbox theft). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1114.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a fortress gate (a FortiGate firewall) where a burglar uses an oversized battering ram (Heap Overflow in sslvpnd) to slip inside. Once inside, the burglar hooks a tiny invisible coat hanger (ld.so.preload rootkit) onto the fortress’s coat rack so that every time an administrator runs the inspection command (ps or ls) to check if anyone is hiding in the room, the coat hanger intercepts the administrator’s glasses and erases the burglar from their field of view, and even hides a spare copy inside the emergency recovery partition (flatkc) to survive firmware updates.',
       plainSummary:
-        'Documented by the Dutch Military Intelligence and Security Service (MIVD), NCTV, and Fortinet (February 2024), COATHANGER is a stealthy Remote Access Trojan (RAT) designed specifically for Fortinet FortiGate firewalls. After gaining initial entry via a heap buffer overflow in the FortiOS SSL-VPN daemon (sslvpnd, CVE-2022-42475 / CVE-2023-27997), COATHANGER hooks Linux userland libraries via /etc/ld.so.preload (forcing every program on the firewall to load the attacker’s filter library first, so the implant can hide its own files and processes from administrators) and hooks the flatkc boot unpacker so it survives firmware upgrades.',
+        'In this scenario (CVE-2024-21762, NCSC-NL, Talos & Mandiant - China-Nexus APT: FortiOS SSL-VPN & COATHANGER Persistent RAT) at 172.16.5.1, the attacker follows one continuous arc: heap Buffer Overflow in FortiOS sslvpnd, then hooking System Calls via /etc/ld.so.preload to Hide, then patching the flatkc Reboot Binary to Survive FortiOS. Steps #1–#3 examine #1 Heap Buffer Overflow in FortiOS sslvpnd; #2 Hooking System Calls via /etc/ld.so.preload to Hide; #3 Patching the flatkc Reboot Binary to Survive FortiOS. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for CVE-2024-21762 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ① (APT Operator), send the heap-overflow payload to Node ②/③ (FortiGate SSL-VPN /remote/logincheck sslvpnd), trace the /data2 filesystem implant and ld.so.preload system-call hooking inside Node ④ (COATHANGER Rootkit), and follow the hidden C2 channel to Node ⑤ while Node ⑥ (SIEM / Out-of-Band Forensics) detects the sslvpnd crash and preload hook.',
       documentedAdvisory: 'Dutch MIVD / NCTV Technical Report on COATHANGER (Feb 2024) · CVE-2022-42475 & CVE-2023-27997 · MITRE T1574.006',
@@ -20,13 +20,13 @@ export const stepGuide: RawScenarioStepGuideData = {
         storyAnalogy:
           'The attacker sends an HTTPS request to the FortiGate VPN login gate with a falsified Content-Length label, causing the sslvpnd gatekeeper to pour extra bytes past the end of its memory bucket (Heap Overflow) and overwrite its own instruction pointer.',
         simpleExplanation:
-          'The attacker sends a specially crafted HTTPS request with a manipulated Content-Length header or encrypted parameter (enc) to the FortiGate SSL-VPN web endpoint (/remote/logincheck or /remote/hostcheck_validate, public VPN login pages reachable from the internet without prior authentication). This triggers a heap-based buffer overflow inside the sslvpnd daemon (writing attacker-controlled bytes past the end of the allocated heap buffer to overwrite adjacent function pointers in RAM and hijack the CPU into running the attacker’s code).',
+          'Against internet-facing FortiGate WAN self-IP 172.16.5.1, the attacker sends a specially crafted HTTPS request with a manipulated Content-Length header or encrypted parameter (enc) to the FortiGate SSL-VPN web endpoint (/remote/logincheck or /remote/hostcheck_validate, public VPN login pages reachable from the internet without prior authentication). This triggers a heap-based buffer overflow inside the sslvpnd daemon (writing attacker-controlled bytes past the end of the allocated heap buffer to overwrite adjacent function pointers in RAM and hijack the CPU into running the attacker’s code).',
         howItWorksInPractice:
           'In FortiOS, sslvpnd and almost all system utilities are compiled into a single monolithic multi-call binary (/bin/init). By chaining Return-Oriented Programming (ROP) gadgets inside that binary, exploiting sslvpnd gives the attacker immediate code execution inside the underlying Linux OS of the firewall. In the documented FortiOS Crashlog exchange from China-Nexus APT C2 to Perimeter Firewall & NDR Tap, Perimeter Firewall & NDR Tap responds with ACK CVE-2024-21762 (confirming that the SSLVPND SIGSEGV request succeeded on Perimeter Firewall & NDR Tap and establishing the runtime state required for Step #2 COATHANGER PRELOAD.SO ROOTKIT & SMARTCTL HOOK).',
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ① (APT Operator) to Node ②/③ (FortiGate /remote/logincheck sslvpnd), and return arrow ⇠#1 triggering the ROP chain and shell execution.',
         detectionAndEvidence:
-          'Documented in Fortinet FG-IR-22-398 & MIVD Report: Application sslvpnd crashed entries in FortiOS crash logs (diagnose debug crashlog read) and anomalous requests to /remote/logincheck.',
+          'Documented in Fortinet FG-IR-22-398 & MIVD Report: Application sslvpnd crashed entries in FortiOS crash logs (diagnose debug crashlog read) and anomalous requests to /remote/logincheck. Correlate Sysmon or Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ inside Node ④ writes the implant to /data2 and hooks /etc/ld.so.preload, with ⇠#2 intercepting userland libc calls.',
         detectionAndEvidence:
-          'Documented by Dutch MIVD: presence of /etc/ld.so.preload hooks and unauthorized binaries inside /data2/ or /bin/smartctl when inspected via offline disk/memory forensics.',
+          'Perform offline disk and memory forensic triage on suspected FortiGate appliances (bypassing live userland rootkit hooks that conceal active implants) to uncover /etc/ld.so.preload entries and unauthorized binaries inside /data2/ or modified /bin/smartctl. Correlate Sysmon or Windows Security Event telemetry for T1574.006 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ persists across boot inside Node ④ and opens the TLS C2 channel to Node ⑤, while Node ⑥ (SIEM / Out-of-Band NetFlow) detects the undocumented outbound TLS sessions from the firewall’s external interface.',
         detectionAndEvidence:
-          'Documented in MIVD COATHANGER Advisory: outbound TLS traffic initiated by the FortiGate appliance itself to unknown external IPs and modified hashes on /bin/smartctl.',
+          'Monitor perimeter firewalls and upstream taps for unexplained outbound TLS connections initiated directly by the FortiGate appliance itself to unknown external IPs (unusual for perimeter gateways) and verify cryptographic hashes on /bin/smartctl and flash partitions. Correlate Sysmon or Windows Security Event telemetry for T1014 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

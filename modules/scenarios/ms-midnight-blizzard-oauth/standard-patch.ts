@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Analyze Microsoft Entra ID SigninLogs (cloud identity telemetry capturing every authentication attempt, ASN, and MFA claim) for low-volume distributed password sprays rotating across residential proxy ASNs against single-factor legacy or non-production accounts.',
+          'Analyze Microsoft Entra ID SigninLogs (cloud identity telemetry capturing every authentication attempt, ASN, and MFA claim) for low-volume distributed password sprays rotating across residential proxy ASNs against single-factor legacy or non-production accounts. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1110.003 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:

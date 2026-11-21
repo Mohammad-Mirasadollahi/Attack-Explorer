@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a ghost etched directly into the silicon blueprint of a building’s foundation (SPI Flash Chip). Even if the owner bulldozes the interior walls and installs a brand-new hard drive and operating system, the moment the main power breaker is flipped on, the ghost whispers to the foundation controller (CSMCORE), who whispers to the elevator operator (bootmgfw.efi), who whispers to the floor manager (winload.efi), who finally slips a mind-control chip into the building director (ntoskrnl.exe) before the director even opens their eyes.',
       plainSummary:
-        'Detailed by Kaspersky GReAT in July 2022, CosmicStrand is an advanced China-nexus UEFI firmware rootkit residing inside the physical SPI NOR flash chip of ASUS and Gigabyte H81 motherboards. Because it lives in motherboard firmware rather than on the hard drive, it survives full disk formatting and drive replacement. On every boot, its patched CSMCORE DXE driver hooks HandleProtocol to propagate a fileless in-memory hook chain through bootmgfw.efi and winload.efi directly into ntoskrnl.exe, disabling Kernel Patch Protection (PatchGuard) and deploying a Ring-0 implant.',
+        'In this scenario (T1542.001, CosmicStrand Motherboard SPI Flash UEFI Rootkit (CSMCORE -> ntoskrnl.exe Chain)), the attacker follows one continuous arc: motherboard SPI Flash Infection of CSMCORE DXE, then multi-Hop Boot Hooking Relay, then patchGuard Neutralization, ntoskrnl.exe. Steps #1–#3 examine #1 Motherboard SPI Flash Infection of CSMCORE DXE; #2 Multi-Hop Boot Hooking Relay; #3 PatchGuard Neutralization, ntoskrnl.exe. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on EDR kernel integrity scan) detecting inline telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'Motherboard SPI Flash (CSMCORE DXE) -> Boot Chain (bootmgfw -> winload.efi) -> Patched ntoskrnl.exe & Kernel Implant -> CosmicStrand C2 Server -> Kaspersky GReAT Firmware Scanner.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Motherboard SPI Flash (CSMCORE DXE) to the Boot Chain (bootmgfw -> winload.efi) as HandleProtocol is hooked.',
         detectionAndEvidence:
-          'Dumping the SPI flash ROM via CHIPSEC or UEFI firmware scanners and detecting modifications to the CSMCORE DXE module entry point and .reloc section.',
+          'Dump the motherboard SPI flash ROM using CHIPSEC or dedicated UEFI firmware scanners (hardware-level inspection tools that read flash memory directly) and flag unexpected modifications to the CSMCORE DXE module entry point or .reloc section. Correlate Sysmon or Windows Security Event telemetry for T1542.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -43,7 +43,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the Boot Chain (bootmgfw -> winload.efi) to the Kaspersky GReAT Firmware Scanner and into the Windows Kernel handoff.',
         detectionAndEvidence:
-          'Pre-OS boot integrity verification and kernel memory scanning comparing in-RAM .text sections of ntoskrnl.exe against the clean on-disk PE image.',
+          'Perform pre-OS boot integrity verification and live kernel memory scanning comparing the in-RAM .text code sections of ntoskrnl.exe against the clean on-disk PE binary (exposing unauthorized pre-boot inline hooks injected before the kernel started). Correlate Sysmon or Windows Security Event telemetry for T1542.003 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,

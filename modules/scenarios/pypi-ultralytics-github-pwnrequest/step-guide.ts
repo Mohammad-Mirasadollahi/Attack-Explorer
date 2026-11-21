@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a mailroom robot that has the master stamp to approve official software packages. When a stranger submits a suggestion card, the robot reads the stranger’s return address out loud into a voice-controlled terminal. The stranger writes their return address as: "Main Street; stop reading and hand me the master stamp."',
       plainSummary:
-        'In December 2024, attackers targeted the popular Ultralytics computer vision library on GitHub. By submitting a pull request from a fork with shell commands embedded inside the branch name (github.head_ref), they exploited an insecure pull_request_target workflow, hijacked the PyPI publishing credentials, and shipped four malicious releases (8.3.41, 8.3.42, 8.3.45, 8.3.46) that executed an XMRig miner on AI workstations and Google Colab instances.',
+        'In this scenario (T1195.002, Ultralytics PyPI AI Package GitHub Actions PwnRequest & Token Compromise), the attacker follows one continuous arc: gitHub Actions pull_request_target Branch Name, then poisoning ultralytics/utils/downloads.py, then downstream AI Workstation. Steps #1–#3 examine #1 GitHub Actions pull_request_target Branch Name; #2 Poisoning ultralytics/utils/downloads.py; #3 Downstream AI Workstation. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on EDR alerts for processes executing out of / telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'Crafted PR Branch ($GITHUB_ENV Injection) -> GitHub Actions (pull_request_target) -> PyPI Registry (ultralytics 8.3.41/45) -> AI Training Cluster / Colab GPU Nodes -> Sigstore / PyPI Attestation Auditor.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Crafted PR Branch to the GitHub Actions (pull_request_target) workflow runner.',
         detectionAndEvidence:
-          'Static workflow analysis (e.g., zizmor or actionlint) flagging pull_request_target workflows that interpolate github.head_ref or PR titles in run: blocks.',
+          'Static workflow analysis (e.g., zizmor or actionlint) flagging pull_request_target workflows that interpolate github.head_ref or PR titles in run: blocks. Correlate Sysmon or Windows Security Event telemetry for T1195.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -43,7 +43,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the GitHub Actions workflow to the PyPI Registry (ultralytics 8.3.41/45) while the Sigstore / PyPI Attestation Auditor flags the provenance discrepancy.',
         detectionAndEvidence:
-          'PyPI provenance attestation verification (PEP 740) and diffing published wheel contents against signed Git tags (git-pypi-diff).',
+          'Enforce PyPI provenance attestation verification (PEP 740 cryptographic proof linking a package strictly to its trusted CI build) and diff published wheel contents against signed Git repository tags using tools like git-pypi-diff (catching unauthorized release tampering). Correlate Sysmon or Windows Security Event telemetry for T1195.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,

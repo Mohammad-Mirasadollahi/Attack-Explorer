@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor kernel handle and IOCTL telemetry (tracking user-mode processes talking to protected OS device links) for any non-standard service opening \\Device\\AppId and issuing IOCTL 0x22A018 (the exact CVE-2024-21338 Lazarus FUDModule trigger).',
+          'Monitor kernel handle and IOCTL telemetry (tracking user-mode processes talking to protected OS device links) for any non-standard service opening \\Device\\AppId and issuing IOCTL 0x22A018 (the exact CVE-2024-21338 Lazarus FUDModule trigger). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1068 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Correlate kernel ETW and crash-analysis telemetry (low-level kernel integrity monitoring) flagging IOCTL 0x22A018 dispatched to appid.sys followed immediately by anomalous KTHREAD PreviousMode transitions from 1 to 0.',
+          'Correlate kernel ETW and crash-analysis telemetry (low-level kernel integrity monitoring) flagging IOCTL 0x22A018 dispatched to appid.sys followed immediately by anomalous KTHREAD PreviousMode transitions from 1 to 0. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1562.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor Kernel Patch Protection (PatchGuard) and Defender Kernel Integrity alerts (ring-0 self-protection checks validating kernel callback arrays) for tampering against PspCreateProcessNotifyRoutine and EtwThreatIntProvRegHandle.',
+          'Monitor Kernel Patch Protection (PatchGuard) and Defender Kernel Integrity alerts (ring-0 self-protection checks validating kernel callback arrays) for tampering against PspCreateProcessNotifyRoutine and EtwThreatIntProvRegHandle. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1003.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

@@ -1,5 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import {
+  readFloatingHoverInspectorSource,
+  readInspectorSources,
+} from './read-inspector-sources';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
 import {
   buildInspectorMiniMapModel,
@@ -760,15 +764,7 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
   it('FloatingHoverInspectorTrigger removes the redundant Main Page button, uses diagramScope, and bounds summary height with vertical scroll so Open Main Scenario Page / Open Dedicated Section Page is always visible', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
-    const inspectorSrc = fs.readFileSync(
-      path.join(process.cwd(), 'components/InspectorPanel.tsx'),
-      'utf8'
-    );
-
-    const triggerSection = inspectorSrc.slice(
-      inspectorSrc.indexOf('export function FloatingHoverInspectorTrigger'),
-      inspectorSrc.indexOf('export function InspectorPanel')
-    );
+    const triggerSection = readFloatingHoverInspectorSource();
 
     assert.equal(
       triggerSection.includes('hover-card-open-main-page-btn'),
@@ -814,10 +810,7 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
       path.join(process.cwd(), 'components/AttackLibrary.tsx'),
       'utf8'
     );
-    const inspectorSrc = fs.readFileSync(
-      path.join(process.cwd(), 'components/InspectorPanel.tsx'),
-      'utf8'
-    );
+    const inspectorSrc = readInspectorSources();
 
     // 1. AttackSidebar removes redundant [ All | Malware | DFIR | AD/Net ] bar & defaults categories to collapsed
     assert.equal(
@@ -1138,7 +1131,7 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
     );
   });
 
-  it('keeps Main Page Story-to-Spec Analogy strictly distinct from Technical Architecture & Forensic Overview (no duplicate text)', async () => {
+  it('keeps Main Page Story-to-Spec Analogy strictly distinct from Technical Overview (no duplicate text)', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const { getRawScenarioStepGuide } = await import('./scenario-step-guides');
@@ -1169,19 +1162,152 @@ describe('Inspector Scope Context & Scoped Models (MAIN_SCENARIO, EXPANDED_NODE,
       assert.notEqual(
         mainScope.scopedStoryAnalogy.trim(),
         rawGuide!.briefing.plainSummary.trim(),
-        `Scenario ${sc.id} Story Analogy must never equal Technical Architecture & Forensic Overview`
+        `Scenario ${sc.id} Story Analogy must never equal Technical Overview`
       );
     }
 
-    const inspectorSrc = fs.readFileSync(
-      path.join(process.cwd(), 'components/InspectorPanel.tsx'),
-      'utf8'
-    );
+    const inspectorSrc = readInspectorSources();
     assert.equal(
       inspectorSrc.includes('rawBriefingGuide?.briefing.storyAnalogy') &&
         inspectorSrc.includes('rawBriefingGuide?.briefing.plainSummary'),
       true,
       'InspectorPanel Main Page must pass rawBriefingGuide.briefing.storyAnalogy and rawBriefingGuide.briefing.plainSummary separately'
+    );
+  });
+
+  it('keeps Cascading Process on Process Hierarchy tab and VAD State Mutation on Memory — never on Overview', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const inspectorSrc = readInspectorSources();
+    const shellSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/inspector/InspectorPanel.tsx'),
+      'utf8'
+    );
+    const overviewSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/inspector/tabs/OverviewTab.tsx'),
+      'utf8'
+    );
+    const hierarchySrc = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        'components/inspector/tabs/ProcessHierarchyTab.tsx'
+      ),
+      'utf8'
+    );
+    const memorySrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/inspector/tabs/MemoryTab.tsx'),
+      'utf8'
+    );
+    const stepsTabSrc = fs.readFileSync(
+      path.join(process.cwd(), 'components/inspector/tabs/StepsTab.tsx'),
+      'utf8'
+    );
+
+    assert.equal(
+      overviewSrc.includes('<InspectorContextMiniMap') ||
+        overviewSrc.includes('InspectorContextMiniMap'),
+      false,
+      'OVERVIEW tab must not render InspectorContextMiniMap (Cascading Process / VAD belong elsewhere)'
+    );
+
+    assert.equal(
+      inspectorSrc.includes("id: 'PROCESS_HIERARCHY'") &&
+        inspectorSrc.includes('inspector-tab-process-hierarchy') &&
+        shellSrc.includes("resolvedActiveTab === 'PROCESS_HIERARCHY'"),
+      true,
+      'Inspector sidebar must expose a dedicated PROCESS_HIERARCHY tab'
+    );
+
+    assert.equal(
+      hierarchySrc.includes('cascadingProcess: true') &&
+        hierarchySrc.includes('cascadingProcessEmbedded: true') &&
+        hierarchySrc.includes('stateTransformation: false'),
+      true,
+      'PROCESS_HIERARCHY tab must render Cascading Process embedded in one card (not VAD)'
+    );
+
+    assert.equal(
+      stepsTabSrc.includes('<InspectorContextMiniMap') ||
+        stepsTabSrc.includes('InspectorContextMiniMap'),
+      false,
+      'STEP_GUIDE must not mount InspectorContextMiniMap (Cascading Process belongs on Process Hierarchy)'
+    );
+    assert.ok(
+      stepsTabSrc.includes('onOpenProcessHierarchy'),
+      'STEP_GUIDE must offer a Process Hierarchy handoff when cascade data exists'
+    );
+
+    const { readStepGuideSources } = await import('./read-step-guide-sources');
+    const stepGuideSrc = readStepGuideSources();
+    assert.equal(
+      stepGuideSrc.includes('Active Parent ──▶ Child Process Waterfall'),
+      false,
+      'Steps must not embed the Cascading Process waterfall — Process Hierarchy owns it'
+    );
+    assert.ok(
+      stepGuideSrc.includes('Open Process Hierarchy'),
+      'Steps must point readers to Process Hierarchy when cascade data exists'
+    );
+    assert.ok(
+      /omitStory[\s\S]{0,400}technicalHeading="1\. Scenario Briefing/.test(
+        stepGuideSrc
+      ) ||
+        /Scenario Briefing · Technical Deep-Dive[\s\S]{0,200}omitStory/.test(
+          stepGuideSrc
+        ),
+      'Steps #0 Scenario Briefing must omit Overview Story Analogy and expand technical detail'
+    );
+    assert.equal(
+      /storyHeading="1\. Real-World Story Analogy:"[\s\S]{0,120}storyAnalogy=\{briefing\.storyAnalogy\}/.test(
+        stepGuideSrc
+      ),
+      false,
+      'Steps #0 must not re-render Overview Real-World Story Analogy'
+    );
+
+    assert.equal(
+      memorySrc.includes('cascadingProcess: false') &&
+        memorySrc.includes('stateTransformation: true'),
+      true,
+      'MEMORY tab must enable VAD State Transformation and disable Cascading Process'
+    );
+    assert.equal(
+      inspectorSrc.includes('inspector-overview-memory-callout'),
+      false,
+      'OVERVIEW must not render a Memory forensics callout card'
+    );
+    assert.ok(
+      /resolvedActiveTab !== 'OVERVIEW'[\s\S]{0,120}resolvedActiveTab !== 'STEP_GUIDE'[\s\S]{0,120}resolvedActiveTab !== 'PROCESS_HIERARCHY'[\s\S]{0,200}InspectorStageFilter/.test(
+        shellSrc
+      ),
+      'Stage Filter standalone strip must not render on OVERVIEW, STEP_GUIDE, or PROCESS_HIERARCHY'
+    );
+    const stepsTabSrcMerged = fs.readFileSync(
+      path.join(process.cwd(), 'components/inspector/tabs/StepsTab.tsx'),
+      'utf8'
+    );
+    assert.ok(
+      stepsTabSrcMerged.includes('inspector-steps-merged-shell'),
+      'Steps tab must use a single merged shell card'
+    );
+
+    const modelSrc = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        'components/inspector/useInspectorPanelModel.tsx'
+      ),
+      'utf8'
+    );
+    assert.equal(
+      /label:\s*[`'"][^`'"]*\(\$\{/.test(modelSrc) ||
+        /label:\s*`[^`]*\$\{[^}]+\}[^`]*`/.test(modelSrc),
+      false,
+      'MOD-12: sidebar tab labels must not interpolate (N) count suffixes'
+    );
+    assert.ok(
+      modelSrc.includes("label: 'Memory'") &&
+        modelSrc.includes("label: 'SIEM Logs'"),
+      'MOD-12: Memory and SIEM Logs sidebar labels must be bare names'
     );
   });
 });

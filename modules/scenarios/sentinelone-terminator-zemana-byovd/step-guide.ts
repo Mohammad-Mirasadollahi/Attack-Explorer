@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine an armored security van (zam64.sys) that promises it will only take orders from people whose names are written on its VIP clipboard. However, the van has a public window (IOCTL 0x80002010) where any stranger on the street can walk up and say, "Please write my name on the VIP clipboard!" Once their name is on the clipboard, the stranger uses the van’s roof cannon (IOCTL 0x80002048) to blast every police car on the block.',
       plainSummary:
-        'Marketed on Russian cybercrime forums in May 2023 for $3,000 as a zero-day EDR bypass and rapidly reverse-engineered by SentinelOne and CrowdStrike, "Terminator" is a BYOVD wrapper abusing zam64.sys (a legitimate, Microsoft-signed kernel driver from Zemana AntiMalware vulnerable to CVE-2021-31728). Terminator drops zam64.sys under a random filename, calls DeviceIoControl with 0x80002010 to add its own PID to the driver’s internal trusted process list, and then loops 0x80002048 (ZwTerminateProcess) to kill processes belonging to 24 security vendors.',
+        'In this scenario (T1068, Terminator EDR Killer Abusing Signed Zemana AntiMalware Driver (zam64.sys / CVE-2021-31728)), the attacker follows one continuous arc: dropping Randomized Signed Zemana Driver, then self-Allowlisting Caller PID via Unauthenticated, then continuous Ring-0 Termination Loop via IOCTL. Steps #1–#3 examine #1 Dropping Randomized Signed Zemana Driver; #2 Self-Allowlisting Caller PID via Unauthenticated; #3 Continuous Ring-0 Termination Loop via IOCTL. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 6 with the documented host and network chain.',
       diagramTopologySummary:
         'Terminator.exe User-Mode Binary -> Signed Zemana Driver (zam64.sys) -> IOCTL 0x80002010 Allowlist Bypass -> IOCTL 0x80002048 Ring-0 Process Kill -> SentinelOne / CrowdStrike Behavioral IOA.',
       documentedAdvisory:
@@ -24,11 +24,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'When executed with administrator privileges, Terminator.exe wrote an embedded copy of zam64.sys (a kernel driver validly signed by Zemana Ltd. and countersigned by Microsoft) into C:\\Windows\\System32\\drivers\\ using a randomly generated 5-to-10 character .sys filename (evading naive detection rules that only check if the file path ends in zam64.sys) and started the kernel service via the Service Control Manager.',
         howItWorksInPractice:
-          'Regardless of the randomized .sys filename on disk, the driver’s DriverEntry routine always creates the fixed device symbolic link \\\\.\\ZemanaAntiMalware (or \\\\.\\B94B8021-5217-4091-96E5-6353272B9429).',
+          'Regardless of the randomized .sys filename on disk, the driver’s DriverEntry routine always creates the fixed device symbolic link \\\\.\\ZemanaAntiMalware (or \\\\.\\B94B8021-5217-4091-96E5-6353272B9429). Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Terminator.exe User-Mode Binary to the Signed Zemana Driver (zam64.sys) as the randomized service is loaded.',
         detectionAndEvidence:
-          'Sysmon EventID 6 matching the SHA-256 hash, PE OriginalFileName (zam64.sys / zamguard64.sys), or Zemana Ltd. certificate thumbprint regardless of filename.',
+          'Sysmon EventID 6 matching the SHA-256 hash, PE OriginalFileName (zam64.sys / zamguard64.sys), or Zemana Ltd. certificate thumbprint regardless of filename. Preserve the raw event fields and the related containment ticket for forensic replay.',
       },
       {
         stepNumber: 2,
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the Allowlist Bypass node invoking IOCTL 0x80002048 Ring-0 Process Kill against endpoint security agents.',
         detectionAndEvidence:
-          'Pre-execution blocking of zam64.sys via Microsoft Vulnerable Driver Blocklist and EDR driver-load prevention policies.',
+          'Enforce pre-execution blocking of zam64.sys via the Microsoft Vulnerable Driver Blocklist and HVCI driver-load policies (which reject known vulnerable driver hashes inside the kernel loader before any IOCTL device link can be created). Correlate Sysmon or Windows Security Event telemetry for T1562.001 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

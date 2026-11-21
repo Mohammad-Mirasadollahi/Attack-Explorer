@@ -17,11 +17,11 @@ import { getRawScenarioStepGuide } from './scenario-step-guides';
 const JAPANESE_CHAR_REGEX = /[\u3040-\u30FF\u4E00-\u9FFF¥]/;
 
 describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
-  it('enforces the canonical Story -> Technical -> Interactive 3D Stage standard contract', () => {
+  it('enforces the canonical Story -> Interactive 3D Stage -> Technical standard contract', async () => {
     assert.deepEqual(ANIME_3D_STAGE_STANDARD.sectionOrder, [
       'STORY_ANALOGY',
-      'TECHNICAL_EXPLANATION',
       'INTERACTIVE_3D_STAGE',
+      'TECHNICAL_EXPLANATION',
     ]);
     assert.deepEqual(ANIME_3D_STAGE_STANDARD.speedMultipliers, [0.5, 1, 1.5]);
     assert.deepEqual(ANIME_3D_STAGE_STANDARD.cutawayModes, [
@@ -41,6 +41,27 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
     );
     assert.ok(
       ANIME_3D_STAGE_STANDARD.bottomDockFeatures.includes('CAMERA_PRESETS')
+    );
+
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const sectionSrc = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        'components/StandardStoryTechnicalSection.tsx'
+      ),
+      'utf8'
+    );
+    const filmIdx = sectionSrc.indexOf('<ScenarioSection3DEmbed');
+    const technicalIdx = sectionSrc.indexOf('data-testid={technicalTestId}');
+    assert.ok(filmIdx > 0, 'StandardStoryTechnicalSection must mount the 3D film');
+    assert.ok(
+      technicalIdx > filmIdx,
+      'MOD-08: Technical clauses must render below the 3D film in StandardStoryTechnicalSection'
+    );
+    assert.ok(
+      sectionSrc.includes('omitStory'),
+      'StandardStoryTechnicalSection must support omitStory for Steps #0'
     );
   });
 

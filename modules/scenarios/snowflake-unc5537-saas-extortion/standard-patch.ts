@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Query SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY (the warehouse immutable sign-in audit table) for sessions where FIRST_AUTHENTICATION_FACTOR = PASSWORD and SECOND_AUTHENTICATION_FACTOR IS NULL originating from Mullvad VPN or commercial proxy IP ranges (pinpointing UNC5537 single-factor credential replay).',
+          'Query SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY (the warehouse immutable sign-in audit table) for sessions where FIRST_AUTHENTICATION_FACTOR = PASSWORD and SECOND_AUTHENTICATION_FACTOR IS NULL originating from Mullvad VPN or commercial proxy IP ranges (pinpointing UNC5537 single-factor credential replay). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1078.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Inspect CLIENT_ENVIRONMENT metadata inside SNOWFLAKE.ACCOUNT_USAGE.SESSIONS (which records exact client software identifiers for every authenticated connection) for "APPLICATION": "Rapeflake" or "DBeaver_DBeaverUltimate" (high-confidence UNC5537 tooling signatures).',
+          'Inspect CLIENT_ENVIRONMENT metadata inside SNOWFLAKE.ACCOUNT_USAGE.SESSIONS (which records exact client software identifiers for every authenticated connection) for "APPLICATION": "Rapeflake" or "DBeaver_DBeaverUltimate" (high-confidence UNC5537 tooling signatures). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1087.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Alert on SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY (which logs every executed SQL statement and data volume) where QUERY_TYPE IN (COPY, GET) exhibits anomalous spikes in BYTES_WRITTEN_TO_RESULT from DBeaver_DBeaverUltimate sessions (catching bulk data staging and exfiltration).',
+          'Alert on SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY (which logs every executed SQL statement and data volume) where QUERY_TYPE IN (COPY, GET) exhibits anomalous spikes in BYTES_WRITTEN_TO_RESULT from DBeaver_DBeaverUltimate sessions (catching bulk data staging and exfiltration). Correlate Sysmon Event 1 and Windows Security Event telemetry for T1530 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

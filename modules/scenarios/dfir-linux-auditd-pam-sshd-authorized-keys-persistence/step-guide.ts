@@ -1,0 +1,132 @@
+import type { RawScenarioStepGuideData } from '@/modules/scenarios/contracts';
+
+export const stepGuide: RawScenarioStepGuideData = {
+      scenarioId: 'dfir-linux-auditd-pam-sshd-authorized-keys-persistence',
+      briefing: {
+          headline: 'Scenario Briefing: Official DFIR & Log Forensics Guide for Red Hat, CISA & MITRE DFIR, Linux auditd SSH authorized_keys & PAM Module Persistence Forensics',
+          storyAnalogy: 'Imagine a Linux vault protected by two distinct door-check systems: a personal spare-key ring hanging inside each employee locker and a central badge-verification office handling every login attempt. An intruder quietly slips their own public key onto an employee spare-key ring and attempts to swap a rigged verification module into the central badge office, while kernel file watches, package integrity seals, and login fingerprint logs stitch together an airtight attribution trail.',
+          storyMappings: [
+              {
+                  storyTerm: 'Slipping a spare key onto an employee personal key ring',
+                  technicalTerm: 'Appending attacker key to ~/.ssh/authorized_keys caught by Linux auditd file-watch rules',
+                  tone: 'amber',
+                },
+              {
+                  storyTerm: 'Swapping a rigged module into the central badge-verification office',
+                  technicalTerm: 'Trojanized PAM shared object in /lib64/security/ exposed by rpm -Va / debsums verification',
+                  tone: 'sky',
+                },
+              {
+                  storyTerm: 'Door log stamping the exact key fingerprint on every entry',
+                  technicalTerm: '/var/log/secure Accepted publickey SHA256 fingerprint correlation',
+                  tone: 'rose',
+                },
+              {
+                  storyTerm: 'Kernel watchman monitoring both spare rings and central locks',
+                  technicalTerm: 'auditd -w rules watching ~/.ssh/authorized_keys and /lib64/security/',
+                  tone: 'emerald',
+                },
+            ],
+          plainSummary: 'In this scenario (T1098.004, Red Hat, CISA & MITRE DFIR - Linux auditd SSH authorized_keys & PAM Module Persistence Forensics), the attacker follows one continuous arc: linux Auditd File-Watch Trigger on, then pAM Shared Library Modification Detection in, then correlating /var/log/secure Accepted publickey. Steps #1–#3 examine #1 Linux Auditd File-Watch Trigger on; #2 PAM Shared Library Modification Detection in; #3 Correlating /var/log/secure Accepted publickey. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on auditd watch rules (-w /root/ Event 257 correlated across the documented kill chain.',
+          diagramTopologySummary: 'The forensic topology spans Node ① (External SSH Client , :22), Node ② (sshd Daemon , PAM Stack), Node ③ (~/.ssh/authorized_keys File), Node ④ (Runtime Process & Artifact Context), Node ⑤ (/lib64/security/pam_unix.so), and Node ⑥ (Linux auditd & /var/log/secure) across 3 chronological steps (#1 to #3).',
+          documentedAdvisory: 'Official Vendor & CERT DFIR Documentation (T1098.004) · Red Hat, CISA & MITRE DFIR, Linux auditd SSH authorized_keys & PAM Module Persistence Forensics',
+        },
+      steps: [
+          {
+              stepNumber: 1,
+              mitreId: 'T1098.004',
+              plainTitle: 'Linux Auditd File-Watch Trigger on ~/.ssh/authorized_keys Modification (SYSCALL openat)',
+              storyAnalogy: 'To guarantee silent passwordless entry even if user passwords change, the intruder appends their own public key straight onto the target user authorized-keys sheet, instantly tripping the kernel file-watch sensor bolted onto that sheet.',
+              simpleExplanation: 'When a compromised service process modifies /root/.ssh/authorized_keys with the O_WRONLY|O_CREAT|O_APPEND flags, the Linux kernel audit subsystem (configured with -w /root/.ssh -p wa -k ssh_persistence) emits correlated SYSCALL, CWD, and PATH records in /var/log/audit/audit.log capturing the exact process (exe), login UID (auid), effective UID (euid), and inode number (logged in Linux Audit Event 257 with AuditKey=ssh_persistence, Syscall=257 , sys_openat with O_WRONLY|O_APPEND, AuditLoginUid=auid=1001 , Pivoted User -> euid=0 , root, ModifiedPath=/root/.ssh/authorized_keys , inode 1310942 so analysts can verify the exact actor and target artifact).',
+              howItWorksInPractice: 'Under the hood, the observed step executes auditctl -w /root/.ssh -p wa -k ssh_persistence (which executes the technical command / telemetry directive , auditctl -w /root/.ssh -p wa -k ssh_persistence via auditctl, passing the exact arguments, t so that advances the scenario kill-chain under MITRE T1098.004 during "Linux Auditd File-Watch Trigger on ~/.ssh/authorized_keys Modification , SYSCALL openat" , When a compromised service process modifies /root/ while generating verifiable host or network telemetry for DFIR attribution). Next, the follow-up artifact auditd SYSCALL Record: syscall=257 (openat) success=yes auid=1001 uid=0 euid=0 exe="/usr/bin/python3.11" key="ssh_persistence" runs (which executes the technical command / telemetry directive , auditd SYSCALL Record: syscall=257 , openat success=yes auid=1001 uid=0 euid=0 exe="/usr/bin so that advances the scenario kill-chain under MITRE T1098.004 during "Linux Auditd File-Watch Trigger on ~/.ssh/authorized_keys Modification , SYSCALL openat" , When a compromised service process modifies /root/ while generating verifiable host or network telemetry for DFIR attribution).',
+              diagramAlignment: 'On the diagram, follow Step #1 / Link #1 across the topology from External SSH Client , :22 and sshd Daemon , PAM Stack toward ~/.ssh/authorized_keys File and Linux auditd & /var/log/secure.',
+              detectionAndEvidence: 'Documented in Linux Audit Event 257 (recording AuditKey=ssh_persistence, Syscall=257 , sys_openat with O_WRONLY|O_APPEND, AuditLoginUid=auid=1001 , Pivoted User -> euid=0 , root, ModifiedPath=/root/.ssh/authorized_keys , inode 1310942 under T1098.004): Configure immutable auditd watch rules (-w /root/.ssh -p wa -k ssh_keys and -w /etc/ssh/sshd_config -p wa -k sshd_config) and ship /var/log/audit/audit.log to a remote SIEM.',
+              storyMappings: [
+                  {
+                      storyTerm: 'User authorized-keys sheet',
+                      technicalTerm: '~/.ssh/authorized_keys allowing passwordless public-key SSH authentication',
+                      tone: 'amber',
+                    },
+                  {
+                      storyTerm: 'Kernel file-watch sensor bolted onto the sheet',
+                      technicalTerm: 'Linux auditd watch rule logging SYSCALL openat/write events with exact auid and exe',
+                      tone: 'sky',
+                    },
+                  {
+                      storyTerm: 'Exact originating login badge preserved',
+                      technicalTerm: 'Immutable auditd auid (Audit User ID) tracing actions even after sudo/su elevation',
+                      tone: 'rose',
+                    },
+                  {
+                      storyTerm: 'Zero password needed on future visits',
+                      technicalTerm: 'MITRE T1098.004 SSH Authorized Keys persistence',
+                      tone: 'emerald',
+                    },
+                ],
+            },
+          {
+              stepNumber: 2,
+              mitreId: 'T1556.003',
+              plainTitle: 'PAM Shared Library Modification Detection in /lib64/security/ (rpm -Va & auditd)',
+              storyAnalogy: 'Seeking deeper backdoor access that works for any account on the server, the intruder tampers with a shared authentication plugin inside the central badge office, immediately breaking the operating system official vendor package checksum seal.',
+              simpleExplanation: 'To retain access even if SSH keys are rotated, the actor modifies /lib64/security/pam_unix.so inside the Pluggable Authentication Modules directory. During DFIR triage, running rpm -Va pam (or dpkg --verify libpam-modules) flags an S.5....T. (Size, MD5/SHA256 digest, and mtime mismatch) on /lib64/security/pam_unix.so alongside an auditd watch event on /lib64/security (logged in Linux Audit Event 82 with AuditKey=pam_tampering, RpmVerifyFlags=S.5....T. , File Size, Digest, and Timestamp Altered, TamperedLibrary=/usr/lib64/security/pam_unix.so, MitreTechnique=T1556.003 , PAM Authentication Modification so analysts can verify the exact actor and target artifact).',
+              howItWorksInPractice: 'Under the hood, the observed step executes rpm -Va pam # Output: S.5....T. /usr/lib64/security/pam_unix.so (which executes the technical command / telemetry directive , rpm -Va pam # Output: S.5....T. /usr/lib64/security/pam_unix.so via pam_unix.so, passing the so that advances the scenario kill-chain under MITRE T1556.003 during "PAM Shared Library Modification Detection in /lib64/security/ , rpm -Va & auditd" , To retain access even if SSH keys are rotated, the actor modifies /lib64/security/pam_unix while generating verifiable host or network telemetry for DFIR attribution). Next, the follow-up artifact auditctl -w /usr/lib64/security -p wa -k pam_tampering runs (which executes the technical command / telemetry directive , auditctl -w /usr/lib64/security -p wa -k pam_tampering via auditctl, passing the exact argum so that advances the scenario kill-chain under MITRE T1556.003 during "PAM Shared Library Modification Detection in /lib64/security/ , rpm -Va & auditd" , To retain access even if SSH keys are rotated, the actor modifies /lib64/security/pam_unix while generating verifiable host or network telemetry for DFIR attribution).',
+              diagramAlignment: 'On the diagram, follow Step #2 / Link #2 across the topology from External SSH Client , :22 and sshd Daemon , PAM Stack toward ~/.ssh/authorized_keys File and Linux auditd & /var/log/secure.',
+              detectionAndEvidence: 'Documented in Linux Audit Event 82 (recording AuditKey=pam_tampering, RpmVerifyFlags=S.5....T. , File Size, Digest, and Timestamp Altered, TamperedLibrary=/usr/lib64/security/pam_unix.so, MitreTechnique=T1556.003 , PAM Authentication Modification under T1556.003): Monitor /lib/security and /usr/lib64/security with File Integrity Monitoring (AIDE / auditd) and run periodic rpm -Va / dpkg --verify integrity checks against signed package databases.',
+              storyMappings: [
+                  {
+                      storyTerm: 'Shared authentication plugin inside the central badge office',
+                      technicalTerm: 'Pluggable Authentication Module (PAM) library such as /lib64/security/pam_unix.so',
+                      tone: 'amber',
+                    },
+                  {
+                      storyTerm: 'Official vendor package checksum seal broken',
+                      technicalTerm: 'rpm -Va or debsums -c flagging modified MD5/SHA-256 digests (5 flag) on /lib64/security/*',
+                      tone: 'sky',
+                    },
+                  {
+                      storyTerm: 'Hidden universal master passphrase',
+                      technicalTerm: 'Backdoored PAM module accepting a hardcoded magic password or logging cleartext logins',
+                      tone: 'rose',
+                    },
+                  {
+                      storyTerm: 'Package-manager ground truth',
+                      technicalTerm: 'Comparing on-disk security libraries directly against cryptographically signed OS package DBs',
+                      tone: 'emerald',
+                    },
+                ],
+            },
+          {
+              stepNumber: 3,
+              mitreId: 'T1021.004',
+              plainTitle: 'Correlating /var/log/secure Accepted publickey SHA256 Fingerprint & USER_AUTH Auditd Events',
+              storyAnalogy: 'When the intruder returns later using their newly planted spare key, the front-door authentication diary stamps the exact cryptographic SHA-256 fingerprint of the key presented, allowing defenders to trace every compromised server across the fleet.',
+              simpleExplanation: 'When the external actor reconnects over TCP 22, sshd logs "Accepted publickey for root from 198.51.100.77 port 51922 ssh2: ED25519 SHA256:k9L2m..." in /var/log/secure (or /var/log/auth.log) and emits a Linux auditd type=USER_AUTH / type=USER_LOGIN record, allowing the responder to match the logged SHA256 fingerprint directly to the key line added in Stage 1 (logged in Linux Audit Event 1100 with AuthLogEvent=Accepted publickey for root from 198.51.100.77, KeyFingerprint=ED25519 SHA256:k9L2m8xPqR4vT1nZ0wXyB7cV5gH3jK, AuditRecordType=USER_LOGIN , ses=94 res=success, DaemonExecutable=/usr/sbin/sshd so analysts can verify the exact actor and target artifact).',
+              howItWorksInPractice: 'Under the hood, the observed step executes ssh-keygen -lf /root/.ssh/authorized_keys # Computes SHA256 fingerprint for every authorized key entry (which executes the technical command / telemetry directive , ssh-keygen -lf /root/.ssh/authorized_keys # Computes SHA256 fingerprint for every authorized so that advances the scenario kill-chain under MITRE T1021.004 during "Correlating /var/log/secure Accepted publickey SHA256 Fingerprint & USER_AUTH Auditd Events" , When the external actor reconnects over TCP 22, sshd logs "Accepted publickey for root from 198 while generating verifiable host or network telemetry for DFIR attribution). Next, the follow-up artifact grep "Accepted publickey" /var/log/secure runs (which executes the technical command / telemetry directive , grep "Accepted publickey" /var/log/secure via System / Runtime Execution Interface, passing so that advances the scenario kill-chain under MITRE T1021.004 during "Correlating /var/log/secure Accepted publickey SHA256 Fingerprint & USER_AUTH Auditd Events" , When the external actor reconnects over TCP 22, sshd logs "Accepted publickey for root from 198 while generating verifiable host or network telemetry for DFIR attribution).',
+              diagramAlignment: 'On the diagram, follow Step #3 / Link #3 across the topology from External SSH Client , :22 and sshd Daemon , PAM Stack toward ~/.ssh/authorized_keys File and Linux auditd & /var/log/secure.',
+              detectionAndEvidence: 'Documented in Linux Audit Event 1100 (recording AuthLogEvent=Accepted publickey for root from 198.51.100.77, KeyFingerprint=ED25519 SHA256:k9L2m8xPqR4vT1nZ0wXyB7cV5gH3jK, AuditRecordType=USER_LOGIN , ses=94 res=success, DaemonExecutable=/usr/sbin/sshd under T1021.004): Disable PermitRootLogin in /etc/ssh/sshd_config, enforce short-lived SSH certificates via a central CA instead of static authorized_keys files, and correlate ssh-keygen -lf fingerprints with /var/log/secure.',
+              storyMappings: [
+                  {
+                      storyTerm: 'Front-door authentication diary',
+                      technicalTerm: '/var/log/secure or /var/log/auth.log recording sshd authentication records',
+                      tone: 'amber',
+                    },
+                  {
+                      storyTerm: 'Exact cryptographic fingerprint of the presented key',
+                      technicalTerm: 'Accepted publickey log entry printing exact SHA256:<fingerprint> and source IP',
+                      tone: 'sky',
+                    },
+                  {
+                      storyTerm: 'Tracing the exact same key across the fleet',
+                      technicalTerm: 'Hunting the attacker SSH key SHA256 fingerprint across all Linux servers in SIEM',
+                      tone: 'rose',
+                    },
+                  {
+                      storyTerm: 'Clean containment across hosts',
+                      technicalTerm: 'Scrubbing unauthorized keys, reinstalling verified PAM packages, and auditing SSHD logs',
+                      tone: 'emerald',
+                    },
+                ],
+            },
+        ],
+    };

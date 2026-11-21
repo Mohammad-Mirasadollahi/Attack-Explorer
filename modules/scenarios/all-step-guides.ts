@@ -22,6 +22,15 @@ import { stepGuide as g_cisco_ios_xe_cve_2023_20198_badimplant } from './cisco-i
 import { stepGuide as g_cl0p_moveit_transfer_cve_2023_34362 } from './cl0p-moveit-transfer-cve-2023-34362/step-guide';
 import { stepGuide as g_codecov_bash_uploader_ci_env_exfil } from './codecov-bash-uploader-ci-env-exfil/step-guide';
 import { stepGuide as g_crowdstrike_poortry_burntcigar_byovd } from './crowdstrike-poortry-burntcigar-byovd/step-guide';
+import { stepGuide as g_dfir_linux_auditd_pam_sshd_authorized_keys_persistence } from './dfir-linux-auditd-pam-sshd-authorized-keys-persistence/step-guide';
+import { stepGuide as g_dfir_linux_systemd_generator_cron_udev_persistence } from './dfir-linux-systemd-generator-cron-udev-persistence/step-guide';
+import { stepGuide as g_dfir_lsass_minidump_comsvcs_sysmon_eid10 } from './dfir-lsass-minidump-comsvcs-sysmon-eid10/step-guide';
+import { stepGuide as g_dfir_ntfs_timestomp_mft_si_fn_mismatch_eid2 } from './dfir-ntfs-timestomp-mft-si-fn-mismatch-eid2/step-guide';
+import { stepGuide as g_dfir_schtasks_xml_registry_taskcache_forensics } from './dfir-schtasks-xml-registry-taskcache-forensics/step-guide';
+import { stepGuide as g_dfir_shimcache_amcache_execution_artifact_triage } from './dfir-shimcache-amcache-execution-artifact-triage/step-guide';
+import { stepGuide as g_dfir_wer_silentprocessexit_localdumps_registry_hijack } from './dfir-wer-silentprocessexit-localdumps-registry-hijack/step-guide';
+import { stepGuide as g_dfir_windows_prefetch_srum_network_execution_trace } from './dfir-windows-prefetch-srum-network-execution-trace/step-guide';
+import { stepGuide as g_dfir_wmi_event_subscription_persistence_sysmon } from './dfir-wmi-event-subscription-persistence-sysmon/step-guide';
 import { stepGuide as g_dns_tunneling_exfil } from './dns-tunneling-exfil/step-guide';
 import { stepGuide as g_elastic_apt41_dustpan_stealthvector } from './elastic-apt41-dustpan-stealthvector/step-guide';
 import { stepGuide as g_elastic_grimresource_msc } from './elastic-grimresource-msc/step-guide';
@@ -57,6 +66,7 @@ import { stepGuide as g_okta_har_file_session_token_hijack } from './okta-har-fi
 import { stepGuide as g_openssh_regreSSHion_cve_2024_6387 } from './openssh-regreSSHion-cve-2024-6387/step-guide';
 import { stepGuide as g_paloalto_expedition_cve_2024_5910_chain } from './paloalto-expedition-cve-2024-5910-chain/step-guide';
 import { stepGuide as g_papercut_ng_cve_2023_27350_bl00dy } from './papercut-ng-cve-2023-27350-bl00dy/step-guide';
+import { stepGuide as g_pikered_clr_profiler_trusted_binary_loader_chain } from './pikered-clr-profiler-trusted-binary-loader-chain/step-guide';
 import { stepGuide as g_play_ransomware_grixba_vss_copy } from './play-ransomware-grixba-vss-copy/step-guide';
 import { stepGuide as g_polyfill_io_cdn_domain_supply_chain } from './polyfill-io-cdn-domain-supply-chain/step-guide';
 import { stepGuide as g_printnightmare_spooler_cve_2021_34527 } from './printnightmare-spooler-cve-2021-34527/step-guide';
@@ -109,6 +119,15 @@ export const STATIC_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideDat
   'cl0p-moveit-transfer-cve-2023-34362': g_cl0p_moveit_transfer_cve_2023_34362,
   'codecov-bash-uploader-ci-env-exfil': g_codecov_bash_uploader_ci_env_exfil,
   'crowdstrike-poortry-burntcigar-byovd': g_crowdstrike_poortry_burntcigar_byovd,
+  'dfir-linux-auditd-pam-sshd-authorized-keys-persistence': g_dfir_linux_auditd_pam_sshd_authorized_keys_persistence,
+  'dfir-linux-systemd-generator-cron-udev-persistence': g_dfir_linux_systemd_generator_cron_udev_persistence,
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': g_dfir_lsass_minidump_comsvcs_sysmon_eid10,
+  'dfir-ntfs-timestomp-mft-si-fn-mismatch-eid2': g_dfir_ntfs_timestomp_mft_si_fn_mismatch_eid2,
+  'dfir-schtasks-xml-registry-taskcache-forensics': g_dfir_schtasks_xml_registry_taskcache_forensics,
+  'dfir-shimcache-amcache-execution-artifact-triage': g_dfir_shimcache_amcache_execution_artifact_triage,
+  'dfir-wer-silentprocessexit-localdumps-registry-hijack': g_dfir_wer_silentprocessexit_localdumps_registry_hijack,
+  'dfir-windows-prefetch-srum-network-execution-trace': g_dfir_windows_prefetch_srum_network_execution_trace,
+  'dfir-wmi-event-subscription-persistence-sysmon': g_dfir_wmi_event_subscription_persistence_sysmon,
   'dns-tunneling-exfil': g_dns_tunneling_exfil,
   'elastic-apt41-dustpan-stealthvector': g_elastic_apt41_dustpan_stealthvector,
   'elastic-grimresource-msc': g_elastic_grimresource_msc,
@@ -144,6 +163,7 @@ export const STATIC_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideDat
   'openssh-regreSSHion-cve-2024-6387': g_openssh_regreSSHion_cve_2024_6387,
   'paloalto-expedition-cve-2024-5910-chain': g_paloalto_expedition_cve_2024_5910_chain,
   'papercut-ng-cve-2023-27350-bl00dy': g_papercut_ng_cve_2023_27350_bl00dy,
+  'pikered-clr-profiler-trusted-binary-loader-chain': g_pikered_clr_profiler_trusted_binary_loader_chain,
   'play-ransomware-grixba-vss-copy': g_play_ransomware_grixba_vss_copy,
   'polyfill-io-cdn-domain-supply-chain': g_polyfill_io_cdn_domain_supply_chain,
   'printnightmare-spooler-cve-2021-34527': g_printnightmare_spooler_cve_2021_34527,

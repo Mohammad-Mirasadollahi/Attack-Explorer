@@ -1075,13 +1075,16 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.ok(flowPill.tooltipDetail.includes('Dispatch Request to Engine'));
 
     // 4. Permanent Zero-Truncation guard on active UI components
+    const { readInspectorSources } = await import('./read-inspector-sources');
+    const { readStepGuideSources } = await import('./read-step-guide-sources');
+    const { readInspectorMiniMapSources } = await import(
+      './read-inspector-minimap-sources'
+    );
     const zeroTruncateFiles = [
       'components/AttackSidebar.tsx',
       'components/AttackVisualizer.tsx',
       'components/DraggableDiagramNode.tsx',
-      'components/InspectorPanel.tsx',
       'components/PlaybackControlBar.tsx',
-      'components/StepByStepGuidePanel.tsx',
       'components/ThreatIntelCard.tsx',
       'components/canvas/ProcessMemoryView.tsx',
       'components/canvas/RawTablesView.tsx',
@@ -1095,6 +1098,21 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
         `${relPath} must not contain CSS 'truncate' class (violates Zero-Truncation Standard)`
       );
     }
+    assert.equal(
+      /\btruncate\b/.test(readInspectorSources()),
+      false,
+      'components/inspector/* must not contain CSS truncate class (violates Zero-Truncation Standard)'
+    );
+    assert.equal(
+      /\btruncate\b/.test(readStepGuideSources()),
+      false,
+      'components/step-guide/* must not contain CSS truncate class (violates Zero-Truncation Standard)'
+    );
+    assert.equal(
+      /\btruncate\b/.test(readInspectorMiniMapSources()),
+      false,
+      'components/inspector-minimap/* must not contain CSS truncate class (violates Zero-Truncation Standard)'
+    );
   });
 
   it('filterAttackVectorLibrary and instantiateAttackVectorNode support side-panel search and drag-and-drop vector injection into the simulation canvas', async () => {
@@ -1445,12 +1463,15 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
       );
     }
 
+    const { readInspectorSources } = await import('./read-inspector-sources');
+    const { readStepGuideSources } = await import('./read-step-guide-sources');
+    const { readInspectorMiniMapSources } = await import(
+      './read-inspector-minimap-sources'
+    );
     const filesToCheck = [
       'components/AttackExplorerWorkbench.tsx',
       'components/AttackHeader.tsx',
       'components/DiagramCanvas.tsx',
-      'components/InspectorPanel.tsx',
-      'components/StepByStepGuidePanel.tsx',
       'components/SettingsDrawer.tsx',
       'lib/diagram-memory-store.ts',
       'app/scenarios/[id]/page.tsx',
@@ -1479,6 +1500,33 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
           `${relPath} must not contain dead code reference "${token}"`
         );
       }
+    }
+
+    const inspectorBundle = readInspectorSources();
+    for (const token of forbiddenDeadTokens) {
+      assert.equal(
+        inspectorBundle.includes(token),
+        false,
+        `components/inspector/* must not contain dead code reference "${token}"`
+      );
+    }
+
+    const stepGuideBundle = readStepGuideSources();
+    for (const token of forbiddenDeadTokens) {
+      assert.equal(
+        stepGuideBundle.includes(token),
+        false,
+        `components/step-guide/* must not contain dead code reference "${token}"`
+      );
+    }
+
+    const miniMapBundle = readInspectorMiniMapSources();
+    for (const token of forbiddenDeadTokens) {
+      assert.equal(
+        miniMapBundle.includes(token),
+        false,
+        `components/inspector-minimap/* must not contain dead code reference "${token}"`
+      );
     }
   });
 });

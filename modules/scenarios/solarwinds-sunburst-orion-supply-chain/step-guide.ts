@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a master counterfeiter who does not break into 18,000 bank vaults one by one. Instead, they sneak onto the assembly floor of the factory that manufactures the banks’ vault doors. Right as the molten steel is poured, a robotic arm swaps a single blueprint for three seconds, embeds a hidden radio receiver inside the door, and puts the original blueprint back before the quality inspector looks.',
       plainSummary:
-        'Rather than modifying source code in Git where developers would spot the diff, APT29 installed a custom C++ service called SUNSPOT on the SolarWinds build server. SUNSPOT watched for MsBuild.exe and transiently replaced InventoryManager.cs in milliseconds so the resulting SolarWinds.Orion.Core.BusinessLayer.dll was officially signed with SolarWinds’ legitimate Authenticode certificate.',
+        'In this scenario (T1195.002, SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29)), the attacker follows one continuous arc: sUNSPOT Build-Time Source Injection into MSBuild, then sUNBURST Dormancy, FNV-1a Blocklist Check, then tEARDROP Memory-Only Dropper. Steps #1–#3 examine #1 SUNSPOT Build-Time Source Injection into MSBuild; #2 SUNBURST Dormancy, FNV-1a Blocklist Check; #3 TEARDROP Memory-Only Dropper. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 11 with the documented host and network chain.',
       diagramTopologySummary:
         'APT29 C2 (*.avsvmcloud.com) -> TeamCity / MSBuild Server (SUNSPOT) -> Orion Server (BusinessLayerHost.exe) -> AD Federation Services (Golden SAML) -> EDR & DNS Sensor.',
       documentedAdvisory:

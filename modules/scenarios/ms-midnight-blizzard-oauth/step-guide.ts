@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a burglar who finds a forgotten, dusty side cottage on a corporate estate (a legacy non-production test tenant) whose door still uses a simple single-key lock (no MFA). Inside that cottage, the burglar finds an old master maintenance badge (a legacy OAuth application) that happens to have cross-building authority in the main corporate headquarters. Using that badge, they mint new automated robot passes (Service Principals) granted the full_access_as_app stamp, letting them silently read any executive’s mailbox without ever needing any executive’s password.',
       plainSummary:
-        'Documented by Microsoft Security Response Center (MSRC) and Microsoft Threat Intelligence (January 2024), this scenario illustrates how Midnight Blizzard (APT29) compromised corporate Exchange Online mailboxes through an identity-and-OAuth chain. First, the attacker used a low-and-slow residential-proxy password spray (sending only a few login attempts per IP so rate-based lockouts never trigger) to compromise a forgotten, non-production test tenant account that lacked MFA. From there, they abused an old OAuth application that had elevated permissions in the corporate environment, registered new malicious OAuth Service Principals, granted them the powerful full_access_as_app Exchange Online role (which allows reading any mailbox in the company via API without user interaction), and exfiltrated emails over EWS.',
+        'In this scenario (T1098.003, Microsoft Threat Intel - Midnight Blizzard (APT29): OAuth App Persistence & EWS Exfiltration), the attacker follows one continuous arc: low-Volume Residential-Proxy Password Spray Against, then abusing a Legacy Cross-Tenant OAuth App to Register, then exfiltrating Corporate Mailboxes via Exchange Web. Steps #1–#3 examine #1 Low-Volume Residential-Proxy Password Spray Against; #2 Abusing a Legacy Cross-Tenant OAuth App to Register; #3 Exfiltrating Corporate Mailboxes via Exchange Web. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1098.003 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Start at Node ①/② (Midnight Blizzard Residential Proxy Spray targeting the Legacy Test Tenant), pivot through the shared OAuth Service Principal into Node ③/④ (Corporate Entra ID & Malicious OAuth App Registration), and query mailboxes on Node ⑤ (Exchange Online full_access_as_app), detected by Node ⑥ (Entra Audit & Unified Audit Log SIEM).',
       documentedAdvisory: 'Microsoft Threat Intelligence Midnight Blizzard Blog (Jan 2024) · MITRE ATT&CK T1110.003 / T1098.003 / T1114.002',
@@ -22,11 +22,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'To avoid triggering automated IP blocks or account lockouts, the attacker routes authentication requests through a rotating pool of residential proxy IPs (home internet routers in the same country as the target, making login traffic look like legitimate local employees rather than a datacenter botnet) and performs a low-volume password spray (trying just one common password at a time across a small list of accounts) against a forgotten, non-production legacy test tenant account that had never been enforced with Multi-Factor Authentication (MFA).',
         howItWorksInPractice:
-          'Because each residential proxy IP sends only a tiny fraction of the total login attempts and stays well below the bad-password lockout threshold (e.g., 1 attempt per hour), traditional velocity-based brute-force rules do not fire, allowing the attacker to quietly log into the forgotten single-factor test account.',
+          'Because each residential proxy IP sends only a tiny fraction of the total login attempts and stays well below the bad-password lockout threshold (e.g., 1 attempt per hour), traditional velocity-based brute-force rules do not fire, allowing the attacker to quietly log into the forgotten single-factor test account. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, follow arrow #1→ from Node ①/② (Residential Proxy Pool) to Node ③ (Legacy Test Tenant Entra ID Sign-In), and return arrow ⇠#1 issuing the initial OAuth token.',
         detectionAndEvidence:
-          'Documented by Microsoft Threat Intelligence: Entra ID Sign-in Logs (SigninLogs) showing distributed password spray across residential proxy ASNs targeting single-factor legacy accounts.',
+          'Analyze Microsoft Entra ID SigninLogs (cloud identity telemetry capturing every authentication attempt, ASN, and MFA claim) for low-volume distributed password sprays rotating across residential proxy ASNs against single-factor legacy or non-production accounts. Correlate Sysmon or Windows Security Event telemetry for T1110.003 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ uses the legacy OAuth app on Node ③ to create and privilege the rogue OAuth Service Principal on Node ④ (Add app role assignment to service principal), with ⇠#2 returning the OAuth2 client_credentials bearer token.',
         detectionAndEvidence:
-          'Documented in Microsoft Entra Audit Logs: Add servicePrincipal, Add servicePrincipal credentials, and Add app role assignment to service principal for full_access_as_app (dc890d15-9560-4a4c-9b7f-a736ec74ec40).',
+          'Documented in Microsoft Entra Audit Logs: Add servicePrincipal, Add servicePrincipal credentials, and Add app role assignment to service principal for full_access_as_app (dc890d15-9560-4a4c-9b7f-a736ec74ec40). Correlate Sysmon or Windows Security Event telemetry for T1098.003 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -52,11 +52,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'Authenticating purely as the rogue OAuth application using grant_type=client_credentials (machine-to-machine authentication that uses the app’s client secret and never involves a human user login or MFA prompt), the attacker calls Exchange Web Services (https://outlook.office365.com/EWS/Exchange.asmx) through the same residential proxy pool to search and download emails from senior executive and security-team mailboxes.',
         howItWorksInPractice:
-          'Because full_access_as_app is an application-level permission (Application Permission) rather than a delegated user permission (Delegated Permission), the OAuth Bearer token grants direct read/export access to any mailbox in the Exchange Online tenant without ever logging in as those users or triggering Conditional Access user-MFA policies.',
+          'Because full_access_as_app is an application-level permission (Application Permission) rather than a delegated user permission (Delegated Permission), the OAuth Bearer token grants direct read/export access to any mailbox in the Exchange Online tenant without ever logging in as those users or triggering Conditional Access user-MFA policies. Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'On the diagram, arrow #3→ queries Node ⑤ (Exchange Online EWS /EWS/Exchange.asmx MailItemsAccessed) from Node ④, while Node ⑥ (Microsoft Sentinel / SIEM) correlates the Entra role grant with EWS MailItemsAccessed telemetry.',
         detectionAndEvidence:
-          'Documented in Microsoft Purview Unified Audit Log (MailItemsAccessed / EWS) correlated with Entra Service Principal sign-ins using AppId holding full_access_as_app.',
+          'Documented in Microsoft Purview Unified Audit Log (MailItemsAccessed / EWS) correlated with Entra Service Principal sign-ins using AppId holding full_access_as_app. Correlate Sysmon or Windows Security Event telemetry for T1528 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

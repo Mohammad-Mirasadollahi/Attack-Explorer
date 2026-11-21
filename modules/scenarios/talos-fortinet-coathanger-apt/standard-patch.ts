@@ -80,7 +80,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Perform offline disk and memory forensic triage on suspected FortiGate appliances (bypassing live userland rootkit hooks that conceal active implants) to uncover /etc/ld.so.preload entries and unauthorized binaries inside /data2/ or modified /bin/smartctl.',
+          'Perform offline disk and memory forensic triage on suspected FortiGate appliances (bypassing live userland rootkit hooks that conceal active implants) to uncover /etc/ld.so.preload entries and unauthorized binaries inside /data2/ or modified /bin/smartctl. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1574.006 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -108,7 +108,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Monitor perimeter firewalls and upstream taps for unexplained outbound TLS connections initiated directly by the FortiGate appliance itself to unknown external IPs (unusual for perimeter gateways) and verify cryptographic hashes on /bin/smartctl and flash partitions.',
+          'Monitor perimeter firewalls and upstream taps for unexplained outbound TLS connections initiated directly by the FortiGate appliance itself to unknown external IPs (unusual for perimeter gateways) and verify cryptographic hashes on /bin/smartctl and flash partitions. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1014 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

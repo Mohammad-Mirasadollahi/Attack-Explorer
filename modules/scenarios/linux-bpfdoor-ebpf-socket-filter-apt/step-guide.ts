@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a spy hiding inside a central post office who doesn’t rent a P.O. Box (listening port) and never makes outgoing phone calls (beacons). Instead, the spy stands invisibly beside the mail chute at the very entrance, ahead of the building’s security checkpoint (iptables), watching every piece of mail addressed to anyone else. Only when a postcard arrives with a secret watermark (0x7255) does the spy step out and unlock a side door.',
       plainSummary:
-        'Unmasked by PwC Threat Intelligence (attributing it to China-nexus APT Red Menshen) and analyzed in depth by Sandfly Security and Elastic, BPFDoor is a passive Linux/Solaris implant that evaded detection for over five years across telecom and government networks. It runs from unlinked RAM storage (/dev/shm/kdmtmpflush (deleted)), spoofs its process name in ps, opens zero listening TCP/UDP ports, and attaches a classic Berkeley Packet Filter (SO_ATTACH_FILTER) to a raw socket to inspect all inbound traffic at the NIC layer for magic bytes 0x7255 (UDP/ICMP) or 0x5293 (TCP).',
+        'In this scenario (T1036.004, BPFDoor Passive Linux Rootkit & Classic BPF Magic Packet Filter (Red Menshen)), the attacker follows one continuous arc: in-Memory /dev/shm/kdmtmpflush Execution, Unlinking, then attaching Kernel Berkeley Packet Filter, then magic Packet Activation, iptables Port Redirection. Steps #1–#3 examine #1 In-Memory /dev/shm/kdmtmpflush Execution, Unlinking; #2 Attaching Kernel Berkeley Packet Filter; #3 Magic Packet Activation, iptables Port Redirection. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on auditd telemetry correlated across the documented kill chain.',
       diagramTopologySummary:
         'Red Menshen Operator (Magic Packet) -> Linux Host eth0 (Before iptables) -> Raw Socket BPF Filter (0x7255 / 0x5293) -> Masqueraded Shell (/dev/shm/kdmtmpflush) -> PwC / Sandfly / Elastic Linux Sensor.',
       documentedAdvisory:
@@ -28,7 +28,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #1 (#1→ / ⇠#1) links the Red Menshen Operator to the Masqueraded Shell (/dev/shm/kdmtmpflush) during initial RAM staging.',
         detectionAndEvidence:
-          'Scanning /proc/[0-9]*/exe symlinks for /dev/shm/* (deleted) and comparing /proc/[pid]/comm against the actual binary path in /proc/[pid]/exe.',
+          'Scan /proc/[0-9]*/exe symbolic links across Linux hosts for targets pointing to /dev/shm/* (deleted) (which exposes memory-backed binaries that erased themselves from disk) and compare /proc/[pid]/comm against the actual resolved binary path in /proc/[pid]/exe. Correlate Sysmon or Windows Security Event telemetry for T1036.004 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -39,11 +39,11 @@ export const stepGuide: RawScenarioStepGuideData = {
         simpleExplanation:
           'BPFDoor called socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP)) to create a raw packet socket and invoked setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf_prog...) (attaching a 30-instruction classic Berkeley Packet Filter bytecode program into the Linux kernel that inspects every frame arriving on the network card before iptables or nftables firewall rules are evaluated, dropping normal traffic so BPFDoor consumes 0% CPU until a packet containing magic bytes 0x7255 at UDP/ICMP offset or 0x5293 at TCP offset arrives).',
         howItWorksInPractice:
-          'Because AF_PACKET sockets do not bind a TCP or UDP port, netstat -tlpn, ss -tlpn, and external port scanners (nmap) show zero open backdoor ports, and the attacker can send the magic packet to any port (even ports blocked by iptables or already used by Apache/SSH on port 443/22).',
+          'Because AF_PACKET sockets do not bind a TCP or UDP port, netstat -tlpn, ss -tlpn, and external port scanners (nmap) show zero open backdoor ports, and the attacker can send the magic packet to any port (even ports blocked by iptables or already used by Apache/SSH on port 443/22). Mechanically, this stage is complete only after [object Object] and [object Object] is observed as live runtime state (the concrete checkpoint proving the previous stage\'s output now drives the next action).',
         diagramAlignment:
           'Step #2 (#2→ / ⇠#2) connects the Linux Host eth0 (Before iptables) to the Raw Socket BPF Filter (0x7255 / 0x5293) and triggers the PwC / Sandfly / Elastic Linux Sensor.',
         detectionAndEvidence:
-          'Running ss -0pb on Linux to enumerate AF_PACKET raw sockets and their attached BPF bytecode filters (specifically looking for decimal constants 29269 (0x7255) and 21139 (0x5293)).',
+          'Running ss -0pb on Linux to enumerate AF_PACKET raw sockets and their attached BPF bytecode filters (specifically looking for decimal constants 29269 (0x7255) and 21139 (0x5293)). Correlate Sysmon or Windows Security Event telemetry for T1205.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,

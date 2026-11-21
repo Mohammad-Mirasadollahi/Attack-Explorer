@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In December 2023, a threat actor phished a former Ledger employee whose npmjs publishing account still retained write access to @ledgerhq/connect-kit (the official JavaScript connector library bridging decentralized web apps to hardware wallets). The attacker published versions 1.1.5, 1.1.6, and 1.1.7 containing the Angel Drainer wallet-draining script and a rogue WalletConnect project ID; because @ledgerhq/connect-kit-loader dynamically loaded https://cdn.jsdelivr.net/npm/@ledgerhq/connect-kit@1 without exact version pinning (floating on the major @1 tag so every new minor release propagated instantly), hundreds of DeFi applications immediately served the drainer to live users.',
+        'In this scenario (T1195.001, Ledger Connect-Kit NPM Compromise & Web3 WalletConnect Drainer), the attacker follows one continuous arc: former Employee NPM Token Phishing, then unpinned jsDelivr CDN Propagation, then rogue WalletConnect Modal. Steps #1–#3 examine #1 Former Employee NPM Token Phishing; #2 Unpinned jsDelivr CDN Propagation; #3 Rogue WalletConnect Modal. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1195.001 across the documented kill chain.',
     },
     steps: {
       1: {
@@ -82,7 +82,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Deploy frontend runtime integrity monitors such as Blockaid (continuous browser-side sensors that hash live third-party scripts and flag DOM mutations) to alert immediately on unexpected script changes or newly injected WalletConnect Project IDs inside live dApp frontends.',
+          'Deploy frontend runtime integrity monitors such as Blockaid (continuous browser-side sensors that hash live third-party scripts and flag DOM mutations) to alert immediately on unexpected script changes or newly injected WalletConnect Project IDs inside live dApp frontends. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1059.007 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       3: {
         storyAnalogy:
@@ -110,7 +110,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Enable wallet-level transaction simulation tools such as Blockaid (which dry-run cryptographic signing prompts before user confirmation) to flag malicious eth_signTypedData_v4 (Permit2) and setApprovalForAll approvals targeting known drainer spender contracts.',
+          'Enable wallet-level transaction simulation tools such as Blockaid (which dry-run cryptographic signing prompts before user confirmation) to flag malicious eth_signTypedData_v4 (Permit2) and setApprovalForAll approvals targeting known drainer spender contracts. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1657 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

@@ -8,7 +8,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a burglar who knows that shouting "Make a shadow copy!" (vssadmin.exe) will trip the voice-activated alarm in the vault. So instead, the burglar brings a silent mechanical arm (AlphaVSS .NET COM Library) that quietly reaches into the shadow vault without making a sound, pulls out the locked master ledger (ntds.dit and SQL databases), smashes the shadow vault behind them, and then scrambles every fifth page of the remaining books.',
       plainSummary:
-        'Detailed in joint CISA/FBI/ASD Advisory AA23-352A and Symantec Threat Hunter research, Play ransomware operators rely on two signature custom tools: Grixba (inf_g.exe, a .NET network and security-software enumerator packed with Costura.Fody and disguised with a SentinelOne icon) and a custom .NET VSS Copying Tool built on the AlphaVSS library (AlphaVSS.x64.dll). By calling the IVssBackupComponents COM interface directly via AlphaVSS, they snapshot and copy locked databases (ntds.dit.mdf) and delete shadow copies without ever spawning vssadmin.exe or wmic.exe, before running 1MB-stride intermittent encryption (.play).',
+        'In this scenario (T1046, Play Ransomware Grixba Recon, AlphaVSS Shadow Copy Theft & Intermittent Encryption (AA23-352A)), the attacker follows one continuous arc: deploying Custom Grixba .NET Reconnaissance Scanner, then alphaVSS .NET Shadow Copy Mounting for Locked, then winPE APIUnhooking. Steps #1–#3 examine #1 Deploying Custom Grixba .NET Reconnaissance Scanner; #2 AlphaVSS .NET Shadow Copy Mounting for Locked; #3 WinPE APIUnhooking. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
       diagramTopologySummary:
         'Play Ransomware Operator -> Compromised RDP / FortiOS / Exchange -> Grixba .NET Scanner (inf_g.exe) -> AlphaVSS Shadow Access & .play Shares -> CISA AA23-352A / Symantec EDR Sensor.',
       documentedAdvisory:
@@ -58,7 +58,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'Step #3 (#3→ / ⇠#3) traces the AlphaVSS Shadow Access node into the .play Shares intermittent encryption phase.',
         detectionAndEvidence:
-          'Minifilter behavioral detection of 0x100000-stride partial file overwrites.play extension renames, and 0xdeadbeef file footers.',
+          'Deploy filesystem minifilter behavioral monitors (kernel-level disk I/O sensors that inspect write patterns in real time) to detect rapid 0x100000-byte stride partial file overwrites, .play extension renames, and trailing 0xdeadbeef file footers. Correlate Sysmon Event 11 and Windows Security Event telemetry for T1486 (pairing write patterns with parent/child process fields) and contain the offending session.',
       },
     ],
   };

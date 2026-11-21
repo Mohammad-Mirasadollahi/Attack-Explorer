@@ -54,7 +54,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Inspect iOS MobileBackup archives and Sysdiagnose bundles (structured device diagnostic snapshots) for anomalous IMAgent attachment processing immediately followed by automated message deletion without corresponding user interaction.',
+          'Inspect iOS MobileBackup archives and Sysdiagnose bundles (structured device diagnostic snapshots) for anomalous IMAgent attachment processing immediately followed by automated message deletion without corresponding user interaction. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1203 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       2: {
         storyAnalogy:
@@ -108,7 +108,7 @@ export const standardPatch: ScenarioStandardPatch = {
           },
         ],
         detectionAndEvidence:
-          'Run Kaspersky triangle_check against offline iOS backups (automated forensic artifact triage) to detect orphaned network usage entries in DataUsage.sqlite for system processes and telltale timestamp gaps in OSAnalytics logs.',
+          'Run Kaspersky triangle_check against offline iOS backups (automated forensic artifact triage) to detect orphaned network usage entries in DataUsage.sqlite for system processes and telltale timestamp gaps in OSAnalytics logs. Correlate Sysmon Event 1 and Windows Security Event telemetry for T1620 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     },
   };

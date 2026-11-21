@@ -7,7 +7,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Imagine a high-security software factory (a JetBrains TeamCity CI/CD server) where the security gate has a sloppy rule written on its clipboard: "Anyone walking to a door whose name ends with /RPC2 doesn’t need to show an ID badge." The attacker walks up to the Super-Admin Key Minting machine (/app/rest/users/id:1/tokens/) and asks it to print a new master key named RPC2 (/app/rest/users/id:1/tokens/RPC2). Because the URL ends with /RPC2, the gate lets them right through, and the machine prints a permanent Super-Admin Bearer Token on the spot!',
       plainSummary:
-        'Synthesizing SonarSource & Rapid7’s Java servlet root-cause analysis with the Joint CISA/FBI/NSA/NCSC & Mandiant APT29 Advisory (October 2023), this scenario shows how APT29 (Midnight Blizzard) exploited CVE-2023-42793 in on-premises JetBrains TeamCity CI/CD servers. Because an authentication wildcard flaw (/**/RPC2 inside TeamCity’s RequestInterceptors class) allowed anyone to reach internal REST paths that ended with "/RPC2" without logging in, the attacker sent a single unauthenticated POST request (/app/rest/users/id:1/tokens/RPC2) to mint a permanent administrator bearer token for User ID 1, enabled the hidden internal debug command endpoint (/app/rest/debug/processes), and deployed the GraphicalProton backdoor.',
+        'In this scenario (CVE-2023-42793, Mandiant & CISA - APT29 (Midnight Blizzard): JetBrains TeamCity RCE & GraphicalProton), the attacker follows one continuous arc: appending "/RPC2" to Mint an Admin Bearer Token, then using the Admin Token to Unlock the Internal Debug, then harvesting CI/CD Build Secrets, Deploying. Steps #1–#3 examine #1 Appending "/RPC2" to Mint an Admin Bearer Token; #2 Using the Admin Token to Unlock the Internal Debug; #3 Harvesting CI/CD Build Secrets, Deploying. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for CVE-2023-42793 across the documented kill chain.',
       diagramTopologySummary:
         'On the diagram: Node ① (APT29 Operator) sends the unauthenticated /app/rest/users/id:1/tokens/RPC2 request through Node ② (Reverse Proxy) to Node ③ (TeamCity CI/CD Server). Inside TeamCity, Node ④ (REST Token Minter & debug/processes Executor) spawns commands and steals build secrets from Node ⑤ (Signing Keys & AD Vault), monitored by Node ⑥ (SIEM).',
       documentedAdvisory: 'SonarSource & Rapid7 CVE-2023-42793 Root-Cause · CISA/FBI/NSA/NCSC & Mandiant APT29 Advisory · MITRE ATT&CK T1190',
@@ -26,7 +26,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #1→ sends POST /app/rest/users/id:1/tokens/RPC2 from Node ①/② to Node ③ (TeamCity Server), and ⇠#1 returns the plaintext admin Bearer token.',
         detectionAndEvidence:
-          'Documented in TeamCity teamcity-javaLogging / access logs: POST /app/rest/users/id:1/tokens/RPC2 returning HTTP 200 followed by DELETE /app/rest/users/id:1/tokens/RPC2.',
+          'Documented in TeamCity teamcity-javaLogging and access logs (web server audit records of token minting): POST /app/rest/users/id:1/tokens/RPC2 returning HTTP 200 followed by DELETE /app/rest/users/id:1/tokens/RPC2 (showing unauthenticated creation and cleanup of an administrator bearer token). Correlate Sysmon or Windows Security Event telemetry for T1190 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 2,
@@ -41,7 +41,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #2→ invokes /app/rest/debug/processes on Node ④ (TeamCity JVM Process Spawner), and ⇠#2 spawns the child shell process.',
         detectionAndEvidence:
-          'Documented by Mandiant: POST /app/rest/debug/processes in teamcity-server.log and java.exe spawning whoami / nltest / curl.',
+          'Documented by Mandiant (post-exploitation telemetry from build server compromises): POST /app/rest/debug/processes in teamcity-server.log and java.exe spawning whoami / nltest / curl (confirming remote command execution from the build management service). Correlate Sysmon or Windows Security Event telemetry for T1059.003 (pairing parent/child process and destination fields) and contain the offending session.',
       },
       {
         stepNumber: 3,
@@ -56,7 +56,7 @@ export const stepGuide: RawScenarioStepGuideData = {
         diagramAlignment:
           'On the diagram, arrow #3→ extracts secrets from Node ⑤ (CI/CD Vault & AD) via Node ④ while Node ⑥ (SIEM) triggers on TeamCity child process and token anomalies.',
         detectionAndEvidence:
-          'Documented in Joint CISA Advisory & Mandiant: Creation of new TeamCity admin accounts in teamcity-activities.log and GraphicalProton OneDrive C2 beacons.',
+          'Documented in Joint CISA Advisory and Mandiant (long-term persistence and C2 indicators): Creation of new TeamCity admin accounts in teamcity-activities.log and GraphicalProton OneDrive C2 beacons (revealing persistent administrative access and covert cloud exfiltration). Correlate Sysmon or Windows Security Event telemetry for T1102.002 (pairing parent/child process and destination fields) and contain the offending session.',
       },
     ],
   };

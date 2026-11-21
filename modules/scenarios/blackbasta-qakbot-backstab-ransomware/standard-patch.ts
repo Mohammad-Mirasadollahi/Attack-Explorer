@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'Documented in joint CISA, FBI, and HHS Advisory AA24-131A and Microsoft Threat Intelligence reporting on Storm-1811, Black Basta affiliates shifted from QakBot email malspam to human-operated Microsoft Teams voice phishing (social engineering over external Teams chats and calls). After flooding a target inbox with spam subscriptions, the operator poses as IT helpdesk staff, persuades the victim to launch Windows QuickAssist.exe (Microsoft built-in remote assistance tool), deploys the Backstab BYOVD driver (PROCEXP.SYS) to kill EDR sensors, exfiltrates data with Rclone, and encrypts network shares using ChaCha20 and RSA-4096 (.basta).',
+        'In this scenario (T1566.004, Black Basta Teams Vishing, Quick Assist, Backstab EDR Bypass & ChaCha20 (AA24-131A)), the attacker follows one continuous arc: email Bombing, External Microsoft Teams Vishing, then backstab EDR Handle Killer, then vssadmin Shadow Wipe. Steps #1–#3 examine #1 Email Bombing, External Microsoft Teams Vishing; #2 Backstab EDR Handle Killer; #3 vssadmin Shadow Wipe. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {
