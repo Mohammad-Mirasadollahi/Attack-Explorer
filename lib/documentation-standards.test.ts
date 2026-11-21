@@ -254,7 +254,7 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-12)',
     );
 
     const roadmap =
-      'In this scenario (MITRE ATT&CK T1055.012, Process Hollowing), the attacker uses Invoice_Q4.exe on Victim Laptop WKS-04 (10.10.4.15) to run Cobalt Strike Beacon inside a Microsoft-signed svchost.exe so antivirus and application-allowlisting treat the implant as a trusted Windows service host. The attack unfolds in one continuous arc: start a real svchost.exe paused, empty its legitimate code from RAM, write Beacon into that same process, wake its thread so Beacon runs under the trusted name, then open encrypted HTTPS C2 to 185.220.101.42:443. Steps #1–#4 walk that process and thread mechanics end-to-end; Step #5 covers the outbound C2 beacon and blend-in network profile; the Memory tab shows why the live process no longer matches the signed file on disk. Primary detection correlates Sysmon ProcessCreate, ProcessAccess, and ProcessTampering with bare svchost.exe opening anomalous HTTPS.';
+      'In this scenario (MITRE ATT&CK T1055.012, Process Hollowing), the attacker uses Invoice_Q4.exe on Victim Laptop WKS-04 (10.10.4.15) to run Cobalt Strike Beacon inside a Microsoft-signed svchost.exe so antivirus treats the implant as a trusted service host. The attack unfolds in one continuous arc: start a paused svchost.exe, empty its code from RAM, write Beacon into that process, wake its thread, then open HTTPS C2 to 185.220.101.42:443. Steps #1–#5 walk that chain end-to-end by covering the suspended launch, memory unmap, Beacon write, thread wake, and outbound C2, while the Memory tab shows why the live process no longer matches the signed file on disk. Primary detection correlates Sysmon ProcessCreate, ProcessAccess, and ProcessTampering with bare svchost.exe opening anomalous HTTPS.';
     const roadmapCheck = validateOverviewRoadmapAltitude(
       roadmap,
       'canonical-overview'
@@ -277,16 +277,28 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-12)',
       'Expected ellipsis truncation + generic detection filler to fail Formula A2 quality gates'
     );
 
-    const sqlOmitOk =
-      'In this scenario (T1190, PostgreSQL COPY FROM PROGRAM), the attacker follows one continuous arc: escape a quote, run COPY ... FROM PROGRAM, then drop a shared library. Steps #1–#3 examine #1 Quote Escaping; #2 COPY FROM PROGRAM; #3 Shared Library Drop. Primary detection pivots on PostgreSQL logs and Linux auditd execve telemetry correlated across the documented kill chain.';
-    const sqlOmitCheck = validateOverviewRoadmapAltitude(
-      sqlOmitOk,
-      'sql-omit-allowed'
+    const explainedOk =
+      'In this scenario (CVE-2021-44228, Log4Shell), the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible. The attack unfolds in one continuous arc: planting a JNDI string in an HTTP header (so Log4j dials out), forcing an outbound LDAP lookup (so the app asks the attacker what to load), then loading remote bytecode into a reverse shell (completing remote code execution). Steps #1–#4 walk that chain end-to-end by covering the poisoned header, the LDAP call, the remote class load, and the shell spawn. Primary detection pivots on Suricata telemetry correlated across the documented kill chain.';
+    const explainedCheck = validateOverviewRoadmapAltitude(
+      explainedOk,
+      'explained-overview-clauses'
     );
     assert.equal(
-      sqlOmitCheck.valid,
+      explainedCheck.valid,
       true,
-      `Expected spaced SQL-style "COPY ... FROM" omit to pass: ${sqlOmitCheck.violations.join('; ')}`
+      `Expected explained Technical Overview clauses to pass: ${explainedCheck.violations.join('; ')}`
+    );
+
+    const telegraphicFragments =
+      'In this scenario (CVE-2021-44228, Log4Shell) at 10.20.1, the attacker follows one continuous arc: sending the jndi string, then log4j evaluates the lookup, then LDAP referral. Steps #1–#4 examine #1 Sending the jndi string; #2 Log4j Evaluates the Lookup; #3 LDAP Referral; #4 Executing the Static Initializer. Primary detection pivots on Suricata telemetry correlated across the documented kill chain.';
+    const telegraphicCheck = validateOverviewRoadmapAltitude(
+      telegraphicFragments,
+      'anti-pattern-telegraphic-clauses'
+    );
+    assert.equal(
+      telegraphicCheck.valid,
+      false,
+      'Expected semicolon step-title fragments to fail Technical Overview clause quality'
     );
   });
 });

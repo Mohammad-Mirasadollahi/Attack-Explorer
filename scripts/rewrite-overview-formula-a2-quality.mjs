@@ -62,6 +62,8 @@ function toPlainPhrase(title, max = 52) {
   t = t.replace(/\s*\((?:CVE|T\d)[^)]*\)\s*/gi, ' ');
   t = t.replace(/\s*\([^)]{0,100}\)\s*/g, ' ');
   t = t.replace(/\.{3,}/g, ' ');
+  // Semicolons become Technical Overview clause breaks in the UI.
+  t = t.replace(/;/g, ' ');
   t = t.replace(/\s+/g, ' ').trim();
   if (t.includes(' & ')) t = t.split(' & ')[0].trim();
   if (t.includes(', then ')) t = t.split(', then ')[0].trim();
@@ -132,6 +134,31 @@ function detectionPivot(scenario, guide) {
   return `Primary detection correlates process, authentication, and network telemetry for ${mitre} across the documented kill chain.`;
 }
 
+/** Short plain-English "why this beat matters" for Overview clauses. */
+function briefWhy(step, title) {
+  const se = stripTechNoise(step?.simpleExplanation || step?.storyAnalogy || '');
+  const clean = (s) =>
+    String(s || '')
+      .replace(/[.;]/g, ',')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[,:]+$/g, '');
+  const paren = se.match(/\(([^)]{24,88})\)/);
+  if (paren) {
+    return clean(paren[1]);
+  }
+  const first = se.split(/(?<=[.!?])\s+/)[0] || '';
+  if (first.length >= 40 && first.length <= 110) {
+    return clean(first);
+  }
+  const label = String(title || 'this stage').toLowerCase().replace(/;/g, ' ');
+  return `so the next stage can build on ${label}`;
+}
+
+/**
+ * Formula A2 with explanatory Technical Overview clauses.
+ * Uses periods only (no "; #N Title" lists) so the UI renders 3–4 full sentences.
+ */
 function buildRoadmap(scenario, guide) {
   const mitre =
     scenario.mitreTechniqueIds?.[0] ||
@@ -140,64 +167,85 @@ function buildRoadmap(scenario, guide) {
     'ATT&CK';
   const name = stripTechNoise(scenario.name || scenario.id);
   const stages = scenario.stages || [];
-  const n = stages.length || guide?.steps?.length || 1;
+  const steps = guide?.steps?.length ? guide.steps : [];
+  const n = stages.length || steps.length || 1;
   const hint = hostHint(scenario);
 
-  const titles = (guide?.steps?.length ? guide.steps : stages).map((st, i) =>
+  const titles = (steps.length ? steps : stages).map((st, i) =>
     toPlainPhrase(
       st.plainTitle ||
         st.title?.replace(/^Stage\s+\d+:\s*/i, '') ||
         `Stage ${i + 1}`,
-      52
+      44
     )
   );
 
-  const arcBits = titles
-    .slice(0, Math.min(4, titles.length))
-    .map((t) => t.charAt(0).toLowerCase() + t.slice(1))
-    .filter(Boolean);
+  const who = `In this scenario (${mitre}, ${name})${hint}, the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible.`;
+
+  const arcSlice = titles.slice(0, Math.min(4, titles.length));
+  const arcBits = arcSlice.map((t, i) => {
+    const beat = t.charAt(0).toLowerCase() + t.slice(1);
+    const why = briefWhy(steps[i], t);
+    return `${beat} (${why})`;
+  });
   const arc =
     arcBits.length > 0
-      ? arcBits.join(', then ')
-      : 'initial access, privilege expansion, and objective completion';
+      ? `The attack unfolds in one continuous arc: ${arcBits.join(', then ')}.`
+      : 'The attack unfolds in one continuous arc: initial access, privilege expansion, then objective completion.';
 
-  const stepMap =
-    n === 1
-      ? `Step #1 examines ${titles[0] || 'the documented kill-chain stage'}`
-      : n === 2
-        ? `Steps #1–#2 examine ${titles[0]}, then ${titles[1]}`
-        : `Steps #1–#${n} examine ${titles
-            .map((t, i) => `#${i + 1} ${t}`)
-            .join('; ')}`;
+  // One flowing sentence — never "examine #1 X; #2 Y;" which becomes meaningless UI fragments.
+  const covered = titles
+    .map((t, i) => {
+      const why = briefWhy(steps[i], t);
+      return `${t} (${why})`;
+    })
+    .join(', then ');
 
   const hasMemory = Boolean(scenario.memoryBlocks?.length);
   const hasProcessTree = Boolean(
     scenario.processTree || scenario.cascadingProcessHierarchy
   );
-  const memoryClause = hasMemory
-    ? ' The Memory tab shows the documented in-memory forensic contrast.'
-    : '';
-  const processClause = hasProcessTree
-    ? ' The Process Hierarchy tab shows the Parent → Child spawn tree.'
-    : '';
+  const laterBits = [];
+  if (hasProcessTree) {
+    laterBits.push(
+      'the Process Hierarchy tab keeps the Parent → Child spawn tree visible so you can see which trusted process launched the next payload'
+    );
+  }
+  if (hasMemory) {
+    laterBits.push(
+      'the Memory tab shows why the live process image no longer matches the signed file on disk'
+    );
+  }
+  const laterTail =
+    laterBits.length > 0 ? `, while ${laterBits.join(' and ')}` : '';
+
+  const stepMap =
+    n === 1
+      ? `Step #1 covers ${covered}${laterTail}.`
+      : `Steps #1–#${n} walk that chain end-to-end by covering ${covered}${laterTail}.`;
 
   const detection = detectionPivot(scenario, guide);
 
-  let summary = `In this scenario (${mitre}, ${name})${hint}, the attacker follows one continuous arc: ${arc}. ${stepMap}.${memoryClause}${processClause} ${detection}`;
-  summary = stripTechNoise(summary);
+  let summary = stripTechNoise(`${who} ${arc} ${stepMap} ${detection}`);
 
+  // Prefer <= 900; hard max 950. Shorten whys first, then drop later-tab tail.
   if (summary.length > 900) {
-    const shortTitles = titles.slice(0, 3).map((t) => toPlainPhrase(t, 40));
-    const shortArc = shortTitles
-      .map((t) => t.charAt(0).toLowerCase() + t.slice(1))
-      .join(', then ');
     const shortMap =
-      n <= 2
-        ? stepMap
-        : `Steps #1–#${n} walk those stages end-to-end (${shortTitles.join('; ')}${n > 3 ? '; and later stages' : ''})`;
-    summary = stripTechNoise(
-      `In this scenario (${mitre}, ${name})${hint}, the attacker follows one continuous arc: ${shortArc}. ${shortMap}.${memoryClause}${processClause} ${detection}`
-    );
+      n === 1
+        ? `Step #1 covers ${titles[0]}${laterTail}.`
+        : `Steps #1–#${n} walk that chain end-to-end by covering ${titles.join(', then ')}${laterTail}.`;
+    const shortArcBits = arcSlice.map((t) => t.charAt(0).toLowerCase() + t.slice(1));
+    const shortArc = `The attack unfolds in one continuous arc: ${shortArcBits.join(', then ')}.`;
+    summary = stripTechNoise(`${who} ${shortArc} ${shortMap} ${detection}`);
+  }
+  if (summary.length > 900) {
+    const shortMap =
+      n === 1
+        ? `Step #1 covers ${titles[0]}.`
+        : `Steps #1–#${n} walk that chain end-to-end by covering ${titles.join(', then ')}.`;
+    const shortArcBits = arcSlice.map((t) => t.charAt(0).toLowerCase() + t.slice(1));
+    const shortArc = `The attack unfolds in one continuous arc: ${shortArcBits.join(', then ')}.`;
+    summary = stripTechNoise(`${who} ${shortArc} ${shortMap} ${detection}`);
   }
   if (summary.length > 950) {
     summary = `${summary.slice(0, 947).replace(/\s+\S*$/, '')}.`;

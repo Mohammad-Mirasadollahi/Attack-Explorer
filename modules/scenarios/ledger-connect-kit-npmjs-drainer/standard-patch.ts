@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In this scenario (T1195.001, Ledger Connect-Kit NPM Compromise & Web3 WalletConnect Drainer), the attacker follows one continuous arc: former Employee NPM Token Phishing, then unpinned jsDelivr CDN Propagation, then rogue WalletConnect Modal. Steps #1–#3 examine #1 Former Employee NPM Token Phishing; #2 Unpinned jsDelivr CDN Propagation; #3 Rogue WalletConnect Modal. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates process, authentication, and network telemetry for T1195.001 across the documented kill chain.',
+        'In this scenario (T1195.001, Ledger Connect-Kit NPM Compromise & Web3 WalletConnect Drainer), the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible. The attack unfolds in one continuous arc: former Employee NPM Token Phishing, then unpinned jsDelivr CDN Propagation, then rogue WalletConnect Modal. Steps #1–#3 walk that chain end-to-end by covering Former Employee NPM Token Phishing, then Unpinned jsDelivr CDN Propagation, then Rogue WalletConnect Modal, while the Process Hierarchy tab keeps the Parent → Child spawn tree visible so you can see which trusted process launched the next payload. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {

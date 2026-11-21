@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In this scenario (T1195.001, NPM High-Impact Package Hijack (ua-parser-js / coa / rc) & DanaBot Stealer), the attacker follows one continuous arc: maintainer Account Takeover, then automatic preinstall Execution, then silent regsvr32.exe -s Execution. Steps #1–#3 examine #1 Maintainer Account Takeover; #2 Automatic preinstall Execution; #3 Silent regsvr32.exe -s Execution. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
+        'In this scenario (T1195.001, NPM High-Impact Package Hijack (ua-parser-js / coa / rc) & DanaBot Stealer), the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible. The attack unfolds in one continuous arc: maintainer Account Takeover, then automatic preinstall Execution, then silent regsvr32.exe -s Execution. Steps #1–#3 walk that chain end-to-end by covering Maintainer Account Takeover, then Automatic preinstall Execution, then Silent regsvr32.exe -s Execution, while the Process Hierarchy tab keeps the Parent → Child spawn tree visible so you can see which trusted process launched the next payload. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {

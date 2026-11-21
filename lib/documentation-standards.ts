@@ -7,7 +7,10 @@
 
 import { AttackScenario } from '@/modules/scenarios/types';
 import './attack-scenarios';
-import { buildDiagramStepGuideModel } from './scenario-step-guides';
+import {
+  buildDiagramStepGuideModel,
+  parseStructuredExplanationClauses,
+} from './scenario-step-guides';
 import { getScenarioAttribution } from './attack-sources-and-legal';
 import { buildScenarioJsonLd } from './seo-metadata';
 import {
@@ -427,6 +430,37 @@ export function validateOverviewRoadmapAltitude(
     violations.push(
       `[${sectionLabel}] MOD-11 Violation: Overview detection pivot is generic filler. Name the concrete SIEM/EDR/log source (and Event ID when known) instead of "correlated host and network telemetry".`
     );
+  }
+
+  // Technical Overview is rendered as numbered clauses (#0.1..). Each clause must be a
+  // complete explanatory sentence — never a telegraphic step-title fragment like "#2 LDAP Referral;".
+  if (
+    /Steps?\s*#\d+\s*[–-]\s*#\d+\s+examine\s+#\d+/i.test(trimmed) &&
+    /;\s*#\d+\b/.test(trimmed)
+  ) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview step map uses telegraphic "; #N Title" fragments. Write one flowing sentence that explains what each Step covers and why it matters.`
+    );
+  }
+
+  const overviewClauses = parseStructuredExplanationClauses(trimmed, '0');
+  if (overviewClauses.length > 5) {
+    violations.push(
+      `[${sectionLabel}] MOD-11 Violation: Overview plainSummary splits into ${overviewClauses.length} Technical Overview clauses (max 5). Keep 3–4 full explanatory sentences so the UI does not show meaningless fragments.`
+    );
+  }
+  for (const clause of overviewClauses) {
+    const body = clause.fullText.replace(/^[.;\s]+/, '').trim();
+    if (/^#\d+\b/.test(body)) {
+      violations.push(
+        `[${sectionLabel}] MOD-11 Violation: Technical Overview clause #${clause.clauseCode} is a bare step-index fragment ("${body.slice(0, 48)}"). Each clause must be a complete explanatory sentence.`
+      );
+    }
+    if (body.length > 0 && body.length < 70) {
+      violations.push(
+        `[${sectionLabel}] MOD-11 Violation: Technical Overview clause #${clause.clauseCode} is only ${body.length} chars. Each clause needs a short narrative explanation (why that beat matters), not a title stub.`
+      );
+    }
   }
 
   return {

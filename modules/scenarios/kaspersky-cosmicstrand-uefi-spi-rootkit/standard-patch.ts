@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In this scenario (T1542.001, CosmicStrand Motherboard SPI Flash UEFI Rootkit (CSMCORE -> ntoskrnl.exe Chain)), the attacker follows one continuous arc: motherboard SPI Flash Infection of CSMCORE DXE, then multi-Hop Boot Hooking Relay, then patchGuard Neutralization, ntoskrnl.exe. Steps #1–#3 examine #1 Motherboard SPI Flash Infection of CSMCORE DXE; #2 Multi-Hop Boot Hooking Relay; #3 PatchGuard Neutralization, ntoskrnl.exe. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection pivots on EDR kernel integrity scan) detecting inline telemetry correlated across the documented kill chain.',
+        'In this scenario (T1542.001, CosmicStrand Motherboard SPI Flash UEFI Rootkit (CSMCORE -> ntoskrnl.exe Chain)), the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible. The attack unfolds in one continuous arc: motherboard SPI Flash Infection of CSMCORE, then multi-Hop Boot Hooking Relay, then patchGuard Neutralization, ntoskrnl.exe. Steps #1–#3 walk that chain end-to-end by covering Motherboard SPI Flash Infection of CSMCORE, then Multi-Hop Boot Hooking Relay, then PatchGuard Neutralization, ntoskrnl.exe, while the Process Hierarchy tab keeps the Parent → Child spawn tree visible so you can see which trusted process launched the next payload. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {

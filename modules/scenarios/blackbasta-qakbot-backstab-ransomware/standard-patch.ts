@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In this scenario (T1566.004, Black Basta Teams Vishing, Quick Assist, Backstab EDR Bypass & ChaCha20 (AA24-131A)), the attacker follows one continuous arc: email Bombing, External Microsoft Teams Vishing, then backstab EDR Handle Killer, then vssadmin Shadow Wipe. Steps #1–#3 examine #1 Email Bombing, External Microsoft Teams Vishing; #2 Backstab EDR Handle Killer; #3 vssadmin Shadow Wipe. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
+        'In this scenario (T1566.004, Black Basta Teams Vishing, Quick Assist, Backstab EDR Bypass & ChaCha20 (AA24-131A)), the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible. The attack unfolds in one continuous arc: email Bombing, External Microsoft Teams, then backstab EDR Handle Killer, then vssadmin Shadow Wipe. Steps #1–#3 walk that chain end-to-end by covering Email Bombing, External Microsoft Teams, then Backstab EDR Handle Killer, then vssadmin Shadow Wipe, while the Process Hierarchy tab keeps the Parent → Child spawn tree visible so you can see which trusted process launched the next payload. Primary detection correlates Sysmon Event 1 with the documented host and network chain.',
     },
     steps: {
       1: {

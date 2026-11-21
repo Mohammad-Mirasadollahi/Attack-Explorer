@@ -27,7 +27,7 @@ export const standardPatch: ScenarioStandardPatch = {
         },
       ],
       plainSummary:
-        'In this scenario (T1195.002, SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29)), the attacker follows one continuous arc: sUNSPOT Build-Time Source Injection into MSBuild, then sUNBURST Dormancy, FNV-1a Blocklist Check, then tEARDROP Memory-Only Dropper. Steps #1–#3 examine #1 SUNSPOT Build-Time Source Injection into MSBuild; #2 SUNBURST Dormancy, FNV-1a Blocklist Check; #3 TEARDROP Memory-Only Dropper. The Process Hierarchy tab shows the Parent → Child spawn tree. Primary detection correlates Sysmon Event 11 with the documented host and network chain.',
+        'In this scenario (T1195.002, SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29)), the attacker follows one continuous intrusion path so each later Step can show the exact handoff that makes the next stage possible. The attack unfolds in one continuous arc: sUNSPOT Build-Time Source Injection, then sUNBURST Dormancy, FNV-1a Blocklist Check, then tEARDROP Memory-Only Dropper. Steps #1–#3 walk that chain end-to-end by covering SUNSPOT Build-Time Source Injection, then SUNBURST Dormancy, FNV-1a Blocklist Check, then TEARDROP Memory-Only Dropper, while the Process Hierarchy tab keeps the Parent → Child spawn tree visible so you can see which trusted process launched the next payload. Primary detection correlates Sysmon Event 11 with the documented host and network chain.',
     },
     steps: {
       1: {
