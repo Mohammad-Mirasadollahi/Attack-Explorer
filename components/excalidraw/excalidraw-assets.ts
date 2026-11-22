@@ -28,7 +28,7 @@ if (typeof window !== 'undefined') {
   window.FontFace = class extends NativeFontFace {
     constructor(
       family: string,
-      source: string | BinaryData,
+      source: ConstructorParameters<typeof FontFace>[1],
       descriptors?: FontFaceDescriptors
     ) {
       if (typeof source === 'string' && source.includes(ESM_SH_HOST)) {
