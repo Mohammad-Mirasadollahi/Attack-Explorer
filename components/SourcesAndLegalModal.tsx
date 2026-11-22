@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { AttackScenario } from '@/lib/attack-scenarios';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import {
   getScenarioAttribution,
   GLOBAL_FRAMEWORK_SOURCES,

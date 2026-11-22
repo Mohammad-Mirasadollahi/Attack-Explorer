@@ -1,4 +1,4 @@
-import { TelemetryEvent } from './attack-scenarios';
+import type { TelemetryEvent } from '@/modules/scenarios/types';
 import {
   CurveArrowMarker,
   NetworkBackboneLink,

@@ -2,9 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import {
-  AttackStage,
-  TelemetryEvent } from '@/lib/attack-scenarios';
+import type { AttackStage, TelemetryEvent } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,

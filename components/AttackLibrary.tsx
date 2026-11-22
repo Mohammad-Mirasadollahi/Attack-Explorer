@@ -2,11 +2,12 @@
 
 import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { AttackCategory } from '@/lib/attack-scenarios';
 import {
-  AttackLibraryItem,
-  queryAttackLibrary,
+  queryAttackLibraryItems,
+  type AttackLibraryItem,
 } from '@/lib/attack-library-service';
+import { SCENARIO_CATALOG } from '@/lib/scenario-catalog';
+import type { AttackCategory } from '@/modules/scenarios/types';
 import {
   ChevronDown,
   ChevronRight,
@@ -57,15 +58,22 @@ export function AttackLibrary({
     Record<string, boolean>
   >({});
 
+  const libraryItems = useMemo(
+    () => SCENARIO_CATALOG.map((entry) => entry.library),
+    []
+  );
   const data = useMemo(
     () =>
-      queryAttackLibrary({
-        category: 'ALL',
-        mitrePhase: 'ALL',
-        severity: 'ALL',
-        search: searchText,
-      }),
-    [searchText]
+      queryAttackLibraryItems(
+        {
+          category: 'ALL',
+          mitrePhase: 'ALL',
+          severity: 'ALL',
+          search: searchText,
+        },
+        libraryItems
+      ),
+    [libraryItems, searchText]
   );
 
   const groupedItems = useMemo(() => {

@@ -21,17 +21,10 @@ import {
 } from './simulation-engine';
 import { buildWhiteboardSchematic } from './sketch-zones-and-drilldown';
 import { CinematicPhase } from './cinematic-camera-director';
-import { STATIC_SCENARIO_STEP_GUIDES } from '@/modules/scenarios/all-step-guides';
-import { VULNCHECK_CWP_AND_DFIR_STEP_GUIDES } from './step-guides/vulncheck-cwp-and-dfir-guides';
 import {
   buildStageCommandBreakdowns,
   StageCommandBreakdownItem,
 } from './command-line-explanations';
-import {
-  getSection3DDescriptor,
-  stepNumberToSectionKey,
-} from './section-3d-registry';
-import { ALL_CATEGORY_STANDARD_PATCHES } from './step-guides/categories';
 
 export interface StructuredExplanationClause {
   clauseCode: string;
@@ -279,101 +272,32 @@ export function normalizeStepGuideProse(text: string): string {
     .trim();
 }
 
-/** Later batches must not overwrite richer guides already registered for the same id. */
-function mergeStepGuidesFirstWins(
-  ...batches: Array<Record<string, RawScenarioStepGuideData>>
-): Record<string, RawScenarioStepGuideData> {
-  const merged: Record<string, RawScenarioStepGuideData> = {};
-  for (const batch of batches) {
-    for (const [id, guide] of Object.entries(batch)) {
-      if (!(id in merged)) {
-        const patch = ALL_CATEGORY_STANDARD_PATCHES[id];
-        const bPatch = patch?.briefing;
-        const cleanedBriefing: RawScenarioBriefingGuide = {
-          headline: normalizeStepGuideProse(
-            bPatch?.headline ?? guide.briefing.headline
-          ),
-          storyAnalogy: normalizeStepGuideProse(
-            bPatch?.storyAnalogy ?? guide.briefing.storyAnalogy
-          ),
-          storyMappings:
-            bPatch?.storyMappings ??
-            guide.briefing.storyMappings ??
-            getSection3DDescriptor(id, 'briefing')?.storyMappings,
-          plainSummary: normalizeStepGuideProse(
-            bPatch?.plainSummary ?? guide.briefing.plainSummary
-          ),
-          diagramTopologySummary: normalizeStepGuideProse(
-            bPatch?.diagramTopologySummary ??
-              guide.briefing.diagramTopologySummary
-          ),
-          documentedAdvisory: normalizeStepGuideProse(
-            bPatch?.documentedAdvisory ?? guide.briefing.documentedAdvisory
-          ),
-        };
-        merged[id] = {
-          ...guide,
-          briefing: cleanedBriefing,
-          steps: guide.steps.map((step) => {
-            const sPatch = patch?.steps?.[step.stepNumber];
-            const cleanedStep: RawScenarioStepGuideItem = {
-              ...step,
-              plainTitle: normalizeStepGuideProse(
-                sPatch?.plainTitle ?? step.plainTitle
-              ),
-              storyAnalogy: normalizeStepGuideProse(
-                sPatch?.storyAnalogy ?? step.storyAnalogy
-              ),
-              storyMappings:
-                sPatch?.storyMappings ??
-                step.storyMappings ??
-                (() => {
-                  const sk = stepNumberToSectionKey(step.stepNumber);
-                  return sk
-                    ? getSection3DDescriptor(id, sk)?.storyMappings
-                    : undefined;
-                })(),
-              simpleExplanation: normalizeStepGuideProse(
-                sPatch?.simpleExplanation ?? step.simpleExplanation
-              ),
-              howItWorksInPractice: normalizeStepGuideProse(
-                sPatch?.howItWorksInPractice ?? step.howItWorksInPractice
-              ),
-              diagramAlignment: normalizeStepGuideProse(
-                sPatch?.diagramAlignment ?? step.diagramAlignment
-              ),
-              detectionAndEvidence: normalizeStepGuideProse(
-                sPatch?.detectionAndEvidence ?? step.detectionAndEvidence
-              ),
-            };
-            if (/\([^)]{25,}\)/.test(cleanedStep.simpleExplanation)) {
-              return cleanedStep;
-            }
-            const cleanPractice = cleanedStep.howItWorksInPractice
-              .replace(/[().]/g, '')
-              .trim();
-            return {
-              ...cleanedStep,
-              simpleExplanation: `${cleanedStep.simpleExplanation.replace(/\.+\s*$/, '')} (${cleanPractice}).`,
-            };
-          }),
-        };
-      }
-    }
-  }
-  return merged;
+const scenarioGuideCache = new Map<string, RawScenarioStepGuideData | null>();
+let scenarioGuideLookup:
+  | ((scenarioId: string) => RawScenarioStepGuideData | null | undefined)
+  | null = null;
+
+/** Server registry calls this once. The browser catalog fills the cache per scenario instead. */
+export function registerScenarioGuideLookup(
+  lookup: (scenarioId: string) => RawScenarioStepGuideData | null | undefined
+) {
+  scenarioGuideLookup = lookup;
 }
 
-export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> =
-  mergeStepGuidesFirstWins(
-    STATIC_SCENARIO_STEP_GUIDES,
-    VULNCHECK_CWP_AND_DFIR_STEP_GUIDES
-  );
+export function cacheScenarioGuide(
+  scenarioId: string,
+  guide: RawScenarioStepGuideData | null
+) {
+  scenarioGuideCache.set(scenarioId, guide);
+}
 
 export function getRawScenarioStepGuide(
   scenarioId: string
 ): RawScenarioStepGuideData | null {
-  return ALL_SCENARIO_STEP_GUIDES[scenarioId] || null;
+  if (scenarioGuideCache.has(scenarioId)) {
+    return scenarioGuideCache.get(scenarioId) ?? null;
+  }
+  return scenarioGuideLookup?.(scenarioId) ?? null;
 }
 
 const CIRCLED_NODE_NUMBERS = ['①', '②', '③', '④', '⑤', '⑥'];

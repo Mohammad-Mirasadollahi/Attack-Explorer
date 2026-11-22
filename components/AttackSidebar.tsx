@@ -3,9 +3,9 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  ATTACK_SCENARIOS,
-  AttackScenario,
-} from '@/lib/attack-scenarios';
+  SCENARIO_CATALOG,
+  type ScenarioCatalogEntry,
+} from '@/lib/scenario-catalog';
 import {
   categorizeScenarios,
   ScenarioGroupByMode,
@@ -35,7 +35,7 @@ import { OperationalGuideIcon } from './OperationalGuideIcon';
 interface AttackSidebarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  displayedScenarios: AttackScenario[];
+  displayedScenarios: ScenarioCatalogEntry[];
   activeScenarioId: string;
   onSelectScenario: (scenarioId: string) => void;
   sortBy?: ScenarioSortOption;
@@ -166,7 +166,7 @@ export function AttackSidebar({
     e.dataTransfer.setData('text/plain', vec.id);
   };
 
-  const renderScenarioItem = (sc: AttackScenario) => {
+  const renderScenarioItem = (sc: ScenarioCatalogEntry) => {
     const isSelectedScenario = sc.id === activeScenarioId;
 
     return (
@@ -174,7 +174,7 @@ export function AttackSidebar({
         <button
           type="button"
           data-testid={`scenario-item-${sc.id}`}
-          title={`${sc.code} (${sc.stages.length} steps) — ${sc.name}: ${sc.shortSubtitle}`}
+          title={`${sc.code} (${sc.stageCount} steps) — ${sc.name}: ${sc.shortSubtitle}`}
           onClick={() => onSelectScenario(sc.id)}
           className={`w-full min-w-0 flex flex-col gap-1 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${
             isSelectedScenario
@@ -193,7 +193,7 @@ export function AttackSidebar({
             <span aria-hidden="true" className="shrink-0">
               ·
             </span>
-            <span className="shrink-0">{sc.stages.length} steps</span>
+            <span className="shrink-0">{sc.stageCount} steps</span>
           </div>
 
           <div className="text-xs font-medium leading-snug break-words w-full">
@@ -258,7 +258,7 @@ export function AttackSidebar({
             }`}
           >
             <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
-            <span>Scenarios ({ATTACK_SCENARIOS.length})</span>
+            <span>Scenarios ({SCENARIO_CATALOG.length})</span>
           </button>
 
           <button

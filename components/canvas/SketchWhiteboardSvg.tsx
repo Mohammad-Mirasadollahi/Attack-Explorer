@@ -1,7 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
-import { TelemetryEvent } from '@/lib/attack-scenarios';
+import type { TelemetryEvent } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,

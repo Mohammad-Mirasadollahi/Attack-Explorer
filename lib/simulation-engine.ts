@@ -166,10 +166,28 @@ export type ScenarioSortOption =
 
 export type ScenarioGroupByMode = 'CATEGORY' | 'MITRE_PHASE' | 'FLAT';
 
-export interface CategorizedScenarioGroup {
+type ScenarioSortable = {
+  name: string;
+  code: string;
+  stageCount?: number;
+  stages?: readonly unknown[];
+};
+
+type ScenarioGroupable = {
+  category: Exclude<AttackCategory, 'ALL'>;
+  primaryMitrePhase: number;
+};
+
+function scenarioStageCount(scenario: ScenarioSortable): number {
+  return scenario.stageCount ?? scenario.stages?.length ?? 0;
+}
+
+export interface CategorizedScenarioGroup<
+  T extends ScenarioGroupable = AttackScenario,
+> {
   groupKey: string;
   label: string;
-  scenarios: AttackScenario[];
+  scenarios: T[];
 }
 
 export function clampPanelDimension(
@@ -217,26 +235,24 @@ export function filterScenarios(
   });
 }
 
-export function sortScenarios(
-  scenarios: AttackScenario[],
+export function sortScenarios<T extends ScenarioSortable>(
+  scenarios: T[],
   sortBy: ScenarioSortOption
-): AttackScenario[] {
+): T[] {
   const copy = [...scenarios];
   switch (sortBy) {
     case 'NAME_ASC':
-      return copy.sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
+      return copy.sort((a, b) => a.name.localeCompare(b.name));
     case 'STAGES_DESC':
       return copy.sort(
         (a, b) =>
-          b.stages.length - a.stages.length ||
+          scenarioStageCount(b) - scenarioStageCount(a) ||
           a.name.localeCompare(b.name)
       );
     case 'STAGES_ASC':
       return copy.sort(
         (a, b) =>
-          a.stages.length - b.stages.length ||
+          scenarioStageCount(a) - scenarioStageCount(b) ||
           a.name.localeCompare(b.name)
       );
     case 'MITRE_CODE':
@@ -280,10 +296,10 @@ function getMitreTacticGroupMeta(phase: number): {
   };
 }
 
-export function categorizeScenarios(
-  scenarios: AttackScenario[],
+export function categorizeScenarios<T extends ScenarioGroupable>(
+  scenarios: T[],
   groupBy: ScenarioGroupByMode
-): CategorizedScenarioGroup[] {
+): CategorizedScenarioGroup<T>[] {
   if (groupBy === 'FLAT') {
     return [
       {
@@ -296,7 +312,7 @@ export function categorizeScenarios(
   if (groupBy === 'MITRE_PHASE') {
     const map = new Map<
       string,
-      { label: string; order: number; list: AttackScenario[] }
+      { label: string; order: number; list: T[] }
     >();
     for (const sc of scenarios) {
       const meta = getMitreTacticGroupMeta(sc.primaryMitrePhase);
@@ -322,7 +338,7 @@ export function categorizeScenarios(
   // Default: 'CATEGORY'
   const map = new Map<
     string,
-    { label: string; order: number; list: AttackScenario[] }
+    { label: string; order: number; list: T[] }
   >();
   for (const sc of scenarios) {
     const meta = getAttackCategoryGroupMeta(sc.category);

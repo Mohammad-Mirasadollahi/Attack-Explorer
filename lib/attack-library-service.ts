@@ -1,4 +1,8 @@
-import { ATTACK_SCENARIOS, AttackCategory, AttackScenario, MITRE_PHASES } from './attack-scenarios';
+import {
+  MITRE_PHASES,
+  type AttackCategory,
+  type AttackScenario,
+} from '@/modules/scenarios/types';
 
 export interface MitreCategoryDescriptor {
   phase: number;
@@ -92,17 +96,16 @@ export function mapScenarioToLibraryItem(
       mitreTacticPhase: st.mitreTacticPhase })) };
 }
 
-export function queryAttackLibrary(
+export function queryAttackLibraryItems(
   query: AttackLibraryQuery = {},
-  scenarios: AttackScenario[] = ATTACK_SCENARIOS
+  allItems: AttackLibraryItem[]
 ): AttackLibraryResponse {
-  const allItems = scenarios.map(mapScenarioToLibraryItem);
 
   const mitreCategories: MitreCategoryDescriptor[] = MITRE_PHASES.map((p) => {
-    const count = scenarios.filter(
-      (s) =>
-        s.primaryMitrePhase === p.phase ||
-        s.stages.some((st) => st.mitreTacticPhase === p.phase)
+    const count = allItems.filter(
+      (item) =>
+        item.primaryMitrePhase === p.phase ||
+        item.stages.some((st) => st.mitreTacticPhase === p.phase)
     ).length;
 
     return {
@@ -170,4 +173,14 @@ export function queryAttackLibrary(
     filteredCount: filteredItems.length,
     mitreCategories,
     items: filteredItems };
+}
+
+export function queryAttackLibrary(
+  query: AttackLibraryQuery = {},
+  scenarios: AttackScenario[]
+): AttackLibraryResponse {
+  return queryAttackLibraryItems(
+    query,
+    scenarios.map(mapScenarioToLibraryItem)
+  );
 }

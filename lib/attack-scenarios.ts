@@ -7,6 +7,7 @@ import {
 } from '@/modules/scenarios/all-scenarios';
 import { normalizeLegacyDraftScenario } from '@/modules/scenarios/legacy/normalize-legacy-draft-scenario';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
+import './scenario-step-guide-index';
 import { ensureCascadingProcessHierarchy } from './documentation-structural-diagrams';
 
 /**

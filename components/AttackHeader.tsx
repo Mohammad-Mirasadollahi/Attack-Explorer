@@ -2,11 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ATTACK_SCENARIOS, AttackScenario } from '@/lib/attack-scenarios';
+import { filterScenarioCatalog } from '@/lib/scenario-catalog';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
-  filterScenarios,
 } from '@/lib/simulation-engine';
 import { WhiteboardSketchNode } from '@/lib/sketch-zones-and-drilldown';
 import { searchAttackGraphNodes } from '@/lib/canvas-interaction-engine';
@@ -32,7 +31,7 @@ import {
 } from 'lucide-react';
 
 interface AttackHeaderProps {
-  scenario: AttackScenario;
+  scenarioCode: string;
   activeEnvironment?: ActiveEnvironmentId;
   onSelectEnvironment?: (env: ActiveEnvironmentId) => void;
   tacticalMode?: boolean;
@@ -63,7 +62,7 @@ interface AttackHeaderProps {
 }
 
 export function AttackHeader({
-  scenario,
+  scenarioCode,
   activeEnvironment = DEFAULT_ACTIVE_ENVIRONMENT,
   onSelectEnvironment,
   tacticalMode = false,
@@ -105,7 +104,7 @@ export function AttackHeader({
   const matchedScenarios = useMemo(() => {
     const trimmed = nodeSearchQuery.trim();
     if (!trimmed) return [];
-    return filterScenarios(ATTACK_SCENARIOS, 'ALL', trimmed).slice(0, 8);
+    return filterScenarioCatalog(trimmed).slice(0, 8);
   }, [nodeSearchQuery]);
 
   // Close search dropdown when clicking outside
@@ -379,7 +378,7 @@ export function AttackHeader({
                         data-testid="top-toolbar-node-search-empty"
                         className="px-3 py-2 text-center text-xs text-zinc-500 dark:text-zinc-400"
                       >
-                        No graph nodes in {scenario.code} match &ldquo;
+                        No graph nodes in {scenarioCode} match &ldquo;
                         {nodeSearchQuery}&rdquo;.
                       </div>
                     ) : (
@@ -437,11 +436,7 @@ export function AttackHeader({
                           </div>
                         ) : (
                           matchedScenarios.map((sc) => {
-                            const mitreIds = Array.from(
-                              new Set(
-                                sc.stages.map((st) => st.mitreTechniqueId)
-                              )
-                            ).slice(0, 3);
+                            const mitreIds = sc.mitreIds.slice(0, 3);
                             return (
                               <button
                                 key={sc.id}
@@ -462,7 +457,7 @@ export function AttackHeader({
                                     </span>
                                   </div>
                                   <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 leading-snug break-words">
-                                    {mitreIds.join(', ')} · {sc.stages.length}{' '}
+                                    {mitreIds.join(', ')} · {sc.stageCount}{' '}
                                     Stages
                                   </div>
                                 </div>

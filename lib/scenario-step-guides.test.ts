@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
+import { ALL_SCENARIO_STEP_GUIDES } from './scenario-step-guide-index';
 import {
-  ALL_SCENARIO_STEP_GUIDES,
   buildDiagramStepGuideModel,
   getRawScenarioStepGuide,
   validateAllScenarioStepGuides,

@@ -1,7 +1,4 @@
-import {
-  AttackScenario,
-  TelemetryEvent,
-} from './attack-scenarios';
+import type { AttackScenario, TelemetryEvent } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,

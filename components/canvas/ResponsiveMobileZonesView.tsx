@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { TelemetryEvent } from '@/lib/attack-scenarios';
+import type { TelemetryEvent } from '@/modules/scenarios/types';
 import {
   NETWORK_ZONE_COLUMNS,
   NetworkZoneColumn,

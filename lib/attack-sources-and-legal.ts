@@ -1,6 +1,6 @@
-import { AttackScenario } from './attack-scenarios';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import { BATCH_1_TO_4_ATTRIBUTIONS } from './batch1-to-4-attributions-and-intel';
-import { VULNCHECK_CWP_AND_DFIR_ATTRIBUTIONS } from './vulncheck-cwp-and-dfir-attributions-intel';
+import { VULNCHECK_CWP_AND_DFIR_ATTRIBUTIONS } from './dfir-records';
 
 export interface SourceCitation {
   id: string;

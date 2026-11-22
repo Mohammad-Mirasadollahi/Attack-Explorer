@@ -1,4 +1,4 @@
-import { AttackScenario} from './attack-scenarios';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import {
   WhiteboardSketchFlow,
   WhiteboardSketchNode } from './sketch-zones-and-drilldown';

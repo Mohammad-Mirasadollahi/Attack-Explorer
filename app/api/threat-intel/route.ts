@@ -1,14 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { ATTACK_SCENARIOS } from '@/lib/attack-scenarios';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import {
-  getCuratedThreatIntel,
+  DEFAULT_SCENARIO_ID,
+  findScenarioCatalogEntry,
+} from '@/lib/scenario-catalog';
+import {
+  getCuratedThreatIntelById,
   GroundedSourceLink,
   ThreatIntelContextData,
 } from '@/lib/threat-intel-service';
 
+async function loadPreparedScenarioForLiveIntel(
+  scenarioId: string,
+  requestUrl: string
+): Promise<AttackScenario | null> {
+  // Prefer Workers Static Assets (Free / unlimited). Never import the full
+  // ATTACK_SCENARIOS corpus into this Worker — that blows the Free 10ms CPU cap.
+  try {
+    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    const { env } = await getCloudflareContext({ async: true });
+    const assetUrl = new URL(
+      `/scenario-data/${encodeURIComponent(scenarioId)}.json`,
+      requestUrl
+    );
+    const assetResponse = await env.ASSETS.fetch(assetUrl);
+    if (assetResponse.ok) {
+      const payload = (await assetResponse.json()) as {
+        scenario?: AttackScenario;
+      };
+      return payload.scenario ?? null;
+    }
+  } catch {
+    // Local `next dev` has no ASSETS binding — fall through to a same-origin fetch.
+  }
+
+  try {
+    const response = await fetch(
+      new URL(
+        `/scenario-data/${encodeURIComponent(scenarioId)}.json`,
+        requestUrl
+      )
+    );
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { scenario?: AttackScenario };
+    return payload.scenario ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
-  let scenarioId = ATTACK_SCENARIOS[0].id;
+  let scenarioId = DEFAULT_SCENARIO_ID;
   try {
     const body = await req.json();
     if (body?.scenarioId && typeof body.scenarioId === 'string') {
@@ -18,9 +61,13 @@ export async function POST(req: NextRequest) {
     // fallback to default scenarioId
   }
 
-  const scenario =
-    ATTACK_SCENARIOS.find((s) => s.id === scenarioId) || ATTACK_SCENARIOS[0];
-  const curated = getCuratedThreatIntel(scenario);
+  const catalogEntry =
+    findScenarioCatalogEntry(scenarioId) ??
+    findScenarioCatalogEntry(DEFAULT_SCENARIO_ID);
+  const curated = getCuratedThreatIntelById(scenarioId, {
+    code: catalogEntry?.code,
+    name: catalogEntry?.name,
+  });
 
   const cacheHeaders = {
     // Curated intel is static data — cache hard so Free-plan Worker invocations stay low.
@@ -28,13 +75,20 @@ export async function POST(req: NextRequest) {
   };
 
   const apiKey = process.env.GEMINI_API_KEY;
-  // Live Gemini + googleSearch grounding can exceed Workers Free 10ms CPU (Error 1102)
-  // after loading the scenario corpus. Opt-in with FORCE_LIVE_INTEL=1 on Paid, or
-  // keep unset on Free and serve curated multi-source intel instead.
+  // Live Gemini + googleSearch grounding can exceed Workers Free 10ms CPU (Error 1102).
+  // Opt-in with FORCE_LIVE_INTEL=1 on Paid; keep unset on Free.
   const allowLiveIntel =
     Boolean(apiKey?.trim()) && process.env.FORCE_LIVE_INTEL === '1';
 
   if (!allowLiveIntel) {
+    return NextResponse.json(curated, { headers: cacheHeaders });
+  }
+
+  const scenario = await loadPreparedScenarioForLiveIntel(
+    scenarioId,
+    req.url
+  );
+  if (!scenario) {
     return NextResponse.json(curated, { headers: cacheHeaders });
   }
 
@@ -89,7 +143,6 @@ Keep the synthesized briefing under 125 words in clear, technical DFIR prose.`;
       }
     }
 
-    // Merge with curated multi-vendor sources so at least 3 independent sources are always preserved
     for (const fallbackSrc of curated.groundedSources) {
       if (!seenUris.has(fallbackSrc.uri)) {
         seenUris.add(fallbackSrc.uri);

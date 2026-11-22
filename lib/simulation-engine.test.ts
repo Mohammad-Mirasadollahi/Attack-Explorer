@@ -169,12 +169,12 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
   });
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
-    const fullLib = queryAttackLibrary();
+    const fullLib = queryAttackLibrary({}, ATTACK_SCENARIOS);
     assert.equal(fullLib.totalCount, 188);
     assert.equal(fullLib.mitreCategories.length, 7);
 
     // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass
-    const phase4 = queryAttackLibrary({ mitrePhase: 4 });
+    const phase4 = queryAttackLibrary({ mitrePhase: 4 }, ATTACK_SCENARIOS);
     assert.ok(
       phase4.items.some((item) => item.scenarioId === 'process-hollowing')
     );
@@ -183,7 +183,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     );
 
     // Search by log source "Sysmon EID 25"
-    const eid25 = queryAttackLibrary({ search: 'Sysmon EID 25' });
+    const eid25 = queryAttackLibrary({ search: 'Sysmon EID 25' }, ATTACK_SCENARIOS);
     assert.equal(eid25.filteredCount, 1);
     assert.equal(eid25.items[0].scenarioId, 'process-hollowing');
   });

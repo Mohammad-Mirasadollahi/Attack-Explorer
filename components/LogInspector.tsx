@@ -2,10 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  AttackScenario,
-  TelemetryEvent,
-} from '@/lib/attack-scenarios';
+import type { AttackScenario, TelemetryEvent } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,

@@ -12,6 +12,7 @@ import {
   stepNumberToSectionKey,
   type Section3DKey,
 } from './section-3d-registry';
+import './scenario-step-guide-index';
 import { getRawScenarioStepGuide } from './scenario-step-guides';
 
 const JAPANESE_CHAR_REGEX = /[\u3040-\u30FF\u4E00-\u9FFF¥]/;

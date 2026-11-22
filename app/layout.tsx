@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import {
-  Plus_Jakarta_Sans,
-  JetBrains_Mono,
-  Patrick_Hand,
-} from 'next/font/google';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import {
   DEFAULT_LAYOUT_MODE,
@@ -24,13 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
-});
-
-const patrickHand = Patrick_Hand({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-sketch',
-  display: 'swap',
+  preload: false,
 });
 
 const siteUrl = resolveSiteUrl();
@@ -194,7 +184,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakartaSans.variable} ${jetbrainsMono.variable} ${patrickHand.variable}`}
+      className={`${jakartaSans.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head>

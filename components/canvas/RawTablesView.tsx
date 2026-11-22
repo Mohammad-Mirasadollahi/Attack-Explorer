@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AttackScenario } from '@/lib/attack-scenarios';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   ComputedStageView,

@@ -2,15 +2,18 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import type { AttackScenario, TelemetryEvent } from '@/modules/scenarios/types';
+import { loadPreparedScenario } from '@/lib/load-prepared-scenario';
 import {
-  ATTACK_SCENARIOS,
-  TelemetryEvent } from '@/lib/attack-scenarios';
+  DEFAULT_SCENARIO_ID,
+  filterScenarioCatalog,
+  findScenarioCatalogEntry,
+} from '@/lib/scenario-catalog';
 import {
   ActiveEnvironmentId,
   computeStageView,
   DEFAULT_ACTIVE_ENVIRONMENT,
   DEFAULT_PLAYBACK_SPEED,
-  filterScenarios,
   ScenarioGroupByMode,
   ScenarioSortOption,
   stepBackward,
@@ -141,7 +144,13 @@ export function AttackExplorerWorkbench() {
   const [sortBy, setSortBy] = useState<ScenarioSortOption>('DEFAULT');
   const [groupBy, setGroupBy] = useState<ScenarioGroupByMode>('CATEGORY');
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(
-    ATTACK_SCENARIOS[0].id
+    DEFAULT_SCENARIO_ID
+  );
+  const [loadedScenario, setLoadedScenario] = useState<AttackScenario | null>(
+    null
+  );
+  const [scenarioLoadError, setScenarioLoadError] = useState<string | null>(
+    null
   );
 
   // Top Workbench Toolbar Graph Node & MITRE Search State
@@ -200,7 +209,7 @@ export function AttackExplorerWorkbench() {
 
   const applyUrlOrSnapshotState = useCallback(() => {
     try {
-      const remembered = readLastVisitedDiagramSnapshot(ATTACK_SCENARIOS[0].id);
+      const remembered = readLastVisitedDiagramSnapshot(DEFAULT_SCENARIO_ID);
       const parsed = parseWorkbenchUrlState(
         typeof window !== 'undefined' ? window.location.search : '',
         typeof window !== 'undefined' ? window.location.hash : '',
@@ -209,20 +218,20 @@ export function AttackExplorerWorkbench() {
 
       const targetSnapshot = parsed.state;
       const validScenario =
-        ATTACK_SCENARIOS.find((s) => s.id === targetSnapshot.scenarioId) ||
-        ATTACK_SCENARIOS.find((s) => s.id === remembered.scenarioId) ||
-        ATTACK_SCENARIOS[0];
+        findScenarioCatalogEntry(targetSnapshot.scenarioId) ||
+        findScenarioCatalogEntry(remembered.scenarioId) ||
+        findScenarioCatalogEntry(DEFAULT_SCENARIO_ID);
 
       const clampedStage = Math.min(
         Math.max(0, targetSnapshot.activeStageIndex),
-        validScenario.stages.length
+        validScenario?.stageCount ?? 0
       );
 
       // Only keep topology/raw view modes that DiagramCanvas can render.
       const safeViewMode =
         targetSnapshot.viewMode === 'RAW_TABLES' ? 'RAW_TABLES' : 'TOPOLOGY';
 
-      setSelectedScenarioId(validScenario.id);
+      setSelectedScenarioId(validScenario?.id ?? DEFAULT_SCENARIO_ID);
       setActiveStageIndex(clampedStage);
       setCinematicPhase(clampedStage === 0 ? 'OVERVIEW' : 'STAGE_ACTIVE');
       if (parsed.hasUrlOverrides) {
@@ -256,7 +265,7 @@ export function AttackExplorerWorkbench() {
       } catch {
         // Ignore storage failures
       }
-      setSelectedScenarioId(ATTACK_SCENARIOS[0].id);
+      setSelectedScenarioId(DEFAULT_SCENARIO_ID);
       setActiveStageIndex(0);
       setCinematicPhase('OVERVIEW');
       setViewMode('TOPOLOGY');
@@ -283,6 +292,24 @@ export function AttackExplorerWorkbench() {
       window.removeEventListener('popstate', onPopState);
     };
   }, [applyUrlOrSnapshotState]);
+
+  useEffect(() => {
+    if (!memoryHydrated) return;
+    let cancelled = false;
+    setScenarioLoadError(null);
+    loadPreparedScenario(selectedScenarioId)
+      .then((scenario) => {
+        if (!cancelled) setLoadedScenario(scenario);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setScenarioLoadError('This scenario could not be loaded.');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [memoryHydrated, selectedScenarioId]);
 
   // Automatically save the complete workbench state in localStorage AND synchronize the browser URL whenever the user navigates across scenarios, steps, sections, nodes, sub-nodes, packets, or inspector tabs
   useEffect(() => {
@@ -403,48 +430,55 @@ export function AttackExplorerWorkbench() {
   }, [isDark]);
 
   const filteredScenarios = useMemo(
-    () => filterScenarios(ATTACK_SCENARIOS, 'ALL', searchQuery),
+    () => filterScenarioCatalog(searchQuery),
     [searchQuery]
   );
 
-  const activeScenario = useMemo(
-    () =>
-      ATTACK_SCENARIOS.find((s) => s.id === selectedScenarioId) ||
-      ATTACK_SCENARIOS[0],
-    [selectedScenarioId]
-  );
+  const activeScenario =
+    loadedScenario && loadedScenario.id === selectedScenarioId
+      ? loadedScenario
+      : null;
+  const selectedScenarioCode =
+    findScenarioCatalogEntry(selectedScenarioId)?.code ??
+    activeScenario?.code ??
+    '';
 
   const currentInjectedVectors = useMemo(
     () =>
-      injectedVectorsByScenario[activeScenario.id] || {
+      (activeScenario &&
+        injectedVectorsByScenario[activeScenario.id]) || {
         nodes: [],
         flows: [],
       },
-    [injectedVectorsByScenario, activeScenario.id]
+    [injectedVectorsByScenario, activeScenario]
   );
 
   const stageView = useMemo(
     () =>
-      computeStageView(
-        activeScenario,
-        activeStageIndex,
-        'ALL',
-        activeEnvironment
-      ),
+      activeScenario
+        ? computeStageView(
+            activeScenario,
+            activeStageIndex,
+            'ALL',
+            activeEnvironment
+          )
+        : null,
     [activeScenario, activeStageIndex, activeEnvironment]
   );
 
   const inspectorScopeContext = useMemo(
     () =>
-      resolveInspectorScopeContext({
-        scenario: activeScenario,
-        activeStageIndex,
-        activeEnvironment,
-        selectedNodeId,
-        expandedNodeId,
-        selectedInternalSubNodeId,
-        scopeOverride: inspectorScopeOverride,
-      }),
+      activeScenario
+        ? resolveInspectorScopeContext({
+            scenario: activeScenario,
+            activeStageIndex,
+            activeEnvironment,
+            selectedNodeId,
+            expandedNodeId,
+            selectedInternalSubNodeId,
+            scopeOverride: inspectorScopeOverride,
+          })
+        : null,
     [
       activeScenario,
       activeStageIndex,
@@ -457,6 +491,7 @@ export function AttackExplorerWorkbench() {
   );
 
   const selectedTelemetry = useMemo(() => {
+    if (!activeScenario || !inspectorScopeContext) return null;
     const scoped = resolveScopedTelemetrySelection({
       scenario: activeScenario,
       selectedTelemetryId,
@@ -472,7 +507,7 @@ export function AttackExplorerWorkbench() {
     activeScenario,
     selectedTelemetryId,
     activeEnvironment,
-    inspectorScopeContext.internalSubBoard,
+    inspectorScopeContext?.internalSubBoard,
     currentInjectedVectors.flows,
   ]);
 
@@ -506,7 +541,7 @@ export function AttackExplorerWorkbench() {
       const template = PREDEFINED_ATTACK_VECTOR_LIBRARY.find(
         (v) => v.id === vectorId
       );
-      if (!template) return;
+      if (!template || !activeScenario) return;
 
       if (viewMode !== 'TOPOLOGY') {
         setViewMode('TOPOLOGY');
@@ -558,7 +593,7 @@ export function AttackExplorerWorkbench() {
 
   // Prince-of-Persia / Protocol-Explorer Cinematic Walkthrough Sequencer
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !activeScenario) return;
 
     if (cinematicPhase === 'INTRO_SURVEY') {
       const t1 = window.setTimeout(() => {
@@ -587,7 +622,7 @@ export function AttackExplorerWorkbench() {
     }, intervalMs);
 
     return () => window.clearInterval(timer);
-  }, [isPlaying, cinematicPhase, playbackSpeed, activeScenario.stages.length]);
+  }, [isPlaying, cinematicPhase, playbackSpeed, activeScenario]);
 
   const handleSelectScenario = (scenarioId: string, stageIdx: number = 0) => {
     setSelectedScenarioId(scenarioId);
@@ -619,6 +654,7 @@ export function AttackExplorerWorkbench() {
     setSelectedTelemetryId(null);
     setFocusedPartHash(null);
     setCinematicPhase('STAGE_ACTIVE');
+    if (!activeScenario) return;
     setActiveStageIndex((prev) => stepForward(activeScenario, prev));
   };
 
@@ -661,6 +697,7 @@ export function AttackExplorerWorkbench() {
     if (
       !isPlaying &&
       (activeStageIndex === 0 ||
+        !activeScenario ||
         activeStageIndex >= activeScenario.stages.length ||
         cinematicPhase === 'OUTRO_COMPLETE')
     ) {
@@ -740,6 +777,7 @@ export function AttackExplorerWorkbench() {
         setIsPlaying(false);
         setSelectedTelemetryId(null);
         setCinematicPhase('STAGE_ACTIVE');
+        if (!activeScenario) return;
         setActiveStageIndex((prev) => stepForward(activeScenario, prev));
       } else if (
         command === 'PLAY_PAUSE_SEQUENCE' &&
@@ -791,7 +829,7 @@ export function AttackExplorerWorkbench() {
         >
           {/* Persistent Navigation Bar with Animated Logo (Memory Return), Navigation Links & Slide-Out Settings Drawer */}
           <AttackHeader
-            scenario={activeScenario}
+            scenarioCode={selectedScenarioCode}
             activeEnvironment={activeEnvironment}
             onSelectEnvironment={setActiveEnvironment}
             tacticalMode={tacticalMode}
@@ -857,7 +895,7 @@ export function AttackExplorerWorkbench() {
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
                   displayedScenarios={filteredScenarios}
-                  activeScenarioId={activeScenario.id}
+                  activeScenarioId={selectedScenarioId}
                   onSelectScenario={(id) => handleSelectScenario(id, 0)}
                   sortBy={sortBy}
                   onSortChange={setSortBy}
@@ -871,7 +909,14 @@ export function AttackExplorerWorkbench() {
             </AnimatePresence>
 
             <div className="relative flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto sm:overflow-hidden">
-              {inspectorOpen ? (
+              {!activeScenario || !stageView || !inspectorScopeContext ? (
+                <div
+                  data-testid="scenario-loading"
+                  className="flex flex-1 items-center justify-center p-8 text-sm font-mono text-zinc-500"
+                >
+                  {scenarioLoadError ?? 'Loading scenario…'}
+                </div>
+              ) : inspectorOpen ? (
                 /* Dedicated Full-Screen Forensic Inspector Page */
                 <InspectorPanel
                   scenario={activeScenario}
@@ -969,7 +1014,7 @@ export function AttackExplorerWorkbench() {
           <AttackLibrary
             isOpen={attackLibraryOpen}
             onClose={() => setAttackLibraryOpen(false)}
-            activeScenarioId={activeScenario.id}
+            activeScenarioId={selectedScenarioId}
             onSelectScenario={handleSelectScenario}
           />
         )}
@@ -982,7 +1027,7 @@ export function AttackExplorerWorkbench() {
           />
         )}
 
-        {sourcesModalOpen && (
+        {sourcesModalOpen && activeScenario && (
           <SourcesAndLegalModal
             isOpen={sourcesModalOpen}
             onClose={() => setSourcesModalOpen(false)}

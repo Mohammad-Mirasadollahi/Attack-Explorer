@@ -1,7 +1,6 @@
-import { AttackScenario, MITRE_PHASES } from '@/modules/scenarios/types';
-import { ATTACK_SCENARIOS } from './attack-scenarios';
+import { MITRE_PHASES, type AttackScenario } from '@/modules/scenarios/types';
 import { BATCH_1_TO_4_CURATED_INTEL } from './batch1-to-4-attributions-and-intel';
-import { VULNCHECK_CWP_AND_DFIR_CURATED_INTEL } from './vulncheck-cwp-and-dfir-attributions-intel';
+import { VULNCHECK_CWP_AND_DFIR_CURATED_INTEL } from './dfir-records';
 
 export interface MitreTacticFrequencyItem {
   phase: number;
@@ -61,7 +60,7 @@ const TACTIC_PHASE_COLORS: Record<number, string> = {
  */
 export function computeMitreTacticFrequency(
   scenario: AttackScenario,
-  allScenarios: AttackScenario[] = ATTACK_SCENARIOS
+  allScenarios: AttackScenario[] = []
 ): MitreTacticFrequencyItem[] {
   const normalizePhase = (p: number): number => {
     if (p >= 1 && p <= 7) return p;
@@ -1584,14 +1583,28 @@ const CURATED_THREAT_INTEL: Record<
 export function getCuratedThreatIntel(
   scenario: AttackScenario
 ): ThreatIntelContextData {
+  return getCuratedThreatIntelById(scenario.id, {
+    code: scenario.code,
+    name: scenario.name,
+  });
+}
+
+/**
+ * Cloudflare Free-safe lookup: uses the precomputed intel map only.
+ * Worker handlers must prefer this over importing ATTACK_SCENARIOS.
+ */
+export function getCuratedThreatIntelById(
+  scenarioId: string,
+  meta?: { code?: string; name?: string }
+): ThreatIntelContextData {
   const base =
-    CURATED_THREAT_INTEL[scenario.id] ||
+    CURATED_THREAT_INTEL[scenarioId] ||
     CURATED_THREAT_INTEL['process-hollowing'];
   return {
     ...base,
-    scenarioId: scenario.id,
-    scenarioCode: scenario.code,
-    scenarioName: scenario.name,
+    scenarioId,
+    scenarioCode: meta?.code ?? base.scenarioCode,
+    scenarioName: meta?.name ?? base.scenarioName,
     sourceMode: 'CURATED_INTELLIGENCE_CACHE',
     fetchedAt: new Date().toISOString(),
   };

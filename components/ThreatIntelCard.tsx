@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { AttackScenario } from '@/lib/attack-scenarios';
+import type { AttackScenario } from '@/modules/scenarios/types';
 import {
   getCuratedThreatIntel,
   ThreatIntelContextData,
@@ -32,6 +32,13 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
 
   const fetchGroundedIntel = useCallback(async (scenarioId: string) => {
     setIsLoading(true);
+    // Always refresh curated intel in the browser first so Cloudflare Free
+    // Workers are not required for the common Sync Live path.
+    const localCurated = getCuratedThreatIntel(scenario);
+    setLiveIntelByScenario((prev) => ({
+      ...prev,
+      [scenarioId]: localCurated,
+    }));
     try {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), 7000);
@@ -52,11 +59,11 @@ export function ThreatIntelCard({ scenario }: ThreatIntelCardProps) {
         }
       }
     } catch {
-      // Retain curated fallback intelligence on offline/network errors
+      // Keep the local curated payload already applied above.
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [scenario]);
 
   return (
     <section
