@@ -1,17 +1,8 @@
-/**
- * Copy Excalidraw prod fonts into public/fonts so the board can self-host
- * under CSP font-src 'self' (no esm.sh CDN).
- *
- * Package layout: node_modules/@excalidraw/excalidraw/dist/prod/fonts/**
- * Served as:      /fonts/**  with window.EXCALIDRAW_ASSET_PATH = "/"
- */
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const src = join(
-  root,
+const sourceDir = path.join(
+  process.cwd(),
   'node_modules',
   '@excalidraw',
   'excalidraw',
@@ -19,17 +10,16 @@ const src = join(
   'prod',
   'fonts'
 );
-const dest = join(root, 'public', 'fonts');
+const targetDir = path.join(process.cwd(), 'public', 'fonts');
 
-if (!existsSync(src)) {
+if (!fs.existsSync(sourceDir)) {
   console.warn(
-    '[copy-excalidraw-fonts] Skip: package fonts missing at',
-    src
+    '[copy-excalidraw-fonts] Source directory not found, skipping:',
+    sourceDir
   );
   process.exit(0);
 }
 
-mkdirSync(join(root, 'public'), { recursive: true });
-rmSync(dest, { recursive: true, force: true });
-cpSync(src, dest, { recursive: true });
-console.log('[copy-excalidraw-fonts] Synced Excalidraw fonts → public/fonts');
+fs.mkdirSync(targetDir, { recursive: true });
+fs.cpSync(sourceDir, targetDir, { recursive: true, force: true });
+console.log('[copy-excalidraw-fonts] Copied Excalidraw fonts to public/fonts');
