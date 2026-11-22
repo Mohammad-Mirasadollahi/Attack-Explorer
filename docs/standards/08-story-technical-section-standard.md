@@ -25,7 +25,11 @@ The **Process Hollowing & Cobalt Strike Beacon Loader** Overview established the
 │     • Standard control dock (Play/Pause, Replay, Acts, Speed, Cutaway,     │
 │       4 Camera Angles, Labels, Bloom, Hide Controls, Timeline Scrubber)    │
 ├────────────────────────────────────────────────────────────────────────────┤
-│  3. TECHNICAL FORENSIC EXPLANATION (Directly BELOW the film)               │
+│  2B. TECHNICAL CLIP (MOD-14) when the section’s claims can be shown        │
+│      Overview / briefing stays unregistered. Memory registers on a diff.   │
+│  2C. TECHNICAL WHITEBOARD (MOD-13) when that section has a chalk board     │
+├────────────────────────────────────────────────────────────────────────────┤
+│  3. TECHNICAL FORENSIC EXPLANATION (Directly BELOW clip and whiteboard)    │
 │     [#X.1] Technical clause explicitly referencing story objects by name   │
 │     [#X.2] Exact APIs, PIDs, hex constants + inline purpose parentheticals │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -59,9 +63,11 @@ This explicit bridge eliminates the mental leap between storytelling and forensi
 
 ## 4. Rule 3 — Strict Non-Duplication & Ordering Between Story and Technical Blocks
 
-1. **Story → Film → Technical** (canonical `ANIME_3D_STAGE_STANDARD.sectionOrder`):
-   - Default shell in `StandardStoryTechnicalSection`, `ProcessMemoryView`, `app/scenarios/[id]/page.tsx`, and Inspector Overview: Amber **Story Analogy** first → interactive **3D film** (when registered) → numbered **Technical Forensic Explanation** directly beneath the film.
+1. **Story → Film → Clip → Board → Technical** (canonical shell in `StandardStoryTechnicalSection`):
+   - Amber **Story Analogy** first → interactive **3D film** (when registered) → **technical clip** (`MOD-14`, when registered) → **Excalidraw whiteboard** (`MOD-13`, when registered) → numbered **Technical Forensic Explanation**.
+   - `ANIME_3D_STAGE_STANDARD.sectionOrder` names the three cognitive layers (Story, 3D film, Technical). The clip and the board sit between the film and the clauses. They do not replace either layer.
    - **Never** place Technical clauses between Story and the film, and **never** place Technical above the film when a section 3D scene is registered.
+   - Overview / briefing does not register a clip. A memory section whose claim is a visual difference does. See `MOD-14` §3.
 2. **Zero Duplicate Text Between Main Page Story and Technical Overview**:
    - Never pass the concatenated `scenario.overview` (`${storyAnalogy} ${plainSummary}`) to both `storyAnalogy` and `technicalText`.
    - Overview and SEO landing pages feed pure `rawGuide.briefing.storyAnalogy` to the Story card and pure `rawGuide.briefing.plainSummary` to Technical Overview.
@@ -126,6 +132,6 @@ Every interactive section across the application—Overview, Steps 1..N, Memory 
 - [ ] Do Step/Memory deep-dive blocks (`simpleExplanation`, `howItWorksInPractice`, `underTheHood`, `stages[].description`) pass `validateTechnicalSectionInlineClarity()` with per-token plain-English why parentheticals?
 - [ ] Is Overview `plainSummary` a roadmap (not a Step/Memory dump), and is the Inspector tab labeled **Overview**?
 - [ ] Are `storyAnalogy` and `technicalText` sourced separately (`briefing.storyAnalogy` vs. `briefing.plainSummary`) with zero duplicated sentences?
-- [ ] Does order stay Story → 3D film → Technical wherever Story is shown (Overview, Steps `#1..#N`, Memory, `/scenarios/[id]`)?
+- [ ] Does order stay Story → 3D film → technical clip (if registered) → whiteboard (if registered) → Technical wherever Story is shown (Overview, Steps `#1..#N`, Memory, `/scenarios/[id]`)?
 - [ ] Does Steps `#0` use `omitStory` (no Overview Story repeat) and expand technical Scenario Briefing detail?
 - [ ] Does every section use the exact Overview-standard button bar, cutaway control, 4 camera angles, and Full-Page mode?

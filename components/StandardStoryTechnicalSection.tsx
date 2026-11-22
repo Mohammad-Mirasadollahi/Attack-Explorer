@@ -11,6 +11,10 @@ import {
   type Section3DKey,
   type StoryTechnicalMapping,
 } from '@/lib/section-3d-registry';
+import { hasTechnicalWhiteboard } from '@/lib/section-excalidraw-registry';
+import { hasTechnicalClip } from '@/lib/section-technical-clip-registry';
+import { TechnicalWhiteboardEmbed } from './excalidraw/TechnicalWhiteboardEmbed';
+import { TechnicalClipEmbed } from './technical-clip/TechnicalClipEmbed';
 import { ScenarioSection3DEmbed } from './three/ScenarioSection3DEmbed';
 
 export interface StandardStoryTechnicalSectionProps {
@@ -124,6 +128,12 @@ export function StandardStoryTechnicalSection({
   const show3D = Boolean(
     sectionKey && hasSection3DScene(scenarioId, sectionKey)
   );
+  const showTechnicalBoard = Boolean(
+    sectionKey && hasTechnicalWhiteboard(scenarioId, sectionKey)
+  );
+  const showTechnicalClip = Boolean(
+    sectionKey && hasTechnicalClip(scenarioId, sectionKey)
+  );
   const showStory = !omitStory && Boolean(storyAnalogy.trim());
 
   return (
@@ -190,7 +200,7 @@ export function StandardStoryTechnicalSection({
         </div>
       )}
 
-      {/* 2. FULL-WIDTH STANDARD ANIME 3D STAGE (directly below Story, or first when Story omitted) */}
+      {/* 2. FULL-WIDTH STANDARD ANIME 3D STAGE (story film — directly below Story) */}
       {show3D && sectionKey && (
         <ScenarioSection3DEmbed
           scenarioId={scenarioId}
@@ -199,7 +209,25 @@ export function StandardStoryTechnicalSection({
         />
       )}
 
-      {/* 3. BELOW FILM: Technical Explanation (Exact Overview Numbered Clause Standard) */}
+      {/* 2B. TECHNICAL CLIP (SVG+GSAP) — cinematic teaching film; separate from whiteboard */}
+      {showTechnicalClip && sectionKey && (
+        <TechnicalClipEmbed
+          scenarioId={scenarioId}
+          sectionKey={sectionKey}
+          className="pt-1"
+        />
+      )}
+
+      {/* 2C. TECHNICAL WHITEBOARD (Excalidraw) — static chalk API map; separate from clip */}
+      {showTechnicalBoard && sectionKey && (
+        <TechnicalWhiteboardEmbed
+          scenarioId={scenarioId}
+          sectionKey={sectionKey}
+          className="pt-1"
+        />
+      )}
+
+      {/* 3. BELOW FILM (+ whiteboard): Technical Explanation (numbered forensic clauses) */}
       {resolvedClauses.length > 0 && (
         <div data-testid={technicalTestId} className="space-y-2">
           <div className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">

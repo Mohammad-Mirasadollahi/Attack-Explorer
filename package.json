@@ -8,13 +8,15 @@
     "start": "next start",
     "lint": "eslint .",
     "clean": "next clean",
+    "postinstall": "node scripts/copy-excalidraw-fonts.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "pages:build": "opennextjs-cloudflare build",
-    "scenarios:registry": "node scripts/generate-scenario-registry.mjs"
+    "scenarios:registry": "node scripts/generate-scenario-registry.mjs && node scripts/generate-scenario-data.mjs"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "0.18.0",
     "@google/genai": "^3.3.0",
     "@hookform/resolvers": "^5.2.1",
     "@opennextjs/cloudflare": "^1.20.17",
@@ -32,7 +34,8 @@
     "react-zoom-pan-pinch": "^4.2.0",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.187.0"
+    "three": "^0.187.0",
+    "gsap": "^3.13.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",

@@ -123,7 +123,7 @@
 }
 
 .font-sketch {
-  font-family: var(--font-sketch), "Patrick Hand", cursive, sans-serif;
+  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
 }
 
 /*
@@ -152,6 +152,68 @@
   background-color: #0B0F17;
   background-image: radial-gradient(#1E293B 1px, transparent 1px);
   background-size: 16px 16px;
+}
+
+/*
+ * Technical teaching boards (Excalidraw embed): keep the chalk surface,
+ * hide editor chrome so it reads as a finished whiteboard slide.
+ */
+.technical-excalidraw-board .App-menu,
+.technical-excalidraw-board .layer-ui__wrapper__top-right,
+.technical-excalidraw-board .layer-ui__wrapper__footer,
+.technical-excalidraw-board .footer-center,
+.technical-excalidraw-board .App-bottom-bar,
+.technical-excalidraw-board .App-toolbar,
+.technical-excalidraw-board .main-menu-trigger,
+.technical-excalidraw-board .help-icon,
+.technical-excalidraw-board .undo-redo-buttons,
+.technical-excalidraw-board label.ToolIcon[title*="Library"],
+.technical-excalidraw-board .FixedSideContainer_side_top {
+  display: none !important;
+}
+
+.technical-excalidraw-board .excalidraw {
+  --color-surface-lowest: #fdfbf7;
+}
+
+.technical-excalidraw-board,
+.technical-excalidraw-board .excalidraw,
+.technical-excalidraw-board canvas {
+  pointer-events: none;
+  touch-action: none;
+}
+
+.technical-excalidraw-board .excalidraw .FixedSideContainer {
+  pointer-events: none;
+}
+
+/* Hover hit-layer re-enables pointer events without unlocking pan/zoom. */
+.technical-excalidraw-board .board-hover-layer {
+  pointer-events: auto;
+  touch-action: none;
+  cursor: help;
+}
+
+/* Interactive chalk tooltip: select/copy/scroll above the hit layer. */
+.technical-excalidraw-board .board-excalidraw-tooltip {
+  pointer-events: auto;
+  touch-action: pan-y;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.technical-excalidraw-board .board-excalidraw-tooltip-body {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+
+.technical-excalidraw-board .board-excalidraw-tooltip-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.technical-excalidraw-board .board-excalidraw-tooltip-body::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
 }
 
 @keyframes dash-flow {
@@ -367,6 +429,30 @@ html.layout-responsive body {
 
 .dark .anime-3d-canvas-bezel {
   border-color: rgba(56, 189, 248, 0.55);
+}
+
+.anime-3d-canvas-bezel.labels-off .clip-label,
+.anime-3d-canvas-bezel.labels-off .log-line {
+  opacity: 0 !important;
+}
+
+.anime-3d-canvas-bezel.bloom-on svg {
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.35))
+    drop-shadow(0 0 16px rgba(244, 63, 94, 0.22));
+}
+
+.anime-3d-canvas-bezel.cutaway-sealed .ghost-page,
+.anime-3d-canvas-bezel.cutaway-sealed .cell-fill,
+.anime-3d-canvas-bezel.cutaway-sealed .radar-blip,
+.anime-3d-canvas-bezel.cutaway-sealed .log-line,
+.anime-3d-canvas-bezel.cutaway-sealed .cutaway-guts {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.anime-3d-canvas-bezel.cutaway-open .cutaway-guts {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .anime-3d-canvas-bezel::before {

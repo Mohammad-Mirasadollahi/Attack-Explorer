@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
-  transpilePackages: ['motion'],
+  transpilePackages: ['motion', '@excalidraw/excalidraw'],
   async headers() {
     return [
       {

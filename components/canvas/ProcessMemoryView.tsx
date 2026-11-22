@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { AttackScenario, TelemetryEvent } from '@/lib/attack-scenarios';
+import type { AttackScenario, TelemetryEvent } from '@/modules/scenarios/types';
 import {
   ActiveEnvironmentId,
   DEFAULT_ACTIVE_ENVIRONMENT,
@@ -22,7 +22,9 @@ import {
 } from 'lucide-react';
 import { MemoryForensicsFlowchart } from './MemoryForensicsFlowchart';
 import { ScenarioSection3DEmbed } from '../three/ScenarioSection3DEmbed';
+import { TechnicalWhiteboardEmbed } from '../excalidraw/TechnicalWhiteboardEmbed';
 import { getSection3DDescriptor } from '@/lib/section-3d-registry';
+import { hasTechnicalWhiteboard } from '@/lib/section-excalidraw-registry';
 
 interface ProcessMemoryViewProps {
   scenario: AttackScenario;
@@ -162,6 +164,13 @@ export function ProcessMemoryView({
               sectionKey="memory-forensics"
             />
           </section>
+        )}
+
+        {hasTechnicalWhiteboard(scenario.id, 'memory-forensics') && (
+          <TechnicalWhiteboardEmbed
+            scenarioId={scenario.id}
+            sectionKey="memory-forensics"
+          />
         )}
 
         {/* 2. BELOW FILM: Technical Documented Virtual Memory Forensics Briefing */}
