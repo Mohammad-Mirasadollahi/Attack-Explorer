@@ -22,8 +22,10 @@ import {
 } from 'lucide-react';
 import { MemoryForensicsFlowchart } from './MemoryForensicsFlowchart';
 import { ScenarioSection3DEmbed } from '../three/ScenarioSection3DEmbed';
+import { TechnicalClipEmbed } from '../technical-clip/TechnicalClipEmbed';
 import { TechnicalWhiteboardEmbed } from '../excalidraw/TechnicalWhiteboardEmbed';
 import { getSection3DDescriptor } from '@/lib/section-3d-registry';
+import { hasTechnicalClip } from '@/lib/section-technical-clip-registry';
 import { hasTechnicalWhiteboard } from '@/lib/section-excalidraw-registry';
 
 interface ProcessMemoryViewProps {
@@ -164,6 +166,13 @@ export function ProcessMemoryView({
               sectionKey="memory-forensics"
             />
           </section>
+        )}
+
+        {hasTechnicalClip(scenario.id, 'memory-forensics') && (
+          <TechnicalClipEmbed
+            scenarioId={scenario.id}
+            sectionKey="memory-forensics"
+          />
         )}
 
         {hasTechnicalWhiteboard(scenario.id, 'memory-forensics') && (

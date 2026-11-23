@@ -62,9 +62,6 @@ export function AnimeClipStage({
   const beatsRef = useRef(beats);
   const userPausedRef = useRef(false);
   const speedRef = useRef(1);
-  buildRef.current = build;
-  beatsRef.current = beats;
-
   const [playing, setPlaying] = useState(true);
   const [beat, setBeat] = useState(beats[0]?.id ?? 0);
   const [progressPct, setProgressPct] = useState(0);
@@ -75,7 +72,12 @@ export function AnimeClipStage({
   const [bloomOn, setBloomOn] = useState(true);
   const [cutaway, setCutaway] = useState<(typeof ANIME_3D_STAGE_STANDARD.cutawayModes)[number]>('AUTO');
   const [camera, setCamera] = useState(cameras[0]?.id ?? 'WIDE');
-  speedRef.current = speed;
+
+  useEffect(() => {
+    buildRef.current = build;
+    beatsRef.current = beats;
+    speedRef.current = speed;
+  }, [build, beats, speed]);
 
   const sync = useCallback((tl: gsap.core.Timeline) => {
     const time = tl.time();
