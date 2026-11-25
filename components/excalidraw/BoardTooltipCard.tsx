@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { BoardTooltip } from '@/lib/section-excalidraw-registry';
 
 const KIND_META: Record<
@@ -17,12 +17,25 @@ const KIND_META: Record<
   note: { label: 'note', stroke: '#b45309', fill: '#fef3c7' },
 };
 
+const CARD_GAP = 12;
+const BOARD_PAD = 8;
+const CARD_MAX_W = 340;
+const CARD_MAX_H = 420;
+const CARD_MIN_H = 140;
+
 export interface BoardTooltipCardProps {
   tooltip: BoardTooltip;
   x: number;
   y: number;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+}
+
+interface CardPlacement {
+  left: number;
+  top: number;
+  maxHeight: number;
+  width: number;
 }
 
 function formatTooltipPlain(tooltip: BoardTooltip): string {
@@ -43,6 +56,7 @@ function formatTooltipPlain(tooltip: BoardTooltip): string {
 /**
  * Interactive Excalidraw chalk island: selectable / copyable text,
  * scrollable body, stays open while the pointer is over it.
+ * Self-clamps inside the board so overflow:hidden parents never clip it.
  */
 export function BoardTooltipCard({
   tooltip,
@@ -52,7 +66,14 @@ export function BoardTooltipCard({
   onMouseLeave,
 }: BoardTooltipCardProps) {
   const meta = KIND_META[tooltip.kind];
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const [placement, setPlacement] = useState<CardPlacement>(() => ({
+    left: x + CARD_GAP,
+    top: y + CARD_GAP,
+    maxHeight: CARD_MAX_H,
+    width: CARD_MAX_W,
+  }));
 
   const copyAll = useCallback(async () => {
     const text = formatTooltipPlain(tooltip);
@@ -65,16 +86,62 @@ export function BoardTooltipCard({
     }
   }, [tooltip]);
 
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    const parent = card?.offsetParent as HTMLElement | null;
+    if (!card || !parent) return;
+
+    const parentW = parent.clientWidth;
+    const parentH = parent.clientHeight;
+    const width = Math.min(CARD_MAX_W, Math.max(160, parentW - BOARD_PAD * 2));
+
+    let left = x + CARD_GAP;
+    if (left + width > parentW - BOARD_PAD) left = parentW - width - BOARD_PAD;
+    left = Math.max(BOARD_PAD, left);
+
+    const spaceBelow = parentH - y - CARD_GAP - BOARD_PAD;
+    const spaceAbove = y - CARD_GAP - BOARD_PAD;
+    const preferBelow = spaceBelow >= spaceAbove;
+
+    // Measure with a generous temp cap, then place fully inside the board.
+    const measureCap = Math.min(
+      CARD_MAX_H,
+      Math.max(CARD_MIN_H, preferBelow ? spaceBelow : spaceAbove, parentH - BOARD_PAD * 2)
+    );
+    card.style.width = `${width}px`;
+    card.style.maxHeight = `${measureCap}px`;
+    const measuredH = Math.min(card.offsetHeight || measureCap, measureCap);
+
+    let top: number;
+    if (preferBelow && y + CARD_GAP + measuredH <= parentH - BOARD_PAD) {
+      top = y + CARD_GAP;
+    } else if (y - CARD_GAP - measuredH >= BOARD_PAD) {
+      top = y - CARD_GAP - measuredH;
+    } else {
+      top = BOARD_PAD;
+    }
+
+    top = Math.min(Math.max(BOARD_PAD, top), Math.max(BOARD_PAD, parentH - BOARD_PAD - CARD_MIN_H));
+    const maxHeight = Math.max(
+      CARD_MIN_H,
+      Math.min(CARD_MAX_H, parentH - top - BOARD_PAD)
+    );
+
+    setPlacement({ left, top, maxHeight, width });
+  }, [tooltip, x, y]);
+
   return (
     <div
+      ref={cardRef}
       role="tooltip"
       data-testid="technical-board-tooltip"
-      className="board-excalidraw-tooltip absolute z-30 flex w-[min(340px,calc(100%-16px))] flex-col"
+      className="board-excalidraw-tooltip absolute z-30 flex flex-col"
       style={{
-        left: x + 14,
-        top: y + 14,
-        maxWidth: 340,
-        maxHeight: 'min(420px, calc(100% - 24px))',
+        left: placement.left,
+        top: placement.top,
+        width: placement.width,
+        maxWidth: CARD_MAX_W,
+        maxHeight: placement.maxHeight,
         background: '#FDFBF7',
         border: '1.5px solid #1e293b',
         borderRadius: 8,

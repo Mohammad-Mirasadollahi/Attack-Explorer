@@ -343,18 +343,14 @@ export default function ExcalidrawBoard({
 
   const clampPosition = useCallback(
     (x: number, y: number, overlay: HTMLElement): { x: number; y: number } => {
+      // BoardTooltipCard self-clamps after measure; keep cursor coords in-bounds
+      // so the card has a sensible anchor when it opens.
       const rect = overlay.getBoundingClientRect();
-      const cardW = 340;
-      const cardH = 360;
-      let nextX = x;
-      let nextY = y;
-      if (nextX + cardW + 20 > rect.width) {
-        nextX = Math.max(8, rect.width - cardW - 12);
-      }
-      if (nextY + cardH + 20 > rect.height) {
-        nextY = Math.max(8, nextY - cardH - 28);
-      }
-      return { x: nextX, y: nextY };
+      const pad = 8;
+      return {
+        x: Math.min(Math.max(pad, x), Math.max(pad, rect.width - pad)),
+        y: Math.min(Math.max(pad, y), Math.max(pad, rect.height - pad)),
+      };
     },
     []
   );
