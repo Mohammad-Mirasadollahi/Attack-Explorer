@@ -119,15 +119,15 @@ export const stepGuide: RawScenarioStepGuideData = {
       scenarioId: 'dfir-wer-silentprocessexit-localdumps-registry-hijack',
       briefing: {
           headline: 'Scenario Briefing: Official DFIR & Log Forensics Guide for Microsoft WER, Mandiant & Elastic DFIR, IFEO SilentProcessExit & WerFault.exe LSASS Dump Hijack (Sysmon EID 12 / 13)',
-          storyAnalogy: 'Imagine an intruder who wants a complete photograph of the central credential guardroom without ever opening a suspicious camera lens directly at the guardroom door. Instead, the intruder flips two official diagnostic switches on the building own built-in crash-inspector board so the operating system Error Reporting clerk itself politely photographs the entire guardroom memory into a chosen folder whenever a silent-exit bell is rung.',
+          storyAnalogy: 'Imagine an intruder who wants a complete photograph of the central credential guardroom without ever opening a suspicious camera lens directly at the guardroom door. Instead, the intruder flips two official diagnostic switches on the building’s built-in crash-inspector board—the first switch enables silent-exit monitoring for the guardroom and the second switch aims the crash-inspector dump tray at a private drop folder—so the Error Reporting clerk politely photographs the entire guardroom memory whenever a silent-exit bell is rung.',
           storyMappings: [
               {
-                  storyTerm: 'Flipping the silent-exit monitoring switch for the guardroom',
+                  storyTerm: 'First diagnostic switch (silent-exit monitoring)',
                   technicalTerm: 'IFEO GlobalFlag set to FLG_MONITOR_SILENT_PROCESS_EXIT (0x200) on lsass.exe',
                   tone: 'amber',
                 },
               {
-                  storyTerm: 'Pointing the crash-inspector dump tray at an attacker folder',
+                  storyTerm: 'Second diagnostic switch (crash-inspector dump tray)',
                   technicalTerm: 'SilentProcessExit\\lsass.exe ReportingMode=2, DumpType=2, and LocalDumpFolder',
                   tone: 'sky',
                 },
@@ -215,7 +215,7 @@ export const stepGuide: RawScenarioStepGuideData = {
               stepNumber: 3,
               mitreId: 'T1003.001',
               plainTitle: 'Triggering RtlReportSilentProcessExit & WerFault.exe Full LSASS Dump (Application EventID 3001)',
-              storyAnalogy: 'Finally, the intruder taps the undocumented silent-exit chime inside a tiny helper tool. Hearing the chime, the signed Microsoft Error Reporting clerk itself marches over, dumps the entire live LSASS credential memory cleanly into the attacker folder, and leaves LSASS running completely undisturbed.',
+              storyAnalogy: 'Finally, the intruder taps the undocumented silent-exit chime inside a tiny helper tool. Hearing the chime, the signed error-reporting clerk itself marches over, dumps the entire live credential vault memory cleanly into the attacker folder, and leaves the vault guard running completely undisturbed.',
               simpleExplanation: 'The attacker calls ntdll.dll!RtlReportSilentProcessExit(hLsass, 0) (which only requires PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ or is triggered via CreateRemoteThread/NtTerminateProcess on a helper). The Windows Error Reporting service spawns the Microsoft-signed C:\\Windows\\System32\\WerFault.exe, which dumps lsass.exe-(PID).dmp into C:\\Windows\\Temp\\Dumps, spawns MonitorProcess, and logs Application EventID 3001 (Source: Winlogon / SilentProcessExit) (logged in Sysmon Event 10 with EventID=10 , ProcessAccess + 11 , FileCreate + 3001 , Application Log, ProxyBinary=C:\\Windows\\System32\\WerFault.exe , Microsoft Signed, TargetProcess=C:\\Windows\\System32\\lsass.exe, CreatedDumpFile=C:\\Windows\\Temp\\Dumps\\lsass.exe-684.dmp so analysts can verify the exact actor and target artifact).',
               howItWorksInPractice: 'Under the hood, the observed step executes ntdll!RtlReportSilentProcessExit(hProcess, 0) -> LPC message to WerSvcGroup (which executes the technical command / telemetry directive , ntdll!RtlReportSilentProcessExit, hProcess, 0 -> LPC message to WerSvcGroup via System / Run so that advances the scenario kill-chain under MITRE T1003.001 during "Triggering RtlReportSilentProcessExit & WerFault.exe Full LSASS Dump , Application EventID 3001" , The attacker calls ntdll while generating verifiable host or network telemetry for DFIR attribution). Next, the follow-up artifact Sysmon EventID 10: SourceImage=C:\\Windows\\System32\\WerFault.exe TargetImage=C:\\Windows\\System32\\lsass.exe GrantedAccess=0x1FFFFF runs (which invokes or targets the host daemon/process , Sysmon EventID 10: SourceImage=C:\\Windows\\System32\\WerFault.exe TargetImage=C:\\Windows\\System32\\lsass. so that advances the scenario kill-chain under MITRE T1003.001 during "Triggering RtlReportSilentProcessExit & WerFault.exe Full LSASS Dump , Application EventID 3001" , The attacker calls ntdll while generating verifiable host or network telemetry for DFIR attribution).',
               diagramAlignment: 'On the diagram, follow Step #3 / Link #3 across the topology from Attacker Registry Modification and IFEO GlobalFlag , 0x200 toward SilentProcessExit\\lsass.exe and Sysmon EID 12/13 & Application.',
@@ -248,15 +248,15 @@ export const stepGuide: RawScenarioStepGuideData = {
 export const standardPatch: ScenarioStandardPatch = {
     briefing: {
       storyAnalogy:
-        'Imagine an intruder who wants a complete photograph of the central credential guardroom without ever opening a suspicious camera lens directly at the guardroom door. Instead, the intruder flips two official diagnostic switches on the building own built-in crash-inspector board so the operating system Error Reporting clerk itself politely photographs the entire guardroom memory into a chosen folder whenever a silent-exit bell is rung.',
+        'Imagine an intruder who wants a complete photograph of the central credential guardroom without ever opening a suspicious camera lens directly at the guardroom door. Instead, the intruder flips two official diagnostic switches on the building own built-in crash-inspector board—the first switch turns on silent-exit monitoring for the guardroom and the second switch directs the full-memory photograph straight into the intruder drop folder—so the operating system Error Reporting clerk itself politely photographs the entire guardroom memory whenever a silent-exit bell is rung.',
       storyMappings: [
         {
-          storyTerm: 'Flipping the silent-exit monitoring switch for the guardroom',
+          storyTerm: 'First Diagnostic Switch (Silent-Exit Monitor)',
           technicalTerm: 'IFEO GlobalFlag set to FLG_MONITOR_SILENT_PROCESS_EXIT (0x200) on lsass.exe',
           tone: 'amber',
         },
         {
-          storyTerm: 'Pointing the crash-inspector dump tray at an attacker folder',
+          storyTerm: 'Second Diagnostic Switch (Dump Folder Target)',
           technicalTerm: 'SilentProcessExit\\lsass.exe ReportingMode=2, DumpType=2, and LocalDumpFolder',
           tone: 'sky',
         },
@@ -327,7 +327,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Finally, the intruder taps the undocumented silent-exit chime inside a tiny helper tool. Hearing the chime, the signed Microsoft Error Reporting clerk itself marches over, dumps the entire live LSASS credential memory cleanly into the attacker folder, and leaves LSASS running completely undisturbed.',
+          'Finally, the intruder taps the undocumented silent-exit chime inside a tiny helper tool. Hearing the chime, the signed error-reporting clerk itself marches over, dumps the entire live credential vault memory cleanly into the attacker folder, and leaves the vault guard running completely undisturbed.',
         storyMappings: [
           {
             storyTerm: 'Tapping the undocumented silent-exit chime',

@@ -167,7 +167,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       2: {
         storyAnalogy:
-          'The moment the automated build bay spins up the attacker worker container, the container taps the booth local metadata wall panel and lifts the live OAuth badge belonging to the overly privileged default Cloud Build service account.',
+          'The moment the automated build bay spins up the attacker worker container, the container taps the booth local wall panel and lifts the live delegated access badge belonging to the overly privileged default factory service account.',
         storyMappings: [
           {
             storyTerm: 'Booth local metadata wall panel',

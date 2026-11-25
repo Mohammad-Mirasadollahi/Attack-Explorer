@@ -198,10 +198,10 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Holding the freshly minted vault door pass, the intruder steps straight into the Domain Controller storage room carrying fabricated executive group badges that do not even match the real employee directory.',
+          'Holding the freshly minted vault door pass, the intruder steps straight into the headquarters directory storage room carrying fabricated executive group badges that do not even match the real employee roster.',
         storyMappings: [
           {
-            storyTerm: 'Stepping into the Domain Controller storage room',
+            storyTerm: 'Stepping into the headquarters directory storage room',
             technicalTerm: 'Mounting \\\\CORP-DC01\\C$ using the forged Kerberos service ticket',
             tone: 'amber',
           },

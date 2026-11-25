@@ -168,7 +168,7 @@ export function StandardStoryTechnicalSection({
               className="pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 space-y-1.5"
             >
               <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-900/90 dark:text-amber-300/90">
-                Story-to-Technical Key (What Each Story Piece Means in Windows)
+                Story-to-Technical Key (What Each Story Piece Means in Practice)
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {resolvedMappings.map((item, idx) => {

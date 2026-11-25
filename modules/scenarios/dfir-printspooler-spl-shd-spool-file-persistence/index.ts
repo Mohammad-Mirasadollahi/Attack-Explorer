@@ -172,7 +172,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       2: {
         storyAnalogy:
-          'Calling the official printer port-monitor registration desk, the intruder pins a custom DLL name onto the permanent Monitors registry shelf so the print service commits to loading that library every single time the server boots.',
+          'Calling the official printer port-monitor registration desk, the intruder pins a custom helper library name onto the permanent Monitors settings shelf so the print service commits to loading that helper every single time the server boots.',
         storyMappings: [
           {
             storyTerm: 'Official port-monitor registration desk',

@@ -371,7 +371,7 @@ export const stepGuide: RawScenarioStepGuideData = {
 export const standardPatch: ScenarioStandardPatch = {
     briefing: {
       storyAnalogy:
-        'Imagine a busy customer-support desk where enterprise administrators mail in full browser traffic recordings to help troubleshoot login glitches, forgetting to black out their own live master wristbands printed inside the packet headers. After breaching the support ticket vault, an intruder lifts those still-live master wristbands straight out of the uploaded recordings, replays them from an overseas proxy to walk straight past multi-factor locks, and mints permanent master API keys before alert response teams slam the door.',
+        'Imagine a busy customer-support desk where enterprise administrators mail in full browser traffic recordings to help troubleshoot login glitches, forgetting to black out their own live master wristbands printed inside the packet headers. After breaching the support ticket vault, an intruder lifts those still-live master wristbands straight out of the uploaded recordings, replays them from an overseas proxy to walk straight past multi-factor locks, and mints permanent master service keys before alert response teams slam the door.',
       storyMappings: [
         {
           storyTerm: 'Uploaded troubleshooting recordings leaking live wristbands',
@@ -452,10 +452,10 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Racing against the clock before the temporary wristband expires or defenders spot the sudden address jump, the intruder attempts to print permanent master API keys or bolt on a rogue identity bridge, triggering real-time security alarms at vigilant defender centers.',
+          'Racing against the clock before the temporary wristband expires or defenders spot the sudden address jump, the intruder attempts to print permanent master service keys or bolt on a rogue identity bridge, triggering real-time security alarms at vigilant defender centers.',
         storyMappings: [
           {
-            storyTerm: 'Printing permanent master API keys before the clock runs out',
+            storyTerm: 'Printing permanent master service keys before the clock runs out',
             technicalTerm: 'Okta System Log event system.api_token.create minting long-lived SSWS API tokens',
             tone: 'amber',
           },

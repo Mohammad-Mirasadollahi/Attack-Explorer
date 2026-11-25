@@ -5,6 +5,18 @@ import { MALWARE_KERNEL_FIRMWARE_3D_REGISTRY } from '@/lib/section-3d-registries
 import { MALWARE_PERSISTENCE_SERVICES_3D_REGISTRY } from '@/lib/section-3d-registries/malware-persistence-services';
 import { MALWARE_CREDENTIAL_LINUX_3D_REGISTRY } from '@/lib/section-3d-registries/malware-credential-linux';
 import { MALWARE_DFIR_ARTIFACTS_3D_REGISTRY } from '@/lib/section-3d-registries/malware-dfir-artifacts';
+import { NETWORK_WEB_3D_REGISTRY } from '@/lib/section-3d-registries/network-web';
+import { ACTIVE_DIRECTORY_3D_REGISTRY } from '@/lib/section-3d-registries/active-directory';
+import { CLOUD_SAAS_3D_REGISTRY } from '@/lib/section-3d-registries/cloud-saas';
+import { RANSOMWARE_EXTORTION_3D_REGISTRY } from '@/lib/section-3d-registries/ransomware-extortion';
+import { AI_MLOPS_3D_REGISTRY } from '@/lib/section-3d-registries/ai-mlops';
+import { ZERO_DAY_APPLIANCES_3D_REGISTRY } from '@/lib/section-3d-registries/zero-day-appliances';
+import { KERNEL_FIRMWARE_BYOVD_3D_REGISTRY } from '@/lib/section-3d-registries/kernel-firmware-byovd';
+import { SUPPLY_CHAIN_CICD_3D_REGISTRY } from '@/lib/section-3d-registries/supply-chain-cicd';
+import { CONTAINERS_KUBERNETES_3D_REGISTRY } from '@/lib/section-3d-registries/containers-kubernetes';
+import { DATABASE_PLATFORMS_3D_REGISTRY } from '@/lib/section-3d-registries/database-platforms';
+import { ICS_OT_SCADA_3D_REGISTRY } from '@/lib/section-3d-registries/ics-ot-scada';
+import { MOBILE_TELECOM_3D_REGISTRY } from '@/lib/section-3d-registries/mobile-telecom';
 
 export type { StoryTechnicalMapping };
 
@@ -899,6 +911,18 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
   ...MALWARE_PERSISTENCE_SERVICES_3D_REGISTRY,
   ...MALWARE_CREDENTIAL_LINUX_3D_REGISTRY,
   ...MALWARE_DFIR_ARTIFACTS_3D_REGISTRY,
+  ...NETWORK_WEB_3D_REGISTRY,
+  ...ACTIVE_DIRECTORY_3D_REGISTRY,
+  ...CLOUD_SAAS_3D_REGISTRY,
+  ...RANSOMWARE_EXTORTION_3D_REGISTRY,
+  ...AI_MLOPS_3D_REGISTRY,
+  ...ZERO_DAY_APPLIANCES_3D_REGISTRY,
+  ...KERNEL_FIRMWARE_BYOVD_3D_REGISTRY,
+  ...SUPPLY_CHAIN_CICD_3D_REGISTRY,
+  ...CONTAINERS_KUBERNETES_3D_REGISTRY,
+  ...DATABASE_PLATFORMS_3D_REGISTRY,
+  ...ICS_OT_SCADA_3D_REGISTRY,
+  ...MOBILE_TELECOM_3D_REGISTRY,
 };
 
 /**

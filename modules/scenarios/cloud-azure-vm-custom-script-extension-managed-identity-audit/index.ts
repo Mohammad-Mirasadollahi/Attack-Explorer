@@ -141,7 +141,7 @@ export const standardPatch: ScenarioStandardPatch = {
     steps: {
       1: {
         storyAnalogy:
-          'Without needing any SSH key or Windows password for the target server, the intruder uses compromised Azure management permissions to push a Custom Script Extension order straight down from the cloud control plane.',
+          'Without needing any remote terminal key or room password for the target server, the intruder uses compromised management permissions to push a remote work-order script straight down from the central control desk.',
         storyMappings: [
           {
             storyTerm: 'Pushing a script order from the cloud control plane',
@@ -149,7 +149,7 @@ export const standardPatch: ScenarioStandardPatch = {
             tone: 'amber',
           },
           {
-            storyTerm: 'Skipping SSH keys and Windows passwords entirely',
+            storyTerm: 'Skipping door keys and login passwords entirely',
             technicalTerm: 'Control-plane-to-data-plane bridge executing code inside the VM OS directly',
             tone: 'sky',
           },

@@ -114,7 +114,7 @@ export const scenario: LegacyDraftScenario = {
 export const standardPatch: ScenarioStandardPatch = {
     briefing: {
       storyAnalogy:
-        'Imagine a chain of corporate record rooms connected by internal brass pneumatic tubes that automatically stamp every parcel with chief-archivist clearance at the far end. An intruder inspects the directory to spot which pneumatic tubes carry top clearance, flips two restricted control switches on the remote room’s wall to unlock its maintenance hatch, and loads a custom mechanical helper directly into the record ledger without ever leaving a physical tool box on the floor.',
+        'Imagine a chain of corporate record rooms connected by internal brass pneumatic tubes that automatically stamp every parcel with chief-archivist clearance at the far end. An intruder inspects the directory to spot which pneumatic tubes carry top clearance, flips two restricted control switches on the remote room’s wall—the first switch unlocks the direct maintenance hatch for shell commands and the second switch enables custom mechanical extensions—and loads a custom mechanical helper directly into the record ledger without ever leaving a physical tool box on the floor.',
       storyMappings: [
         {
           storyTerm: 'Internal Brass Pneumatic Tubes',
@@ -122,8 +122,13 @@ export const standardPatch: ScenarioStandardPatch = {
           tone: 'sky',
         },
         {
-          storyTerm: 'Flipping Restricted Wall Switches',
-          technicalTerm: 'sp_configure Enabling xp_cmdshell & clr enabled (EventID 15457)',
+          storyTerm: 'First Wall Switch (Maintenance Hatch)',
+          technicalTerm: 'sp_configure Enabling xp_cmdshell for Direct OS Commands (EventID 15457)',
+          tone: 'amber',
+        },
+        {
+          storyTerm: 'Second Wall Switch (Custom Extensions)',
+          technicalTerm: 'sp_configure Enabling clr enabled for In-Database .NET Assemblies',
           tone: 'amber',
         },
         {

@@ -193,7 +193,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Switching seamlessly between high-speed locking gears tailored for each affiliate job, the crew seals both Windows office files and basement ESXi virtual servers at the exact same time, leaving the enterprise paralyzed across physical and virtual floors.',
+          'Switching seamlessly between high-speed locking gears tailored for each affiliate job, the crew seals both office desktop files and basement virtual server hosts at the exact same time, leaving the enterprise paralyzed across physical and virtual floors.',
         storyMappings: [
           {
             storyTerm: 'Tailored locking gears chosen per job',

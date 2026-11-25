@@ -198,7 +198,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Inside the newly opened virtual drive window, the user clicks a disguised document shortcut that launches the hidden payload without SmartScreen warnings, while Windows Explorer quietly records the drive visit inside the user Shellbags diary and records the shortcut metadata.',
+          'Inside the newly opened virtual drive window, the user clicks a disguised document shortcut that launches the hidden payload without front-door safety warnings, while the file browser quietly records the drive visit inside the user folder diary and records the shortcut trail.',
         storyMappings: [
           {
             storyTerm: 'User folder-viewing diary recording the drive visit',

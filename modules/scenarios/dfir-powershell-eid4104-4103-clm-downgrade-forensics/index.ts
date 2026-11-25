@@ -170,7 +170,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       2: {
         storyAnalogy:
-          'On modern patched booths where downgrade fails, even if the intruder wraps their payload inside multiple layers of Base64 and character-scrambling obfuscation, the PowerShell engine records the fully unwrapped plaintext script automatically the instant it compiles to run.',
+          'On modern patched booths where downgrade fails, even if the intruder wraps their note inside multiple layers of coded text and character-scrambling disguises, the automation desk records the fully unwrapped plaintext script automatically the instant it prepares to run.',
         storyMappings: [
           {
             storyTerm: 'Multiple layers of character-scrambling obfuscation',

@@ -398,7 +398,7 @@ export function AnimeSection3DStage({
       bloomPass.threshold = sim.isDark ? 0.98 : 1.12;
       bloomPass.radius = sim.isDark ? 0.42 : 0.32;
 
-      // Smooth camera preset interpolation (or Director gentle breathing orbit)
+      // Smooth camera preset interpolation (with Process-Hollowing-style multi-act Director choreography)
       if (!sim.manualOrbit) {
         const preset =
           descriptor.cameraPresets.find((p) => p.id === sim.cameraPreset) ||
@@ -406,8 +406,35 @@ export function AnimeSection3DStage({
         _scratchCamPos.set(...preset.position);
         _scratchCamTarget.set(...preset.target);
         if (sim.cameraPreset === 'DIRECTOR') {
-          _scratchCamPos.x += Math.sin(sim.elapsed * 0.28) * 0.7;
-          _scratchCamPos.y += Math.cos(sim.elapsed * 0.22) * 0.25;
+          const totalPhases = Math.max(1, descriptor.phases.length);
+          const viewA = descriptor.cameraPresets[1];
+          const viewB = descriptor.cameraPresets[2];
+          const viewC = descriptor.cameraPresets[3];
+          const phaseFocal =
+            totalPhases >= 3
+              ? phaseIdx === 0
+                ? viewA
+                : phaseIdx === 1
+                  ? viewB
+                  : phaseIdx === 2
+                    ? viewC
+                    : preset
+              : phaseIdx === 0
+                ? preset
+                : viewB ?? preset;
+          if (phaseFocal && phaseFocal.id !== 'DIRECTOR') {
+            // Blend 42% toward the active act's hero viewpoint so the whole stage stays legible while the camera tells the story
+            _scratchCamPos.lerp(
+              new THREE.Vector3(...phaseFocal.position),
+              0.42
+            );
+            _scratchCamTarget.lerp(
+              new THREE.Vector3(...phaseFocal.target),
+              0.42
+            );
+          }
+          _scratchCamPos.x += Math.sin(sim.elapsed * 0.28) * 0.65;
+          _scratchCamPos.y += Math.cos(sim.elapsed * 0.22) * 0.22;
         }
         if (sim.snapCamera) {
           camera.position.copy(_scratchCamPos);

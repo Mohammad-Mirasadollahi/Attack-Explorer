@@ -189,7 +189,7 @@ export const standardPatch: ScenarioStandardPatch = {
             tone: 'rose',
           },
           {
-            storyTerm: 'Central SIEM vault keeping copies untouched',
+            storyTerm: 'Central security archive vault keeping copies untouched',
             technicalTerm: 'Real-time log forwarding preserving pre-clear logs off the compromised host',
             tone: 'emerald',
           },

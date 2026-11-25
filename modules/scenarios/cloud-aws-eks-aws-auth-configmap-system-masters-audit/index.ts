@@ -114,7 +114,7 @@ export const scenario: LegacyDraftScenario = {
 export const standardPatch: ScenarioStandardPatch = {
     briefing: {
       storyAnalogy:
-        'Imagine a cloud-managed Kubernetes complex whose front reception desk translates AWS corporate badges into inner building keys using one hand-edited paper seating chart taped behind the desk. Using a pre-signed AWS badge to sign in, an intruder edits that single paper seating chart to write their own ordinary cloud role straight into the Supreme Master Guild line, instantly unlocking every secret vault in the entire cluster.',
+        'Imagine a cloud-managed cluster complex whose front reception desk translates corporate cloud badges into inner building keys using one hand-edited paper seating chart taped behind the desk. Using a pre-signed corporate badge to sign in, an intruder edits that single paper seating chart to write their own ordinary cloud role straight into the Supreme Master Guild line, instantly unlocking every secret vault in the entire cluster.',
       storyMappings: [
         {
           storyTerm: 'Pre-signed corporate badge unlocking the cluster reception desk',
@@ -141,7 +141,7 @@ export const standardPatch: ScenarioStandardPatch = {
     steps: {
       1: {
         storyAnalogy:
-          'Generating a short-lived pre-signed AWS identity voucher wrapped inside a special cluster prefix, the intruder presents it to the Kubernetes front gate to authenticate smoothly with an existing cloud IAM badge.',
+          'Generating a short-lived pre-signed identity voucher wrapped inside a special cluster prefix, the intruder presents it to the cluster front gate to authenticate smoothly with an existing cloud badge.',
         storyMappings: [
           {
             storyTerm: 'Short-lived pre-signed AWS identity voucher',
@@ -149,17 +149,17 @@ export const standardPatch: ScenarioStandardPatch = {
             tone: 'amber',
           },
           {
-            storyTerm: 'Kubernetes front gate validating the voucher',
+            storyTerm: 'Cluster front gate validating the voucher',
             technicalTerm: 'EKS aws-iam-authenticator verifying the STS signature and mapping the IAM ARN',
             tone: 'sky',
           },
           {
-            storyTerm: 'Existing cloud IAM badge with ConfigMap editing rights',
+            storyTerm: 'Existing cloud badge with seating-chart editing rights',
             technicalTerm: 'Compromised IAM principal authorized to modify kube-system ConfigMaps',
             tone: 'rose',
           },
           {
-            storyTerm: 'Dual audit trail bridging AWS and Kubernetes',
+            storyTerm: 'Dual audit trail bridging cloud vault and cluster hall',
             technicalTerm: 'Correlating AWS IAM ARN with Kubernetes kube-apiserver audit user identity',
             tone: 'emerald',
           },
@@ -167,7 +167,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       2: {
         storyAnalogy:
-          'Opening the delicate translation chart taped inside the system room, the intruder appends a second backdoor cloud user directly underneath the unrestrictable Supreme Master Guild, granting permanent cluster-wide sovereignty that survives even RBAC cleanups.',
+          'Opening the delicate translation chart taped inside the system room, the intruder appends a second backdoor cloud user directly underneath the unrestrictable Supreme Master Guild, granting permanent cluster-wide sovereignty that survives even role-roster cleanups.',
         storyMappings: [
           {
             storyTerm: 'Delicate translation chart inside the system room',

@@ -140,7 +140,7 @@ export default function ExcalidrawBoard({
       const appState = api.getAppState();
       api.updateScene({
         appState: {
-          zoom: { value: zoom },
+          zoom: { value: zoom as typeof appState.zoom.value },
           scrollX: appState.scrollX,
           scrollY: appState.scrollY,
         },

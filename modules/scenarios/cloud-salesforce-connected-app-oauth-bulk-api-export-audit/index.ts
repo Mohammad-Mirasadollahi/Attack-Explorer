@@ -141,7 +141,7 @@ export const standardPatch: ScenarioStandardPatch = {
     steps: {
       1: {
         storyAnalogy:
-          'Lured by a smooth social-engineering call or phishing link, an employee clicks Approve on a disguised external Connected App, silently handing the attacker a renewable OAuth key ring scoped to read and export company CRM records.',
+          'Lured by a smooth phone call or disguised link, an employee clicks Approve on a disguised external research cart, silently handing the attacker a renewable delegated key ring scoped to read and export company customer records.',
         storyMappings: [
           {
             storyTerm: 'Disguised external Connected App approved by a user',

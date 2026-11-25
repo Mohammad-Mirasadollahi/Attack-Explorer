@@ -193,7 +193,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Because the encryptor keeps its master instructions tightly sealed against curious defenders, it refuses to budge until the operator supplies a 64-character secret passkey, unlocking modern curve-based locks that seal Windows desktops, Linux hosts, and ESXi servers alike.',
+          'Because the encryptor keeps its master instructions tightly sealed against curious defenders, it refuses to budge until the operator supplies a 64-character secret passkey, unlocking modern curve-based locks that seal office desktops, server hosts, and virtual server racks alike.',
         storyMappings: [
           {
             storyTerm: 'Refusing to budge without a 64-character secret passkey',

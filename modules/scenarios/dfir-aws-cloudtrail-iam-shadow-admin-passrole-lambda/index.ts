@@ -171,7 +171,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       2: {
         storyAnalogy:
-          'Triggering the newly built helper function immediately, the developer watches the function step into the IAM control room under its privileged role and attach the full Administrator policy straight back onto the developer own identity.',
+          'Triggering the newly built helper robot immediately, the developer watches it step into the badge control room under its senior role and attach the full Administrator ribbon straight back onto the developer own identity.',
         storyMappings: [
           {
             storyTerm: 'Triggering the helper function immediately',

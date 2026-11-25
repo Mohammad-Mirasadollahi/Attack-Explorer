@@ -196,7 +196,7 @@ export const standardPatch: ScenarioStandardPatch = {
       },
       3: {
         storyAnalogy:
-          'Instead of answering the courier themselves, the trickster holds up a real-time mirror that bounces every handshake phrase straight into a neighboring certificate notary office lacking tamper-proof channel seals, minting a Domain Controller badge while leaving an impossible address mismatch in the notary guestbook.',
+          'Instead of answering the courier themselves, the trickster holds up a real-time mirror that bounces every handshake phrase straight into a neighboring certificate notary office lacking tamper-proof channel seals, minting a headquarters directory badge while leaving an impossible address mismatch in the notary guestbook.',
         storyMappings: [
           {
             storyTerm: 'Real-time mirror bouncing every handshake phrase',
@@ -214,7 +214,7 @@ export const standardPatch: ScenarioStandardPatch = {
             tone: 'rose',
           },
           {
-            storyTerm: 'Minting a permanent Domain Controller badge',
+            storyTerm: 'Minting a permanent master courthouse badge',
             technicalTerm: 'Issued CORP-DC01$ certificate or RBCD delegation granting full domain compromise',
             tone: 'emerald',
           },

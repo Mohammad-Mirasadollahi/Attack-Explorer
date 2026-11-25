@@ -464,4 +464,121 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
       `Expected 135 total MALWARE 3D sections (7 hollowing + 128 new), got ${totalSections}`
     );
   });
+
+  it('provides 100% bespoke Three.js coverage across ALL 188 scenarios across all 13 categories (797 sections, 42 memory-forensics, zero jargon, zero Japanese, unique sceneKinds, lazy world factories)', async () => {
+    assert.equal(ATTACK_SCENARIOS.length, 188);
+
+    const globalSceneKinds = new Set<string>();
+    let totalSections = 0;
+    let totalMemoryForensics = 0;
+    const jargonViolations: string[] = [];
+
+    for (const scenario of ATTACK_SCENARIOS) {
+      const expectedKeys: Section3DKey[] = ['briefing'];
+      for (let i = 1; i <= scenario.stages.length; i++) {
+        const key = stepNumberToSectionKey(i);
+        assert.ok(key, `Could not map step ${i} for ${scenario.id}`);
+        expectedKeys.push(key);
+      }
+
+      const hasDocumentedMemory = scenario.processTree.some(
+        (p) => Array.isArray(p.memoryBlocks) && p.memoryBlocks.length > 0
+      );
+      if (hasDocumentedMemory) {
+        expectedKeys.push('memory-forensics');
+        totalMemoryForensics++;
+      }
+
+      const registered = listScenario3DSections(scenario.id);
+      assert.equal(
+        registered.length,
+        expectedKeys.length,
+        `${scenario.id}: expected ${expectedKeys.length} 3D sections (${expectedKeys.join(', ')}), got ${registered.length}`
+      );
+
+      for (const key of expectedKeys) {
+        const desc = getSection3DDescriptor(scenario.id, key);
+        assert.ok(desc, `Missing descriptor for ${scenario.id}:${key}`);
+        assert.equal(desc.scenarioId, scenario.id);
+        assert.equal(desc.sectionKey, key);
+        assert.equal(
+          globalSceneKinds.has(desc.sceneKind),
+          false,
+          `Duplicate sceneKind "${desc.sceneKind}" in ${scenario.id}:${key}`
+        );
+        globalSceneKinds.add(desc.sceneKind);
+        totalSections++;
+
+        assert.ok(desc.storyCue.length > 35, `${scenario.id}:${key} storyCue too short`);
+        assert.ok(desc.technicalCue.length > 35, `${scenario.id}:${key} technicalCue too short`);
+        assert.ok(desc.storyMappings.length >= 4, `${scenario.id}:${key} expected >= 4 storyMappings`);
+        assert.equal(desc.callouts.length, 2);
+        assert.equal(desc.cameraPresets.length, 4);
+        assert.equal(desc.cameraPresets[0].id, 'DIRECTOR');
+        assert.ok(desc.phases.length >= 3);
+
+        for (const ph of desc.phases) {
+          assert.ok(ph.storyExcerpt.length > 15, `${scenario.id}:${key} short phase storyExcerpt`);
+          assert.ok(ph.technicalParallel.length > 15, `${scenario.id}:${key} short phase technicalParallel`);
+          assert.ok(ph.endSec > ph.startSec, `${scenario.id}:${key} invalid phase window`);
+        }
+
+        const cueHits = findTechnicalJargonInStory(desc.storyCue);
+        if (cueHits.length) jargonViolations.push(`${scenario.id}:${key} storyCue -> [${cueHits.join(', ')}]`);
+        for (const c of desc.callouts) {
+          const hits = findTechnicalJargonInStory(c.title);
+          if (hits.length) jargonViolations.push(`${scenario.id}:${key} callout.title -> [${hits.join(', ')}]`);
+          assert.ok(c.subtitle.length >= 10, `${scenario.id}:${key} short callout subtitle`);
+        }
+        for (const ph of desc.phases) {
+          const hits = findTechnicalJargonInStory(ph.storyExcerpt);
+          if (hits.length) jargonViolations.push(`${scenario.id}:${key} phase(${ph.id}) -> [${hits.join(', ')}]`);
+        }
+        for (const m of desc.storyMappings) {
+          const hits = findTechnicalJargonInStory(m.storyTerm);
+          if (hits.length) jargonViolations.push(`${scenario.id}:${key} storyTerm -> [${hits.join(', ')}]`);
+          assert.ok(m.technicalTerm.length >= 8, `${scenario.id}:${key} short technicalTerm`);
+        }
+
+        const allTexts = [
+          desc.stageBadge,
+          desc.title,
+          desc.storyCue,
+          desc.technicalCue,
+          ...desc.storyMappings.flatMap((m) => [m.storyTerm, m.technicalTerm]),
+          ...desc.callouts.flatMap((c) => [c.tag, c.title, c.subtitle]),
+          ...desc.cameraPresets.map((c) => c.label),
+          ...desc.phases.flatMap((p) => [p.shortLabel, p.stageTag, p.title, p.storyExcerpt, p.technicalParallel]),
+        ];
+        for (const text of allTexts) {
+          assert.equal(
+            JAPANESE_CHAR_REGEX.test(text),
+            false,
+            `Japanese char in ${scenario.id}:${key}: "${text}"`
+          );
+        }
+      }
+
+      const group = resolveMalwareWorldGroup(scenario.id);
+      if (scenario.id === 'process-hollowing') {
+        assert.equal(group, 'process-hollowing');
+      } else {
+        assert.notEqual(
+          group,
+          'process-hollowing',
+          `${scenario.id} must NOT route to process-hollowing factory`
+        );
+      }
+      const factory = await loadBespokeSectionSceneFactory(scenario.id);
+      assert.equal(typeof factory, 'function');
+    }
+
+    assert.equal(
+      jargonViolations.length,
+      0,
+      `Found ${jargonViolations.length} jargon violations:\n${jargonViolations.slice(0, 15).join('\n')}`
+    );
+    assert.equal(totalMemoryForensics, 42, `Expected 42 memory-forensics scenes, got ${totalMemoryForensics}`);
+    assert.equal(totalSections, 797, `Expected 797 total 3D sections across 188 scenarios, got ${totalSections}`);
+  });
 });
