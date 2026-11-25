@@ -181,17 +181,25 @@
 .technical-excalidraw-board canvas {
   pointer-events: none;
   touch-action: none;
+  overscroll-behavior: none;
 }
 
 .technical-excalidraw-board .excalidraw .FixedSideContainer {
   pointer-events: none;
 }
 
-/* Hover hit-layer re-enables pointer events without unlocking pan/zoom. */
+/* Hover hit-layer: wheel zoom + left-drag pan; page scroll must stay blocked. */
 .technical-excalidraw-board .board-hover-layer {
   pointer-events: auto;
   touch-action: none;
-  cursor: help;
+  overscroll-behavior: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.technical-excalidraw-board .board-hover-layer.is-panning {
+  cursor: grabbing;
 }
 
 /* Interactive chalk tooltip: select/copy/scroll above the hit layer. */

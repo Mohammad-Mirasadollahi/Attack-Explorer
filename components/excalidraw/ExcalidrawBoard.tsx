@@ -43,10 +43,15 @@ interface HoverState {
   y: number;
 }
 
+interface PanState {
+  lastX: number;
+  lastY: number;
+}
+
 /**
  * Static Excalidraw whiteboard. Every drawn shape stays visible.
  * Hover an annotated rectangle → delayed chalk tooltip (scroll + select + copy).
- * Wheel / buttons zoom the chalk surface; tooltip card typography is unchanged.
+ * Wheel zooms the chalk surface (page scroll blocked); left-drag pans the view.
  */
 export default function ExcalidrawBoard({
   skeletons,
@@ -54,6 +59,7 @@ export default function ExcalidrawBoard({
   className = '',
 }: ExcalidrawBoardProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const hoverLayerRef = useRef<HTMLDivElement | null>(null);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const showTimerRef = useRef<number | null>(null);
   const hideTimerRef = useRef<number | null>(null);
@@ -61,9 +67,11 @@ export default function ExcalidrawBoard({
   const pendingRef = useRef<HoverState | null>(null);
   const overTooltipRef = useRef(false);
   const activeIdRef = useRef<string | null>(null);
+  const panRef = useRef<PanState | null>(null);
 
   const [hover, setHover] = useState<HoverState | null>(null);
   const [zoomLabel, setZoomLabel] = useState('100%');
+  const [isPanning, setIsPanning] = useState(false);
 
   const sceneKey = useMemo(
     () =>
@@ -146,16 +154,36 @@ export default function ExcalidrawBoard({
   );
 
   const setZoom = useCallback(
-    (nextValue: number) => {
+    (
+      nextValue: number,
+      anchor?: { clientX: number; clientY: number; overlay: HTMLElement }
+    ) => {
       const api = apiRef.current;
       if (!api) return;
-      const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextValue));
       const appState = api.getAppState();
+      const prevZoom = appState.zoom?.value ?? 1;
+      const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextValue));
+      if (zoom === prevZoom) {
+        syncZoomLabel(api);
+        return;
+      }
+
+      let scrollX = appState.scrollX;
+      let scrollY = appState.scrollY;
+      if (anchor) {
+        const rect = anchor.overlay.getBoundingClientRect();
+        const mx = anchor.clientX - rect.left;
+        const my = anchor.clientY - rect.top;
+        // Keep the scene point under the cursor fixed while zooming.
+        scrollX = scrollX + mx * (1 / zoom - 1 / prevZoom);
+        scrollY = scrollY + my * (1 / zoom - 1 / prevZoom);
+      }
+
       api.updateScene({
         appState: {
           zoom: { value: zoom as typeof appState.zoom.value },
-          scrollX: appState.scrollX,
-          scrollY: appState.scrollY,
+          scrollX,
+          scrollY,
         },
       });
       syncZoomLabel(api);
@@ -164,14 +192,36 @@ export default function ExcalidrawBoard({
   );
 
   const zoomBy = useCallback(
-    (factor: number) => {
+    (
+      factor: number,
+      anchor?: { clientX: number; clientY: number; overlay: HTMLElement }
+    ) => {
       const api = apiRef.current;
       if (!api) return;
       const current = api.getAppState().zoom?.value ?? 1;
-      setZoom(current * factor);
+      setZoom(current * factor, anchor);
     },
     [setZoom]
   );
+
+  const panBy = useCallback((dx: number, dy: number) => {
+    const api = apiRef.current;
+    if (!api) return;
+    const appState = api.getAppState();
+    const zoom = appState.zoom?.value ?? 1;
+    api.updateScene({
+      appState: {
+        scrollX: appState.scrollX + dx / zoom,
+        scrollY: appState.scrollY + dy / zoom,
+      },
+    });
+  }, []);
+
+  const endPan = useCallback(() => {
+    if (!panRef.current) return;
+    panRef.current = null;
+    setIsPanning(false);
+  }, []);
 
   const scheduleFits = useCallback(
     (api: ExcalidrawImperativeAPI) => {
@@ -210,6 +260,59 @@ export default function ExcalidrawBoard({
       observer.disconnect();
     };
   }, [fitBoard, sceneKey]);
+
+  // React's onWheel is often passive — use a native listener so preventDefault
+  // actually stops the page from scrolling while the board zooms.
+  useEffect(() => {
+    const layer = hoverLayerRef.current;
+    if (!layer) return;
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const factor = event.deltaY > 0 ? 1 / ZOOM_STEP : ZOOM_STEP;
+      zoomBy(factor, {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        overlay: layer,
+      });
+    };
+
+    layer.addEventListener('wheel', onWheel, { passive: false });
+    return () => layer.removeEventListener('wheel', onWheel);
+  }, [zoomBy, sceneKey]);
+
+  useEffect(() => {
+    if (!isPanning) return;
+
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+
+    const onWindowMove = (event: MouseEvent) => {
+      const pan = panRef.current;
+      if (!pan) return;
+      const dx = event.clientX - pan.lastX;
+      const dy = event.clientY - pan.lastY;
+      pan.lastX = event.clientX;
+      pan.lastY = event.clientY;
+      if (dx !== 0 || dy !== 0) panBy(dx, dy);
+    };
+
+    const onWindowUp = () => endPan();
+
+    window.addEventListener('mousemove', onWindowMove);
+    window.addEventListener('mouseup', onWindowUp);
+    window.addEventListener('blur', onWindowUp);
+    return () => {
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener('mousemove', onWindowMove);
+      window.removeEventListener('mouseup', onWindowUp);
+      window.removeEventListener('blur', onWindowUp);
+    };
+  }, [endPan, isPanning, panBy]);
 
   const lockFrame = useCallback(
     (api: ExcalidrawImperativeAPI) => {
@@ -316,7 +419,19 @@ export default function ExcalidrawBoard({
     [clearHideTimer, clearShowTimer, hover]
   );
 
+  const onOverlayPointerDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    clearShowTimer();
+    pendingRef.current = null;
+    activeIdRef.current = null;
+    setHover(null);
+    panRef.current = { lastX: event.clientX, lastY: event.clientY };
+    setIsPanning(true);
+  };
+
   const onOverlayMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (panRef.current) return;
     if (!tooltips) return;
     const id = hitTest(event.clientX, event.clientY, event.currentTarget);
     if (!id) {
@@ -332,14 +447,8 @@ export default function ExcalidrawBoard({
   };
 
   const onOverlayLeave = () => {
+    if (panRef.current) return;
     if (!overTooltipRef.current) scheduleHide();
-  };
-
-  const onOverlayWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const factor = event.deltaY > 0 ? 1 / ZOOM_STEP : ZOOM_STEP;
-    zoomBy(factor);
   };
 
   const onTooltipEnter = () => {
@@ -383,13 +492,16 @@ export default function ExcalidrawBoard({
         excalidrawAPI={lockFrame}
       />
 
-      {/* Captures hover + wheel zoom without relying on Excalidraw chrome. */}
+      {/* Captures hover, wheel zoom, and left-drag pan without Excalidraw chrome. */}
       <div
-        className="board-hover-layer absolute inset-0 z-10"
+        ref={hoverLayerRef}
+        className={`board-hover-layer absolute inset-0 z-10 ${
+          isPanning ? 'is-panning' : ''
+        }`}
         data-testid="excalidraw-board-hover-layer"
+        onMouseDown={onOverlayPointerDown}
         onMouseMove={onOverlayMove}
         onMouseLeave={onOverlayLeave}
-        onWheel={onOverlayWheel}
         aria-hidden="true"
       />
 
