@@ -21,7 +21,7 @@ function ClipLoading() {
   );
 }
 
-const CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+const PROCESS_HOLLOWING_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
   'step-1': dynamic(() => import('./clips/Step1SuspendClip'), { ssr: false, loading: () => <ClipLoading /> }),
   'step-2': dynamic(() => import('./clips/Step2UnmapClip'), { ssr: false, loading: () => <ClipLoading /> }),
   'step-3': dynamic(() => import('./clips/Step3AllocInjectClip'), { ssr: false, loading: () => <ClipLoading /> }),
@@ -29,6 +29,11 @@ const CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
   'step-5': dynamic(() => import('./clips/Step5BeaconClip'), { ssr: false, loading: () => <ClipLoading /> }),
   'memory-forensics': dynamic(() => import('./clips/MemoryDiffClip'), { ssr: false, loading: () => <ClipLoading /> }),
 };
+
+const MalwareTechnicalClipSlot = dynamic(
+  () => import('./malware-clips/MalwareTechnicalClipSlot'),
+  { ssr: false, loading: () => <ClipLoading /> }
+);
 
 export interface TechnicalClipEmbedProps {
   scenarioId: string;
@@ -47,8 +52,12 @@ export function TechnicalClipEmbed({
 }: TechnicalClipEmbedProps) {
   const { ref, active, activate } = useHeavyMediaSlot('clip');
   if (!hasTechnicalClip(scenarioId, sectionKey)) return null;
-  const Clip = CLIP_BY_SECTION[sectionKey];
-  if (!Clip) return null;
+
+  const isProcessHollowing = scenarioId === 'process-hollowing';
+  const ProcessHollowingClip = isProcessHollowing
+    ? PROCESS_HOLLOWING_CLIP_BY_SECTION[sectionKey]
+    : null;
+  if (isProcessHollowing && !ProcessHollowingClip) return null;
 
   return (
     <div
@@ -58,7 +67,15 @@ export function TechnicalClipEmbed({
       data-clip-active={active ? 'true' : 'false'}
     >
       {active ? (
-        <Clip />
+        isProcessHollowing && ProcessHollowingClip ? (
+          <ProcessHollowingClip />
+        ) : (
+          <MalwareTechnicalClipSlot
+            key={`${scenarioId}:${sectionKey}`}
+            scenarioId={scenarioId}
+            sectionKey={sectionKey}
+          />
+        )
       ) : (
         <button
           type="button"

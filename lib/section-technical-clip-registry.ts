@@ -1,4 +1,5 @@
 import type { Section3DKey } from '@/lib/section-3d-registry';
+import { MALWARE_TECHNICAL_CLIP_FLAGS } from '@/lib/malware-2d-blueprints';
 
 /**
  * SVG + GSAP teaching clips — separate from Excalidraw whiteboards.
@@ -18,6 +19,7 @@ const SCENARIO_TECHNICAL_CLIPS: Record<
     'step-5': true,
     'memory-forensics': true,
   },
+  ...MALWARE_TECHNICAL_CLIP_FLAGS,
 };
 
 export function hasTechnicalClip(

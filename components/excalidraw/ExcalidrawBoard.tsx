@@ -159,8 +159,19 @@ export default function ExcalidrawBoard({
     (api: ExcalidrawImperativeAPI) => {
       apiRef.current = api;
       scheduleFits(api);
+      if (typeof document !== 'undefined' && document.fonts?.ready) {
+        void document.fonts.ready.then(() => {
+          if (apiRef.current !== api) return;
+          const remeasured = convertToExcalidrawElements(
+            skeletons as Parameters<typeof convertToExcalidrawElements>[0],
+            { regenerateIds: false }
+          );
+          api.updateScene({ elements: remeasured });
+          requestAnimationFrame(() => fitBoard(api));
+        });
+      }
     },
-    [scheduleFits]
+    [fitBoard, scheduleFits, skeletons]
   );
 
   const clampPosition = useCallback(

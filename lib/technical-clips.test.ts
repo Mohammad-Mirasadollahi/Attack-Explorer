@@ -3,6 +3,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { hasTechnicalClip } from './section-technical-clip-registry';
+import { ATTACK_SCENARIOS } from './attack-scenarios';
+import {
+  findTechnicalJargonInStory,
+  listScenario3DSections,
+} from './section-3d-registry';
+import {
+  getTechnicalWhiteboard,
+  hasTechnicalWhiteboard,
+  listTechnicalWhiteboardSections,
+} from './section-excalidraw-registry';
+import {
+  getMalwareTechnicalClipSpec,
+  MALWARE_TECHNICAL_CLIP_SPECS,
+} from './malware-2d-blueprints';
+import { ARROW_GAP } from './excalidraw-boards/board-primitives';
 
 const CLIPS_DIR = path.join(
   process.cwd(),
@@ -118,3 +133,142 @@ test('Process Hollowing technical clips satisfy MOD-14 player contract and techn
   );
   assert.match(memoryView, /<TechnicalClipEmbed[\s\S]*sectionKey="memory-forensics"/);
 });
+
+const JAPANESE_CHAR_REGEX = /[\u3040-\u30FF\u4E00-\u9FFF¥]/;
+
+test('All 30 MALWARE scenarios have complete MOD-13 Excalidraw whiteboards (135 boards) and MOD-14 SVG+GSAP technical clips (105 clips)', () => {
+  assert.ok(ARROW_GAP >= 150, `ARROW_GAP must be >= 150px, got ${ARROW_GAP}`);
+
+  const malwareScenarios = ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE');
+  assert.equal(malwareScenarios.length, 30, 'Expected 30 MALWARE scenarios');
+
+  const seenPrefixes = new Set<string>(['s1', 's2', 's3', 's4', 's5', 'mem']);
+  let totalBoards = 0;
+  let totalClips = 0;
+
+  for (const scenario of malwareScenarios) {
+    const expected3DSections = listScenario3DSections(scenario.id).map(
+      (d) => d.sectionKey
+    );
+    assert.ok(
+      expected3DSections.length >= 3,
+      `Expected >= 3 sections for ${scenario.id}`
+    );
+
+    // MOD-14 §3: briefing MUST stay unregistered for technical clips
+    assert.equal(
+      hasTechnicalClip(scenario.id, 'briefing'),
+      false,
+      `briefing must NOT have a technical clip for ${scenario.id}`
+    );
+
+    // MOD-13: Every section (briefing, step-1..N, and memory-forensics when present) MUST have an Excalidraw whiteboard
+    const registeredBoards = listTechnicalWhiteboardSections(scenario.id);
+    assert.equal(
+      registeredBoards.length,
+      expected3DSections.length,
+      `Board count mismatch for ${scenario.id}: expected ${expected3DSections.join(',')} got ${registeredBoards.join(',')}`
+    );
+
+    for (const sectionKey of expected3DSections) {
+      assert.equal(
+        hasTechnicalWhiteboard(scenario.id, sectionKey),
+        true,
+        `Missing Excalidraw whiteboard for ${scenario.id}/${sectionKey}`
+      );
+      const board = getTechnicalWhiteboard(scenario.id, sectionKey);
+      assert.ok(board, `Null whiteboard for ${scenario.id}/${sectionKey}`);
+      totalBoards++;
+
+      assert.ok(board.skeletons.length >= 8, `Board too sparse for ${scenario.id}/${sectionKey}`);
+      assert.ok(
+        Object.keys(board.tooltips).length >= 5,
+        `Board must have tooltips for all teaching cards + sticky (${scenario.id}/${sectionKey})`
+      );
+
+      // MOD-13 rule: zero inline labels on arrows (captions must be separate text elements)
+      for (const skel of board.skeletons) {
+        if (skel.type === 'arrow') {
+          assert.equal(
+            'label' in skel && Boolean((skel as { label?: unknown }).label),
+            false,
+            `Arrow in ${scenario.id}/${sectionKey} must not have inline label`
+          );
+        }
+      }
+
+      // Every tooltip must have valid kind, title, fields, and plain-language explain
+      for (const [tipId, tip] of Object.entries(board.tooltips)) {
+        assert.ok(tip.title.trim().length > 0, `Empty tooltip title on ${scenario.id}/${sectionKey}/${tipId}`);
+        assert.ok(tip.fields.length >= 1, `Empty tooltip fields on ${scenario.id}/${sectionKey}/${tipId}`);
+        assert.ok(tip.explain.trim().length >= 20, `Too-short tooltip explain on ${scenario.id}/${sectionKey}/${tipId}`);
+      }
+
+      // MOD-14: Every non-briefing section MUST have a registered technical clip
+      if (sectionKey !== 'briefing') {
+        assert.equal(
+          hasTechnicalClip(scenario.id, sectionKey),
+          true,
+          `Missing technical clip for ${scenario.id}/${sectionKey}`
+        );
+        totalClips++;
+
+        if (scenario.id !== 'process-hollowing') {
+          const spec = getMalwareTechnicalClipSpec(scenario.id, sectionKey);
+          assert.ok(spec, `Missing MalwareTechnicalClipSpec for ${scenario.id}/${sectionKey}`);
+          assert.equal(
+            seenPrefixes.has(spec.svgPrefix),
+            false,
+            `Duplicate SVG prefix "${spec.svgPrefix}" on ${scenario.id}/${sectionKey}`
+          );
+          seenPrefixes.add(spec.svgPrefix);
+
+          assert.equal(spec.beats.length, 4, `Expected 4 beats on ${scenario.id}/${sectionKey}`);
+          assert.equal(spec.cameraLabels.length, 4, `Expected 4 cameras on ${scenario.id}/${sectionKey}`);
+
+          for (const beat of spec.beats) {
+            const jargon = findTechnicalJargonInStory(beat.story);
+            assert.deepEqual(
+              jargon,
+              [],
+              `Story jargon in ${scenario.id}/${sectionKey} beat ${beat.id}: ${jargon.join(', ')} | "${beat.story}"`
+            );
+            assert.equal(
+              JAPANESE_CHAR_REGEX.test(beat.story + beat.technical + beat.title),
+              false,
+              `Unexpected Japanese character in ${scenario.id}/${sectionKey}`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  assert.equal(totalBoards, 135, `Expected exactly 135 Excalidraw boards across 30 MALWARE scenarios, got ${totalBoards}`);
+  assert.equal(totalClips, 105, `Expected exactly 105 SVG+GSAP technical clips across 30 MALWARE scenarios, got ${totalClips}`);
+  assert.equal(Object.keys(MALWARE_TECHNICAL_CLIP_SPECS).length, 29, 'Expected 29 compiled MALWARE clip scenario profiles');
+
+  // Verify MalwareTechnicalClipRenderer adheres strictly to MOD-14 & GSAP SVG safety invariants
+  const rendererSrc = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      'components',
+      'technical-clip',
+      'malware-clips',
+      'MalwareTechnicalClipRenderer.tsx'
+    ),
+    'utf8'
+  );
+  assert.match(rendererSrc, /<AnimeClipStage\b/);
+  assert.match(rendererSrc, /<FilmBackdrop\s+prefix=\{spec\.svgPrefix\}\s*\/>/);
+  assert.match(rendererSrc, /clipPace\.hold/);
+  assert.match(rendererSrc, /clipPace\.end/);
+  assert.match(rendererSrc, /clipPace\.travel/);
+  assert.match(rendererSrc, /clipPace\.teach/);
+  assert.doesNotMatch(
+    rendererSrc,
+    /<g[^>]*className=[^>]*transform=\{?["'`]translate/,
+    'MalwareTechnicalClipRenderer must never combine className and transform="translate(...)" on the same <g>'
+  );
+});
+

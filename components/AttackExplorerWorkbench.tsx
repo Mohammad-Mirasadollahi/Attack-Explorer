@@ -296,10 +296,12 @@ export function AttackExplorerWorkbench() {
   useEffect(() => {
     if (!memoryHydrated) return;
     let cancelled = false;
-    setScenarioLoadError(null);
     loadPreparedScenario(selectedScenarioId)
       .then((scenario) => {
-        if (!cancelled) setLoadedScenario(scenario);
+        if (!cancelled) {
+          setScenarioLoadError(null);
+          setLoadedScenario(scenario);
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -507,7 +509,7 @@ export function AttackExplorerWorkbench() {
     activeScenario,
     selectedTelemetryId,
     activeEnvironment,
-    inspectorScopeContext?.internalSubBoard,
+    inspectorScopeContext,
     currentInjectedVectors.flows,
   ]);
 

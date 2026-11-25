@@ -67,7 +67,7 @@ export function TechnicalWhiteboardEmbed({
         <div className="h-[500px] sm:h-[620px] w-full relative">
           {active ? (
             <ExcalidrawBoard
-              key={sectionKey}
+              key={`${scenarioId}:${sectionKey}`}
               skeletons={board.skeletons}
               tooltips={board.tooltips}
             />
