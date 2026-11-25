@@ -36,14 +36,29 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
   async headers() {
+    // Cloud Run / AI Studio previews load the app from https://*.run.app and
+    // fetch /_next/* chunks from that same host family. Explicit run.app hosts
+    // keep script/style/connect working when the document is framed or proxied.
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.run.app https://*.us-east1.run.app",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.run.app https://*.us-east1.run.app",
+      "font-src 'self' https://fonts.gstatic.com data: https://*.run.app https://*.us-east1.run.app",
+      "img-src 'self' data: blob: https://picsum.photos https://*.run.app https://*.us-east1.run.app",
+      "connect-src 'self' https: wss: https://*.run.app https://*.us-east1.run.app wss://*.run.app wss://*.us-east1.run.app",
+      "worker-src 'self' blob: https://*.run.app https://*.us-east1.run.app",
+      "frame-ancestors 'self' https://*.google.com https://*.googleapis.com https://*.run.app https://*.us-east1.run.app",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ');
+
     return [
       {
         source: '/:path*',
         headers: [
           {
             key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://picsum.photos; connect-src 'self' https:; frame-ancestors 'self' https://*.google.com https://*.googleapis.com https://*.run.app; base-uri 'self'; form-action 'self'",
+            value: csp,
           },
           {
             key: 'X-Content-Type-Options',
