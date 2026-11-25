@@ -1,0 +1,30 @@
+---
+description: Keep git-tracked source under 1000 files; merge related code into colocated modules
+alwaysApply: true
+---
+
+# File budget & merge law
+
+Hard cap: **git-tracked source files must stay ≤ 1000** (`git ls-files | wc -l`). Prefer fewer, denser modules over one-concern-per-tiny-file.
+
+## When to merge
+
+Merge into one file when pieces share the same domain object and are usually edited together:
+
+- Scenario package: `scenario` + `stepGuide` + `standardPatch` → single `modules/scenarios/<id>/index.ts`
+- Small sibling helpers (< ~150 lines) that only serve one parent module
+- Thin re-export barrels that only forward one or two symbols
+
+## When NOT to merge
+
+- Generated artifacts (`public/scenario-data/*.json`, `*.generated.json`) — keep as build output
+- Large presentation surfaces that already exceed ~400 lines each (e.g. per-step Three.js / clip scenes)
+- Optional presentation trees (`three/`, `excalidraw/`) loaded via registry, not via the package barrel
+- Unrelated features that would create a god-file with mixed ownership
+
+## Authoring rules
+
+- New scenario = **one** `index.ts` exporting `scenario` (and optional `stepGuide` / `standardPatch`). Do not add `scenario.ts` / `step-guide.ts` / `standard-patch.ts` / thin `index` barrels.
+- Before adding a new source file, check whether an existing related module can absorb it.
+- After structural moves, run `npm run scenarios:registry` and keep `git ls-files | wc -l` ≤ 1000.
+- Never split a file solely for “organization” if the pieces are always consumed together.

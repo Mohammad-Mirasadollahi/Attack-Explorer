@@ -178,25 +178,16 @@ async function main() {
     if (before.valid) continue;
 
     const guide = buildDiagramStepGuideModel(scenario, 1);
-    const sgPath = path.join(
+    const indexPath = path.join(
       root,
       'modules/scenarios',
       scenario.id,
-      'step-guide.ts'
-    );
-    const spPath = path.join(
-      root,
-      'modules/scenarios',
-      scenario.id,
-      'standard-patch.ts'
+      'index.ts'
     );
     const targets = [];
-    if (fs.existsSync(sgPath)) targets.push(sgPath);
-    if (fs.existsSync(spPath) && /detectionAndEvidence|howItWorksInPractice|storyAnalogy|simpleExplanation/.test(fs.readFileSync(spPath, 'utf8'))) {
-      targets.push(spPath);
-    }
+    if (fs.existsSync(indexPath)) targets.push(indexPath);
     if (targets.length === 0) {
-      failed.push({ id: scenario.id, reason: 'no step-guide.ts' });
+      failed.push({ id: scenario.id, reason: 'no index.ts' });
       continue;
     }
 

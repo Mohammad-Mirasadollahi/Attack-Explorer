@@ -3,10 +3,10 @@
  * Bulk-roll MOD-11 Formula A2 Overview plainSummary across all non-MALWARE
  * scenarios that still fail validateOverviewRoadmapAltitude.
  *
- * - Scenarios with modules/scenarios/<id>/step-guide.ts → patch plainSummary
+ * - Scenarios with modules/scenarios/<id>/index.ts → patch plainSummary
  * - Draft / generated guides → write into
  *   DFIR_FORMULA_A2_PLAIN_SUMMARIES (lib/step-guides/vulncheck-cwp-and-dfir-guides.ts)
- * - Also patch standard-patch.ts when it overrides briefing.plainSummary
+ * - Also patch index.ts when it overrides briefing.plainSummary
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -220,39 +220,22 @@ async function main() {
       continue;
     }
 
-    const sgPath = path.join(
+    const indexPath = path.join(
       root,
       'modules/scenarios',
       scenario.id,
-      'step-guide.ts'
-    );
-    const spPath = path.join(
-      root,
-      'modules/scenarios',
-      scenario.id,
-      'standard-patch.ts'
+      'index.ts'
     );
 
-    if (fs.existsSync(sgPath)) {
-      const r = replacePlainSummaryInFile(sgPath, summary);
+    if (fs.existsSync(indexPath)) {
+      const r = replacePlainSummaryInFile(indexPath, summary);
       if (!r.ok) {
         // Fall back to map override for generated merge paths
         mapEntries[scenario.id] = summary;
         draftIds.add(scenario.id);
         patched.push({ id: scenario.id, via: 'map-fallback', len: summary.length });
       } else {
-        patched.push({ id: scenario.id, via: 'step-guide', len: summary.length });
-      }
-      if (fs.existsSync(spPath)) {
-        const spSrc = fs.readFileSync(spPath, 'utf8');
-        if (/plainSummary\s*:/.test(spSrc)) {
-          replacePlainSummaryInFile(spPath, summary);
-          patched.push({
-            id: scenario.id,
-            via: 'standard-patch',
-            len: summary.length,
-          });
-        }
+        patched.push({ id: scenario.id, via: 'index', len: summary.length });
       }
     } else {
       mapEntries[scenario.id] = summary;

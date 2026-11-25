@@ -124,8 +124,11 @@ firebase-export-*
 # ---------------------------------------------------------------------------
 # Cursor / VS Code / JetBrains / other editors & AI agents
 # ---------------------------------------------------------------------------
-.cursor/
-.cursor/**
+# Keep project rules versioned; ignore the rest of Cursor local state.
+.cursor/*
+!.cursor/rules/
+.cursor/rules/*
+!.cursor/rules/*.mdc
 .cursorrules
 .cursorignore
 .cursorindexingignore

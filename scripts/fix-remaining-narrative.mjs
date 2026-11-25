@@ -130,8 +130,7 @@ async function main() {
 
     const guide = buildDiagramStepGuideModel(scenario, 1);
     const files = [
-      path.join(root, 'modules/scenarios', scenario.id, 'step-guide.ts'),
-      path.join(root, 'modules/scenarios', scenario.id, 'standard-patch.ts'),
+      path.join(root, 'modules/scenarios', scenario.id, 'index.ts'),
     ].filter((f) => fs.existsSync(f));
 
     // Special hardcoded guides

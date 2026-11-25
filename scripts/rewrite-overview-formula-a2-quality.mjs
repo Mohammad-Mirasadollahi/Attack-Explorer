@@ -425,17 +425,11 @@ async function main() {
       continue;
     }
 
-    const sgPath = path.join(
+    const indexPath = path.join(
       root,
       'modules/scenarios',
       scenario.id,
-      'step-guide.ts'
-    );
-    const spPath = path.join(
-      root,
-      'modules/scenarios',
-      scenario.id,
-      'standard-patch.ts'
+      'index.ts'
     );
 
     // Hardcoded VULNCHECK_CWP_STEP_GUIDE owns this overview — patch that block only.
@@ -480,8 +474,8 @@ async function main() {
       continue;
     }
 
-    if (fs.existsSync(sgPath)) {
-      const r = replacePlainSummaryInFile(sgPath, summary);
+    if (fs.existsSync(indexPath)) {
+      const r = replacePlainSummaryInFile(indexPath, summary);
       if (!r.ok) {
         mapEntries[scenario.id] = summary;
         patched.push({
@@ -491,18 +485,7 @@ async function main() {
           reason: r.reason,
         });
       } else {
-        patched.push({ id: scenario.id, via: 'step-guide', len: summary.length });
-      }
-      if (fs.existsSync(spPath)) {
-        const spSrc = fs.readFileSync(spPath, 'utf8');
-        if (/plainSummary\s*:/.test(spSrc)) {
-          replacePlainSummaryInFile(spPath, summary);
-          patched.push({
-            id: scenario.id,
-            via: 'standard-patch',
-            len: summary.length,
-          });
-        }
+        patched.push({ id: scenario.id, via: 'index', len: summary.length });
       }
     } else {
       mapEntries[scenario.id] = summary;

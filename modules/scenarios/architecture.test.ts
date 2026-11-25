@@ -28,12 +28,20 @@ const LEGACY_IMPORTERS = new Set([
   'scripts/generate-scenario-registry.mjs',
 ]);
 
+const SPLIT_PARTS = new Set(['scenario.ts', 'step-guide.ts', 'standard-patch.ts']);
+
 function packages(): string[] {
   return fs
     .readdirSync(SCENARIOS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && !SKIP_DIRS.has(entry.name))
     .map((entry) => entry.name)
-    .filter((id) => fs.existsSync(path.join(SCENARIOS_DIR, id, 'scenario.ts')))
+    .filter((id) => {
+      const index = path.join(SCENARIOS_DIR, id, 'index.ts');
+      return (
+        fs.existsSync(index) &&
+        /export const scenario\s*:/.test(fs.readFileSync(index, 'utf8'))
+      );
+    })
     .sort();
 }
 
@@ -63,7 +71,7 @@ function importSpecifiers(source: string): string[] {
 }
 
 describe('scenario package architecture', () => {
-  it('keeps generated catalogs and package barrels in sync with the filesystem', () => {
+  it('keeps generated catalogs in sync with the filesystem', () => {
     const result = spawnSync(
       process.execPath,
       ['scripts/generate-scenario-registry.mjs', '--check'],
@@ -76,25 +84,31 @@ describe('scenario package architecture', () => {
     );
   });
 
-  it('requires scenario, optional guides, and a barrel that does not export Three.js', () => {
+  it('requires one merged index.ts per package (no split scenario/guide/patch files)', () => {
     const registry = fs.readFileSync(
       path.join(SCENARIOS_DIR, 'three-registry.ts'),
       'utf8'
     );
     for (const id of packages()) {
       const dir = path.join(SCENARIOS_DIR, id);
-      const scenario = fs.readFileSync(path.join(dir, 'scenario.ts'), 'utf8');
-      const idMatch = scenario.match(/id:\s*'([^']+)'/);
-      assert.equal(idMatch?.[1], id, `${id} scenario id`);
+      for (const name of SPLIT_PARTS) {
+        assert.equal(
+          fs.existsSync(path.join(dir, name)),
+          false,
+          `${id} must not keep split file ${name}`
+        );
+      }
 
       const index = fs.readFileSync(path.join(dir, 'index.ts'), 'utf8');
-      assert.match(index, /export \{ scenario \} from '\.\/scenario'/);
+      assert.match(index, /export const scenario\s*:/);
+      const idMatch = index.match(/id:\s*'([^']+)'/);
+      assert.equal(idMatch?.[1], id, `${id} scenario id`);
       assert.doesNotMatch(index, /from '\.\/three'/);
-      if (fs.existsSync(path.join(dir, 'step-guide.ts'))) {
-        const guide = fs.readFileSync(path.join(dir, 'step-guide.ts'), 'utf8');
-        assert.match(guide, new RegExp(`scenarioId:\\s*'${id}'`));
-        assert.match(index, /export \{ stepGuide \} from '\.\/step-guide'/);
+
+      if (/export const stepGuide\s*:/.test(index)) {
+        assert.match(index, new RegExp(`scenarioId:\\s*'${id}'`));
       }
+
       if (fs.existsSync(path.join(dir, 'three'))) {
         assert.equal(
           fs.existsSync(path.join(dir, 'three', 'index.ts')),
@@ -113,18 +127,21 @@ describe('scenario package architecture', () => {
         const rel = path.relative(dir, file);
         const specs = importSpecifiers(fs.readFileSync(file, 'utf8'));
         const inThree = rel.startsWith(`three${path.sep}`) || rel.startsWith('three/');
+        const inExcalidraw =
+          rel.startsWith(`excalidraw${path.sep}`) || rel.startsWith('excalidraw/');
+        const inPresentation = inThree || inExcalidraw;
         for (const spec of specs) {
           if (!spec.startsWith('.') && !spec.startsWith('@/')) {
             const nodeBuiltin = spec.startsWith('node:') || spec === 'node:test';
             assert.ok(
-              inThree || (rel.endsWith('.test.ts') && nodeBuiltin),
+              inPresentation || (rel.endsWith('.test.ts') && nodeBuiltin),
               `${id}/${rel} imports package ${spec}`
             );
             continue;
           }
           if (spec.startsWith('.')) {
             const outside = spec.split('/').filter((part) => part === '..').length;
-            if (inThree) {
+            if (inPresentation) {
               assert.ok(outside <= 1, `${id}/${rel} escapes via ${spec}`);
             } else {
               assert.ok(
@@ -143,6 +160,16 @@ describe('scenario package architecture', () => {
               spec.startsWith('@/components/three/') ||
                 spec === '@/lib/section-3d-registry' ||
                 spec.startsWith('@/modules/scenarios/'),
+              `${id}/${rel} imports ${spec}`
+            );
+            continue;
+          }
+          if (inExcalidraw) {
+            assert.ok(
+              spec.startsWith('@/modules/scenarios/') ||
+                spec.startsWith('@/components/excalidraw/') ||
+                spec === '@/lib/section-3d-registry' ||
+                spec === '@/lib/section-excalidraw-registry',
               `${id}/${rel} imports ${spec}`
             );
             continue;
@@ -192,7 +219,7 @@ describe('scenario package architecture', () => {
         if (source.includes('legacy/normalize-legacy-draft-scenario')) {
           const allowed =
             LEGACY_IMPORTERS.has(rel) ||
-            (rel.startsWith('modules/scenarios/') && rel.endsWith('/scenario.ts'));
+            (rel.startsWith('modules/scenarios/') && rel.endsWith('/index.ts'));
           assert.equal(allowed, true, rel);
         }
       }

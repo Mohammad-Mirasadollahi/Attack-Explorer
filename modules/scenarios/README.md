@@ -4,18 +4,19 @@ Attack packages live here. Shared engines stay in `lib/`. Routes stay in `app/sc
 
 ```
 modules/scenarios/<scenario-id>/
-  scenario.ts          required
-  index.ts             required, generated
-  step-guide.ts        optional
-  standard-patch.ts    optional
-  telemetry.ts         optional
+  index.ts             required — merged scenario + optional stepGuide + standardPatch
+  telemetry.ts         optional (presentation helpers; re-exported from index when present)
   choreography.ts      optional
   three/               optional presentation; load it from three-registry.ts
+  excalidraw/          optional whiteboard scenes
 ```
+
+File-budget law: keep related scenario data in **one** `index.ts`. Do not split into
+`scenario.ts` / `step-guide.ts` / `standard-patch.ts` / thin barrels.
 
 `contracts.ts` owns authoring types. `legacy/` owns the draft normalizer until those scenarios are rewritten as `AttackScenario`. `lib/scenario-step-guides.ts` only projects guides onto the workbench.
 
-Refresh barrels after adding a package:
+Refresh catalogs after adding a package:
 
 ```bash
 npm run scenarios:registry

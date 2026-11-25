@@ -4,7 +4,7 @@ import { explainCommandLine } from '../command-line-explanations';
 import { LEGACY_DRAFT_SCENARIOS } from '@/modules/scenarios/all-scenarios';
 import { STATIC_SCENARIO_STEP_GUIDES } from '@/modules/scenarios/all-step-guides';
 
-/** Draft scenarios without a static step-guide.ts (DFIR / CWP / official expansion batches). */
+/** Draft scenarios without a static stepGuide export in index.ts (DFIR / CWP / official expansion batches). */
 const ALL_NEW_DFIR_AND_CWP_DRAFTS: LegacyDraftScenario[] =
   LEGACY_DRAFT_SCENARIOS.filter((draft) => !STATIC_SCENARIO_STEP_GUIDES[draft.id]);
 

@@ -1,0 +1,36 @@
+---
+description: Inspector tab ownership, single-card merges, Stage Filter, sidebar labels (MOD-12)
+globs: components/inspector/**/*,components/InspectorPanel.tsx,components/StepByStepGuidePanel.tsx,components/InspectorContextMiniMap.tsx,docs/standards/12-*.md,docs/standards/08-*.md,docs/standards/11-*.md
+alwaysApply: false
+---
+
+# Inspector Panel Ownership (`MOD-12`)
+
+Follow `/docs/standards/12-inspector-panel-ownership-and-ui-shell.md`.
+
+## Tab ownership
+
+| Tab | Owns | Never hosts |
+| --- | --- | --- |
+| Overview | Roadmap Story + Technical (Formula A2), topology directory, Steps titles/MITRE only | Stage Filter, Cascading Process, VAD, Memory callouts, stage-titled headers, deep-dives, duplicate title card |
+| Steps | Per-stage deep-dives + Visual State Machine + merged stage pills | Full PPID→PID cascade, Auto-Play, legend cards, standalone Stage Filter |
+| Process Hierarchy | Cascade tree + merged title/stage pills (embedded rows) | VAD mutation, nested MiniMap title card, stacked process sub-cards |
+| Memory | VAD + memoryBlocks | Cascading Process waterfall |
+| SIEM Logs / Sources | Logs / intel only | Attack mechanics dumps |
+
+## Single-card merge law
+
+- Overview (main): badge + title + Story/Technical = **one** card.
+- Steps: `inspector-steps-merged-shell` with header pills; hide global Stage Filter.
+- Process Hierarchy: one shell; `cascadingProcessEmbedded: true`; hide global Stage Filter.
+- Standalone Stage Filter only on Memory / SIEM Logs / Sources.
+
+## Chrome laws
+
+- Sidebar labels: bare names — never `Memory (3)`.
+- Steps: no Auto-Play; no legend trio.
+- Migrate before delete (`MOD-11` §7). Cascade → Process Hierarchy.
+
+## Code layout
+
+`components/inspector/**`; public entry `components/InspectorPanel.tsx` re-exports. Tests use `readInspectorSources()`.
