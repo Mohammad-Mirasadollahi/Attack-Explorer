@@ -9,8 +9,8 @@ import {
 } from '@/lib/section-3d-registry';
 import { PROCESS_HOLLOWING_TECHNICAL_BOARDS } from '@/modules/scenarios/process-hollowing/excalidraw';
 import type { TechnicalBoardDescriptor } from '@/lib/excalidraw-boards/board-primitives';
-import { hasMalwareWhiteboardInManifest } from '@/lib/malware-2d-blueprints/manifest';
-import { loadMalwareTechnicalWhiteboard } from '@/lib/malware-2d-blueprints/loader';
+import { hasAnyTechnicalWhiteboard } from '@/lib/malware-2d-blueprints/manifest';
+import { loadAnyTechnicalWhiteboard } from '@/lib/scenario-2d-blueprints/loader';
 import { useHeavyMediaSlot } from '@/components/media/useHeavyMediaSlot';
 
 function BoardLoading() {
@@ -58,9 +58,8 @@ export function TechnicalWhiteboardEmbed({
   const staticBoard = isProcessHollowing
     ? PROCESS_HOLLOWING_TECHNICAL_BOARDS[sectionKey] ?? null
     : null;
-  const hasMalwareBoard =
-    !isProcessHollowing &&
-    hasMalwareWhiteboardInManifest(scenarioId, sectionKey);
+  const hasLazyBoard =
+    !isProcessHollowing && hasAnyTechnicalWhiteboard(scenarioId, sectionKey);
 
   const targetKey = `${scenarioId}:${sectionKey}`;
   const [loadedState, setLoadedState] = useState<{
@@ -71,9 +70,9 @@ export function TechnicalWhiteboardEmbed({
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!active || staticBoard || !hasMalwareBoard) return;
+    if (!active || staticBoard || !hasLazyBoard) return;
     let cancelled = false;
-    void loadMalwareTechnicalWhiteboard(scenarioId, sectionKey)
+    void loadAnyTechnicalWhiteboard(scenarioId, sectionKey)
       .then((loaded) => {
         if (!cancelled) {
           setLoadedState({ key: targetKey, board: loaded, error: false });
@@ -87,9 +86,9 @@ export function TechnicalWhiteboardEmbed({
     return () => {
       cancelled = true;
     };
-  }, [active, staticBoard, hasMalwareBoard, scenarioId, sectionKey, targetKey, attempt]);
+  }, [active, staticBoard, hasLazyBoard, scenarioId, sectionKey, targetKey, attempt]);
 
-  if (!staticBoard && !hasMalwareBoard) return null;
+  if (!staticBoard && !hasLazyBoard) return null;
 
   const isCurrent = loadedState.key === targetKey;
   const resolvedBoard = staticBoard ?? (isCurrent ? loadedState.board : null);

@@ -1,8 +1,8 @@
 # SVG + GSAP Technical Clip — Silent Lecture Standard (`MOD-14`)
 
-> **Module ID**: `MOD-14` · **Parent Index**: [`/docs/standards/README.md`](./README.md)  
-> **Scope**: Cinematic technical clips under `/components/technical-clip/**` and the section gate in `/lib/section-technical-clip-registry.ts`.  
-> **Status**: Mandatory for any scenario that ships a technical clip · **Reference of the method** (not a stencil): Process Hollowing clips · **Enforced By**: author review against this module. Clip-decision tests are planned. Do not copy a reference film’s cast into another section.
+> **Module ID**: `MOD-14` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
+> **Scope**: Cinematic technical clips under `/components/technical-clip/**` (including all 14 domain kinetic engines in `MalwareTechnicalClipRenderer.tsx` and `DomainKineticVisualizers.tsx`), scenario 2D blueprint compilers under `/lib/scenario-2d-blueprints/**` and `/lib/malware-2d-blueprints/**`, and the section gate in `/lib/section-technical-clip-registry.ts`.  
+> **Status**: Mandatory Permanent Standard across all 188 scenarios · **Reference of the method** (not a stencil): Process Hollowing clips · **Enforced By**: `/lib/technical-clips.test.ts`. Do not copy a reference film’s cast into another section.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Module ID**: `MOD-00` (Master Router & Architecture Index)  
 > **Scope**: All Markdown Engineering Documents (`/docs/**`, `/seo-audit/**`), Attack Scenario Definitions (`/modules/scenarios/**`), Step-by-Step Operational Guides (`/lib/step-guides/**`), Threat Intelligence & Attribution Registries (`/lib/attack-sources-and-legal.ts`, `/lib/threat-intel-service.ts`), SEO/GEO Metadata (`/lib/seo-metadata.ts`), and Workbench UI Copy (`/components/**`).  
-> **Status**: Mandatory Permanent Standard · Enforced by `/lib/documentation-standards.ts` and `/lib/documentation-standards.test.ts` for `MOD-00` through `MOD-12`. Includes **`MOD-13`** (Excalidraw technical whiteboards) and **`MOD-14`** (SVG + GSAP silent technical clips).
+> **Status**: Mandatory Permanent Standard · Enforced by `/lib/documentation-standards.ts` and `/lib/documentation-standards.test.ts` for `MOD-00` through `MOD-12`, and by `/lib/technical-clips.test.ts` and `/lib/section-3d-registry.test.ts` for **`MOD-13`** (Excalidraw technical whiteboards), **`MOD-14`** (SVG + GSAP silent technical clips), and **`MOD-15`** (Unified 3D Anime + 2D Kinetic Clip + Whiteboard Scenario Authoring Handbook).
 
 ### Domain layout (engineering rule)
 
@@ -25,7 +25,7 @@ Import domain code as `@/modules/scenarios/...`. `npm run scenarios:registry` re
 
 Because **Attack Explorer** unifies interactive 2D network diagrams, kernel/process memory maps, raw SIEM/Sysmon telemetry, 3-layer pedagogical narratives, multi-vendor threat intelligence citations, and programmatic SEO/GEO structured data, **a single monolithic style guide cannot govern every artifact effectively**.
 
-Instead, the Attack Explorer Documentation & Content Authoring Standard is architected as **specialized, composable modules (`MOD-01` through `MOD-14`)**. Authors and automated tools load only the modules relevant to their current task while maintaining 100% consistency across the entire platform.
+Instead, the Attack Explorer Documentation & Content Authoring Standard is architected as **specialized, composable modules (`MOD-01` through `MOD-15`)**. Authors and automated tools load only the modules relevant to their current task while maintaining 100% consistency across the entire platform.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -34,8 +34,8 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 └───────────┬───────────────────────────────┬───────────────────────────────┬────────────┘
             │                               │                               │
  ┌──────────▼──────────┐         ┌──────────▼──────────┐         ┌──────────▼──────────┐
- │ STRUCTURAL & PROSE  │         │ TECHNICAL & FORENSIC│         │ INTERACTIVE 3D &    │
- │ AUTHORING MODULES   │         │ DOMAIN MODULES      │         │ STORY-TO-TECH SUITE │
+ │ STRUCTURAL & PROSE  │         │ TECHNICAL & FORENSIC│         │ INTERACTIVE 3D, 2D  │
+ │ AUTHORING MODULES   │         │ DOMAIN MODULES      │         │ & WHITEBOARD SUITE  │
  ├─────────────────────┤         ├─────────────────────┤         ├─────────────────────┤
  │ • MOD-01: Templates │         │ • MOD-04: Telemetry │         │ • MOD-08: Story ->  │
  │   & Skeletons       │         │   Memory & Diagrams │         │   Key -> Tech -> 3D │
@@ -43,13 +43,12 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
  │   3-Layer Pedagogy  │         │   E-E-A-T Intel     │         │   Anime & Clean HUD │
  │ • MOD-03: Inline    │         │ • MOD-06: SEO, GEO  │         │ • MOD-10: Adaptive  │
  │   Why & CLI Tokens  │         │   & URL Deep-Links  │         │   3D Rollout Guide  │
- │ • MOD-11: Scenario  │         │                     │         │                     │
- │   Writing Blueprint │         │                     │         │                     │
- │ • MOD-12: Inspector │         │                     │         │ • MOD-13: Excalidraw │
- │   Tab Ownership &   │         │                     │         │   Technical         │
- │   UI Shell          │         │                     │         │   Whiteboard        │
- │                     │         │                     │         │ • MOD-14: SVG+GSAP  │
- │                     │         │                     │         │   Silent Lecture    │
+ │ • MOD-11: Scenario  │         │                     │         │ • MOD-13: Excalidraw│
+ │   Writing Blueprint │         │                     │         │   Whiteboard (8x)   │
+ │ • MOD-12: Inspector │         │                     │         │ • MOD-14: SVG+GSAP  │
+ │   Tab Ownership &   │         │                     │         │   Kinetic Clips (14)│
+ │   UI Shell          │         │                     │         │ • MOD-15: Unified   │
+ │                     │         │                     │         │   Authoring Handbook│
  └──────────┬──────────┘         └──────────┬──────────┘         └──────────┬──────────┘
             │                               │                               │
             └───────────────────────────────┼───────────────────────────────┘
@@ -62,7 +61,7 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 
 ---
 
-## 2. Directory of Standard Modules (`MOD-01` .. `MOD-14`)
+## 2. Directory of Standard Modules (`MOD-01` .. `MOD-15`)
 
 | Module ID | File Path | Title & Domain Responsibility | When You MUST Load This Module |
 | :--- | :--- | :--- | :--- |
@@ -78,8 +77,9 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 | **`MOD-10`** | [`/docs/standards/10-scenario-adaptive-3d-storytelling-and-rollout-playbook.md`](./10-scenario-adaptive-3d-storytelling-and-rollout-playbook.md) | **Scenario-Adaptive 3D Storytelling & Cross-Scenario Rollout Playbook** | Whenever designing bespoke metaphor worlds and rolling out Story + Technical + 3D upgrades to additional scenarios. |
 | **`MOD-11`** | [`/docs/standards/11-scenario-writing-and-narrative-blueprint.md`](./11-scenario-writing-and-narrative-blueprint.md) | **Scenario & Narrative Writing Blueprint (Field-by-Field Manual & Templates)** | Whenever writing or revising scenario text fields (`storyAnalogy`, `plainSummary`, `storyMappings`, `simpleExplanation`, `howItWorksInPractice`, `callouts`, `phases`). |
 | **`MOD-12`** | [`/docs/standards/12-inspector-panel-ownership-and-ui-shell.md`](./12-inspector-panel-ownership-and-ui-shell.md) | **Inspector Panel Ownership, Tab Shell, Single-Card Merge & Chrome Standard** | Whenever changing Inspector tabs, merging title/Stage Filter/body cards, Stage Filter placement, Overview/Steps/Process Hierarchy/Memory ownership, sidebar labels, or `/components/inspector/**`. |
-| **`MOD-13`** | [`/docs/standards/13-excalidraw-technical-whiteboard-standard.md`](./13-excalidraw-technical-whiteboard-standard.md) | **Excalidraw Technical Whiteboard (Spacing, Bare Arrows, Sticky Notes, Chalk Hover Tooltips)** | Whenever adding or editing `/modules/scenarios/<id>/excalidraw/**`, `TechnicalWhiteboardEmbed`, or board tooltips for briefing / steps / memory. |
-| **`MOD-14`** | [`/docs/standards/14-technical-clip-silent-lecture-standard.md`](./14-technical-clip-silent-lecture-standard.md) | **SVG + GSAP Technical Clip (Silent Lecture, plus a readable 1x pace)** | Whenever adding or editing `/components/technical-clip/**` or `/lib/section-technical-clip-registry.ts`. 1x must leave each claim readable (`clipPace.ts`). |
+| **`MOD-13`** | [`/docs/standards/13-excalidraw-technical-whiteboard-standard.md`](./13-excalidraw-technical-whiteboard-standard.md) | **Excalidraw Technical Whiteboard (Spacing, Bare Arrows, Sticky Notes, Chalk Hover Tooltips)** | Whenever adding or editing `/modules/scenarios/<id>/excalidraw/**`, `/lib/excalidraw-boards/**`, `TechnicalWhiteboardEmbed`, or board tooltips for briefing / steps / memory. |
+| **`MOD-14`** | [`/docs/standards/14-technical-clip-silent-lecture-standard.md`](./14-technical-clip-silent-lecture-standard.md) | **SVG + GSAP Technical Clip (Silent Lecture, plus a readable 1x pace)** | Whenever adding or editing `/components/technical-clip/**`, `/lib/scenario-2d-blueprints/**`, or `/lib/section-technical-clip-registry.ts`. 1x must leave each claim readable (`clipPace.ts`). |
+| **`MOD-15`** | [`/docs/standards/15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md) | **Unified Scenario-Based 3D Anime, 2D Kinetic Clip & Excalidraw Whiteboard Authoring Handbook** | **Start here** whenever authoring a new scenario or upgrading any scenario across all 3 visual layers (3D Japanese anime world + 14 kinetic 2D engines + 8 Excalidraw topologies + lazy manifest/loader wiring). |
 
 ---
 
@@ -89,15 +89,15 @@ Before writing or editing any content, identify your task type in the table belo
 
 | Task Type | Required Modules (Execute in Order) | Primary Target Files |
 | :--- | :--- | :--- |
-| **1. Adding a New Cyber Attack / DFIR Scenario** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-05` → `MOD-06` → `MOD-07` | `/modules/scenarios/*.ts`, `/lib/attack-scenarios.ts`, `/lib/attack-sources-and-legal.ts`, `/lib/threat-intel-service.ts`, `/public/llms-full.txt` |
+| **1. Adding a New Cyber Attack / DFIR Scenario (Full 3D + 2D + Whiteboard)** | `MOD-15` → `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-05` → `MOD-06` → `MOD-07` | `/modules/scenarios/<id>/index.ts`, `/lib/section-3d-registries/*`, `/lib/scenario-2d-blueprints/*`, `/lib/attack-sources-and-legal.ts`, `/lib/threat-intel-service.ts`, `/public/llms-full.txt` |
 | **2. Writing or Revising a Step-by-Step Operational Guide** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-06` → `MOD-07` → `MOD-08` → `MOD-12` | `/lib/step-guides/*.ts`, `/lib/scenario-step-guides.ts`, `/components/step-guide/**`, `/components/StepByStepGuidePanel.tsx`, `/components/inspector/tabs/StepsTab.tsx` |
 | **3. Writing a New Engineering / Architecture Markdown Document** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-07` | `/docs/**/*.md`, `/seo-audit/**/*.md` |
 | **4. Adding Raw SIEM Logs, Memory Maps, or CLI Explanations** | `MOD-03` → `MOD-04` → `MOD-05` → `MOD-07` | `/lib/command-line-explanations.ts`, `/modules/scenarios/*.ts` |
 | **5. Updating Workbench UI Components, Badges, or Tooltips** | `MOD-02` → `MOD-06` → `MOD-07` → `MOD-08` → `MOD-12` | `/components/**/*.tsx`, `/lib/ui-text-standards.ts`, `/lib/diagram-memory-store.ts` |
-| **6. Upgrading a Scenario with Bespoke Story-to-Technical + Three.js 3D Scenes** | `MOD-02` → `MOD-03` → `MOD-11` → `MOD-08` → `MOD-09` → `MOD-10` → `MOD-14` → `MOD-13` → `MOD-07` | `/lib/section-3d-registry.ts`, `/lib/section-technical-clip-registry.ts`, `/lib/step-guides/*.ts`, `/components/three/**`, `/components/technical-clip/**`, `/components/StandardStoryTechnicalSection.tsx`, `/modules/scenarios/<id>/excalidraw/**`, `/components/excalidraw/**` |
+| **6. Upgrading a Scenario with Bespoke Story-to-Technical + 3D + 2D Clip + Whiteboard** | `MOD-15` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-08` → `MOD-09` → `MOD-10` → `MOD-14` → `MOD-13` → `MOD-07` | `/lib/section-3d-registry.ts`, `/lib/section-technical-clip-registry.ts`, `/lib/scenario-2d-blueprints/**`, `/components/three/**`, `/components/technical-clip/**`, `/components/StandardStoryTechnicalSection.tsx`, `/components/excalidraw/**` |
 | **7. Refactoring Inspector Tabs / Overview Cleanup / Process Hierarchy Placement** | `MOD-11` → `MOD-08` → `MOD-12` → `MOD-07` | `/components/inspector/**`, `/components/InspectorPanel.tsx`, `/components/step-guide/**`, `/components/StepByStepGuidePanel.tsx`, `/components/inspector-minimap/**`, `/components/InspectorContextMiniMap.tsx` |
-| **8. Adding or Revising Excalidraw Technical Whiteboards** | `MOD-13` → `MOD-08` → `MOD-03` → `MOD-04` → `MOD-07` | `/modules/scenarios/<id>/excalidraw/**`, `/lib/section-excalidraw-registry.ts`, `/components/excalidraw/**` |
-| **9. Adding or Revising SVG + GSAP Technical Clips** | `MOD-14` → `MOD-08` → `MOD-09` → `MOD-03` → `MOD-07` | `/components/technical-clip/**`, `/lib/section-technical-clip-registry.ts` |
+| **8. Adding or Revising Excalidraw Technical Whiteboards** | `MOD-13` → `MOD-15` → `MOD-08` → `MOD-03` → `MOD-04` → `MOD-07` | `/modules/scenarios/<id>/excalidraw/**`, `/lib/excalidraw-boards/**`, `/lib/scenario-2d-blueprints/**`, `/lib/section-excalidraw-registry.ts`, `/components/excalidraw/**` |
+| **9. Adding or Revising SVG + GSAP Technical Clips** | `MOD-14` → `MOD-15` → `MOD-08` → `MOD-09` → `MOD-03` → `MOD-07` | `/components/technical-clip/**`, `/lib/scenario-2d-blueprints/**`, `/lib/malware-2d-blueprints/**`, `/lib/section-technical-clip-registry.ts` |
 
 ---
 
@@ -115,7 +115,7 @@ The modular standards in `/docs/standards/` unify and govern the existing deep-d
 
 ## 5. Programmatic Enforcement & Universal Per-Section Clarity Law (`/lib/documentation-standards.ts`)
 
-Every rule in `MOD-01` through `MOD-12` is backed by executable contracts in [`/lib/documentation-standards.ts`](../../lib/documentation-standards.ts) and [`/lib/section-3d-registry.ts`](../../lib/section-3d-registry.ts), and verified automatically by [`/lib/documentation-standards.test.ts`](../../lib/documentation-standards.test.ts), [`/lib/section-3d-registry.test.ts`](../../lib/section-3d-registry.test.ts), [`/lib/scenario-step-guides.test.ts`](../../lib/scenario-step-guides.test.ts), and [`/lib/inspector-scope.test.ts`](../../lib/inspector-scope.test.ts). **`MOD-13`** is mandatory for any scenario that ships Excalidraw boards; automated board-descriptor tests are planned — until then, use the Process Hollowing reference package and the checklist in `MOD-13` §10. **`MOD-14`** is mandatory for any scenario that ships a technical clip. It standardizes the decision procedure, not a scene stencil. At 1x every teaching change and every hold must meet `clipPace.ts` (`MOD-14` §4.5). Automated clip-decision tests are planned — until then, review against `MOD-14` §9. Study the Process Hollowing clips as filled examples of that procedure. Do not trace their casts onto another section.
+Every rule in `MOD-01` through `MOD-12` is backed by executable contracts in [`/lib/documentation-standards.ts`](../../lib/documentation-standards.ts) and [`/lib/section-3d-registry.ts`](../../lib/section-3d-registry.ts), and verified automatically by [`/lib/documentation-standards.test.ts`](../../lib/documentation-standards.test.ts), [`/lib/section-3d-registry.test.ts`](../../lib/section-3d-registry.test.ts), [`/lib/technical-clips.test.ts`](../../lib/technical-clips.test.ts), [`/lib/scenario-step-guides.test.ts`](../../lib/scenario-step-guides.test.ts), and [`/lib/inspector-scope.test.ts`](../../lib/inspector-scope.test.ts). **`MOD-13`**, **`MOD-14`**, and **`MOD-15`** are now automatically enforced across all 188 scenarios by `/lib/technical-clips.test.ts` (validating all 797 Excalidraw whiteboards across 8 topologies, all 609 SVG+GSAP technical clips across 14 kinetic engines, globally unique `svgPrefix`, GSAP SVG transform safety, bare arrows, rich tooltips, zero Story jargon, zero Japanese characters, and lazy category loader sync).
 
 **Permanent Universal Per-Section Clarity Law (Enforced Automatically Across Every Section)**:
 1. **Prop-Purpose Clarity (`validateStoryPropClarity`)**: Whenever a Story Analogy introduces key props or paired objects (such as *"two golden master keys"*), both the Story prose and `storyMappings[]` must explicitly state what **each** prop unlocks or does—with zero technical jargon in Story text.

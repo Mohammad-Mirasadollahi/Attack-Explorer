@@ -60,7 +60,9 @@ export type BoardTopologyKind =
   | 'supplychain-branch'
   | 'persistence-triad'
   | 'memory-vad-compare'
-  | 'forensic-timeline';
+  | 'forensic-timeline'
+  | 'network-hop-chain'
+  | 'protocol-layer-stack';
 
 export interface StructuredBoardBlueprint {
   scenarioId: string;
@@ -128,7 +130,6 @@ function safeTitle(x: number, y: number, text: string): TechnicalBoardSkeleton {
   return {
     ...title(x, y, text),
     fontSize: 22,
-    width: Math.max(780, Math.ceil(text.length * 16)),
   };
 }
 
@@ -141,7 +142,6 @@ function safeNote(
   return {
     ...note(x, y, text, color),
     fontSize: 14,
-    width: Math.max(620, Math.ceil(text.length * 10.5)),
   };
 }
 
@@ -155,7 +155,6 @@ function safeCaption(
   return {
     ...caption(id, x, y, text, color),
     fontSize: 13.5,
-    width: Math.max(200, Math.ceil(text.length * 10.5)),
   };
 }
 
@@ -171,13 +170,12 @@ function safeHArrow(opts: {
 }): TechnicalBoardSkeleton[] {
   const [cap, arr] = hArrow(opts);
   const gap = opts.toLeft - opts.fromRight;
-  const estW = Math.max(150, Math.ceil(opts.caption.length * 10.2));
+  const estW = Math.min(gap - 12, Math.ceil(opts.caption.length * 7.5));
   return [
     {
       ...cap,
-      x: opts.fromRight + Math.max(6, (gap - estW) / 2),
-      y: opts.midY - 36,
-      width: estW,
+      x: opts.fromRight + Math.max(8, (gap - estW) / 2),
+      y: opts.midY - 34,
       fontSize: 13,
     },
     arr,
@@ -199,7 +197,6 @@ function safeVArrow(opts: {
   return [
     {
       ...cap,
-      width: Math.max(170, Math.ceil(opts.caption.length * 10.2)),
       fontSize: 13,
     },
     arr,
@@ -543,6 +540,143 @@ export function buildStructuredBoard(
       }),
       safeBox({ id: s1.id, x: x2, y: yB, w: w2, h: hB, label: s1.label, ...toneColors(s1.tone) }),
       safeNote(40, yB + hB + 26, 'Hover any chalk box → forensic artifact fields + plain "What this means".', CHALK.muted)
+    );
+  } else if (bp.topology === 'network-hop-chain') {
+    // Stepped multi-hop network / perimeter / identity relay map:
+    // Left origin -> Perimeter Gate / Broker -> Target Service (top row)
+    // Vertical callback / witness arc down to SOC Sensor + Invariant Control + Sticky NOTE
+    const yTop = 94;
+    const hTop = 152;
+    const yBot = 352;
+    const hBot = 152;
+    const x0 = 40;
+    const w0 = 320;
+    const x1 = x0 + w0 + ARROW_GAP + 20;
+    const w1 = 330;
+    const x2 = x1 + w1 + ARROW_GAP + 20;
+    const w2 = 340;
+
+    skeletons.push(
+      safeCaption('net-top', 40, 62, bp.zoneHeaders?.[0] ?? 'EDGE / PROTOCOL HOP CHAIN (ORIGIN → BROKER → TARGET)', CHALK.api),
+      safeBox({ id: p0.id, x: x0, y: yTop, w: w0, h: hTop, label: p0.label, ...toneColors(p0.tone) }),
+      ...safeHArrow({
+        id: `${p0.id}-nh1`,
+        fromId: p0.id,
+        toId: p1.id,
+        fromRight: x0 + w0,
+        toLeft: x1,
+        midY: yTop + hTop / 2,
+        caption: bp.edges.e1,
+        stroke: CHALK.attacker,
+      }),
+      safeBox({ id: p1.id, x: x1, y: yTop, w: w1, h: hTop, label: p1.label, ...toneColors(p1.tone) }),
+      ...safeHArrow({
+        id: `${p1.id}-nh2`,
+        fromId: p1.id,
+        toId: p2.id,
+        fromRight: x1 + w1,
+        toLeft: x2,
+        midY: yTop + hTop / 2,
+        caption: bp.edges.e2,
+        stroke: CHALK.api,
+      }),
+      safeBox({ id: p2.id, x: x2, y: yTop, w: w2, h: hTop, label: p2.label, ...toneColors(p2.tone) }),
+      safeCaption('net-bot', 40, yBot - 36, bp.zoneHeaders?.[1] ?? 'VERIFICATION · UNTOUCHED CONTROL & TELEMETRY SENSOR', CHALK.ok),
+      ...safeVArrow({
+        id: `${p2.id}-nv1`,
+        fromId: p2.id,
+        toId: s1.id,
+        midX: x2 + w2 / 2,
+        fromBottom: yTop + hTop,
+        toTop: yBot,
+        caption: bp.edges.e3,
+        stroke: CHALK.ok,
+        captionOffsetX: 16,
+      }),
+      sticky({
+        id: bp.stickyNote.id,
+        x: x0,
+        y: yBot,
+        w: w0,
+        h: hBot,
+        label: bp.stickyNote.label,
+      }),
+      safeBox({ id: s0.id, x: x1, y: yBot, w: w1, h: hBot, label: s0.label, ...toneColors(s0.tone) }),
+      ...safeHArrow({
+        id: `${s0.id}-nh4`,
+        fromId: s0.id,
+        toId: s1.id,
+        fromRight: x1 + w1,
+        toLeft: x2,
+        midY: yBot + hBot / 2,
+        caption: bp.edges.e4 ?? 'Correlates',
+        stroke: CHALK.trusted,
+      }),
+      safeBox({ id: s1.id, x: x2, y: yBot, w: w2, h: hBot, label: s1.label, ...toneColors(s1.tone) }),
+      safeNote(40, yBot + hBot + 26, 'Hover any chalk box → protocol / packet / event fields + plain "What this means".', CHALK.muted)
+    );
+  } else if (bp.topology === 'protocol-layer-stack') {
+    // Layered architectural stack (AI / Cloud / DB / ICS / Mobile):
+    // Left vertical ingress -> Control Plane / Protocol Engine -> Execution Layer
+    // Right side: Invariant Control (top) + Witness Sensor (middle) + Sticky NOTE (bottom)
+    const xL = 40;
+    const wL = 420;
+    const xR = xL + wL + ARROW_GAP + 30;
+    const wR = 400;
+    const xS = xR + wR + 48;
+    const wS = 280;
+    const y1 = 90;
+    const hBox = 148;
+    const y2 = 338;
+
+    skeletons.push(
+      safeCaption('stk-l', xL, 58, bp.zoneHeaders?.[0] ?? 'EXECUTION / PROTOCOL LAYER STACK', CHALK.trusted),
+      safeCaption('stk-r', xR, 58, bp.zoneHeaders?.[1] ?? 'POLICY / TELEMETRY PLANE', CHALK.ok),
+      safeBox({ id: p0.id, x: xL, y: y1, w: wL, h: hBox, label: p0.label, ...toneColors(p0.tone) }),
+      ...safeHArrow({
+        id: `${p0.id}-sl1`,
+        fromId: p0.id,
+        toId: p1.id,
+        fromRight: xL + wL,
+        toLeft: xR,
+        midY: y1 + hBox / 2,
+        caption: bp.edges.e1,
+        stroke: CHALK.api,
+      }),
+      safeBox({ id: p1.id, x: xR, y: y1, w: wR, h: hBox, label: p1.label, ...toneColors(p1.tone) }),
+      ...safeVArrow({
+        id: `${p1.id}-sv1`,
+        fromId: p1.id,
+        toId: p2.id,
+        midX: xL + wL / 2,
+        fromBottom: y1 + hBox,
+        toTop: y2,
+        caption: bp.edges.e2,
+        stroke: CHALK.attacker,
+        captionOffsetX: 16,
+      }),
+      safeBox({ id: p2.id, x: xL, y: y2, w: wL, h: hBox, label: p2.label, ...toneColors(p2.tone) }),
+      ...safeHArrow({
+        id: `${p2.id}-sl2`,
+        fromId: p2.id,
+        toId: s1.id,
+        fromRight: xL + wL,
+        toLeft: xR,
+        midY: y2 + hBox / 2,
+        caption: bp.edges.e3,
+        stroke: CHALK.ok,
+      }),
+      safeBox({ id: s1.id, x: xR, y: y2, w: wR, h: hBox, label: s1.label, ...toneColors(s1.tone) }),
+      safeBox({ id: s0.id, x: xS, y: y1, w: wS, h: hBox, label: s0.label, ...toneColors(s0.tone) }),
+      sticky({
+        id: bp.stickyNote.id,
+        x: xS,
+        y: y2,
+        w: wS,
+        h: hBox,
+        label: bp.stickyNote.label,
+      }),
+      safeNote(40, y2 + hBox + 26, 'Hover any chalk box → layer contract / API fields + plain "What this means".', CHALK.muted)
     );
   } else {
     // 'pipeline-flow': Canonical 3-node top chain + sticky NOTE + lower artifact/detection strip

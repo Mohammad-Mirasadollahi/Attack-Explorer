@@ -1,5 +1,6 @@
 import type { Section3DKey } from '@/lib/section-3d-registry';
 import { MALWARE_TECHNICAL_CLIP_FLAGS } from '@/lib/malware-2d-blueprints/manifest';
+import { SCENARIO_2D_CLIP_FLAGS } from '@/lib/scenario-2d-blueprints/manifest';
 
 /**
  * SVG + GSAP teaching clips — separate from Excalidraw whiteboards.
@@ -20,6 +21,7 @@ const SCENARIO_TECHNICAL_CLIPS: Record<
     'memory-forensics': true,
   },
   ...MALWARE_TECHNICAL_CLIP_FLAGS,
+  ...SCENARIO_2D_CLIP_FLAGS,
 };
 
 export function hasTechnicalClip(

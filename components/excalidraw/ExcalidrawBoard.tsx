@@ -73,11 +73,24 @@ export default function ExcalidrawBoard({
     [skeletons]
   );
 
-  const initialData = useMemo<ExcalidrawInitialDataState>(() => {
-    const elements = convertToExcalidrawElements(
+  const convertBoardElements = useCallback(() => {
+    const raw = convertToExcalidrawElements(
       skeletons as Parameters<typeof convertToExcalidrawElements>[0],
       { regenerateIds: false }
     );
+    return raw.map((el) => {
+      if (el.type === 'text' && !el.containerId) {
+        return {
+          ...el,
+          width: Math.ceil(el.width * 1.32 + 40),
+        };
+      }
+      return el;
+    });
+  }, [skeletons]);
+
+  const initialData = useMemo<ExcalidrawInitialDataState>(() => {
+    const elements = convertBoardElements();
     return {
       elements,
       appState: {
@@ -88,7 +101,7 @@ export default function ExcalidrawBoard({
       },
       scrollToContent: true,
     };
-  }, [skeletons]);
+  }, [convertBoardElements]);
 
   const clearShowTimer = useCallback(() => {
     if (showTimerRef.current != null) {
@@ -205,16 +218,13 @@ export default function ExcalidrawBoard({
       if (typeof document !== 'undefined' && document.fonts?.ready) {
         void document.fonts.ready.then(() => {
           if (apiRef.current !== api) return;
-          const remeasured = convertToExcalidrawElements(
-            skeletons as Parameters<typeof convertToExcalidrawElements>[0],
-            { regenerateIds: false }
-          );
+          const remeasured = convertBoardElements();
           api.updateScene({ elements: remeasured });
           requestAnimationFrame(() => fitBoard(api));
         });
       }
     },
-    [fitBoard, scheduleFits, skeletons]
+    [convertBoardElements, fitBoard, scheduleFits]
   );
 
   const clampPosition = useCallback(

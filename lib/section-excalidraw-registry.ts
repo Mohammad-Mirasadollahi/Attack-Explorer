@@ -8,6 +8,7 @@ import {
   type TechnicalBoardSkeleton,
 } from '@/modules/scenarios/process-hollowing/excalidraw';
 import { MALWARE_EXCALIDRAW_BOARDS } from '@/lib/malware-2d-blueprints';
+import { SCENARIO_2D_EXCALIDRAW_BOARDS } from '@/lib/scenario-2d-blueprints';
 
 export type {
   BoardTooltip,
@@ -23,6 +24,7 @@ const SCENARIO_TECHNICAL_BOARDS: Record<
 > = {
   'process-hollowing': PROCESS_HOLLOWING_TECHNICAL_BOARDS,
   ...MALWARE_EXCALIDRAW_BOARDS,
+  ...SCENARIO_2D_EXCALIDRAW_BOARDS,
 };
 
 export function hasTechnicalWhiteboard(

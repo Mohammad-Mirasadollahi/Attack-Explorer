@@ -36,6 +36,9 @@ export function useCanvasPlayToggle(
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
+      if ((e.target as Element | null)?.closest?.('[data-clip-interactive="true"]')) {
+        return;
+      }
       active = true;
       startX = e.clientX;
       startY = e.clientY;
@@ -52,6 +55,9 @@ export function useCanvasPlayToggle(
     const onPointerUp = (e: PointerEvent) => {
       if (e.button !== 0 || !active) return;
       active = false;
+      if ((e.target as Element | null)?.closest?.('[data-clip-interactive="true"]')) {
+        return;
+      }
       if (dragged) return;
       if (Math.hypot(e.clientX - startX, e.clientY - startY) > clickThresholdPx) {
         return;

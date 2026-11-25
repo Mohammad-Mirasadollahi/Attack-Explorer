@@ -1,8 +1,8 @@
 # Excalidraw Technical Whiteboard Standard (`MOD-13`)
 
-> **Module ID**: `MOD-13` · **Parent Index**: [`/docs/standards/README.md`](./README.md)  
-> **Scope**: Every scenario technical teaching board under `/modules/scenarios/<id>/excalidraw/**`, the shared embed `/components/excalidraw/**`, and registry wiring in `/lib/section-excalidraw-registry.ts`.  
-> **Status**: Mandatory Permanent Standard for any scenario that ships a technical whiteboard · **Reference implementation**: `/modules/scenarios/process-hollowing/excalidraw/` · **Enforced By**: (planned) board-descriptor contract tests; until then, PR review against this module + the Process Hollowing boards.
+> **Module ID**: `MOD-13` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
+> **Scope**: Every scenario technical teaching board under `/modules/scenarios/<id>/excalidraw/**`, shared multi-topology builders under `/lib/excalidraw-boards/**` and `/lib/scenario-2d-blueprints/**`, the shared embed `/components/excalidraw/**`, and registry wiring in `/lib/section-excalidraw-registry.ts`.  
+> **Status**: Mandatory Permanent Standard across all 188 scenarios · **Reference implementation**: `/modules/scenarios/process-hollowing/excalidraw/` and `/lib/excalidraw-boards/board-primitives.ts` (8 topologies) · **Enforced By**: `/lib/technical-clips.test.ts`.
 
 ---
 
