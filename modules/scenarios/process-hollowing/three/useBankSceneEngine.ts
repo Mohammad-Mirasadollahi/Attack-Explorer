@@ -755,12 +755,21 @@ export function useBankSceneEngine({
       renderBusy = true;
       frameId = window.requestAnimationFrame(() => {
         if (disposed) return;
+        // Play may have been pressed while this paused frame was queued.
+        // Upgrade to the playback loop instead of wiping renderDirty and stalling.
+        if (simRef.current.isPlaying) {
+          renderDirty = false;
+          lastTickTime = performance.now();
+          tick();
+          return;
+        }
         renderDirty = false;
         applySceneState(0.016);
         renderFrame();
         const done = () => {
           renderBusy = false;
-          if (renderDirty && !disposed) {
+          if (disposed) return;
+          if (simRef.current.isPlaying || renderDirty) {
             renderDirty = false;
             requestRender();
           }

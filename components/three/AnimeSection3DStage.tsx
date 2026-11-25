@@ -649,12 +649,21 @@ export function AnimeSection3DStage({
       renderBusy = true;
       frameId = window.requestAnimationFrame(() => {
         if (disposed) return;
+        // Play may have been pressed while this paused frame was queued.
+        // Upgrade to the playback loop instead of wiping renderDirty and stalling.
+        if (simRef.current.isPlaying) {
+          renderDirty = false;
+          lastTickTime = performance.now();
+          tick();
+          return;
+        }
         renderDirty = false;
         applySceneState(0.016);
         renderFrame();
         const done = () => {
           renderBusy = false;
-          if (renderDirty && !disposed) {
+          if (disposed) return;
+          if (simRef.current.isPlaying || renderDirty) {
             renderDirty = false;
             requestRender();
           }
@@ -765,17 +774,23 @@ export function AnimeSection3DStage({
   );
 
   const handleTogglePlay = useCallback(() => {
-    setIsPlaying((prev) => {
-      if (prev) return false;
-      // If the timeline already finished, rewind so Play runs the story again.
-      if (simRef.current.normalizedTime >= 0.999) {
-        simRef.current.normalizedTime = 0.01;
-        simRef.current.snapCamera = true;
-        setActivePhaseIndex(0);
-        setTimelinePct(1);
-      }
-      return true;
-    });
+    const sim = simRef.current;
+    // Prefer the sim flag so we don't race React state vs the render loop.
+    if (sim.isPlaying) {
+      sim.isPlaying = false;
+      setIsPlaying(false);
+      return;
+    }
+    // Finished timeline: rewind first so Play actually runs again.
+    if (sim.normalizedTime >= 0.999) {
+      sim.normalizedTime = 0;
+      sim.snapCamera = true;
+      setActivePhaseIndex(0);
+      setTimelinePct(0);
+    }
+    sim.isPlaying = true;
+    setIsPlaying(true);
+    sim.requestRender();
   }, []);
 
   const handleToggleFullPage = useCallback(() => {

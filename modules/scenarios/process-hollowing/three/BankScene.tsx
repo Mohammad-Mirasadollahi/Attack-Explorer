@@ -163,16 +163,21 @@ export function ProcessHollowingBankScene({
   }, []);
 
   const handleTogglePlay = useCallback(() => {
-    setIsPlaying((prev) => {
-      if (prev) return false;
-      if (simRef.current.normalizedTime >= 0.999) {
-        simRef.current.normalizedTime = 0.01;
-        simRef.current.snapCamera = true;
-        setActiveActIndex(0);
-        setTimelinePct(1);
-      }
-      return true;
-    });
+    const sim = simRef.current;
+    if (sim.isPlaying) {
+      sim.isPlaying = false;
+      setIsPlaying(false);
+      return;
+    }
+    if (sim.normalizedTime >= 0.999) {
+      sim.normalizedTime = 0;
+      sim.snapCamera = true;
+      setActiveActIndex(0);
+      setTimelinePct(0);
+    }
+    sim.isPlaying = true;
+    setIsPlaying(true);
+    sim.requestRender();
   }, []);
 
   const handleToggleFullPage = useCallback(() => {

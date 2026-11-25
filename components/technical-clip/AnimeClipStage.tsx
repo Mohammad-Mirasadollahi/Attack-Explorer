@@ -100,6 +100,10 @@ export function AnimeClipStage({
       setBeat: (id) => setBeat(id),
     });
     tl.eventCallback('onUpdate', () => sync(tl));
+    tl.eventCallback('onComplete', () => {
+      setPlaying(false);
+      setProgressPct(100);
+    });
     tl.timeScale(speedRef.current);
     return tl;
   }, [sync]);
@@ -152,9 +156,12 @@ export function AnimeClipStage({
   const togglePlay = useCallback(() => {
     const tl = tlRef.current;
     if (!tl) return;
-    if (tl.paused()) {
+    const atEnd = tl.progress() >= 0.999;
+    if (tl.paused() || atEnd) {
       userPausedRef.current = false;
-      tl.play();
+      // GSAP play() at the end is a no-op — restart from 0.
+      if (atEnd) tl.play(0);
+      else tl.play();
       setPlaying(true);
     } else {
       userPausedRef.current = true;
