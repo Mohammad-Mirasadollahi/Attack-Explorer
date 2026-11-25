@@ -34,6 +34,7 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
+  Layers,
   Maximize2,
   Minimize2,
   Pause,
@@ -86,8 +87,10 @@ export function AnimeSection3DStage({
     useState<StandardCameraPresetId>('DIRECTOR');
   const [dockExpanded, setDockExpanded] = useState<boolean>(true);
   const [isFullPage, setIsFullPage] = useState<boolean>(false);
-  const [bespokeSceneFactory, setBespokeSceneFactory] =
-    useState<BespokeSectionSceneFactory | null>(null);
+  const [loadedFactory, setLoadedFactory] = useState<{
+    scenarioId: string;
+    factory: BespokeSectionSceneFactory;
+  } | null>(null);
   const [bloomEnabled, setBloomEnabled] = useState<boolean>(true);
   const [labelsEnabled, setLabelsEnabled] = useState<boolean>(true);
   const [webglError, setWebglError] = useState<string | null>(null);
@@ -171,18 +174,23 @@ export function AnimeSection3DStage({
 
   useEffect(() => {
     let live = true;
-    loadBespokeSectionSceneFactory().then((factory) => {
-      if (live) setBespokeSceneFactory(() => factory);
+    const targetScenarioId = descriptor.scenarioId;
+    loadBespokeSectionSceneFactory(targetScenarioId).then((factory) => {
+      if (live) {
+        setLoadedFactory({ scenarioId: targetScenarioId, factory });
+      }
     });
     return () => {
       live = false;
     };
-  }, []);
+  }, [descriptor.scenarioId]);
 
   useEffect(() => {
     const mountEl = canvasMountRef.current;
     if (!mountEl) return;
-    if (!bespokeSceneFactory) return;
+    if (!loadedFactory || loadedFactory.scenarioId !== descriptor.scenarioId) {
+      return;
+    }
     if (descriptor.sceneKind === 'bank-truck-briefing') return;
 
     const sceneKind = descriptor.sceneKind as Exclude<
@@ -271,7 +279,7 @@ export function AnimeSection3DStage({
     rimLight.position.set(-20, 14, -18);
     scene.add(rimLight);
 
-    const bespoke = bespokeSceneFactory(sceneKind, materials, isSoftwareGl);
+    const bespoke = loadedFactory.factory(sceneKind, materials, isSoftwareGl);
     scene.add(bespoke.root);
 
     const pixelRatio = renderer.getPixelRatio();
@@ -696,7 +704,7 @@ export function AnimeSection3DStage({
       envTarget.dispose();
       renderer.dispose();
     };
-  }, [descriptor, bespokeSceneFactory]);
+  }, [descriptor, loadedFactory]);
 
   const handleSelectPhase = useCallback(
     (phaseIdx: number) => {
@@ -818,7 +826,15 @@ export function AnimeSection3DStage({
         >
           <div className={`anime-floating-callout-card ${primaryStyle.card}`}>
             <div className="flex items-center gap-1.5">
-              <Truck className={`w-3.5 h-3.5 shrink-0 ${primaryStyle.icon}`} />
+              {descriptor.scenarioId === 'process-hollowing' ? (
+                <Truck
+                  className={`w-3.5 h-3.5 shrink-0 ${primaryStyle.icon}`}
+                />
+              ) : (
+                <Layers
+                  className={`w-3.5 h-3.5 shrink-0 ${primaryStyle.icon}`}
+                />
+              )}
               <span className="text-[11.5px] font-extrabold tracking-normal text-white">
                 {primaryCallout.title}
               </span>

@@ -1,4 +1,10 @@
 import type { StoryTechnicalMapping } from '@/modules/scenarios/contracts';
+import { MALWARE_INMEMORY_EVASION_3D_REGISTRY } from '@/lib/section-3d-registries/malware-inmemory-evasion';
+import { MALWARE_SUPPLYCHAIN_HIJACK_3D_REGISTRY } from '@/lib/section-3d-registries/malware-supplychain-hijack';
+import { MALWARE_KERNEL_FIRMWARE_3D_REGISTRY } from '@/lib/section-3d-registries/malware-kernel-firmware';
+import { MALWARE_PERSISTENCE_SERVICES_3D_REGISTRY } from '@/lib/section-3d-registries/malware-persistence-services';
+import { MALWARE_CREDENTIAL_LINUX_3D_REGISTRY } from '@/lib/section-3d-registries/malware-credential-linux';
+import { MALWARE_DFIR_ARTIFACTS_3D_REGISTRY } from '@/lib/section-3d-registries/malware-dfir-artifacts';
 
 export type { StoryTechnicalMapping };
 
@@ -18,7 +24,8 @@ export type Anime3DSceneKind =
   | 'rwx-vault-inject'
   | 'cockpit-gps-hijack'
   | 'firewall-c2-bridge'
-  | 'memory-vad-diff';
+  | 'memory-vad-diff'
+  | (string & {});
 
 export type StandardCameraPresetId = 'DIRECTOR' | 'VIEW_A' | 'VIEW_B' | 'VIEW_C';
 export type StandardCutawayMode = 'AUTO' | 'OPEN' | 'SEALED';
@@ -886,6 +893,12 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
   Partial<Record<Section3DKey, Section3DDescriptor>>
 > = {
   'process-hollowing': PROCESS_HOLLOWING_SECTION_SCENES,
+  ...MALWARE_INMEMORY_EVASION_3D_REGISTRY,
+  ...MALWARE_SUPPLYCHAIN_HIJACK_3D_REGISTRY,
+  ...MALWARE_KERNEL_FIRMWARE_3D_REGISTRY,
+  ...MALWARE_PERSISTENCE_SERVICES_3D_REGISTRY,
+  ...MALWARE_CREDENTIAL_LINUX_3D_REGISTRY,
+  ...MALWARE_DFIR_ARTIFACTS_3D_REGISTRY,
 };
 
 /**
