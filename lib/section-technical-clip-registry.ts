@@ -1,5 +1,5 @@
 import type { Section3DKey } from '@/lib/section-3d-registry';
-import { MALWARE_TECHNICAL_CLIP_FLAGS } from '@/lib/malware-2d-blueprints';
+import { MALWARE_TECHNICAL_CLIP_FLAGS } from '@/lib/malware-2d-blueprints/manifest';
 
 /**
  * SVG + GSAP teaching clips — separate from Excalidraw whiteboards.

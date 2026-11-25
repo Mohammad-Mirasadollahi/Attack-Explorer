@@ -272,3 +272,50 @@ test('All 30 MALWARE scenarios have complete MOD-13 Excalidraw whiteboards (135 
   );
 });
 
+test('Lightweight manifest and dynamic per-group loader stay in 100% sync with compiled MALWARE 2D registry', async () => {
+  const {
+    hasAnyTechnicalWhiteboard,
+    MALWARE_2D_SECTION_MANIFEST,
+  } = await import('./malware-2d-blueprints/manifest');
+  const {
+    loadMalwareTechnicalWhiteboard,
+    loadMalwareTechnicalClipSpec,
+  } = await import('./malware-2d-blueprints/loader');
+
+  const malwareScenarios = ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE');
+  assert.equal(Object.keys(MALWARE_2D_SECTION_MANIFEST).length, 29);
+
+  for (const scenario of malwareScenarios) {
+    const sections = listScenario3DSections(scenario.id).map((d) => d.sectionKey);
+    for (const sectionKey of sections) {
+      assert.equal(
+        hasAnyTechnicalWhiteboard(scenario.id, sectionKey),
+        hasTechnicalWhiteboard(scenario.id, sectionKey),
+        `Manifest whiteboard mismatch for ${scenario.id}/${sectionKey}`
+      );
+    }
+  }
+
+  // Verify dynamic loader resolves a representative scenario from every group (1..6)
+  const samplePerGroup = [
+    'amsi-reflective-dll',
+    '3cx-desktopapp-supply-chain-lazarus',
+    'kaspersky-lazarus-byovd-fudmodule',
+    'ms-forest-blizzard-gooseegg',
+    'dfir-lsass-minidump-comsvcs-sysmon-eid10',
+    'dfir-ntfs-timestomp-mft-si-fn-mismatch-eid2',
+  ];
+
+  for (const scenarioId of samplePerGroup) {
+    const board = await loadMalwareTechnicalWhiteboard(scenarioId, 'step-1');
+    const clip = await loadMalwareTechnicalClipSpec(scenarioId, 'step-1');
+    assert.ok(board && board.skeletons.length >= 8, `Loader failed whiteboard for ${scenarioId}/step-1`);
+    assert.ok(clip && clip.beats.length === 4, `Loader failed clip for ${scenarioId}/step-1`);
+    assert.equal(
+      await loadMalwareTechnicalClipSpec(scenarioId, 'briefing'),
+      null,
+      `Loader must return null for briefing clip on ${scenarioId}`
+    );
+  }
+});
+

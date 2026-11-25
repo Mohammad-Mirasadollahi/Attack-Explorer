@@ -11,7 +11,7 @@ import {
   type Section3DKey,
   type StoryTechnicalMapping,
 } from '@/lib/section-3d-registry';
-import { hasTechnicalWhiteboard } from '@/lib/section-excalidraw-registry';
+import { hasAnyTechnicalWhiteboard as hasTechnicalWhiteboard } from '@/lib/malware-2d-blueprints/manifest';
 import { hasTechnicalClip } from '@/lib/section-technical-clip-registry';
 import { TechnicalWhiteboardEmbed } from './excalidraw/TechnicalWhiteboardEmbed';
 import { TechnicalClipEmbed } from './technical-clip/TechnicalClipEmbed';

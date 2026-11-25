@@ -2,8 +2,14 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Allow LAN access during local/dev (host IP / hostname).
-  allowedDevOrigins: ['192.168.1.199', 'localhost', '127.0.0.1'],
+  // Allow LAN & Cloud Run preview access during dev (avoids blocked /_next/* chunk requests).
+  allowedDevOrigins: [
+    '192.168.1.199',
+    'localhost',
+    '127.0.0.1',
+    '*.run.app',
+    '*.us-east1.run.app',
+  ],
   // Smaller responses; Cloudflare already strips some fingerprint headers.
   poweredByHeader: false,
   // Workers Free has no Next.js Image Optimization runtime — serve as-is.
@@ -29,7 +35,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
-  transpilePackages: ['motion', '@excalidraw/excalidraw'],
   async headers() {
     return [
       {
@@ -61,9 +66,6 @@ const nextConfig: NextConfig = {
     ];
   },
   webpack: (config, { dev }) => {
-    if (dev) {
-      config.cache = false;
-    }
     if (dev && process.env.DISABLE_HMR === 'true') {
       config.watchOptions = {
         ignored: /.*/,

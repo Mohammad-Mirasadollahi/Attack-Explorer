@@ -222,7 +222,7 @@ export function AnimeSection3DStage({
       isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2)
     );
     renderer.shadowMap.enabled = !isSoftwareGl;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 
     const initialW = Math.max(320, mountEl.clientWidth || 1200);
     const initialH = Math.max(360, mountEl.clientHeight || 640);

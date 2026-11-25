@@ -6,7 +6,7 @@ import {
   DESKTOP_LAYOUT_WIDTH,
   LAYOUT_MODE_STORAGE_KEY,
 } from '@/lib/layout-preference';
-import { buildRootJsonLd, resolveSiteUrl } from '@/lib/seo-metadata';
+import { buildRootJsonLd, resolveSiteUrl } from '@/lib/seo-root-metadata';
 
 const jakartaSans = Plus_Jakarta_Sans({
   weight: ['400', '500', '600', '700', '800'],

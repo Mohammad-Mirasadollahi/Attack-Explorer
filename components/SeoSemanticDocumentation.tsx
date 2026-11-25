@@ -1,11 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
-import { ATTACK_SCENARIOS } from '@/lib/attack-scenarios';
+import { SCENARIO_CATALOG } from '@/lib/scenario-catalog';
 import {
   GLOBAL_FRAMEWORK_SOURCES,
   LEGAL_COMPLIANCE_STATEMENT,
 } from '@/lib/attack-sources-and-legal';
-import { AUTHOR_PROFILE, PLATFORM_FAQ_ITEMS } from '@/lib/seo-metadata';
+import { AUTHOR_PROFILE, PLATFORM_FAQ_ITEMS } from '@/lib/seo-root-metadata';
 
 const FEATURED_SCENARIO_IDS = [
   'process-hollowing',
@@ -27,7 +27,7 @@ const FEATURED_SCENARIO_IDS = [
  * telemetry code tokens (`<code>`) and satisfy crawlable E-E-A-T link requirements.
  */
 export function SeoSemanticDocumentation() {
-  const featuredScenarios = ATTACK_SCENARIOS.filter((s) =>
+  const featuredScenarios = SCENARIO_CATALOG.filter((s) =>
     FEATURED_SCENARIO_IDS.includes(s.id)
   );
 
@@ -74,7 +74,7 @@ export function SeoSemanticDocumentation() {
             <Link href={`/scenarios/${sc.id}`}>
               {sc.code}: {sc.name} — {sc.shortSubtitle}
             </Link>{' '}
-            <span>{sc.overview}</span>
+            <span>{sc.library.overview}</span>
           </li>
         ))}
       </ul>
