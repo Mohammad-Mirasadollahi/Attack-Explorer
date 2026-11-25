@@ -44,6 +44,8 @@ type AnimeClipStageProps = {
   cameras: ClipCamera[];
   build: (api: ClipTimelineApi) => gsap.core.Timeline;
   children: React.ReactNode;
+  /** Frame-fixed chrome (inspect bars, cards) — not affected by camera zoom/pan. */
+  filmOverlay?: React.ReactNode;
 };
 
 export function AnimeClipStage({
@@ -54,6 +56,7 @@ export function AnimeClipStage({
   cameras,
   build,
   children,
+  filmOverlay,
 }: AnimeClipStageProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const filmRef = useRef<HTMLDivElement | null>(null);
@@ -313,6 +316,11 @@ export function AnimeClipStage({
           >
             {children}
           </div>
+          {filmOverlay ? (
+            <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+              {filmOverlay}
+            </div>
+          ) : null}
         </div>
 
         <div className="z-20 flex shrink-0 flex-col items-center px-3 pb-3 pt-1">
