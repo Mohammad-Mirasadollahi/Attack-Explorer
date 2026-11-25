@@ -77,7 +77,7 @@ Wire the scenario map in `/lib/section-excalidraw-registry.ts`. Render only thro
 | **R4 · Box copy** | Box labels stay short (≤ 5 lines). Dense detail belongs in the hover card, not crushed inside the rectangle. |
 | **R5 · Sticky NOTE** | Every board includes ≥ 1 on-canvas `sticky()` teaching callout (yellow chalk) with a scannable NOTE. |
 | **R6 · Footer hint** | Every board ends with a muted `note()` reminding learners to hover for the software card. |
-| **R7 · Fit, don’t pan** | Boards are static: `viewMode` + locked pointer pan/zoom on the canvas; hover uses a dedicated overlay layer only. |
+| **R7 · Readable chalk + zoom** | Board text uses large helper defaults (title ~40, box ~26, caption/note/sticky ~22–24). Hover tooltip card typography stays compact. Wheel + on-board zoom controls (`+` / `−` / Fit) are required; drawing stays `viewMode` (no free edit). |
 | **R8 · Stroke visibility** | Arrow `strokeWidth` ≥ board stroke + 0.5. Never rely on text sitting on the line for “labels”. |
 
 Use helpers from `helpers.ts` (`hArrow`, `vArrow`, `sticky`, `caption`). Do not hand-roll labeled arrows that regress R2/R3.
@@ -167,7 +167,7 @@ Embed chrome (`TechnicalWhiteboardEmbed`) must show: badge, title, subtitle, and
 
 1. **Whiteboard surface** — chalk cream background (`#FDFBF7` or `CHALK` palette). No dark-mode rewrite of the board canvas.  
 2. **Editor chrome hidden** — menus, toolbars, library, footer controls must not appear (`technical-excalidraw-board` CSS).  
-3. **Pan/zoom locked** — canvas `pointer-events: none`; `.board-hover-layer` hit-tests; `.board-excalidraw-tooltip` is interactive.  
+3. **Hover + zoom** — `.board-hover-layer` hit-tests rectangles and owns wheel zoom; zoom dock (`ZoomIn` / `ZoomOut` / Fit) sits above the board; `.board-excalidraw-tooltip` stays interactive and does **not** inherit board font scale.  
 4. **Hit-test** — map pointer → scene coords with current zoom/scroll; match rectangle ids to `tooltips`.  
 5. **Delayed open** — card opens after ~240ms dwell (no instant flash). Hide after ~240ms grace so the pointer can move onto the card.  
 6. **Interactive card** — scrollable body, selectable text, Copy button + native select/copy; stays open while the pointer is over it.  
@@ -233,7 +233,7 @@ New scenarios **copy the Process Hollowing package shape**, then replace content
 - [ ] Every teaching rectangle + sticky has a `tooltips[id]` entry.  
 - [ ] Every tooltip has `kind`, `title`, `fields`, and non-empty `explain`.  
 - [ ] Sticky NOTE present on each board; footer hover hint present.  
-- [ ] Embed uses shared components; pan/zoom remains locked; hover layer works.  
+- [ ] Embed uses shared components; board chalk text is large/readable; zoom controls + wheel zoom work; hover tooltip typography stays compact; hover layer works.  
 - [ ] Chalk palette / cream surface; editor chrome hidden.  
 - [ ] Content matches the section’s technical prose (PIDs, APIs, EIDs consistent with `MOD-03` / `MOD-08`).  
 - [ ] Registry entry added for the scenario id.

@@ -29,7 +29,7 @@ export function box(opts: {
     roughness: BOARD_ROUGHNESS,
     label: {
       text: opts.label,
-      fontSize: opts.fontSize ?? 17,
+      fontSize: opts.fontSize ?? 26,
       textAlign: 'center',
     },
   };
@@ -46,7 +46,7 @@ export function title(
     x,
     y,
     text,
-    fontSize: 26,
+    fontSize: 40,
     fontFamily: BOARD_FONT,
     strokeColor: CHALK.ink,
   };
@@ -64,7 +64,7 @@ export function note(
     x,
     y,
     text,
-    fontSize: 15,
+    fontSize: 24,
     fontFamily: BOARD_FONT,
     strokeColor: color,
   };
@@ -87,7 +87,7 @@ export function caption(
     x,
     y,
     text,
-    fontSize: 14,
+    fontSize: 22,
     fontFamily: BOARD_FONT,
     strokeColor: color,
   };
@@ -106,7 +106,7 @@ export function sticky(opts: {
     ...opts,
     stroke: CHALK.note,
     fill: CHALK.noteFill,
-    fontSize: 14,
+    fontSize: 22,
   });
 }
 

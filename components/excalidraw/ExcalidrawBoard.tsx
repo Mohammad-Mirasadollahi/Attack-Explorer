@@ -12,6 +12,7 @@ import type {
   ExcalidrawImperativeAPI,
   ExcalidrawInitialDataState,
 } from '@excalidraw/excalidraw/types';
+import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import '@excalidraw/excalidraw/index.css';
 import type {
   BoardTooltip,
@@ -24,7 +25,10 @@ const TOOLTIP_SHOW_MS = 240;
 /** Grace period to move from the box onto the card (select / scroll / copy). */
 const TOOLTIP_HIDE_MS = 240;
 /** Leave a little chalk margin so bottom sticky/notes are never clipped. */
-const FIT_VIEWPORT_FACTOR = 0.8;
+const FIT_VIEWPORT_FACTOR = 0.92;
+const MIN_ZOOM = 0.35;
+const MAX_ZOOM = 3.2;
+const ZOOM_STEP = 1.18;
 
 export interface ExcalidrawBoardProps {
   skeletons: TechnicalBoardSkeleton[];
@@ -42,6 +46,7 @@ interface HoverState {
 /**
  * Static Excalidraw whiteboard. Every drawn shape stays visible.
  * Hover an annotated rectangle → delayed chalk tooltip (scroll + select + copy).
+ * Wheel / buttons zoom the chalk surface; tooltip card typography is unchanged.
  */
 export default function ExcalidrawBoard({
   skeletons,
@@ -58,6 +63,7 @@ export default function ExcalidrawBoard({
   const activeIdRef = useRef<string | null>(null);
 
   const [hover, setHover] = useState<HoverState | null>(null);
+  const [zoomLabel, setZoomLabel] = useState('100%');
 
   const sceneKey = useMemo(
     () =>
@@ -103,23 +109,61 @@ export default function ExcalidrawBoard({
     fitTimersRef.current = [];
   }, []);
 
-  const fitBoard = useCallback((api?: ExcalidrawImperativeAPI | null) => {
+  const syncZoomLabel = useCallback((api?: ExcalidrawImperativeAPI | null) => {
     const target = api ?? apiRef.current;
     if (!target) return;
-    const elements = target.getSceneElements().filter((el) => !el.isDeleted);
-    if (!elements.length) return;
-    target.scrollToContent(elements, {
-      fitToViewport: true,
-      animate: false,
-      viewportZoomFactor: FIT_VIEWPORT_FACTOR,
-    });
+    const value = target.getAppState().zoom?.value ?? 1;
+    setZoomLabel(`${Math.round(value * 100)}%`);
   }, []);
+
+  const fitBoard = useCallback(
+    (api?: ExcalidrawImperativeAPI | null) => {
+      const target = api ?? apiRef.current;
+      if (!target) return;
+      const elements = target.getSceneElements().filter((el) => !el.isDeleted);
+      if (!elements.length) return;
+      target.scrollToContent(elements, {
+        fitToViewport: true,
+        animate: false,
+        viewportZoomFactor: FIT_VIEWPORT_FACTOR,
+      });
+      syncZoomLabel(target);
+    },
+    [syncZoomLabel]
+  );
+
+  const setZoom = useCallback(
+    (nextValue: number) => {
+      const api = apiRef.current;
+      if (!api) return;
+      const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextValue));
+      const appState = api.getAppState();
+      api.updateScene({
+        appState: {
+          zoom: { value: zoom },
+          scrollX: appState.scrollX,
+          scrollY: appState.scrollY,
+        },
+      });
+      syncZoomLabel(api);
+    },
+    [syncZoomLabel]
+  );
+
+  const zoomBy = useCallback(
+    (factor: number) => {
+      const api = apiRef.current;
+      if (!api) return;
+      const current = api.getAppState().zoom?.value ?? 1;
+      setZoom(current * factor);
+    },
+    [setZoom]
+  );
 
   const scheduleFits = useCallback(
     (api: ExcalidrawImperativeAPI) => {
       clearFitTimers();
       fitBoard(api);
-      // Layout / font metrics can settle after first paint — refit a few times.
       requestAnimationFrame(() => fitBoard(api));
       for (const ms of [60, 180, 400, 800]) {
         const id = window.setTimeout(() => fitBoard(api), ms);
@@ -138,7 +182,6 @@ export default function ExcalidrawBoard({
     [clearFitTimers, clearHideTimer, clearShowTimer]
   );
 
-  // Re-fit whenever the chalk frame is resized (sidebar, responsive, font load).
   useEffect(() => {
     const root = rootRef.current;
     if (!root || typeof ResizeObserver === 'undefined') return;
@@ -282,6 +325,13 @@ export default function ExcalidrawBoard({
     if (!overTooltipRef.current) scheduleHide();
   };
 
+  const onOverlayWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const factor = event.deltaY > 0 ? 1 / ZOOM_STEP : ZOOM_STEP;
+    zoomBy(factor);
+  };
+
   const onTooltipEnter = () => {
     overTooltipRef.current = true;
     clearHideTimer();
@@ -323,15 +373,54 @@ export default function ExcalidrawBoard({
         excalidrawAPI={lockFrame}
       />
 
-      {tooltips ? (
-        <div
-          className="board-hover-layer absolute inset-0 z-10"
-          data-testid="excalidraw-board-hover-layer"
-          onMouseMove={onOverlayMove}
-          onMouseLeave={onOverlayLeave}
-          aria-hidden="true"
-        />
-      ) : null}
+      {/* Captures hover + wheel zoom without relying on Excalidraw chrome. */}
+      <div
+        className="board-hover-layer absolute inset-0 z-10"
+        data-testid="excalidraw-board-hover-layer"
+        onMouseMove={onOverlayMove}
+        onMouseLeave={onOverlayLeave}
+        onWheel={onOverlayWheel}
+        aria-hidden="true"
+      />
+
+      <div
+        className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded-lg border border-slate-800/80 bg-[#FDFBF7]/95 p-1 shadow-[2px_2px_0_#0f172a]"
+        data-testid="excalidraw-board-zoom-controls"
+      >
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-800 hover:bg-slate-200/80"
+          aria-label="Zoom out whiteboard"
+          data-testid="excalidraw-board-zoom-out"
+          onClick={() => zoomBy(1 / ZOOM_STEP)}
+        >
+          <ZoomOut className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <span
+          className="min-w-[3.25rem] px-1 text-center font-mono text-[11px] font-bold text-slate-800"
+          data-testid="excalidraw-board-zoom-label"
+        >
+          {zoomLabel}
+        </span>
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-800 hover:bg-slate-200/80"
+          aria-label="Zoom in whiteboard"
+          data-testid="excalidraw-board-zoom-in"
+          onClick={() => zoomBy(ZOOM_STEP)}
+        >
+          <ZoomIn className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-800 hover:bg-slate-200/80"
+          aria-label="Fit whiteboard to view"
+          data-testid="excalidraw-board-zoom-fit"
+          onClick={() => fitBoard()}
+        >
+          <Maximize2 className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
 
       {hover && activeTooltip ? (
         <BoardTooltipCard
