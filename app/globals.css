@@ -188,7 +188,10 @@
   pointer-events: none;
 }
 
-/* Hover hit-layer: wheel zoom + left-drag pan; page scroll must stay blocked. */
+/*
+ * Hover hit-layer: while the pointer is here, wheel zooms the board (JS
+ * preventDefault) and left-drag pans. Page scroll outside this board is unchanged.
+ */
 .technical-excalidraw-board .board-hover-layer {
   pointer-events: auto;
   touch-action: none;

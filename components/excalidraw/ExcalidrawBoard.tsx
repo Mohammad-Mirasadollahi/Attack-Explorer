@@ -261,13 +261,24 @@ export default function ExcalidrawBoard({
     };
   }, [fitBoard, sceneKey]);
 
-  // React's onWheel is often passive — use a native listener so preventDefault
-  // actually stops the page from scrolling while the board zooms.
+  // Scoped to this board only: outside the board, the page keeps normal scroll.
+  // React's onWheel is often passive, so use a native non-passive listener.
   useEffect(() => {
+    const root = rootRef.current;
     const layer = hoverLayerRef.current;
-    if (!layer) return;
+    if (!root || !layer) return;
 
     const onWheel = (event: WheelEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('.board-excalidraw-tooltip')
+      ) {
+        // Let the chalk tooltip scroll its own text; do not zoom / steal the wheel.
+        return;
+      }
+
+      // Pointer is on the whiteboard surface (or zoom chrome) → zoom only.
       event.preventDefault();
       event.stopPropagation();
       const factor = event.deltaY > 0 ? 1 / ZOOM_STEP : ZOOM_STEP;
@@ -278,8 +289,8 @@ export default function ExcalidrawBoard({
       });
     };
 
-    layer.addEventListener('wheel', onWheel, { passive: false });
-    return () => layer.removeEventListener('wheel', onWheel);
+    root.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => root.removeEventListener('wheel', onWheel, true);
   }, [zoomBy, sceneKey]);
 
   useEffect(() => {
