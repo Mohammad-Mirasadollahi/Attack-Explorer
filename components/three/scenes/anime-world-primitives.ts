@@ -351,7 +351,9 @@ export function buildStageFloor(
 }
 
 /**
- * Rear architectural backdrop wall placed strictly at z <= -4.2 (never obstructs camera).
+ * Rear architectural backdrop frame placed strictly at z <= -4.2 (never obstructs camera).
+ * Uses a low waist dado + side framing piers + top transom beam so each scenario's
+ * bespoke anime sky dome, clouds, sun/moon, and starfield shine cleanly behind the props.
  */
 export function buildRearBackdropWall(
   materials: AnimeMaterialLibrary,
@@ -364,42 +366,82 @@ export function buildRearBackdropWall(
   } = {}
 ): THREE.Group {
   const g = new THREE.Group();
-  const w = Math.max(opts.width ?? 34, 34);
-  const h = Math.max(opts.height ?? 7.4, 7.0);
+  g.name = 'generic-rear-backdrop-wall';
+  const w = Math.max(opts.width ?? 30, 26);
+  const h = Math.min(Math.max(opts.height ?? 6.4, 5.6), 7.2);
   const z = opts.z ?? -4.6;
   const accent = opts.accentHex ?? 0x38bdf8;
-
-  const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, 0.4),
-    materials.createToonMaterial(opts.wallHex ?? 0x1e293b)
-  );
-  wall.position.set(0, h * 0.5, z);
-  addAnimeInkEdges(wall, materials.inkLineMaterial, 24);
-  g.add(wall);
-
-  // Subtle recessed architectural pilasters and dado band along rear wall
+  const wallMat = materials.createToonMaterial(opts.wallHex ?? 0x1e293b);
   const ribMat = materials.createToonMaterial(0x0f172a);
-  for (const rx of [-11.5, -5.8, 5.8, 11.5]) {
-    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.28, h - 0.3, 0.2), ribMat);
-    rib.position.set(rx, h * 0.5, z + 0.22);
+
+  // Lower solid dado wall (height 2.1) grounding the scene without blocking the sky
+  const lowerWall = new THREE.Mesh(new THREE.BoxGeometry(w, 2.1, 0.44), wallMat);
+  lowerWall.position.set(0, 1.05, z);
+  addAnimeInkEdges(lowerWall, materials.inkLineMaterial, 24);
+  g.add(lowerWall);
+
+  // Side architectural wing piers framing the wide panoramic sky window
+  const wingW = Math.max(3.6, (w - 17.6) * 0.5);
+  for (const side of [-1, 1]) {
+    const wing = new THREE.Mesh(
+      new THREE.BoxGeometry(wingW, h - 2.1, 0.44),
+      wallMat
+    );
+    wing.position.set(side * (8.8 + wingW * 0.5), 2.1 + (h - 2.1) * 0.5, z);
+    addAnimeInkEdges(wing, materials.inkLineMaterial, 24);
+    g.add(wing);
+  }
+
+  // Slender architectural mullions inside the open sky window
+  for (const rx of [-8.8, -4.4, 4.4, 8.8]) {
+    const rib = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, h - 0.2, 0.24),
+      ribMat
+    );
+    rib.position.set(rx, h * 0.5, z + 0.14);
+    addAnimeInkEdges(rib, materials.inkLineMaterial, 24);
     g.add(rib);
   }
 
+  // Subtle translucent panoramic window tint strip
+  const glassStrip = new THREE.Mesh(
+    new THREE.PlaneGeometry(17.6, h - 2.35),
+    new THREE.MeshBasicMaterial({
+      color: accent,
+      transparent: true,
+      opacity: 0.055,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    })
+  );
+  glassStrip.position.set(0, 2.15 + (h - 2.35) * 0.5, z);
+  g.add(glassStrip);
+
+  // Lower dado rail + top luminous cornice lintel
   const dado = new THREE.Mesh(
-    new THREE.BoxGeometry(w - 0.4, 0.14, 0.12),
+    new THREE.BoxGeometry(w - 0.2, 0.16, 0.54),
     materials.createToonMaterial(0x334155)
   );
-  dado.position.set(0, 1.35, z + 0.22);
+  dado.position.set(0, 2.12, z + 0.04);
+  addAnimeInkEdges(dado, materials.inkLineMaterial, 24);
   g.add(dado);
 
+  const lintel = new THREE.Mesh(
+    new THREE.BoxGeometry(w + 0.1, 0.26, 0.52),
+    ribMat
+  );
+  lintel.position.set(0, h - 0.12, z);
+  addAnimeInkEdges(lintel, materials.inkLineMaterial, 24);
+  g.add(lintel);
+
   const trim = new THREE.Mesh(
-    new THREE.BoxGeometry(w + 0.1, 0.14, 0.48),
+    new THREE.BoxGeometry(w + 0.14, 0.12, 0.56),
     new THREE.MeshBasicMaterial({
       color: accent,
       toneMapped: false,
     })
   );
-  trim.position.set(0, h, z);
+  trim.position.set(0, h + 0.05, z);
   g.add(trim);
 
   return g;

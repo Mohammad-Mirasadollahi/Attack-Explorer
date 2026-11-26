@@ -22,6 +22,15 @@ import {
   createAnimeMaterialLibrary,
   createAnimeSkyDome,
 } from './anime-toon-materials';
+import {
+  CAMERA_STYLE_OFFSETS,
+  CINEMA_ATMOSPHERES,
+  getScenarioCinemaProfile,
+} from '@/lib/scenario-cinema-profiles';
+import {
+  buildRealWorldMalwareBackdrop,
+  type BuiltMalwareBackdrop,
+} from './scenes/cinema-stage-architectures';
 import { detectSoftwareWebGL } from './detectSoftwareWebGL';
 import { useCanvasPlayToggle } from './useCanvasPlayToggle';
 import { CALLOUT_CARD_STYLES } from './calloutCardStyles';
@@ -213,11 +222,24 @@ export function AnimeSection3DStage({
       return;
     }
 
+    const isProcessHollowing = descriptor.scenarioId === 'process-hollowing';
+    const cinemaProfile = isProcessHollowing
+      ? null
+      : getScenarioCinemaProfile(descriptor.scenarioId);
+    const atmo = cinemaProfile
+      ? CINEMA_ATMOSPHERES[cinemaProfile.atmosphere]
+      : undefined;
+    const camStyle = cinemaProfile
+      ? CAMERA_STYLE_OFFSETS[cinemaProfile.cameraStyle]
+      : undefined;
+
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const isDarkNow = document.documentElement.classList.contains('dark');
     simRef.current.isDark = isDarkNow;
-    renderer.toneMappingExposure = isDarkNow ? 0.96 : 1.02;
+    renderer.toneMappingExposure = isDarkNow
+      ? (atmo?.exposureDark ?? 0.96)
+      : (atmo?.exposureLight ?? 1.02);
     renderer.setPixelRatio(
       isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2)
     );
@@ -237,13 +259,15 @@ export function AnimeSection3DStage({
     mountEl.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const fogColorLight = new THREE.Color(0xdfeffc);
-    const fogColorDark = new THREE.Color(0x0b1024);
+    const fogColorLight = new THREE.Color(atmo?.fogLightHex ?? 0xdfeffc);
+    const fogColorDark = new THREE.Color(atmo?.fogDarkHex ?? 0x0b1024);
 
     scene.background = (isDarkNow ? fogColorDark : fogColorLight).clone();
     scene.fog = new THREE.FogExp2(
       isDarkNow ? fogColorDark.getHex() : fogColorLight.getHex(),
-      isDarkNow ? 0.0085 : 0.0105
+      isDarkNow
+        ? (atmo?.fogDensityDark ?? 0.0085)
+        : (atmo?.fogDensityLight ?? 0.0105)
     );
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -252,35 +276,61 @@ export function AnimeSection3DStage({
     pmremGenerator.dispose();
 
     const materials = createAnimeMaterialLibrary(renderer);
-    const sky = createAnimeSkyDome();
+    const sky = createAnimeSkyDome(atmo);
     sky.uniforms.uDarkMode.value = isDarkNow ? 1 : 0;
     scene.add(sky.mesh);
 
     const hemiLight = new THREE.HemisphereLight(
-      isDarkNow ? 0x3b82f6 : 0xdbeafe,
-      isDarkNow ? 0x0f172a : 0x64748b,
-      isDarkNow ? 0.46 : 0.92
+      isDarkNow
+        ? (atmo?.hemiSkyDark ?? 0x3b82f6)
+        : (atmo?.hemiSkyLight ?? 0xdbeafe),
+      isDarkNow
+        ? (atmo?.hemiGroundDark ?? 0x0f172a)
+        : (atmo?.hemiGroundLight ?? 0x64748b),
+      isDarkNow ? 0.52 : 0.94
     );
     scene.add(hemiLight);
 
     const keyLight = new THREE.DirectionalLight(
-      isDarkNow ? 0xa5b4fc : 0xfff7ed,
-      isDarkNow ? 1.15 : 1.72
+      isDarkNow
+        ? (atmo?.keyLightColorDark ?? 0xa5b4fc)
+        : (atmo?.keyLightColorLight ?? 0xfff7ed),
+      isDarkNow
+        ? (atmo?.keyLightIntensityDark ?? 1.15)
+        : (atmo?.keyLightIntensityLight ?? 1.72)
     );
-    keyLight.position.set(16, 26, 18);
+    const keyPos = atmo?.keyLightPos ?? [16, 26, 18];
+    keyLight.position.set(keyPos[0], keyPos[1], keyPos[2]);
     keyLight.castShadow = !isSoftwareGl;
     keyLight.shadow.mapSize.set(1024, 1024);
     scene.add(keyLight);
 
     const rimLight = new THREE.DirectionalLight(
-      new THREE.Color(descriptor.accentHex),
-      isDarkNow ? 1.0 : 0.72
+      new THREE.Color(atmo?.rimLightColor ?? descriptor.accentHex),
+      isDarkNow ? 1.05 : 0.78
     );
-    rimLight.position.set(-20, 14, -18);
+    const rimPos = atmo?.rimLightPos ?? [-20, 14, -18];
+    rimLight.position.set(rimPos[0], rimPos[1], rimPos[2]);
     scene.add(rimLight);
 
     const bespoke = loadedFactory.factory(sceneKind, materials, isSoftwareGl);
     scene.add(bespoke.root);
+
+    let realWorldBackdrop: BuiltMalwareBackdrop | null = null;
+    if (!isProcessHollowing && cinemaProfile && !bespoke.root.userData?.hasRealWorldSet) {
+      bespoke.root.traverse((obj) => {
+        if (obj.name === 'generic-rear-backdrop-wall') {
+          obj.visible = false;
+        }
+      });
+      realWorldBackdrop = buildRealWorldMalwareBackdrop(
+        cinemaProfile.spatialSet,
+        materials,
+        cinemaProfile.primaryHex,
+        cinemaProfile.secondaryHex
+      );
+      scene.add(realWorldBackdrop.group);
+    }
 
     const pixelRatio = renderer.getPixelRatio();
 
@@ -342,7 +392,9 @@ export function AnimeSection3DStage({
     const syncTheme = () => {
       const dark = document.documentElement.classList.contains('dark');
       simRef.current.isDark = dark;
-      renderer.toneMappingExposure = dark ? 0.96 : 1.02;
+      renderer.toneMappingExposure = dark
+        ? (atmo?.exposureDark ?? 0.96)
+        : (atmo?.exposureLight ?? 1.02);
       sky.uniforms.uDarkMode.value = dark ? 1 : 0;
       const targetFog = dark ? fogColorDark : fogColorLight;
       if (scene.background instanceof THREE.Color) {
@@ -350,14 +402,30 @@ export function AnimeSection3DStage({
       }
       if (scene.fog instanceof THREE.FogExp2) {
         scene.fog.color.copy(targetFog);
-        scene.fog.density = dark ? 0.0085 : 0.0105;
+        scene.fog.density = dark
+          ? (atmo?.fogDensityDark ?? 0.0085)
+          : (atmo?.fogDensityLight ?? 0.0105);
       }
-      hemiLight.color.setHex(dark ? 0x3b82f6 : 0xdbeafe);
-      hemiLight.groundColor.setHex(dark ? 0x0f172a : 0x64748b);
-      hemiLight.intensity = dark ? 0.46 : 0.92;
-      keyLight.color.setHex(dark ? 0xa5b4fc : 0xfff7ed);
-      keyLight.intensity = dark ? 1.15 : 1.72;
-      rimLight.intensity = dark ? 1.0 : 0.72;
+      hemiLight.color.setHex(
+        dark
+          ? (atmo?.hemiSkyDark ?? 0x3b82f6)
+          : (atmo?.hemiSkyLight ?? 0xdbeafe)
+      );
+      hemiLight.groundColor.setHex(
+        dark
+          ? (atmo?.hemiGroundDark ?? 0x0f172a)
+          : (atmo?.hemiGroundLight ?? 0x64748b)
+      );
+      hemiLight.intensity = dark ? 0.52 : 0.94;
+      keyLight.color.setHex(
+        dark
+          ? (atmo?.keyLightColorDark ?? 0xa5b4fc)
+          : (atmo?.keyLightColorLight ?? 0xfff7ed)
+      );
+      keyLight.intensity = dark
+        ? (atmo?.keyLightIntensityDark ?? 1.15)
+        : (atmo?.keyLightIntensityLight ?? 1.72);
+      rimLight.intensity = dark ? 1.05 : 0.78;
     };
 
     const themeObserver = new MutationObserver(() => {
@@ -393,6 +461,7 @@ export function AnimeSection3DStage({
       sky.uniforms.uTime.value = sim.elapsed;
 
       bespoke.update(timeSec, phaseIdx, sim.isDark, sim.cutawayMode);
+      realWorldBackdrop?.animate(timeSec, sim.normalizedTime, phaseIdx >= 2);
 
       bloomPass.strength = sim.isDark ? 0.42 : 0.26;
       bloomPass.threshold = sim.isDark ? 0.98 : 1.12;
@@ -433,7 +502,16 @@ export function AnimeSection3DStage({
               0.42
             );
           }
-          _scratchCamPos.x += Math.sin(sim.elapsed * 0.28) * 0.65;
+          if (camStyle) {
+            _scratchCamPos.x += camStyle.posDelta[0] * 0.55;
+            _scratchCamPos.y += camStyle.posDelta[1] * 0.55;
+            _scratchCamPos.z += camStyle.posDelta[2] * 0.55;
+            _scratchCamTarget.x += camStyle.targetDelta[0] * 0.55;
+            _scratchCamTarget.y += camStyle.targetDelta[1] * 0.55;
+            _scratchCamTarget.z += camStyle.targetDelta[2] * 0.55;
+          }
+          const sway = camStyle?.swayAmp ?? 0.65;
+          _scratchCamPos.x += Math.sin(sim.elapsed * 0.28) * sway;
           _scratchCamPos.y += Math.cos(sim.elapsed * 0.22) * 0.22;
         }
         if (sim.snapCamera) {
@@ -826,11 +904,19 @@ export function AnimeSection3DStage({
   const secondaryStyle = CALLOUT_CARD_STYLES[secondaryCallout.tone];
   const totalPhases = descriptor.phases.length;
 
+  const stageCinemaProfile =
+    descriptor.scenarioId === 'process-hollowing'
+      ? null
+      : getScenarioCinemaProfile(descriptor.scenarioId);
+
   return (
     <div
       ref={containerRef}
       data-testid={`section-3d-stage-${descriptor.sectionKey}`}
       data-scene-kind={descriptor.sceneKind}
+      data-cinema-atmosphere={stageCinemaProfile?.atmosphere ?? 'default'}
+      data-cinema-set={stageCinemaProfile?.spatialSet ?? 'default'}
+      data-cinema-hero={stageCinemaProfile?.heroKinetic ?? 'default'}
       data-is-playing={isPlaying ? 'true' : 'false'}
       data-cutaway-mode={cutawayMode}
       data-camera-preset={cameraPreset}

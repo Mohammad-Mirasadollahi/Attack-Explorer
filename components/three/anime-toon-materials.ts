@@ -437,16 +437,60 @@ export function addInvertedHullOutline(
 /**
  * Custom GLSL Japanese Anime Sky Dome Shader (Makoto Shinkai daylight / Neo-Tokyo twilight night).
  */
-export function createAnimeSkyDome(): {
+export function createAnimeSkyDome(atmosphere?: {
+  dayZenith: [number, number, number];
+  dayMid: [number, number, number];
+  dayHorizon: [number, number, number];
+  nightZenith: [number, number, number];
+  nightMid: [number, number, number];
+  nightHorizon: [number, number, number];
+  dayCloudLit: [number, number, number];
+  dayCloudShadow: [number, number, number];
+  nightCloudLit: [number, number, number];
+  nightCloudShadow: [number, number, number];
+  sunDir: [number, number, number];
+  daySunColor: [number, number, number];
+  nightSunColor: [number, number, number];
+  starfieldIntensity: number;
+}): {
   mesh: THREE.Mesh;
   uniforms: {
     uTime: { value: number };
     uDarkMode: { value: number };
   };
 } {
+  const dz = atmosphere?.dayZenith ?? [0.16, 0.48, 0.88];
+  const dm = atmosphere?.dayMid ?? [0.47, 0.78, 0.98];
+  const dh = atmosphere?.dayHorizon ?? [0.99, 0.94, 0.86];
+  const nz = atmosphere?.nightZenith ?? [0.03, 0.05, 0.14];
+  const nm = atmosphere?.nightMid ?? [0.09, 0.13, 0.29];
+  const nh = atmosphere?.nightHorizon ?? [0.22, 0.16, 0.34];
+  const dcl = atmosphere?.dayCloudLit ?? [1.0, 0.99, 0.96];
+  const dcs = atmosphere?.dayCloudShadow ?? [0.76, 0.85, 0.96];
+  const ncl = atmosphere?.nightCloudLit ?? [0.32, 0.28, 0.52];
+  const ncs = atmosphere?.nightCloudShadow ?? [0.14, 0.18, 0.34];
+  const sdir = atmosphere?.sunDir ?? [0.48, 0.32, -0.82];
+  const dsc = atmosphere?.daySunColor ?? [1.0, 0.96, 0.82];
+  const nsc = atmosphere?.nightSunColor ?? [0.74, 0.88, 1.0];
+  const stars = atmosphere?.starfieldIntensity ?? 0.2;
+
   const uniforms = {
     uTime: { value: 0 },
     uDarkMode: { value: 0 },
+    uDayZenith: { value: new THREE.Vector3(...dz) },
+    uDayMid: { value: new THREE.Vector3(...dm) },
+    uDayHoriz: { value: new THREE.Vector3(...dh) },
+    uNightZenith: { value: new THREE.Vector3(...nz) },
+    uNightMid: { value: new THREE.Vector3(...nm) },
+    uNightHoriz: { value: new THREE.Vector3(...nh) },
+    uDayCloudLit: { value: new THREE.Vector3(...dcl) },
+    uDayCloudShadow: { value: new THREE.Vector3(...dcs) },
+    uNightCloudLit: { value: new THREE.Vector3(...ncl) },
+    uNightCloudShadow: { value: new THREE.Vector3(...ncs) },
+    uSunDir: { value: new THREE.Vector3(...sdir).normalize() },
+    uDaySunCol: { value: new THREE.Vector3(...dsc) },
+    uNightSunCol: { value: new THREE.Vector3(...nsc) },
+    uStarIntensity: { value: stars },
   };
 
   const geo = new THREE.SphereGeometry(115, 32, 20);
@@ -466,6 +510,20 @@ export function createAnimeSkyDome(): {
       varying vec3 vWorldDir;
       uniform float uTime;
       uniform float uDarkMode;
+      uniform vec3 uDayZenith;
+      uniform vec3 uDayMid;
+      uniform vec3 uDayHoriz;
+      uniform vec3 uNightZenith;
+      uniform vec3 uNightMid;
+      uniform vec3 uNightHoriz;
+      uniform vec3 uDayCloudLit;
+      uniform vec3 uDayCloudShadow;
+      uniform vec3 uNightCloudLit;
+      uniform vec3 uNightCloudShadow;
+      uniform vec3 uSunDir;
+      uniform vec3 uDaySunCol;
+      uniform vec3 uNightSunCol;
+      uniform float uStarIntensity;
 
       float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -497,21 +555,23 @@ export function createAnimeSkyDome(): {
         vec3 dir = normalize(vWorldDir);
         float h = clamp(dir.y, -0.2, 1.0);
 
-        // Light mode: Makoto Shinkai anime azure zenith -> crisp cyan mid -> warm sunlit horizon
-        vec3 dayZenith = vec3(0.16, 0.48, 0.88);
-        vec3 dayMid    = vec3(0.47, 0.78, 0.98);
-        vec3 dayHoriz  = vec3(0.99, 0.94, 0.86);
-        vec3 daySky = mix(dayHoriz, dayMid, smoothstep(-0.02, 0.28, h));
-        daySky = mix(daySky, dayZenith, smoothstep(0.25, 0.85, h));
+        vec3 daySky = mix(uDayHoriz, uDayMid, smoothstep(-0.02, 0.28, h));
+        daySky = mix(daySky, uDayZenith, smoothstep(0.25, 0.85, h));
 
-        // Dark mode: Neo-Tokyo deep indigo zenith -> cyber twilight violet -> rose-amber city glow horizon
-        vec3 nightZenith = vec3(0.03, 0.05, 0.14);
-        vec3 nightMid    = vec3(0.09, 0.13, 0.29);
-        vec3 nightHoriz  = vec3(0.22, 0.16, 0.34);
-        vec3 nightSky = mix(nightHoriz, nightMid, smoothstep(-0.02, 0.3, h));
-        nightSky = mix(nightSky, nightZenith, smoothstep(0.28, 0.85, h));
+        vec3 nightSky = mix(uNightHoriz, uNightMid, smoothstep(-0.02, 0.3, h));
+        nightSky = mix(nightSky, uNightZenith, smoothstep(0.28, 0.85, h));
 
         vec3 sky = mix(daySky, nightSky, uDarkMode);
+
+        // Crisp procedural anime starfield for orbital / midnight / twilight atmospheres
+        if (dir.y > 0.06 && uStarIntensity > 0.05) {
+          vec2 starUv = floor(dir.xz / (dir.y + 0.35) * 48.0);
+          float s = hash(starUv);
+          float starDot = smoothstep(0.992, 0.999, s);
+          float twinkle = 0.65 + 0.35 * sin(uTime * 2.4 + s * 62.8);
+          float starVis = mix(uStarIntensity * 0.45, uStarIntensity, uDarkMode) * smoothstep(0.08, 0.35, dir.y);
+          sky += vec3(0.92, 0.96, 1.0) * starDot * twinkle * starVis;
+        }
 
         // Stylized cel-stepped anime cumulus clouds
         if (dir.y > 0.02) {
@@ -521,26 +581,20 @@ export function createAnimeSkyDome(): {
           float cloudBand2 = smoothstep(0.64, 0.68, c);
           float horizonFade = smoothstep(0.02, 0.18, dir.y) * (1.0 - smoothstep(0.55, 0.92, dir.y));
 
-          vec3 dayCloudShadow = vec3(0.76, 0.85, 0.96);
-          vec3 dayCloudLit    = vec3(1.0, 0.99, 0.96);
-          vec3 nightCloudShadow = vec3(0.14, 0.18, 0.34);
-          vec3 nightCloudLit    = vec3(0.32, 0.28, 0.52);
-
           vec3 cCol = mix(
-            mix(dayCloudShadow, nightCloudShadow, uDarkMode),
-            mix(dayCloudLit, nightCloudLit, uDarkMode),
+            mix(uDayCloudShadow, uNightCloudShadow, uDarkMode),
+            mix(uDayCloudLit, uNightCloudLit, uDarkMode),
             cloudBand2
           );
           sky = mix(sky, cCol, cloudBand1 * horizonFade * 0.78);
         }
 
         // Stylized anime sun / moon disc
-        vec3 sunDir = normalize(vec3(0.48, 0.32, -0.82));
-        float sunDot = max(dot(dir, sunDir), 0.0);
+        float sunDot = max(dot(dir, normalize(uSunDir)), 0.0);
         float sunDisc = smoothstep(0.9965, 0.9982, sunDot);
-        float sunHalo = pow(sunDot, 18.0) * 0.32;
-        vec3 sunCol = mix(vec3(1.0, 0.96, 0.82), vec3(0.74, 0.88, 1.0), uDarkMode);
-        sky += sunCol * (sunHalo + sunDisc * 0.9);
+        float sunHalo = pow(sunDot, 16.0) * 0.36;
+        vec3 sunCol = mix(uDaySunCol, uNightSunCol, uDarkMode);
+        sky += sunCol * (sunHalo + sunDisc * 0.92);
 
         gl_FragColor = vec4(sky, 1.0);
       }

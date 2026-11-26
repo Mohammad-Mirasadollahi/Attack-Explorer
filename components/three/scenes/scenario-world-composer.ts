@@ -14,7 +14,6 @@ import {
   buildOverheadSignboard,
   buildPacketArcTrack,
   buildPadlockProp,
-  buildStageFloor,
   clamp01,
   createSignboardTexture,
   easeInOutQuad,
@@ -24,6 +23,11 @@ import {
   type StageFloorArchetype,
 } from './anime-world-primitives';
 import { buildDomainProp, type DomainPropKind } from './domain-props-library';
+import { getScenarioCinemaProfile } from '@/lib/scenario-cinema-profiles';
+import {
+  buildHeroKineticMechanism,
+  buildSpatialSetArchitecture,
+} from './cinema-stage-architectures';
 
 export type SectionChoreographyMode =
   | 'overview-full'
@@ -107,48 +111,27 @@ function resolveStoryPlot(
 }
 
 /**
- * Distant cel-shaded Japanese anime horizon skyline (strictly z <= -11.5, zero foreground clutter).
+ * Cleans ASCII signboard/plaque text, trims strictly on word boundaries, and strips
+ * dangling trailing articles or arrows so 3D signs never look awkwardly cut off.
  */
-function buildAnimeHorizonSkyline(
-  materials: AnimeMaterialLibrary,
-  accentHex: number
-): THREE.Group {
-  const g = new THREE.Group();
-  const towerSpecs: Array<[number, number, number, number, number]> = [
-    [-14.5, 4.4, -13.5, 2.3, 8.8],
-    [-10.8, 5.6, -14.8, 2.7, 11.2],
-    [-6.9, 3.8, -14.0, 2.2, 7.6],
-    [-2.8, 6.4, -15.4, 2.9, 12.8],
-    [1.6, 4.8, -14.6, 2.5, 9.6],
-    [5.6, 6.0, -15.0, 2.6, 12.0],
-    [9.6, 4.0, -13.8, 2.3, 8.0],
-    [13.4, 5.1, -14.0, 2.5, 10.2],
-  ];
-  const bodyMat = materials.createToonMaterial(0x1e293b);
-  const winMat = new THREE.MeshBasicMaterial({
-    color: accentHex,
-    transparent: true,
-    opacity: 0.52,
-    toneMapped: false,
-  });
-
-  for (const [x, y, z, w, h] of towerSpecs) {
-    const tower = new THREE.Mesh(new THREE.BoxGeometry(w, h, 1.8), bodyMat);
-    tower.position.set(x, y - 0.2, z);
-    addAnimeInkEdges(tower, materials.inkLineMaterial, 26);
-    g.add(tower);
-
-    // Subtle crisp anime skyline window bands
-    for (let row = 0; row < 3; row += 1) {
-      const strip = new THREE.Mesh(
-        new THREE.BoxGeometry(w * 0.68, 0.14, 0.08),
-        winMat
-      );
-      strip.position.set(x, y + h * 0.22 - row * 1.15, z + 0.94);
-      g.add(strip);
-    }
+function sanitizeBoardText(raw: string, maxChars: number): string {
+  const clean = raw
+    .replace(/→/g, '->')
+    .replace(/[^\x20-\x7E]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  let trimmed = clean;
+  if (clean.length > maxChars) {
+    const sliced = clean.slice(0, maxChars);
+    const lastSpace = sliced.lastIndexOf(' ');
+    trimmed =
+      lastSpace > Math.floor(maxChars * 0.5)
+        ? sliced.slice(0, lastSpace).trim()
+        : sliced.trim();
   }
-  return g;
+  return trimmed
+    .replace(/(?:\s+(?:A|AN|THE|OF|TO|IN|ON|FOR|WITH|BY|AND|OR|&|->|-|:))+$/i, '')
+    .trim();
 }
 
 /**
@@ -162,8 +145,8 @@ function buildStationPlaque(
   subLabel: string
 ): THREE.Group {
   const g = new THREE.Group();
-  const safeLabel = label.replace(/[^\x20-\x7E]/g, '').slice(0, 26).toUpperCase();
-  const safeSub = subLabel.replace(/[^\x20-\x7E]/g, '').slice(0, 28).toUpperCase();
+  const safeLabel = sanitizeBoardText(label, 24).toUpperCase();
+  const safeSub = sanitizeBoardText(subLabel, 26).toUpperCase();
   const tex = createSignboardTexture(safeLabel || 'STORY STATION', safeSub, {
     bgHex: '#0F172A',
     borderHex,
@@ -268,77 +251,57 @@ export function buildScenarioWorldFromBlueprint(
   materials: AnimeMaterialLibrary
 ): BespokeSection3DScene {
   const root = new THREE.Group();
+  root.userData.hasRealWorldSet = true;
   const extraTextures: THREE.Texture[] = [];
 
-  const accentHex = variant.accentHex ?? blueprint.accentHex;
-  const secondaryHex = variant.secondaryHex ?? blueprint.secondaryHex;
+  const cinema = getScenarioCinemaProfile(blueprint.scenarioId);
+  const accentHex = variant.accentHex ?? cinema.primaryHex ?? blueprint.accentHex;
+  const secondaryHex =
+    variant.secondaryHex ?? cinema.secondaryHex ?? blueprint.secondaryHex;
   const isMemory = variant.mode === 'memory-split-xray';
   const storyPlot = resolveStoryPlot(blueprint, variant);
   const durationSec = variant.mode === 'overview-full' ? 18 : 15;
 
-  // 1. Distinct architectural floor, sleek waist-height anime parapet & open Japanese anime skyline!
-  root.add(
-    buildStageFloor(
-      materials,
-      isMemory ? 'split-dual' : blueprint.floor,
-      accentHex,
-      secondaryHex
-    )
+  // 1. Bespoke per-scenario 3D real-world architectural set (28 distinct everyday environments!)
+  const arch = buildSpatialSetArchitecture(
+    cinema.spatialSet,
+    materials,
+    accentHex,
+    secondaryHex,
+    blueprint.wallHex,
+    isMemory
   );
-  // Waist-height rear architectural parapet (height 1.75) so the cel-shaded anime sky & skyline shine clearly above!
-  const parapetGroup = new THREE.Group();
-  const parapetWall = new THREE.Mesh(
-    new THREE.BoxGeometry(22.5, 1.72, 0.55),
-    materials.createToonMaterial(blueprint.wallHex)
+  root.add(arch.group);
+
+  // Bespoke per-scenario animated 3D real-world hero vehicle/prop (28 matched centerpieces!)
+  const heroKinetic = buildHeroKineticMechanism(
+    cinema.heroKinetic,
+    materials,
+    accentHex,
+    secondaryHex
   );
-  parapetWall.position.set(0, 0.86, -4.75);
-  addAnimeInkEdges(parapetWall, materials.inkLineMaterial, 22);
-  parapetGroup.add(parapetWall);
-
-  const parapetTrim = new THREE.Mesh(
-    new THREE.BoxGeometry(22.6, 0.12, 0.62),
-    new THREE.MeshBasicMaterial({ color: accentHex, toneMapped: false })
+  heroKinetic.group.position.set(
+    arch.heroCenterPos[0],
+    arch.heroCenterPos[1],
+    arch.heroCenterPos[2]
   );
-  parapetTrim.position.set(0, 1.76, -4.75);
-  parapetGroup.add(parapetTrim);
-  root.add(parapetGroup);
-  root.add(buildAnimeHorizonSkyline(materials, accentHex));
+  heroKinetic.group.scale.setScalar(0.94);
+  root.add(heroKinetic.group);
 
-  // Crisp glowing anime floor story-track lane linking Left -> Center -> Right
-  const laneTrack = new THREE.Mesh(
-    new THREE.BoxGeometry(8.2, 0.04, 1.3),
-    materials.createToonMaterial(0x0f172a)
-  );
-  laneTrack.position.set(0, 0.03, 0.95);
-  addAnimeInkEdges(laneTrack, materials.inkLineMaterial, 28);
-  root.add(laneTrack);
-
-  const laneStripeMat = new THREE.MeshBasicMaterial({
-    color: accentHex,
-    transparent: true,
-    opacity: 0.72,
-    toneMapped: false,
-  });
-  for (const dz of [-0.56, 0.56]) {
-    const stripe = new THREE.Mesh(
-      new THREE.BoxGeometry(7.8, 0.03, 0.08),
-      laneStripeMat
-    );
-    stripe.position.set(0, 0.06, 0.95 + dz);
-    root.add(stripe);
-  }
-
-  // 2. Scenario + Section specific overhead English signboard (positioned right-of-center clear of top-left HUD card!)
+  // 2. Scenario + Section specific overhead English signboard (real-world place + MITRE/stage line, clear of top-left HUD!)
+  const overheadTitle = isMemory
+    ? `${cinema.realWorldPlace} · MEMORY X-RAY`
+    : cinema.settingLabel;
   root.add(
     buildOverheadSignboard(
       materials,
       extraTextures,
-      variant.boardTitle,
-      variant.boardSubtitle,
+      sanitizeBoardText(overheadTitle, 38).toUpperCase(),
+      sanitizeBoardText(variant.boardSubtitle, 48).toUpperCase(),
       {
-        width: 5.7,
-        height: 1.3,
-        position: [2.35, 5.2, -4.35],
+        width: 6.0,
+        height: 1.32,
+        position: arch.boardPos,
         borderHex: hexToCss(accentHex),
         subHex: hexToCss(secondaryHex),
         withRearStruts: true,
@@ -346,7 +309,7 @@ export function buildScenarioWorldFromBlueprint(
     )
   );
 
-  // 3. Left & Right bespoke composite hero props (framed comfortably inside viewport margins)
+  // 3. Left & Right bespoke composite hero props framed cleanly by the active spatial set
   const leftKind: DomainPropKind = isMemory
     ? 'memory-xray-chamber'
     : variant.leftPropOverride ?? blueprint.leftProp;
@@ -368,22 +331,22 @@ export function buildScenarioWorldFromBlueprint(
   );
 
   const leftX = isMemory
-    ? -3.75
+    ? -4.1
     : variant.mode === 'left-breach-focus'
-      ? -2.85
-      : variant.mode === 'right-impact-focus'
-        ? -4.15
-        : -3.7;
+      ? Math.max(arch.leftPropPos[0] + 0.55, -3.5)
+      : arch.leftPropPos[0];
   const rightX = isMemory
-    ? 3.75
+    ? 4.1
     : variant.mode === 'right-impact-focus'
-      ? 2.85
-      : variant.mode === 'left-breach-focus'
-        ? 4.15
-        : 3.7;
+      ? Math.min(arch.rightPropPos[0] - 0.55, 3.5)
+      : arch.rightPropPos[0];
 
-  leftBuilt.group.position.set(leftX, 0, -0.45);
-  rightBuilt.group.position.set(rightX, 0, -0.45);
+  leftBuilt.group.position.set(leftX, arch.leftPropPos[1], arch.leftPropPos[2]);
+  rightBuilt.group.position.set(
+    rightX,
+    arch.rightPropPos[1],
+    arch.rightPropPos[2]
+  );
   if (variant.mode === 'left-breach-focus') {
     leftBuilt.group.scale.setScalar(1.04);
   } else if (variant.mode === 'right-impact-focus') {
@@ -392,15 +355,13 @@ export function buildScenarioWorldFromBlueprint(
   root.add(leftBuilt.group);
   root.add(rightBuilt.group);
 
-  // Grounded diegetic English plaques angled cleanly inside viewport bounds
-  const leftPlaqueLabel =
-    variant.leftPlaqueOverride ??
-    blueprint.leftPlaque ??
-    (isMemory ? 'CLEAN BASELINE' : 'ORIGIN STATION');
-  const rightPlaqueLabel =
-    variant.rightPlaqueOverride ??
-    blueprint.rightPlaque ??
-    (isMemory ? 'TAMPERED MEMORY' : 'TARGET VAULT');
+  // Grounded diegetic English plaques aligned to the real-world place & framed inside 16:9 viewport bounds
+  const leftPlaqueLabel = isMemory
+    ? 'CLEAN BASELINE'
+    : cinema.castSummary.protagonist;
+  const rightPlaqueLabel = isMemory
+    ? 'TAMPERED MEMORY'
+    : cinema.castSummary.targetAsset;
 
   const leftPlaque = buildStationPlaque(
     materials,
@@ -409,7 +370,11 @@ export function buildScenarioWorldFromBlueprint(
     hexToCss(isMemory ? 0x38bdf8 : accentHex),
     isMemory ? 'TRUSTED IMAGE ON DISK' : 'ACT 01 · STORY ENTRY'
   );
-  leftPlaque.position.set(leftX + 0.35, 0, 2.25);
+  leftPlaque.position.set(
+    Math.max(arch.leftPlaquePos[0], -3.65),
+    arch.leftPlaquePos[1],
+    arch.leftPlaquePos[2]
+  );
   leftPlaque.rotation.y = 0.24;
   root.add(leftPlaque);
 
@@ -420,7 +385,11 @@ export function buildScenarioWorldFromBlueprint(
     hexToCss(isMemory ? 0xf43f5e : secondaryHex),
     isMemory ? 'MODIFIED LIVE PAGES' : 'ACT 03 · TARGET EFFECT'
   );
-  rightPlaque.position.set(rightX - 0.35, 0, 2.25);
+  rightPlaque.position.set(
+    Math.min(arch.rightPlaquePos[0], 3.65),
+    arch.rightPlaquePos[1],
+    arch.rightPlaquePos[2]
+  );
   rightPlaque.rotation.y = -0.24;
   root.add(rightPlaque);
 
@@ -765,6 +734,8 @@ export function buildScenarioWorldFromBlueprint(
 
       leftBuilt.animate(timeSec, progress, cut, leftAlert);
       rightBuilt.animate(timeSec, progress, cut, rightAlert);
+      arch.animate(timeSec, progress, rightAlert);
+      heroKinetic.animate(timeSec, progress, cut, rightAlert);
 
       // Multi-Act Japanese Anime Character Movement & Expressive Storytelling!
       let leftMoveT = 0;
@@ -937,9 +908,6 @@ export function buildScenarioWorldFromBlueprint(
         !isMemory && progress > 0.68 && progress < 0.95
           ? Math.sin(((progress - 0.68) / 0.27) * Math.PI) * 0.55
           : 0;
-
-      // Subtle floor stripe color shift when target is compromised
-      laneStripeMat.color.setHex(rightAlert ? secondaryHex : accentHex);
 
       return {
         glitchIntensity: rightAlert && act3 > 0.15 && act3 < 0.65 ? 0.35 : 0,

@@ -17,6 +17,7 @@ import { CONTAINERS_KUBERNETES_3D_REGISTRY } from '@/lib/section-3d-registries/c
 import { DATABASE_PLATFORMS_3D_REGISTRY } from '@/lib/section-3d-registries/database-platforms';
 import { ICS_OT_SCADA_3D_REGISTRY } from '@/lib/section-3d-registries/ics-ot-scada';
 import { MOBILE_TELECOM_3D_REGISTRY } from '@/lib/section-3d-registries/mobile-telecom';
+import { getScenarioRealWorldStory } from './scenario-real-world-stories';
 
 export type { StoryTechnicalMapping };
 
@@ -964,11 +965,117 @@ export function findTechnicalJargonInStory(text: string): string[] {
   return hits;
 }
 
+const _section3DDescriptorCache = new Map<string, Section3DDescriptor>();
+
+function applyRealWorldStoryOverlay(
+  base: Section3DDescriptor
+): Section3DDescriptor {
+  if (base.scenarioId === 'process-hollowing') return base;
+  const rw = getScenarioRealWorldStory(base.scenarioId);
+  if (!rw) return base;
+
+  const updatedCameras: Section3DDescriptor['cameraPresets'] = [
+    base.cameraPresets[0],
+    { ...base.cameraPresets[1], label: rw.cameraLabels[0] },
+    { ...base.cameraPresets[2], label: rw.cameraLabels[1] },
+    { ...base.cameraPresets[3], label: rw.cameraLabels[2] },
+  ];
+
+  const actLabels = ['1. Entry', '2. Bypass', '3. Audit', '4. Impact', '5. Detect', '6. Verify'];
+  const memLabels = ['1. Clean Disk', '2. X-Ray Scan', '3. Diff Proof'];
+
+  if (base.sectionKey === 'briefing') {
+    return {
+      ...base,
+      storyCue: rw.briefing.storyAnalogy,
+      storyMappings: rw.briefing.storyMappings,
+      callouts: [
+        { ...base.callouts[0], title: rw.calloutTitles[0] },
+        { ...base.callouts[1], title: rw.calloutTitles[1] },
+      ],
+      phases: base.phases.map((p, idx) => ({
+        ...p,
+        shortLabel: actLabels[idx] ?? `${idx + 1}. Beat`,
+        storyExcerpt:
+          rw.briefing.phaseExcerpts[idx % rw.briefing.phaseExcerpts.length],
+      })),
+      cameraPresets: updatedCameras,
+    };
+  }
+
+  if (base.sectionKey === 'memory-forensics') {
+    const mem = rw.memoryForensics;
+    const fallbackCue = `Inside the ${rw.placeName.toLowerCase()}, place the untouched original record beside the live altered version under a bright comparison lamp to spot the hidden swap.`;
+    const fallbackExcerpts: [string, string, string] = [
+      `On the left sits the untouched original record inside the ${rw.placeName.toLowerCase()}.`,
+      `A comparison lamp sweeps across both sides inside the ${rw.placeName.toLowerCase()}, exposing the swapped interior.`,
+      `Even though the outer label matches, the side-by-side inspection proves the contents were replaced.`,
+    ];
+    return {
+      ...base,
+      storyCue: mem?.storyCue ?? fallbackCue,
+      storyMappings: mem?.storyMappings ?? rw.briefing.storyMappings,
+      callouts: [
+        {
+          ...base.callouts[0],
+          title: mem?.calloutTitles[0] ?? `Original ${rw.calloutTitles[0]}`,
+        },
+        {
+          ...base.callouts[1],
+          title: mem?.calloutTitles[1] ?? `Altered ${rw.calloutTitles[1]}`,
+        },
+      ],
+      phases: base.phases.map((p, idx) => ({
+        ...p,
+        shortLabel: memLabels[idx] ?? `${idx + 1}. Inspect`,
+        storyExcerpt: (mem?.phaseExcerpts ?? fallbackExcerpts)[idx % 3],
+      })),
+      cameraPresets: updatedCameras,
+    };
+  }
+
+  const stepMatch = /^step-(\d+)$/.exec(base.sectionKey);
+  if (stepMatch) {
+    const stepNum = Number(stepMatch[1]);
+    const rwStep = rw.steps[stepNum] ?? rw.steps[1];
+    if (rwStep) {
+      return {
+        ...base,
+        storyCue: rwStep.storyAnalogy,
+        storyMappings: rwStep.storyMappings,
+        callouts: [
+          { ...base.callouts[0], title: rwStep.calloutTitles[0] },
+          { ...base.callouts[1], title: rwStep.calloutTitles[1] },
+        ],
+        phases: base.phases.map((p, idx) => ({
+          ...p,
+          shortLabel: actLabels[idx] ?? `${idx + 1}. Action`,
+          storyExcerpt:
+            rwStep.phaseExcerpts[idx % rwStep.phaseExcerpts.length],
+        })),
+        cameraPresets: updatedCameras,
+      };
+    }
+  }
+
+  return {
+    ...base,
+    cameraPresets: updatedCameras,
+  };
+}
+
 export function getSection3DDescriptor(
   scenarioId: string,
   sectionKey: Section3DKey
 ): Section3DDescriptor | null {
-  return SCENARIO_SECTION_3D_REGISTRY[scenarioId]?.[sectionKey] ?? null;
+  const base = SCENARIO_SECTION_3D_REGISTRY[scenarioId]?.[sectionKey] ?? null;
+  if (!base) return null;
+  const cacheKey = `${scenarioId}::${sectionKey}`;
+  const cached = _section3DDescriptorCache.get(cacheKey);
+  if (cached) return cached;
+  const overlaid = applyRealWorldStoryOverlay(base);
+  _section3DDescriptorCache.set(cacheKey, overlaid);
+  return overlaid;
 }
 
 export function hasSection3DScene(
@@ -993,7 +1100,7 @@ export function listScenario3DSections(
     'memory-forensics',
   ];
   return orderedKeys
-    .map((k) => map[k])
+    .map((k) => getSection3DDescriptor(scenarioId, k))
     .filter((d): d is Section3DDescriptor => Boolean(d));
 }
 
