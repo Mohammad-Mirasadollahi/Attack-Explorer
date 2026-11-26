@@ -14,8 +14,8 @@
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
 │  • Total Catalog Scenarios Tracked : 188  (13 Sidebar Categories)                        │
 │  • Golden Benchmark Live (Untouched): 1    (#001 process-hollowing)                      │
-│  • Bespoke Studio Rebuilds Completed: 1    (#002 amsi-reflective-dll)                    │
-│  • Pending Clean-Slate Rebuild      : 186  (#003 .. #188 in strict Sidebar order)        │
+│  • Bespoke Studio Rebuilds Completed: 3    (#002, #003, #004)                             │
+│  • Pending Clean-Slate Rebuild      : 184  (#005 .. #188 in strict Sidebar order)        │
 │  • Priority Tier Breakdown          : Tier 1: 55  | Tier 2: 107 | Tier 3: 26           │
 │  • Preserved Primary Source URLs    : 564  authoritative links archived safely           │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
@@ -65,8 +65,8 @@
 | ---: | :--- | :--- | :--- | :--- |
 | **#001** | `MALWARE` | `process-hollowing` | Process Hollowing & Cobalt Strike Beacon Loader | `BENCHMARK_LIVE` |
 | **#002** | `MALWARE` | `amsi-reflective-dll` | Fileless AMSI Memory Bypass & Reflective DLL Injection | `COMPLETED` |
-| **#003** | `MALWARE` | `ransomware-shadow-wipe` | LockBit Ransomware Behavioral Analysis: VSS Wipe & Fast Encryption | `PENDING_REBUILD` |
-| **#004** | `MALWARE` | `3cx-desktopapp-supply-chain-lazarus` | CrowdStrike, Kaspersky & Mandiant — Lazarus (SmoothOperator): 3CXDesktopApp Supply Chain & Gopuram | `PENDING_REBUILD` |
+| **#003** | `RANSOMWARE_EXTORTION` | `ransomware-shadow-wipe` | LockBit 3.0 Ransomware Behavioral Analysis: VSS Wipe & Fast IOCP Encryption | `COMPLETED` |
+| **#004** | `SUPPLY_CHAIN_CICD` | `3cx-desktopapp-supply-chain-lazarus` | CrowdStrike, Kaspersky & Mandiant — Lazarus (SmoothOperator): 3CXDesktopApp Supply Chain & Gopuram | `COMPLETED` |
 | **#016** | `MALWARE` | `xz-utils-cve-2024-3094-backdoor` | Andres Freund, Red Hat & Kaspersky — XZ Utils (liblzma) IFUNC sshd Supply Chain Backdoor | `PENDING_REBUILD` |
 | **#020** | `MALWARE` | `dfir-lsass-minidump-comsvcs-sysmon-eid10` | Microsoft Sysinternals & Splunk SURGe DFIR — LSASS MiniDump via comsvcs.dll & Sysmon EventID 10 | `PENDING_REBUILD` |
 | **#030** | `MALWARE` | `pikered-clr-profiler-trusted-binary-loader-chain` | PikeRed Research & MITRE T1574.012 — Abusing the .NET CLR Profiler: VHDX MotW Bypass & Trusted-Binary Loader Chain (KeePass.exe -> clr.dll) | `PENDING_REBUILD` |
@@ -129,8 +129,8 @@
 | ---: | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
 | **#001** | `process-hollowing` | `T1055.012` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s001) | T1106, T1055.012, T1071.001 · CVE-2023-36884, CVE-2024-21412 | — | `BENCHMARK_LIVE` |
 | **#002** | `amsi-reflective-dll` | `T1562.001` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s002) | T1562.001, T1620 · CVE-2023-23397, CVE-2024-21351 | — | `COMPLETED` |
-| **#003** | `ransomware-shadow-wipe` | `T1486 / T1490` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s003) | T1490, T1486 · CVE-2023-4966 & CVE-2024-1709, CVE-2021-36934 | Evaluate moving to Category 8 (RANSOMWARE_EXTORTION) during rebuild | `PENDING_REBUILD` |
-| **#004** | `3cx-desktopapp-supply-chain-lazarus` | `CVE-2023-29059` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s004) | T1195.002, T1102.001, T1555.003 · CVE-2023-29059 | Evaluate moving to Category 5 (SUPPLY_CHAIN_CICD) during rebuild | `PENDING_REBUILD` |
+| **#003** | `ransomware-shadow-wipe` | `T1486 / T1490` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s003) | T1490, T1486 · CVE-2023-4966 & CISA AA23-165A | Rebuilt & moved to Category 8 (`RANSOMWARE_EXTORTION`) with independent Archive Vault engine | `COMPLETED` |
+| **#004** | `3cx-desktopapp-supply-chain-lazarus` | `CVE-2023-29059` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s004) | T1195.002, T1102.001, T1555.003 · CVE-2023-29059 | Rebuilt & moved to Category 5 (`SUPPLY_CHAIN_CICD`) with independent Cleanroom Telecom engine | `COMPLETED` |
 | **#005** | `elastic-apt41-dustpan-stealthvector` | `T1620` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s005) | T1574.002, T1620, T1071.001 · MITRE-T1620 | — | `PENDING_REBUILD` |
 | **#006** | `elastic-grimresource-msc` | `T1218.014` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s006) | T1218.014, T1059.005, T1055.002 · CVE-2024-43572 | — | `PENDING_REBUILD` |
 | **#007** | `elastic-lotus-blossom-chrysalis` | `T1574.002` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s007) | T1574.002, T1027.007, T1071.001 · MITRE-T1574.002 | — | `PENDING_REBUILD` |

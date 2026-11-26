@@ -68,12 +68,83 @@ const AMSI_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> =
   ),
 };
 
+const LOCKBIT_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/ransomware-shadow-wipe/LockbitStep1PsexecClip').then(
+        (m) => m.LockbitStep1PsexecClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/ransomware-shadow-wipe/LockbitStep2VssWipeClip').then(
+        (m) => m.LockbitStep2VssWipeClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/ransomware-shadow-wipe/LockbitStep3IocpEncryptClip').then(
+        (m) => m.LockbitStep3IocpEncryptClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/ransomware-shadow-wipe/LockbitStep4RansomNoteClip').then(
+        (m) => m.LockbitStep4RansomNoteClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const THREECX_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/3cx-desktopapp-supply-chain-lazarus/ThreeCxStep1BuildSignClip').then(
+        (m) => m.ThreeCxStep1BuildSignClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/3cx-desktopapp-supply-chain-lazarus/ThreeCxStep2FeedfaceRc4Clip').then(
+        (m) => m.ThreeCxStep2FeedfaceRc4Clip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/3cx-desktopapp-supply-chain-lazarus/ThreeCxStep3IconDeadDropClip').then(
+        (m) => m.ThreeCxStep3IconDeadDropClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/3cx-desktopapp-supply-chain-lazarus/ThreeCxStep4StealerGopuramClip').then(
+        (m) => m.ThreeCxStep4StealerGopuramClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/3cx-desktopapp-supply-chain-lazarus/ThreeCxMemoryDiffClip').then(
+        (m) => m.ThreeCxMemoryDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
 const SCENARIO_TECHNICAL_CLIPS_BY_ID: Record<
   string,
   Partial<Record<Section3DKey, React.ComponentType>>
 > = {
   'process-hollowing': PROCESS_HOLLOWING_CLIP_BY_SECTION,
   'amsi-reflective-dll': AMSI_CLIP_BY_SECTION,
+  'ransomware-shadow-wipe': LOCKBIT_CLIP_BY_SECTION,
+  '3cx-desktopapp-supply-chain-lazarus': THREECX_CLIP_BY_SECTION,
 };
 
 export interface TechnicalClipEmbedProps {

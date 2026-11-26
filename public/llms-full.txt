@@ -1,6 +1,6 @@
 # Attack Explorer — Full Scenario & MITRE ATT&CK Encyclopedia (llms-full.txt)
 
-> Comprehensive machine-readable index of all 2 live bespoke cyber attack scenarios, forensic telemetry traces, CVEs, and authoritative primary sources in Attack Explorer (https://www.attackexplorer.com).
+> Comprehensive machine-readable index of all 4 live bespoke cyber attack scenarios, forensic telemetry traces, CVEs, and authoritative primary sources in Attack Explorer (https://www.attackexplorer.com).
 
 ## Creator & E-E-A-T Attribution
 - **Creator:** Mohammad Mirasadollahi (@M_Mirasadollahi)
@@ -51,4 +51,47 @@
   - Microsoft Learn — *Antimalware Scan Interface (AMSI) Developer Architecture* (`MS-AMSI-ARCH`): https://learn.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal
   - Microsoft PowerShell Team — *PowerShell Operational Log Event ID 4104 (Script Block Logging)* (`MS-PS-EID-4104`): https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows
   - The MITRE Corporation & Defender Threat Intelligence — *MITRE ATT&CK T1620 & T1562.001: Reflective Code Loading & AMSI Memory Patching* (`ATT&CK-T1620-T1562`): https://attack.mitre.org/techniques/T1620/
+
+---
+
+## 3. LockBit 3.0 Ransomware Behavioral Analysis: VSS Wipe & Fast IOCP Encryption
+- **Scenario ID:** `ransomware-shadow-wipe`
+- **Code:** T1486 / T1490
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/ransomware-shadow-wipe
+- **Category:** Ransomware & Extortion (`RANSOMWARE_EXTORTION`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1569.002 (System Services: Service Execution), T1490 (Inhibit System Recovery), T1486 (Data Encrypted for Impact), T1070.001 (Indicator Removal: Clear Windows Event Logs)
+- **CVEs / Advisories:** CISA AA23-165A (Understanding Ransomware Threat Actors: LockBit), CVE-2023-4966
+- **Executive Summary:** Compromised Domain Admin credentials on `JUMP-OPS-02` (`10.10.15.8`) push `lb3_black.exe` over SMB `ADMIN$` (`WinSec EID 5145`) and register `PSEXESVC` (`System EID 7045`) as `NT AUTHORITY\SYSTEM` on `FS-CORP-01` (`10.10.50.14`) to launch `lb3_black.exe -pass 8f91c2a0` (`PID 6412`). The locker wipes Volume Shadow Copies (`vssadmin`, `wbadmin`, `bcdedit`) and halts `MSSQLSERVER`/`VeeamVSSSvc` (`EID 7036`), encrypts the opening 4 KB of every file on `D:\Finance` and `D:\HR` via asynchronous IOCP `ChaCha20 + RSA-2048` (`*.HLJkNskOq`), drops `HLJkNskOq.README.txt`, and executes `wevtutil cl Security` (`WinSec EID 1102`) while off-host SIEM preserves the complete attack timeline.
+- **Kill-Chain Stages (4):**
+  1. **[T1569.002] LATERAL PSEXEC STAGING & SYSTEM SERVICE CREATION**: `JUMP-OPS-02` copies `lb3_black.exe` to `ADMIN$` (`EID 5145`) and starts `PSEXESVC` (`EID 7045`) to launch password-gated `lb3_black.exe -pass 8f91c2a0` (`PID 6412`).
+  2. **[T1490] SHADOW COPY PURGE & BACKUP SERVICE TERMINATION**: `vssadmin delete shadows /all /quiet`, `wbadmin delete catalog`, `bcdedit` recovery lockout, and stopping `MSSQLSERVER`/`VeeamVSSSvc` (`EID 7036`).
+  3. **[T1486] HIGH-SPEED IOCP INTERMITTENT ENCRYPTION**: Multi-threaded `CreateIoCompletionPort` workers seal the first 4 KB of each file with `ChaCha20` + `RSA-2048` and append `.HLJkNskOq` while excluding `C:\Windows`.
+  4. **[T1070.001] RANSOM NOTE DROP & SECURITY EVENT LOG WIPE**: `HLJkNskOq.README.txt` drops across shares and `wevtutil cl Security` stamps `WinSec EID 1102` while off-host SIEM retains every earlier alert.
+- **Primary Authoritative Sources (3):**
+  - CISA / FBI / MS-ISAC Joint Advisory — *Understanding Ransomware Threat Actors: LockBit (AA23-165A)*: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-165a
+  - MITRE ATT&CK — *T1490 Inhibit System Recovery & T1486 Data Encrypted for Impact*: https://attack.mitre.org/techniques/T1490/
+  - Microsoft Security — *Windows Security Event ID 1102 & System Event ID 7045 Auditing Reference*: https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-1102
+
+---
+
+## 4. Lazarus (SmoothOperator): 3CXDesktopApp Supply-Chain Compromise & Gopuram
+- **Scenario ID:** `3cx-desktopapp-supply-chain-lazarus`
+- **Code:** CVE-2023-29059
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/3cx-desktopapp-supply-chain-lazarus
+- **Category:** Supply Chain & CI/CD (`SUPPLY_CHAIN_CICD`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1195.002 (Supply Chain Compromise: Compromise Software Supply Chain), T1574.002 (Hijack Execution Flow: DLL Side-Loading), T1102.001 (Web Service: Dead Drop Resolver), T1555.003 (Credentials from Web Browsers)
+- **CVEs / Advisories:** CVE-2023-29059 (CVSS 9.8 CRITICAL)
+- **Executive Summary:** Pivoting from a prior trojanized Trading Technologies `X_TRADER` binary, Lazarus (`UNC4736` / `Labyrinth Chollima`) tampered with the 3CX CI/CD build server to swap `ffmpeg.dll` (unsigned sideload proxy) and `d3dcompiler_47.dll` (`0xFEEDFACE` + 312 KB RC4 payload) prior to genuine 3CX Ltd EV Authenticode signing (`v18.12.407`). On trading workstation `WKS-TRD-14` (`10.10.8.41`), signed `3CXDesktopApp.exe` (`PID 7120`) sideloads `ffmpeg.dll`, decrypts the payload with RC4 key `3jB(2bsG#@c7` into unbacked `MEM_PRIVATE RWX` RAM (`0x000001C948200000`), sleeps ~7 days before fetching GitHub `IconStorages/images/main/icon12.ico` trailing Base64 past EOF to contact `akamaitechcloudservices[.]com`, and executes `ICONICSTEALER` (`0x000001C948280000`) plus selective `Gopuram` backdoor deployment—exposed by `Sysmon EID 7/22/3` and behavioral EDR alerts on a VoIP binary reading Chrome/Edge `Login Data`.
+- **Kill-Chain Stages (4):**
+  1. **[T1195.002] CASCADING X_TRADER PIVOT & PRE-SIGNING CI/CD SWAP**: `ffmpeg.dll` and `d3dcompiler_47.dll` swapped before valid 3CX EV Authenticode signing (`3CXDesktopApp-18.12.407.msi`); `Sysmon EID 7` catches unsigned child DLL loading.
+  2. **[T1574.002] DLL SIDELOAD, 0xFEEDFACE MARKER & RC4 UNBACKED RWX**: `ffmpeg.dll` parses `0xFEEDFACE` in `d3dcompiler_47.dll` (`0x7FF8A1000000`) and RC4-decrypts (`3jB(2bsG#@c7`) 312 KB shellcode into `MEM_PRIVATE RWX` (`0x000001C948200000`).
+  3. **[T1102.001] GITHUB ICONSTORAGES .ICO DEAD-DROP RESOLVER**: After dormancy, `PID 7120` fetches `raw.githubusercontent.com/IconStorages/images/main/icon12.ico` (`Sysmon EID 22/3`) and extracts trailing Base64 past EOF pointing to `akamaitechcloudservices[.]com`.
+  4. **[T1555.003] ICONICSTEALER, SELECTIVE GOPURAM & BEHAVIORAL EDR**: `ICONICSTEALER` (`0x000001C948280000`) reads Chrome/Edge `Login Data` and hands high-value finance/crypto victims to `Gopuram`, triggering CrowdStrike Falcon behavioral alerts.
+- **Primary Authoritative Sources (3):**
+  - CrowdStrike Intelligence — *3CXDesktopApp Supply Chain Compromise (Labyrinth Chollima / SmoothOperator)*: https://www.crowdstrike.com/blog/crowdstrike-detects-and-prevents-active-intrusion-campaign-targeting-3cxdesktopapp-customers/
+  - Mandiant — *3CX Software Supply Chain Compromise Initiated by a Prior Software Supply Chain Compromise (UNC4736 / X_TRADER)*: https://cloud.google.com/blog/topics/threat-intelligence/3cx-software-supply-chain-compromise
+  - Kaspersky GReAT — *3CXDesktopApp Supply-Chain Attack Leads to Gopuram Backdoor*: https://securelist.com/3cxdesktopapp-supply-chain-attack-leads-to-gopuram-backdoor/109358/
+
 

@@ -41,6 +41,14 @@ const BESPOKE_SECTION_SCENE_LOADERS: Record<
     import('./amsi-reflective-dll/three').then(
       (mod) => mod.buildBespokeAmsiSectionScene as BespokeSectionSceneFactory
     ),
+  'ransomware-shadow-wipe': () =>
+    import('./ransomware-shadow-wipe/three').then(
+      (mod) => mod.buildBespokeLockbitSectionScene as BespokeSectionSceneFactory
+    ),
+  '3cx-desktopapp-supply-chain-lazarus': () =>
+    import('./3cx-desktopapp-supply-chain-lazarus/three').then(
+      (mod) => mod.buildBespokeThreeCxSectionScene as BespokeSectionSceneFactory
+    ),
 };
 
 export function loadBespokeSectionSceneFactory(

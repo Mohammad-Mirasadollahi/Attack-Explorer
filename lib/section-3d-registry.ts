@@ -1,5 +1,7 @@
 import type { StoryTechnicalMapping } from '@/modules/scenarios/contracts';
 import { AMSI_REFLECTIVE_DLL_SECTION_SCENES } from './amsi-section-3d-descriptors';
+import { LOCKBIT_SECTION_SCENES } from './lockbit-section-3d-descriptors';
+import { THREECX_SECTION_SCENES } from './threecx-section-3d-descriptors';
 
 export type { StoryTechnicalMapping };
 
@@ -26,6 +28,17 @@ export type Anime3DSceneKind =
   | 'amsi-step3-patch'
   | 'amsi-step4-reflective'
   | 'amsi-memory-diff'
+  | 'lockbit-archive-briefing'
+  | 'lockbit-step1-psexec'
+  | 'lockbit-step2-vsswipe'
+  | 'lockbit-step3-iocp'
+  | 'lockbit-step4-ransomnote'
+  | 'threecx-cleanroom-briefing'
+  | 'threecx-step1-buildsign'
+  | 'threecx-step2-feedface'
+  | 'threecx-step3-icondrop'
+  | 'threecx-step4-gopuram'
+  | 'threecx-memory-diff'
   | (string & {});
 
 export type StandardCameraPresetId = 'DIRECTOR' | 'VIEW_A' | 'VIEW_B' | 'VIEW_C';
@@ -895,6 +908,8 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
 > = {
   'process-hollowing': PROCESS_HOLLOWING_SECTION_SCENES,
   'amsi-reflective-dll': AMSI_REFLECTIVE_DLL_SECTION_SCENES,
+  'ransomware-shadow-wipe': LOCKBIT_SECTION_SCENES,
+  '3cx-desktopapp-supply-chain-lazarus': THREECX_SECTION_SCENES,
 };
 
 /**

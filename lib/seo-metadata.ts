@@ -132,7 +132,19 @@ export function getRelatedClusterScenarios(
       s.category !== scenario.category &&
       s.primaryMitrePhase === scenario.primaryMitrePhase
   );
-  return [...sameCategory, ...samePhase].slice(0, limit);
+  const picked = [...sameCategory, ...samePhase];
+  if (picked.length >= limit) {
+    return picked.slice(0, limit);
+  }
+  const pickedIds = new Set<string>([scenario.id, ...picked.map((s) => s.id)]);
+  const crossClusterFallback = ATTACK_SCENARIOS.filter(
+    (s) => !pickedIds.has(s.id)
+  ).sort(
+    (a, b) =>
+      Math.abs(a.primaryMitrePhase - scenario.primaryMitrePhase) -
+      Math.abs(b.primaryMitrePhase - scenario.primaryMitrePhase)
+  );
+  return [...picked, ...crossClusterFallback].slice(0, limit);
 }
 
 export interface ScenarioBreadcrumbItem {

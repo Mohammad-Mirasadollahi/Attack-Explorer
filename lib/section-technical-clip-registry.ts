@@ -25,6 +25,19 @@ const SCENARIO_TECHNICAL_CLIPS: Record<
     'step-4': true,
     'memory-forensics': true,
   },
+  'ransomware-shadow-wipe': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+  },
+  '3cx-desktopapp-supply-chain-lazarus': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
 };
 
 export function hasTechnicalClip(

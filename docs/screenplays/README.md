@@ -16,3 +16,5 @@ Every rebuilt scenario (`#002` through `#188`) begins with an approved **Phase 0
 | ---: | --- | --- | --- | --- |
 | `#001` | `process-hollowing` | **LIVE BENCHMARK (Untouched)** | Armored Bank Truck Dispatch Garage, Cargo Bay & Bank Gate | Golden Reference (`modules/scenarios/process-hollowing/`) |
 | `#002` | `amsi-reflective-dll` | **COMPLETED (Live Bespoke)** | Automated X-Ray Inspection Chamber & Zero-Floor Levitation Workshop | [`002-amsi-reflective-dll.md`](./bespoke/002-amsi-reflective-dll.md) |
+| `#003` | `ransomware-shadow-wipe` | **COMPLETED (Live Bespoke)** | Municipal Records Vault & Archival Backup Reel Room | [`003-ransomware-shadow-wipe.md`](./bespoke/003-ransomware-shadow-wipe.md) |
+| `#004` | `3cx-desktopapp-supply-chain-lazarus` | **COMPLETED (Live Bespoke)** | Cleanroom Telecommunications Assembly Line, Gold Hologram Signing Press & Public Icon Gallery Wall | [`004-3cx-desktopapp-supply-chain-lazarus.md`](./bespoke/004-3cx-desktopapp-supply-chain-lazarus.md) |

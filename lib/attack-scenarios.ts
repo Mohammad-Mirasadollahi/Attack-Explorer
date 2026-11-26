@@ -13,6 +13,8 @@ import { ensureCascadingProcessHierarchy } from './documentation-structural-diag
 const LEADING_SCENARIO_IDS = [
   'process-hollowing',
   'amsi-reflective-dll',
+  'ransomware-shadow-wipe',
+  '3cx-desktopapp-supply-chain-lazarus',
 ] as const;
 
 const byId = new Map(
