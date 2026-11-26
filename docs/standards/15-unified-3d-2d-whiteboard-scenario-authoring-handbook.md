@@ -1,8 +1,8 @@
 # Unified Scenario-Based 3D Anime, 2D Kinetic Clip & Excalidraw Whiteboard Authoring Handbook (`MOD-15`)
 
 > **Module ID**: `MOD-15` · **Parent Index**: [`/docs/standards/README.md`](./README.md)  
-> **Scope**: End-to-end engineering handbook for authoring or upgrading any Attack Explorer scenario across all three visual teaching layers: Three.js Japanese anime 3D storytelling (`MOD-09`, `MOD-10`), animated SVG + GSAP technical clips (`MOD-14`), and interactive Excalidraw technical whiteboards (`MOD-13`).  
-> **Status**: Mandatory Permanent Standard · **Reference Benchmark**: `process-hollowing` (Process Hollowing & Cobalt Strike Beacon Loader) · **Enforced By**: `/lib/section-3d-registry.test.ts`, `/lib/technical-clips.test.ts`, `/lib/documentation-standards.test.ts`, and `/modules/scenarios/architecture.test.ts`.
+> **Scope**: End-to-end engineering handbook for authoring or upgrading any Attack Explorer scenario across all three visual teaching layers: Three.js Japanese anime 3D storytelling (`MOD-09`, `MOD-10`, `MOD-16`), animated SVG + GSAP technical clips (`MOD-14`, `MOD-16`), and interactive Excalidraw technical whiteboards (`MOD-13`).  
+> **Status**: Mandatory Permanent Standard · **Reference Benchmark**: `process-hollowing` (Process Hollowing & Cobalt Strike Beacon Loader) · **Companion Requirement**: [`MOD-16` (Dynamic Real-World Physical Environment & Screenplay Standard)](./16-dynamic-real-world-environment-and-screenplay-standard.md) · **Enforced By**: `/lib/section-3d-registry.test.ts`, `/lib/technical-clips.test.ts`, `/lib/scenario-cinematic-uniqueness.test.ts`, `/lib/documentation-standards.test.ts`, and `/modules/scenarios/architecture.test.ts`.
 
 ---
 
@@ -211,28 +211,30 @@ Follow these 6 concrete steps whenever adding a brand-new scenario so all three 
 
 ### Mandatory Engineering Steps for Every New Scenario
 
-1. **Author the Scenario Package**:
+1. **Assign a Dynamic Real-World Environment & Author the Screenplay First (`MOD-16`)**:
+   - Before writing 3D or 2D visuals, assign the scenario a concrete everyday real-world place from `REAL_WORLD_ENVIRONMENTS` (or add a new environment #29+ following `MOD-16 §4`), update `/scripts/build-cinema-screenplays.ts`, and run `npx --yes tsx scripts/build-cinema-screenplays.ts && node scripts/generate-scenario-data.mjs` so its docs-only screenplay in `/docs/screenplays/`, cinema profile, real-world story copy, and static `/public/scenario-data/*.json` stay 100% aligned with zero 3D/2D collisions.
+2. **Author the Scenario Package**:
    - Create `/modules/scenarios/<id>/index.ts` exporting the `AttackScenario` (with rich `nodes`, `stages`, `telemetry`, `processTree`, optional documented `memoryBlocks`, `detectionRule`, and `>= 3` primary sources) plus its `stepGuide`.
    - Run `npm run scenarios:registry` so generated catalogs stay synchronized with the filesystem.
-2. **Register Bespoke 3D Descriptors & Anime World**:
+3. **Register Bespoke 3D Descriptors & Dynamic Real-World Anime World**:
    - Add unique `Section3DDescriptor` entries for `briefing`, every `step-1..N`, and `memory-forensics` (only if `memoryBlocks` exist).
-   - Ensure `sceneKind` is globally unique, every `storyCue`/`storyExcerpt`/`callout.title` passes `findTechnicalJargonInStory() === []`, and the Three.js scene factory renders concrete cel-shaded story props with `dispose()` cleanup.
-3. **Register Scenario-Tailored 2D Clip & Excalidraw Whiteboard Profiles**:
+   - Ensure `sceneKind` is globally unique, every `storyCue`/`storyExcerpt`/`callout.title` passes `findTechnicalJargonInStory() === []`, and the Three.js scene renders the scenario's literal real-world physical architecture and animated hero prop (`MOD-16`) with `dispose()` cleanup.
+4. **Register Scenario-Tailored 2D Clip & Excalidraw Whiteboard Profiles**:
    - For **`MALWARE`** scenarios: add a bespoke `MalwareScenario2DProfile` to the matching `/lib/malware-2d-blueprints/group*.ts` file and register its sections in `/lib/malware-2d-blueprints/manifest.ts`.
    - For the **other 12 categories**: ensure `/lib/scenario-2d-blueprints/<category>.ts` generates or overrides its `MalwareScenario2DProfile` with authentic per-step `clipMechanic` (14 engines) and `boardTopology` (8 topologies), and add its zero-dependency entry (`{ group, sections }`) to `/lib/scenario-2d-blueprints/manifest.ts`.
    - Keep `manifest.ts` **100% dependency-free** (importing only types) so the `/` home workbench never eagerly compiles heavy blueprint arrays; runtime loading always flows through `loadAnyTechnicalWhiteboard()` and `loadAnyTechnicalClipSpec()` in `/lib/scenario-2d-blueprints/loader.ts`.
-4. **Never Register a 2D Clip on `briefing`**:
+5. **Never Register a 2D Clip on `briefing`**:
    - `briefing` always receives **Three.js 3D** + **Excalidraw Whiteboard**, and **never** a 2D technical clip (`hasTechnicalClip(id, 'briefing') === false`).
-5. **Update Expected Catalog Counts in Tests & Run Full CI Suite**:
-   - Update catalog totals in `/lib/technical-clips.test.ts`, `/lib/section-3d-registry.test.ts`, and `/lib/documentation-standards.test.ts` if scenario counts increase.
+6. **Update Expected Catalog Counts in Tests & Run Full CI Suite**:
+   - Update catalog totals in `/lib/technical-clips.test.ts`, `/lib/section-3d-registry.test.ts`, `/lib/scenario-cinematic-uniqueness.test.ts`, and `/lib/documentation-standards.test.ts` if scenario counts increase.
    - Execute all automated verification commands:
      ```bash
-     npx --yes tsx --test lib/technical-clips.test.ts lib/section-3d-registry.test.ts lib/documentation-standards.test.ts modules/scenarios/architecture.test.ts lib/scenario-step-guides.test.ts lib/scenario-catalog.test.ts
+     npx --yes tsx --test lib/scenario-cinematic-uniqueness.test.ts lib/technical-clips.test.ts lib/section-3d-registry.test.ts lib/documentation-standards.test.ts modules/scenarios/architecture.test.ts lib/scenario-step-guides.test.ts lib/scenario-catalog.test.ts
      npm run build
      npm run lint
      ```
-6. **Perform Real-Browser Visual Audit (`1440×960`)**:
-   - Open `/scenarios/<id>` in a real browser (`playwright-cli`), scroll into `step-1` and `memory-forensics` (if present), click a station inside the 2D technical clip to verify the bounded `[data-testid="clip-station-inspector"]` card, open the Excalidraw whiteboard to verify zero clipped glyphs and working hover tooltips, and verify zero console/page errors.
+7. **Perform Real-Browser Visual Audit (`1440×900`)**:
+   - Open `/scenarios/<id>` in a real browser (`playwright-cli`), verify the real-world 3D environment matches the Story Analogy verbatim, scroll into `step-1` and `memory-forensics` (if present), click a station inside the 2D technical clip to verify both the matching 2D real-world architectural illustration and the bounded `[data-testid="clip-station-inspector"]` card, open the Excalidraw whiteboard to verify zero clipped glyphs and working hover tooltips, and verify zero console/page errors.
 
 ---
 

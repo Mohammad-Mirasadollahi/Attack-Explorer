@@ -18,6 +18,7 @@ import {
 } from './section-3d-registry';
 import { resolveCinema2DLayoutPlan } from '../components/technical-clip/malware-clips/Cinema2DStoryArt';
 import type { Clip2DLayoutGeometry } from './scenario-cinema-profiles-core';
+import { validateMarkdownDocumentStandard } from './documentation-standards';
 
 const ROOT = process.cwd();
 const JAPANESE_REGEX = /[\u3040-\u30FF\u4E00-\u9FFF¥]/;
@@ -241,4 +242,42 @@ test('Cinema2DStoryArt preserves GSAP SVG safety invariants and clean 1200x640 l
     assert.ok(x >= 0 && x + w <= 1200, `Theater X bounds valid for ${layout}`);
     assert.ok(y >= 38 && y + h <= 550, `Theater Y bounds stay clear of header & bottom log strip for ${layout}`);
   }
+});
+
+test('MOD-16 Dynamic Real-World Physical Environment Standard exists, passes MOD-01/MOD-02 validation, is indexed in MOD-00, and documents all registered places', () => {
+  const mod16Path = path.join(
+    ROOT,
+    'docs',
+    'standards',
+    '16-dynamic-real-world-environment-and-screenplay-standard.md'
+  );
+  assert.ok(fs.existsSync(mod16Path), 'MOD-16 standard document must exist on disk');
+
+  const mod16Content = fs.readFileSync(mod16Path, 'utf8');
+  const validation = validateMarkdownDocumentStandard(mod16Content, 'MOD-16');
+  assert.equal(
+    validation.valid,
+    true,
+    `MOD-16 failed Markdown standard validation: ${validation.violations.join('; ')}`
+  );
+  assert.ok(mod16Content.includes('MOD-16'), 'MOD-16 must reference its own Module ID');
+
+  for (const [placeId, env] of Object.entries(REAL_WORLD_ENVIRONMENTS)) {
+    assert.ok(
+      mod16Content.includes(`\`${placeId}\``),
+      `MOD-16 must document registered real-world environment "${placeId}"`
+    );
+    assert.ok(
+      mod16Content.includes(`\`${env.heroKinetic}\``),
+      `MOD-16 must document registered 3D hero mechanism "${env.heroKinetic}"`
+    );
+  }
+
+  const readmePath = path.join(ROOT, 'docs', 'standards', 'README.md');
+  const readmeContent = fs.readFileSync(readmePath, 'utf8');
+  assert.ok(
+    readmeContent.includes('MOD-16') &&
+      readmeContent.includes('16-dynamic-real-world-environment-and-screenplay-standard.md'),
+    'docs/standards/README.md (MOD-00) must register and link MOD-16'
+  );
 });
