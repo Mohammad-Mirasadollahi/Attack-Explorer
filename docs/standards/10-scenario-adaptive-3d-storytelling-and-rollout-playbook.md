@@ -42,69 +42,68 @@ Use the matrix below as a creative blueprint when designing bespoke 3D worlds fo
 
 ---
 
-## 3. Modular Code Architecture for Scaling Beyond Process Hollowing
+## 3. Modular Code Architecture for Scaling 188 Bespoke Engines Cleanly (`MOD-17`)
 
-To keep code clean, maintainable, and bundle-efficient as more scenarios receive bespoke 3D scenes, follow this strict modular file structure:
+To keep bundle size light and builds fast while scaling to 188 fully bespoke 3D worlds, isolate every scenario's creative code inside its own self-contained domain package under `/modules/scenarios/<scenario-id>/` and keep `/components/three/` strictly limited to the **shared playback shell**:
 
 ```
-/lib/
-├── section-3d-registry.ts                # Core interfaces, validators, central scenario lookup
-└── section-3d-registries/                # Per-domain descriptor modules (added as scenarios roll out)
-    ├── log4shell-3d-registry.ts          # Example: Web/JNDI scenario descriptors
-    ├── kerberoasting-3d-registry.ts      # Example: Active Directory scenario descriptors
-    └── ...
+/modules/scenarios/<scenario-id>/
+├── index.ts                              # Core AttackScenario + stepGuide + primary sources
+├── choreography.ts                       # Pure deterministic 0%..100% prop & camera timeline
+├── choreography.test.ts                  # Fast unit tests verifying act/prop transitions
+└── three/                                # 100% bespoke hero props, environment & step dioramas
+    ├── index.ts                          # Lazy entry loaded ONLY by three-registry.ts
+    ├── scene-builders.ts                 # Articulated cel-shaded hero prop builders
+    └── step-scene-builders.ts            # Per-stage scenes + deterministic dispose()
 
-/components/three/
-├── anime-toon-materials.ts               # Shared cel-shading ramp, ink outlines, scan shaders
-├── AnimeSection3DStage.tsx               # Shared Overview-standard 3D stage + HUD + Bloom + controls
-├── ScenarioSection3DEmbed.tsx            # Shared standby preview + IntersectionObserver lazy mount
-├── hollowing-scene-builders.ts           # Scenario-specific hero prop builders (Armored Bank Truck)
-├── hollowing-step-scene-builders.ts      # Scenario-specific step dioramas (Process Hollowing)
-└── scenes/                               # Future per-scenario modular builders (lazy-imported)
-    ├── log4shell-scene-builders.ts       # Receptionist lobby + courier van builders
-    ├── kerberoasting-scene-builders.ts   # Ticket booth + offline cracker builders
-    └── ...
+/modules/scenarios/three-registry.ts      # Dynamic import() loader (only active scenario loads)
+
+/components/three/                        # SHARED CINEMA SHELL ONLY (zero creative logic)
+├── anime-toon-materials.ts               # Shared cel-shading ramp & ink outline helpers
+├── AnimeSection3DStage.tsx               # Shared HUD + Bloom + Cutaway + Timeline controls
+└── ScenarioSection3DEmbed.tsx            # Shared standby preview + IntersectionObserver lazy mount
 ```
 
-### Key Architectural Rules for Scaling
+### Key Architectural Rules for Scaling (`MOD-17 §3 Principle 4`)
 
-1. **Keep Shared Engine Decoupled from Scenario Worlds**: `AnimeSection3DStage.tsx`, `ScenarioSection3DEmbed.tsx`, and `StandardStoryTechnicalSection.tsx` stay 100% scenario-agnostic; they read metadata (`storyMappings`, `callouts`, `phases`, `cameraPresets`, `durationSec`) purely from `Section3DDescriptor`.
-2. **Isolate Scenario-Specific Geometry & Shaders**: Never cram multiple unrelated scenarios into `hollowing-step-scene-builders.ts`. Place each new scenario's reusable hero props and step scenes in its own dedicated module under `/components/three/scenes/` and dispatch cleanly by `sceneKind`.
-3. **Graceful Progressive Rollout**: Scenarios not yet upgraded continue to render cleanly with their structured Story + Technical cards (with zero broken layouts or empty canvases) until their bespoke descriptors and 3D scene builders are registered.
+1. **Zero Shared Scene Composers**: Never route new or rebuilt scenarios through generic template builders (`scenario-world-composer.ts` and the retired 28-place pool are deprecated for Phase 1 removal).
+2. **Keep Shared Shell Scenario-Agnostic**: `AnimeSection3DStage.tsx`, `ScenarioSection3DEmbed.tsx`, and `StandardStoryTechnicalSection.tsx` own only the player HUD, camera buttons, cutaway toggle, WebGL lifecycle, and lazy dynamic loading.
+3. **100% Isolated Per-Scenario Geometry & Choreography**: Every scenario owns its own articulated models, timeline state machine, camera shot list, and `dispose()` cleanup inside `/modules/scenarios/<id>/`.
 
 ---
 
-## 4. Step-by-Step Rollout Playbook for Upgrading Any Remaining Scenario
+## 4. Step-by-Step Single-Episode Rollout Playbook (`MOD-17`)
 
-Execute these 6 phases in order whenever upgrading a scenario to the full `MOD-08` + `MOD-09` + `MOD-10` standard:
+Execute these **7 phases in strict order for ONE scenario at a time** (following exact Sidebar order in `/docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md`; batching multiple scenarios is strictly prohibited):
 
-1. **Phase 1 — Design the Continuous Metaphor World**:
-   - Audit the scenario's real kill-chain stages (`Stage 1..N`) and confirm whether it has documented `memoryBlocks`.
-   - Choose one memorable, concrete physical metaphor world that maps cleanly onto every stage without forcing technical concepts into unnatural shapes.
-2. **Phase 2 — Rewrite Story & Technical Prose (`MOD-02`, `MOD-03`, `MOD-08`)**:
-   - Rewrite `briefing.storyAnalogy` and every `steps[i].storyAnalogy` in `/lib/step-guides/*.ts` to be 100% jargon-free, continuous storytelling (`findTechnicalJargonInStory() === []`).
-   - Author 4 explicit `storyMappings` per section (`briefing`, `step-1..N`, and optional `memory-forensics`).
-   - Update `steps[i].simpleExplanation` and `stages[i].description` so technical clauses explicitly bridge back to the exact story objects while preserving inline purpose parentheticals (`> 25 chars`) and forensic accuracy.
-   - Verify `briefing.storyAnalogy` and `briefing.plainSummary` are completely distinct (zero duplicated sentences).
-3. **Phase 3 — Register Descriptors (`Section3DDescriptor`)**:
-   - Define `stageBadge`, `mitreId`, `title`, `storyCue`, `technicalCue`, `storyMappings`, `callouts` (jargon-free title + technical subtitle), `phases` (2–6 acts matching the step's real beats), and `4 cameraPresets`.
-4. **Phase 4 — Build Bespoke Cel-Shaded 3D Scenes (`MOD-09`, `MOD-10`)**:
-   - Create scenario-specific hero prop builders reusing `anime-toon-materials.ts` (toon shading, ink outlines, selective bloom, zero glitter/dust particles, zero Japanese characters).
-   - Animate every physical beat described in the story with rear-mounted scenery (zero foreground pillars blocking hero props) and clean signboard/callout clearances.
-   - Implement deterministic `dispose()` cleanup for all dynamically created textures, materials, and geometries.
-5. **Phase 5 — Automated Unit & Guardrail Verification (`MOD-07`, `MOD-08`)**:
-   - Add the upgraded scenario to `/lib/section-3d-registry.test.ts` so CI verifies: zero jargon in story fields, `>= 4` `storyMappings` per section, zero Japanese characters, distinct `storyAnalogy` vs. `plainSummary`, and valid phase timing coverage.
-   - Run `npx --yes tsx --test lib/*.test.ts`, `npm run build`, and `npm run lint`.
-6. **Phase 6 — Real-Browser Visual Audit (`1440×900`)**:
-   - Inspect the rendered Briefing, key Stages, Main Page Inspector, and optional Memory Forensics view in Playwright at `1440×900`.
-   - Confirm: Story-first order, visible Story-to-Technical Key, zero duplicate text, zero foreground pillar occlusion, zero label/signboard overlap, zero glitter/dust particles, and zero console errors.
+1. **Phase 1 — Research Preserved Sources & Design Technical Architecture**:
+   - Load the scenario's preserved authoritative source URLs from `/docs/redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md`.
+   - Design authentic kill-chain stages (`Stage 1..N`), real SIEM/Sysmon/CloudTrail/Auditd telemetry, CLI breakdowns, and confirm whether genuine documented `memoryBlocks` exist.
+2. **Phase 2 — Pass Mute Test & Swap Test + Author Director's Blueprint (`USER APPROVAL GATE`)**:
+   - Invent a 1-to-1 physical mechanism world that passes the **Mute Test** (clear with zero text) and **Swap Test** (fails if transplanted to another attack).
+   - Write `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` with Cinematic Inspiration, 1-to-1 Technical↔Physical Articulation Table, 5–6 Act timeline (`0%..100%`), and mandatory 5-Shot Camera Shot List (`MOD-17 §3 Principle 3`).
+   - **STOP and wait for explicit user approval or revisions before writing any code.**
+3. **Phase 3 — Author Story & Technical Prose Together (`MOD-02`, `MOD-03`, `MOD-08`, `MOD-11`)**:
+   - Write 100% jargon-free `briefing.storyAnalogy` and `steps[i].storyAnalogy` (`findTechnicalJargonInStory() === []`) matching the approved 3D cast verbatim.
+   - Author 4 or 6 explicit `storyMappings` per section and per-token inline plain-English parentheticals in Step/Memory deep-dives while keeping Overview strictly roadmap-only (`Formula A2`).
+4. **Phase 4 — Build Bespoke `choreography.ts` & Cel-Shaded 3D World (`MOD-09`, `MOD-10`)**:
+   - Implement the pure timeline state machine + `choreography.test.ts` and articulated cel-shaded 3D props inside `/modules/scenarios/<id>/three/` (toon shading, ink outlines, rear-mounted scenery `z <= -2.2`, zero clutter particles, zero Japanese characters, 4 unobstructed camera presets, full `dispose()`).
+   - Register lazily via dynamic `import()` in `/modules/scenarios/three-registry.ts`.
+5. **Phase 5 — Build Bespoke 2D Silent Lectures & Excalidraw Chalk Boards (`MOD-13`, `MOD-14`, `MOD-15`)**:
+   - Author claim-driven SVG+GSAP silent lecture clips (`step-1..N`, optional `memory-forensics`, never `briefing`) and modular Excalidraw chalk boards (`briefing`, `step-1..N`, optional `memory-forensics`).
+6. **Phase 6 — Automated Unit, Build & Lint Verification (`MOD-07`)**:
+   - Run `npx --yes tsx --test modules/scenarios/<id>/choreography.test.ts lib/*.test.ts`, regenerate static scenario JSON + `llms-full.txt`, and verify `npm run build` and `npm run lint`.
+7. **Phase 7 — Frame-by-Frame Browser Director's Review (`1440×900`, `MOD-17 §3 Principle 5`)**:
+   - Capture every Act (`0%..100%`), all 4 cameras, Cutaway modes, 2D clips, and Excalidraw whiteboards in headless Chromium.
+   - Verify zero geometry clipping, centered hero framing, zero HUD/signboard overlap, zero mid-sentence truncation, weighted cinematic motion, visual Mute/Swap verification, and zero console/WebGL errors. Only then mark `COMPLETED` in the Master Backlog.
 
 ---
 
 ## 5. Rollout Acceptance Checklist (`MOD-10`)
 
-- [ ] Does the scenario use a physical metaphor world uniquely suited to its real attack mechanics (not cloned from Process Hollowing)?
-- [ ] Do the 3D scenes animate the literal physical actions narrated in each stage's `storyAnalogy`?
-- [ ] Is `memory-forensics` 3D added **only** if the scenario has documented `memoryBlocks`?
-- [ ] Are scenario-specific 3D builders isolated in their own modular file with proper `dispose()` cleanup?
-- [ ] Do all automated tests (`lib/*.test.ts`), build, lint, and Playwright visual checks pass with zero errors?
+- [ ] Was this scenario built individually (never batched) following a user-approved Director's Blueprint (`MOD-17`)?
+- [ ] Does the physical world pass both the **Mute Test** and **Swap Test** (never cloned from `process-hollowing` or the retired 28-place template pool)?
+- [ ] Do articulated 3D props execute literal physical state changes matching every stage's `storyAnalogy`?
+- [ ] Is `memory-forensics` 3D added **only** if the scenario has genuine documented `memoryBlocks`?
+- [ ] Are scenario-specific 3D models and choreography isolated in `/modules/scenarios/<id>/` with lazy dynamic loading and full `dispose()` cleanup?
+- [ ] Did all automated tests, build, lint, and Frame-by-Frame Browser Director's Review (`1440×900`) pass with zero defects?

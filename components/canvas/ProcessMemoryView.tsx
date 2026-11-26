@@ -26,7 +26,7 @@ import { TechnicalClipEmbed } from '../technical-clip/TechnicalClipEmbed';
 import { TechnicalWhiteboardEmbed } from '../excalidraw/TechnicalWhiteboardEmbed';
 import { getSection3DDescriptor } from '@/lib/section-3d-registry';
 import { hasTechnicalClip } from '@/lib/section-technical-clip-registry';
-import { hasAnyTechnicalWhiteboard as hasTechnicalWhiteboard } from '@/lib/malware-2d-blueprints/manifest';
+import { hasTechnicalWhiteboard } from '@/lib/section-excalidraw-registry';
 
 interface ProcessMemoryViewProps {
   scenario: AttackScenario;

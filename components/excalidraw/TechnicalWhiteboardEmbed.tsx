@@ -1,16 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import { PenLine } from 'lucide-react';
-import {
-  getSection3DDescriptor,
-  type Section3DKey,
-} from '@/lib/section-3d-registry';
-import { PROCESS_HOLLOWING_TECHNICAL_BOARDS } from '@/modules/scenarios/process-hollowing/excalidraw';
-import type { TechnicalBoardDescriptor } from '@/lib/excalidraw-boards/board-primitives';
-import { hasAnyTechnicalWhiteboard } from '@/lib/malware-2d-blueprints/manifest';
-import { loadAnyTechnicalWhiteboard } from '@/lib/scenario-2d-blueprints/loader';
+import type { Section3DKey } from '@/lib/section-3d-registry';
+import { getTechnicalWhiteboard } from '@/lib/section-excalidraw-registry';
 import { useHeavyMediaSlot } from '@/components/media/useHeavyMediaSlot';
 
 function BoardLoading() {
@@ -31,12 +25,6 @@ const ExcalidrawBoard = dynamic(() => import('./ExcalidrawBoard'), {
   loading: () => <BoardLoading />,
 });
 
-function compactBoardBadge(sectionKey: Section3DKey): string {
-  if (sectionKey === 'briefing') return 'TECH BOARD · BRIEFING #0';
-  if (sectionKey === 'memory-forensics') return 'TECH BOARD · MEMORY DIFF';
-  return `TECH BOARD · STEP #${sectionKey.replace('step-', '')}`;
-}
-
 export interface TechnicalWhiteboardEmbedProps {
   scenarioId: string;
   sectionKey: Section3DKey;
@@ -53,72 +41,28 @@ export function TechnicalWhiteboardEmbed({
   className = '',
 }: TechnicalWhiteboardEmbedProps) {
   const { ref, active, activate } = useHeavyMediaSlot('board');
-
-  const isProcessHollowing = scenarioId === 'process-hollowing';
-  const staticBoard = isProcessHollowing
-    ? PROCESS_HOLLOWING_TECHNICAL_BOARDS[sectionKey] ?? null
-    : null;
-  const hasLazyBoard =
-    !isProcessHollowing && hasAnyTechnicalWhiteboard(scenarioId, sectionKey);
+  const resolvedBoard = getTechnicalWhiteboard(scenarioId, sectionKey);
+  if (!resolvedBoard) return null;
 
   const targetKey = `${scenarioId}:${sectionKey}`;
-  const [loadedState, setLoadedState] = useState<{
-    key: string;
-    board: TechnicalBoardDescriptor | null;
-    error: boolean;
-  }>({ key: '', board: null, error: false });
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    if (!active || staticBoard || !hasLazyBoard) return;
-    let cancelled = false;
-    void loadAnyTechnicalWhiteboard(scenarioId, sectionKey)
-      .then((loaded) => {
-        if (!cancelled) {
-          setLoadedState({ key: targetKey, board: loaded, error: false });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoadedState({ key: targetKey, board: null, error: true });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [active, staticBoard, hasLazyBoard, scenarioId, sectionKey, targetKey, attempt]);
-
-  if (!staticBoard && !hasLazyBoard) return null;
-
-  const isCurrent = loadedState.key === targetKey;
-  const resolvedBoard = staticBoard ?? (isCurrent ? loadedState.board : null);
-  const loadError = !staticBoard && isCurrent && loadedState.error;
-
-  const desc = !staticBoard
-    ? getSection3DDescriptor(scenarioId, sectionKey)
-    : null;
-  const boardBadge =
-    staticBoard?.boardBadge ?? compactBoardBadge(sectionKey);
-  const title = staticBoard?.title ?? desc?.title ?? `${scenarioId} — ${sectionKey}`;
-  const subtitle = staticBoard?.subtitle ?? desc?.technicalCue ?? '';
 
   return (
     <section
       data-testid={`technical-whiteboard-embed-${sectionKey}`}
       className={`w-full space-y-2 ${className}`}
-      aria-label={`Technical whiteboard: ${title}`}
+      aria-label={`Technical whiteboard: ${resolvedBoard.title}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-900 text-[#FDFBF7] font-mono text-[10.5px] font-extrabold tracking-wide">
           <PenLine className="w-3 h-3" aria-hidden="true" />
-          {boardBadge}
+          {resolvedBoard.boardBadge}
         </span>
         <h3 className="text-sm sm:text-[15px] font-bold text-slate-900 dark:text-slate-100 leading-snug">
-          {title}
+          {resolvedBoard.title}
         </h3>
       </div>
       <p className="text-xs sm:text-[13px] text-slate-700 dark:text-slate-300 leading-relaxed">
-        {subtitle}
+        {resolvedBoard.subtitle}
       </p>
 
       <div
@@ -128,34 +72,11 @@ export function TechnicalWhiteboardEmbed({
       >
         <div className="h-[500px] sm:h-[620px] w-full relative">
           {active ? (
-            loadError ? (
-              <div
-                className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#FDFBF7] p-4"
-                data-testid="excalidraw-technical-board-error"
-              >
-                <div className="font-mono text-xs text-rose-700">
-                  Failed to load technical whiteboard.
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoadedState({ key: '', board: null, error: false });
-                    setAttempt((n) => n + 1);
-                  }}
-                  className="rounded-md border border-slate-300 bg-slate-900 px-3 py-1.5 font-mono text-xs font-bold text-white hover:bg-slate-800"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : resolvedBoard ? (
-              <ExcalidrawBoard
-                key={targetKey}
-                skeletons={resolvedBoard.skeletons}
-                tooltips={resolvedBoard.tooltips}
-              />
-            ) : (
-              <BoardLoading />
-            )
+            <ExcalidrawBoard
+              key={targetKey}
+              skeletons={resolvedBoard.skeletons}
+              tooltips={resolvedBoard.tooltips}
+            />
           ) : (
             <button
               type="button"

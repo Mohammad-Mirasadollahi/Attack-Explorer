@@ -13,12 +13,10 @@ import {
   getSection3DDescriptor,
   stepNumberToSectionKey,
 } from './section-3d-registry';
-import { VULNCHECK_CWP_AND_DFIR_STEP_GUIDES } from './step-guides/vulncheck-cwp-and-dfir-guides';
 import {
   normalizeStepGuideProse,
   registerScenarioGuideLookup,
 } from './scenario-step-guides';
-import { getScenarioRealWorldStory } from './scenario-real-world-stories';
 
 function mergeStepGuidesFirstWins(
   ...batches: Array<Record<string, RawScenarioStepGuideData>>
@@ -29,18 +27,14 @@ function mergeStepGuidesFirstWins(
       if (id in merged) continue;
       const patch = ALL_CATEGORY_STANDARD_PATCHES[id];
       const bPatch = patch?.briefing;
-      const rw = getScenarioRealWorldStory(id);
       const cleanedBriefing: RawScenarioBriefingGuide = {
         headline: normalizeStepGuideProse(
           bPatch?.headline ?? guide.briefing.headline
         ),
         storyAnalogy: normalizeStepGuideProse(
-          rw?.briefing.storyAnalogy ??
-            bPatch?.storyAnalogy ??
-            guide.briefing.storyAnalogy
+          bPatch?.storyAnalogy ?? guide.briefing.storyAnalogy
         ),
         storyMappings:
-          rw?.briefing.storyMappings ??
           bPatch?.storyMappings ??
           guide.briefing.storyMappings ??
           getSection3DDescriptor(id, 'briefing')?.storyMappings,
@@ -60,19 +54,15 @@ function mergeStepGuidesFirstWins(
         briefing: cleanedBriefing,
         steps: guide.steps.map((step) => {
           const sPatch = patch?.steps?.[step.stepNumber];
-          const rwStep = rw?.steps?.[step.stepNumber];
           const cleanedStep: RawScenarioStepGuideItem = {
             ...step,
             plainTitle: normalizeStepGuideProse(
               sPatch?.plainTitle ?? step.plainTitle
             ),
             storyAnalogy: normalizeStepGuideProse(
-              rwStep?.storyAnalogy ??
-                sPatch?.storyAnalogy ??
-                step.storyAnalogy
+              sPatch?.storyAnalogy ?? step.storyAnalogy
             ),
             storyMappings:
-              rwStep?.storyMappings ??
               sPatch?.storyMappings ??
               step.storyMappings ??
               (() => {
@@ -112,10 +102,7 @@ function mergeStepGuidesFirstWins(
 }
 
 export const ALL_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> =
-  mergeStepGuidesFirstWins(
-    STATIC_SCENARIO_STEP_GUIDES,
-    VULNCHECK_CWP_AND_DFIR_STEP_GUIDES
-  );
+  mergeStepGuidesFirstWins(STATIC_SCENARIO_STEP_GUIDES);
 
 registerScenarioGuideLookup(
   (scenarioId) => ALL_SCENARIO_STEP_GUIDES[scenarioId] ?? null

@@ -6,7 +6,6 @@ import { describe, it } from 'node:test';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const SCENARIOS_DIR = path.join(ROOT, 'modules/scenarios');
-const SKIP_DIRS = new Set(['legacy']);
 
 const ROOT_FILES = new Set([
   'README.md',
@@ -20,20 +19,12 @@ const ROOT_FILES = new Set([
   'types.ts',
 ]);
 
-const LEGACY_IMPORTERS = new Set([
-  'modules/scenarios/all-scenarios.ts',
-  'lib/attack-scenarios.ts',
-  'lib/vulncheck-cwp-and-dfir-attributions-intel.ts',
-  'lib/step-guides/vulncheck-cwp-and-dfir-guides.ts',
-  'scripts/generate-scenario-registry.mjs',
-]);
-
 const SPLIT_PARTS = new Set(['scenario.ts', 'step-guide.ts', 'standard-patch.ts']);
 
 function packages(): string[] {
   return fs
     .readdirSync(SCENARIOS_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !SKIP_DIRS.has(entry.name))
+    .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter((id) => {
       const index = path.join(SCENARIOS_DIR, id, 'index.ts');
@@ -148,7 +139,6 @@ describe('scenario package architecture', () => {
                 outside === 0 ||
                   spec.startsWith('../types') ||
                   spec.startsWith('../contracts') ||
-                  spec.startsWith('../legacy/') ||
                   spec.startsWith('../category-labels'),
                 `${id}/${rel} imports ${spec}`
               );
@@ -183,18 +173,20 @@ describe('scenario package architecture', () => {
     }
   });
 
-  it('keeps the legacy normalizer inside the domain and off app libraries', () => {
-    const legacyDir = path.join(SCENARIOS_DIR, 'legacy');
-    for (const file of walk(legacyDir)) {
-      const specs = importSpecifiers(fs.readFileSync(file, 'utf8'));
-      for (const spec of specs) {
-        assert.equal(spec.startsWith('@/lib/'), false, spec);
-        assert.equal(spec.startsWith('@/components/'), false, spec);
-      }
-    }
+  it('enforces Phase 1 clean-slate purge: legacy drafts and generic template engines are removed', () => {
+    assert.equal(fs.existsSync(path.join(SCENARIOS_DIR, 'legacy')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'components/three/scenes')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'lib/section-3d-registries')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'lib/scenario-2d-blueprints')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'lib/malware-2d-blueprints')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'components/technical-clip/malware-clips')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'lib/step-guides')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'lib/scenario-cinema-profiles.ts')), false);
+    assert.equal(fs.existsSync(path.join(ROOT, 'lib/scenario-real-world-stories.ts')), false);
+    assert.equal(fs.existsSync(path.join(SCENARIOS_DIR, 'process-hollowing/index.ts')), true);
   });
 
-  it('rejects removed compatibility paths and keeps legacy drafts behind one module', () => {
+  it('rejects removed compatibility paths and legacy draft imports across source code', () => {
     assert.equal(fs.existsSync(path.join(ROOT, 'lib/scenarios')), false);
     assert.equal(
       fs.existsSync(path.join(ROOT, 'lib/process-hollowing-3d-choreography.ts')),
@@ -205,10 +197,10 @@ describe('scenario package architecture', () => {
       false
     );
 
-    const roots = ['app', 'components', 'lib', 'modules', 'scripts', 'docs'].map((name) =>
+    const codeRoots = ['app', 'components', 'lib', 'modules', 'scripts'].map((name) =>
       path.join(ROOT, name)
     );
-    for (const root of roots) {
+    for (const root of codeRoots) {
       if (!fs.existsSync(root)) continue;
       for (const file of walk(root)) {
         if (file.endsWith(`${path.sep}architecture.test.ts`)) continue;
@@ -216,12 +208,11 @@ describe('scenario package architecture', () => {
         const source = fs.readFileSync(file, 'utf8');
         assert.equal(source.includes('@/lib/scenarios'), false, rel);
         assert.equal(source.includes('lib/scenarios/'), false, rel);
-        if (source.includes('legacy/normalize-legacy-draft-scenario')) {
-          const allowed =
-            LEGACY_IMPORTERS.has(rel) ||
-            (rel.startsWith('modules/scenarios/') && rel.endsWith('/index.ts'));
-          assert.equal(allowed, true, rel);
-        }
+        assert.equal(
+          source.includes('legacy/normalize-legacy-draft-scenario'),
+          false,
+          `${rel} must not reference removed legacy draft normalizer`
+        );
       }
     }
   });
@@ -230,7 +221,7 @@ describe('scenario package architecture', () => {
     for (const name of fs.readdirSync(SCENARIOS_DIR)) {
       const full = path.join(SCENARIOS_DIR, name);
       if (fs.statSync(full).isDirectory()) {
-        assert.ok(SKIP_DIRS.has(name) || packages().includes(name), name);
+        assert.ok(packages().includes(name), name);
         continue;
       }
       assert.ok(ROOT_FILES.has(name), name);

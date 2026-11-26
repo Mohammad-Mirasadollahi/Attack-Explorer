@@ -60,11 +60,21 @@ Every major section, stage card, and numbered step clause in the DOM **must** ex
 | `#forensic-fact-sheet` | Forensic Fact Sheet section on `/scenarios/[id]` | `/scenarios/log4shell-dfir#forensic-fact-sheet` |
 | `#kill-chain-stages` / `#stage-N` | Stage `N` breakdown card on `/scenarios/[id]` | `/scenarios/log4shell-dfir#stage-2` |
 
+### 3.3 Clean-Slate Redesign SEO Transition Policy (`MOD-17 §2.3`)
+
+During the Phase 1 Clean-Slate Purge (`MOD-17`), the 187 legacy templated scenarios are removed from `ATTACK_SCENARIOS` while `#001 process-hollowing` remains live as the Golden Benchmark, and each scenario is rebuilt and re-published one-by-one in exact Sidebar order:
+
+1. **Zero Orphan Index Entries**: Immediately upon executing the Phase 1 Purge, regenerate `/sitemap.xml`, `/public/llms.txt`, and `/public/llms-full.txt` from the active live `ATTACK_SCENARIOS` registry so neither search crawlers nor AI agents crawl deleted templated slugs.
+2. **Pre-Index vs. Publicly Indexed Handling**:
+   - If the domain has not yet been publicly indexed, unpublished `/scenarios/<id>` slugs return standard `404` (`notFound()`) until their bespoke episode ships.
+   - If any legacy `/scenarios/<id>` URLs are already indexed in Google Search Console, serve a clean `410 Gone` or a `noindex, follow` "Undergoing Bespoke Studio Redesign" redirect/stub pointing to `/` until that slug is rebuilt, and avoid soft-404 thin pages.
+3. **One-by-One Re-Indexing on Episode Completion**: As each rebuilt scenario passes `MOD-17 §4.5` Director's Review, atomically re-register it in `ATTACK_SCENARIOS`, regenerate `/public/llms-full.txt` and `/public/llms.txt`, update `CANONICAL_CONTENT_LAST_MODIFIED` / `LAST_MODIFIED_DATE`, and ping `IndexNow`. All 564 original primary source URLs remain permanently preserved in `/docs/redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md`.
+
 ---
 
 ## 4. Verification Checklist (`MOD-06`)
 
-- [ ] Does `/sitemap.xml` include `https://attackexplorer.org/scenarios/<id>`?
+- [ ] Does `/sitemap.xml` match 100% of live published scenarios in `ATTACK_SCENARIOS` (and zero purged/unbuilt slugs)?
 - [ ] Does `buildScenarioJsonLd(scenario)` emit valid `TechArticle`, `HowTo`, and 4-level `BreadcrumbList` schemas?
-- [ ] Has `/public/llms-full.txt` been regenerated to include the new scenario?
+- [ ] Have `/public/llms-full.txt` and `/public/llms.txt` been regenerated to match the active live scenario set?
 - [ ] Does navigating to any step, section, or clause update `window.location.search` and `window.location.hash` via `serializeWorkbenchUrlState`?

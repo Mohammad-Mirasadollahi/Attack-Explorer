@@ -1,8 +1,8 @@
 # SVG + GSAP Technical Clip — Silent Lecture Standard (`MOD-14`)
 
-> **Module ID**: `MOD-14` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
-> **Scope**: Cinematic technical clips under `/components/technical-clip/**` (including all 14 domain kinetic engines in `MalwareTechnicalClipRenderer.tsx` and `DomainKineticVisualizers.tsx`), scenario 2D blueprint compilers under `/lib/scenario-2d-blueprints/**` and `/lib/malware-2d-blueprints/**`, and the section gate in `/lib/section-technical-clip-registry.ts`.  
-> **Status**: Mandatory Permanent Standard across all 188 scenarios · **Reference of the method** (not a stencil): Process Hollowing clips · **Enforced By**: `/lib/technical-clips.test.ts`. Do not copy a reference film’s cast into another section.
+> **Module ID**: `MOD-14` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Supreme Production Workflow**: [`MOD-17`](./17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
+> **Scope**: Bespoke SVG + GSAP silent-lecture technical clips under `/components/technical-clip/clips/**` (or per-scenario clip modules), shared player chrome in `AnimeClipStage.tsx` / `clipPace.ts`, and section registration in `/lib/section-technical-clip-registry.ts`. *(Deprecated legacy generic engines under `MalwareTechnicalClipRenderer.tsx`, `DomainKineticVisualizers.tsx`, `/lib/scenario-2d-blueprints/**`, and `/lib/malware-2d-blueprints/**` are scheduled for Phase 1 Clean-Slate removal per `MOD-17 §2.2`.)*  
+> **Status**: Mandatory Permanent Standard for every bespoke episode rebuilt under `MOD-17` · **Reference of the method** (not a stencil): `#001 process-hollowing` clips · **Enforced By**: `/lib/technical-clips.test.ts` & `MOD-17 §4.5` Director's Review. Do not copy a reference film's cast into another section.
 
 ---
 

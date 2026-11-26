@@ -1,23 +1,5 @@
 import type { StoryTechnicalMapping } from '@/modules/scenarios/contracts';
-import { MALWARE_INMEMORY_EVASION_3D_REGISTRY } from '@/lib/section-3d-registries/malware-inmemory-evasion';
-import { MALWARE_SUPPLYCHAIN_HIJACK_3D_REGISTRY } from '@/lib/section-3d-registries/malware-supplychain-hijack';
-import { MALWARE_KERNEL_FIRMWARE_3D_REGISTRY } from '@/lib/section-3d-registries/malware-kernel-firmware';
-import { MALWARE_PERSISTENCE_SERVICES_3D_REGISTRY } from '@/lib/section-3d-registries/malware-persistence-services';
-import { MALWARE_CREDENTIAL_LINUX_3D_REGISTRY } from '@/lib/section-3d-registries/malware-credential-linux';
-import { MALWARE_DFIR_ARTIFACTS_3D_REGISTRY } from '@/lib/section-3d-registries/malware-dfir-artifacts';
-import { NETWORK_WEB_3D_REGISTRY } from '@/lib/section-3d-registries/network-web';
-import { ACTIVE_DIRECTORY_3D_REGISTRY } from '@/lib/section-3d-registries/active-directory';
-import { CLOUD_SAAS_3D_REGISTRY } from '@/lib/section-3d-registries/cloud-saas';
-import { RANSOMWARE_EXTORTION_3D_REGISTRY } from '@/lib/section-3d-registries/ransomware-extortion';
-import { AI_MLOPS_3D_REGISTRY } from '@/lib/section-3d-registries/ai-mlops';
-import { ZERO_DAY_APPLIANCES_3D_REGISTRY } from '@/lib/section-3d-registries/zero-day-appliances';
-import { KERNEL_FIRMWARE_BYOVD_3D_REGISTRY } from '@/lib/section-3d-registries/kernel-firmware-byovd';
-import { SUPPLY_CHAIN_CICD_3D_REGISTRY } from '@/lib/section-3d-registries/supply-chain-cicd';
-import { CONTAINERS_KUBERNETES_3D_REGISTRY } from '@/lib/section-3d-registries/containers-kubernetes';
-import { DATABASE_PLATFORMS_3D_REGISTRY } from '@/lib/section-3d-registries/database-platforms';
-import { ICS_OT_SCADA_3D_REGISTRY } from '@/lib/section-3d-registries/ics-ot-scada';
-import { MOBILE_TELECOM_3D_REGISTRY } from '@/lib/section-3d-registries/mobile-telecom';
-import { getScenarioRealWorldStory } from './scenario-real-world-stories';
+import { AMSI_REFLECTIVE_DLL_SECTION_SCENES } from './amsi-section-3d-descriptors';
 
 export type { StoryTechnicalMapping };
 
@@ -38,6 +20,12 @@ export type Anime3DSceneKind =
   | 'cockpit-gps-hijack'
   | 'firewall-c2-bridge'
   | 'memory-vad-diff'
+  | 'amsi-xray-briefing'
+  | 'amsi-step1-lookup'
+  | 'amsi-step2-protect'
+  | 'amsi-step3-patch'
+  | 'amsi-step4-reflective'
+  | 'amsi-memory-diff'
   | (string & {});
 
 export type StandardCameraPresetId = 'DIRECTOR' | 'VIEW_A' | 'VIEW_B' | 'VIEW_C';
@@ -906,24 +894,7 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
   Partial<Record<Section3DKey, Section3DDescriptor>>
 > = {
   'process-hollowing': PROCESS_HOLLOWING_SECTION_SCENES,
-  ...MALWARE_INMEMORY_EVASION_3D_REGISTRY,
-  ...MALWARE_SUPPLYCHAIN_HIJACK_3D_REGISTRY,
-  ...MALWARE_KERNEL_FIRMWARE_3D_REGISTRY,
-  ...MALWARE_PERSISTENCE_SERVICES_3D_REGISTRY,
-  ...MALWARE_CREDENTIAL_LINUX_3D_REGISTRY,
-  ...MALWARE_DFIR_ARTIFACTS_3D_REGISTRY,
-  ...NETWORK_WEB_3D_REGISTRY,
-  ...ACTIVE_DIRECTORY_3D_REGISTRY,
-  ...CLOUD_SAAS_3D_REGISTRY,
-  ...RANSOMWARE_EXTORTION_3D_REGISTRY,
-  ...AI_MLOPS_3D_REGISTRY,
-  ...ZERO_DAY_APPLIANCES_3D_REGISTRY,
-  ...KERNEL_FIRMWARE_BYOVD_3D_REGISTRY,
-  ...SUPPLY_CHAIN_CICD_3D_REGISTRY,
-  ...CONTAINERS_KUBERNETES_3D_REGISTRY,
-  ...DATABASE_PLATFORMS_3D_REGISTRY,
-  ...ICS_OT_SCADA_3D_REGISTRY,
-  ...MOBILE_TELECOM_3D_REGISTRY,
+  'amsi-reflective-dll': AMSI_REFLECTIVE_DLL_SECTION_SCENES,
 };
 
 /**
@@ -965,117 +936,11 @@ export function findTechnicalJargonInStory(text: string): string[] {
   return hits;
 }
 
-const _section3DDescriptorCache = new Map<string, Section3DDescriptor>();
-
-function applyRealWorldStoryOverlay(
-  base: Section3DDescriptor
-): Section3DDescriptor {
-  if (base.scenarioId === 'process-hollowing') return base;
-  const rw = getScenarioRealWorldStory(base.scenarioId);
-  if (!rw) return base;
-
-  const updatedCameras: Section3DDescriptor['cameraPresets'] = [
-    base.cameraPresets[0],
-    { ...base.cameraPresets[1], label: rw.cameraLabels[0] },
-    { ...base.cameraPresets[2], label: rw.cameraLabels[1] },
-    { ...base.cameraPresets[3], label: rw.cameraLabels[2] },
-  ];
-
-  const actLabels = ['1. Entry', '2. Bypass', '3. Audit', '4. Impact', '5. Detect', '6. Verify'];
-  const memLabels = ['1. Clean Disk', '2. X-Ray Scan', '3. Diff Proof'];
-
-  if (base.sectionKey === 'briefing') {
-    return {
-      ...base,
-      storyCue: rw.briefing.storyAnalogy,
-      storyMappings: rw.briefing.storyMappings,
-      callouts: [
-        { ...base.callouts[0], title: rw.calloutTitles[0] },
-        { ...base.callouts[1], title: rw.calloutTitles[1] },
-      ],
-      phases: base.phases.map((p, idx) => ({
-        ...p,
-        shortLabel: actLabels[idx] ?? `${idx + 1}. Beat`,
-        storyExcerpt:
-          rw.briefing.phaseExcerpts[idx % rw.briefing.phaseExcerpts.length],
-      })),
-      cameraPresets: updatedCameras,
-    };
-  }
-
-  if (base.sectionKey === 'memory-forensics') {
-    const mem = rw.memoryForensics;
-    const fallbackCue = `Inside the ${rw.placeName.toLowerCase()}, place the untouched original record beside the live altered version under a bright comparison lamp to spot the hidden swap.`;
-    const fallbackExcerpts: [string, string, string] = [
-      `On the left sits the untouched original record inside the ${rw.placeName.toLowerCase()}.`,
-      `A comparison lamp sweeps across both sides inside the ${rw.placeName.toLowerCase()}, exposing the swapped interior.`,
-      `Even though the outer label matches, the side-by-side inspection proves the contents were replaced.`,
-    ];
-    return {
-      ...base,
-      storyCue: mem?.storyCue ?? fallbackCue,
-      storyMappings: mem?.storyMappings ?? rw.briefing.storyMappings,
-      callouts: [
-        {
-          ...base.callouts[0],
-          title: mem?.calloutTitles[0] ?? `Original ${rw.calloutTitles[0]}`,
-        },
-        {
-          ...base.callouts[1],
-          title: mem?.calloutTitles[1] ?? `Altered ${rw.calloutTitles[1]}`,
-        },
-      ],
-      phases: base.phases.map((p, idx) => ({
-        ...p,
-        shortLabel: memLabels[idx] ?? `${idx + 1}. Inspect`,
-        storyExcerpt: (mem?.phaseExcerpts ?? fallbackExcerpts)[idx % 3],
-      })),
-      cameraPresets: updatedCameras,
-    };
-  }
-
-  const stepMatch = /^step-(\d+)$/.exec(base.sectionKey);
-  if (stepMatch) {
-    const stepNum = Number(stepMatch[1]);
-    const rwStep = rw.steps[stepNum] ?? rw.steps[1];
-    if (rwStep) {
-      return {
-        ...base,
-        storyCue: rwStep.storyAnalogy,
-        storyMappings: rwStep.storyMappings,
-        callouts: [
-          { ...base.callouts[0], title: rwStep.calloutTitles[0] },
-          { ...base.callouts[1], title: rwStep.calloutTitles[1] },
-        ],
-        phases: base.phases.map((p, idx) => ({
-          ...p,
-          shortLabel: actLabels[idx] ?? `${idx + 1}. Action`,
-          storyExcerpt:
-            rwStep.phaseExcerpts[idx % rwStep.phaseExcerpts.length],
-        })),
-        cameraPresets: updatedCameras,
-      };
-    }
-  }
-
-  return {
-    ...base,
-    cameraPresets: updatedCameras,
-  };
-}
-
 export function getSection3DDescriptor(
   scenarioId: string,
   sectionKey: Section3DKey
 ): Section3DDescriptor | null {
-  const base = SCENARIO_SECTION_3D_REGISTRY[scenarioId]?.[sectionKey] ?? null;
-  if (!base) return null;
-  const cacheKey = `${scenarioId}::${sectionKey}`;
-  const cached = _section3DDescriptorCache.get(cacheKey);
-  if (cached) return cached;
-  const overlaid = applyRealWorldStoryOverlay(base);
-  _section3DDescriptorCache.set(cacheKey, overlaid);
-  return overlaid;
+  return SCENARIO_SECTION_3D_REGISTRY[scenarioId]?.[sectionKey] ?? null;
 }
 
 export function hasSection3DScene(

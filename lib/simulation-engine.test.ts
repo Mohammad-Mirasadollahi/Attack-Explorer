@@ -19,75 +19,28 @@ import {
   NETWORK_ZONE_COLUMNS } from './sketch-zones-and-drilldown';
 
 describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & LogInspector', () => {
-  it('filterScenarios filters by category and search query accurately across all 188 scenarios organized into 13 specialized categories', () => {
+  it('filterScenarios filters by category and search query accurately across live bespoke scenarios', () => {
     const all = filterScenarios(ATTACK_SCENARIOS, 'ALL', '');
-    assert.equal(all.length, 188);
-
-    const zeroDayAppliances = filterScenarios(
-      ATTACK_SCENARIOS,
-      'ZERO_DAY_APPLIANCES',
-      ''
-    );
-    assert.ok(zeroDayAppliances.length >= 9);
-    assert.ok(
-      zeroDayAppliances.some(
-        (s) => s.id === 'vulncheck-cwp-preauth-module-dispatch-rce'
-      )
-    );
-
-    const icsOt = filterScenarios(ATTACK_SCENARIOS, 'ICS_OT_SCADA', '');
-    assert.ok(icsOt.length >= 5);
-
-    const mobileTelecom = filterScenarios(
-      ATTACK_SCENARIOS,
-      'MOBILE_TELECOM_SPYWARE',
-      ''
-    );
-    assert.ok(mobileTelecom.length >= 5);
-
-    const databasePlatforms = filterScenarios(
-      ATTACK_SCENARIOS,
-      'DATABASE_DATA_PLATFORMS',
-      ''
-    );
-    assert.ok(databasePlatforms.length >= 5);
-
-    const aiLlmMlops = filterScenarios(
-      ATTACK_SCENARIOS,
-      'AI_LLM_MLOPS_SECURITY',
-      ''
-    );
-    assert.ok(aiLlmMlops.length >= 6);
+    assert.equal(all.length, ATTACK_SCENARIOS.length);
+    assert.ok(all.length >= 1);
 
     const malwareOnly = filterScenarios(ATTACK_SCENARIOS, 'MALWARE', '');
-    assert.ok(malwareOnly.length >= 25);
-
-    const cloudSaas = filterScenarios(ATTACK_SCENARIOS, 'CLOUD_SAAS', '');
-    assert.ok(cloudSaas.length >= 25);
-
-    const containersK8s = filterScenarios(
-      ATTACK_SCENARIOS,
-      'CONTAINERS_KUBERNETES',
-      ''
-    );
-    assert.ok(containersK8s.length >= 13);
+    assert.ok(malwareOnly.length >= 1);
+    assert.ok(malwareOnly.some((s) => s.id === 'process-hollowing'));
 
     const byMitre = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'T1055.012');
     assert.equal(byMitre.length, 1);
     assert.equal(byMitre[0].id, 'process-hollowing');
 
-    const elasticScenarios = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'Elastic Security Labs');
-    assert.ok(elasticScenarios.length >= 2);
+    const byKeyword = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'svchost');
+    assert.ok(byKeyword.some((s) => s.id === 'process-hollowing'));
 
-    const unit42Scenarios = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'Unit 42');
-    assert.ok(unit42Scenarios.length >= 3);
-
-    const vulncheckCwp = filterScenarios(ATTACK_SCENARIOS, 'ALL', 'CVE-2026-73695');
-    assert.equal(vulncheckCwp.length, 1);
-    assert.equal(
-      vulncheckCwp[0].id,
-      'vulncheck-cwp-preauth-module-dispatch-rce'
+    const emptySearch = filterScenarios(
+      ATTACK_SCENARIOS,
+      'ALL',
+      'nonexistent-query-token-xyz'
     );
+    assert.equal(emptySearch.length, 0);
   });
 
   it('stepForward and stepBackward bound stage indices properly', () => {
@@ -170,16 +123,13 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('queryAttackLibrary maps scenarios to MITRE ATT&CK categories and filters by tactic phase', () => {
     const fullLib = queryAttackLibrary({}, ATTACK_SCENARIOS);
-    assert.equal(fullLib.totalCount, 188);
+    assert.equal(fullLib.totalCount, ATTACK_SCENARIOS.length);
     assert.equal(fullLib.mitreCategories.length, 7);
 
-    // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing & AMSI Bypass
+    // Phase 4 (Defense Evasion / Process Injection) should include Process Hollowing
     const phase4 = queryAttackLibrary({ mitrePhase: 4 }, ATTACK_SCENARIOS);
     assert.ok(
       phase4.items.some((item) => item.scenarioId === 'process-hollowing')
-    );
-    assert.ok(
-      phase4.items.some((item) => item.scenarioId === 'amsi-reflective-dll')
     );
 
     // Search by log source "Sysmon EID 25"
@@ -214,26 +164,26 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
 
   it('Whiteboard schematic builds scenario-specific non-collinear 2D topologies, explicit network devices, and expandable internal visual sub-boards', () => {
     const hollowScenario = ATTACK_SCENARIOS[0]; // process-hollowing
-    const log4jScenario = ATTACK_SCENARIOS[1]; // log4shell-dfir
-    const krbScenario = ATTACK_SCENARIOS[3]; // ad-kerberoasting
-    const dnsScenario = ATTACK_SCENARIOS[4]; // dns-tunneling-exfil
+    const webFixture = { ...hollowScenario, id: 'log4shell-dfir', category: 'NETWORK_WEB' as const };
+    const adFixture = { ...hollowScenario, id: 'ad-kerberoasting', category: 'ACTIVE_DIRECTORY' as const };
+    const dnsFixture = { ...hollowScenario, id: 'dns-tunneling-exfil', category: 'EXFILTRATION' as const };
 
     assert.equal(NETWORK_ZONE_COLUMNS.length, 4);
 
     const hollowSchematic = buildWhiteboardSchematic(hollowScenario, 1);
-    const log4jSchematic = buildWhiteboardSchematic(log4jScenario, 1);
-    const krbSchematic = buildWhiteboardSchematic(krbScenario, 1);
-    const dnsSchematic = buildWhiteboardSchematic(dnsScenario, 1);
+    const webSchematic = buildWhiteboardSchematic(webFixture, 1);
+    const adSchematic = buildWhiteboardSchematic(adFixture, 1);
+    const dnsSchematic = buildWhiteboardSchematic(dnsFixture, 1);
 
     // 1. Verify scenario-specific network device icons & distinct 2D zone/node layouts
     const hollowNetDev = hollowSchematic.nodes.find((n) => n.isNetworkDevice)!;
-    const log4jNetDev = log4jSchematic.nodes.find((n) => n.isNetworkDevice)!;
-    const krbNetDev = krbSchematic.nodes.find((n) => n.isNetworkDevice)!;
+    const webNetDev = webSchematic.nodes.find((n) => n.isNetworkDevice)!;
+    const adNetDev = adSchematic.nodes.find((n) => n.isNetworkDevice)!;
     const dnsNetDev = dnsSchematic.nodes.find((n) => n.isNetworkDevice)!;
 
     assert.equal(hollowNetDev.iconType, 'FIREWALL_ROUTER');
-    assert.equal(log4jNetDev.iconType, 'WAF_REVERSE_PROXY');
-    assert.equal(krbNetDev.iconType, 'CORE_SWITCH');
+    assert.equal(webNetDev.iconType, 'WAF_REVERSE_PROXY');
+    assert.equal(adNetDev.iconType, 'CORE_SWITCH');
     assert.equal(dnsNetDev.iconType, 'DNS_RESOLVER');
 
     // Non-collinear 2D zones (yStart varies across zones within a scenario, and differs across scenarios)
@@ -244,7 +194,7 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     );
     assert.notDeepEqual(
       hollowSchematic.nodes.map((n) => `${n.wx},${n.wy}`),
-      log4jSchematic.nodes.map((n) => `${n.wx},${n.wy}`),
+      webSchematic.nodes.map((n) => `${n.wx},${n.wy}`),
       'Different scenarios must have distinct 2D node placements'
     );
     assert.ok(hollowSchematic.backboneLinks.length >= 3);
@@ -431,41 +381,62 @@ describe('Attack Explorer Simulation Engine, AttackLibrary, AttackVisualizer & L
     assert.equal(clampPanelDimension(640, 240, 560), 560);
     assert.equal(clampPanelDimension(360.4, 240, 560), 360);
 
-    // 2. Sorting by STAGES_DESC vs STAGES_ASC vs NAME_ASC vs MITRE_CODE
-    const byStagesDesc = sortScenarios(ATTACK_SCENARIOS, 'STAGES_DESC');
+    // 2. Sorting by STAGES_DESC vs STAGES_ASC vs NAME_ASC vs MITRE_CODE (using multi-scenario fixture list so sorting stays verified at any catalog size)
+    const baseScenario = ATTACK_SCENARIOS[0];
+    const fixtureScenarios = [
+      baseScenario,
+      {
+        ...baseScenario,
+        id: 'fixture-alpha-web',
+        name: 'Alpha Web Injection Fixture',
+        code: 'T1190',
+        category: 'NETWORK_WEB' as const,
+        stages: baseScenario.stages.slice(0, 2),
+      },
+      {
+        ...baseScenario,
+        id: 'fixture-zeta-cloud',
+        name: 'Zeta Cloud Persistence Fixture',
+        code: 'T1098',
+        category: 'CLOUD_SAAS' as const,
+        stages: baseScenario.stages.slice(0, 3),
+      },
+    ];
+
+    const byStagesDesc = sortScenarios(fixtureScenarios, 'STAGES_DESC');
     assert.ok(
       byStagesDesc[0].stages.length >=
         byStagesDesc[byStagesDesc.length - 1].stages.length
     );
 
-    const byStagesAsc = sortScenarios(ATTACK_SCENARIOS, 'STAGES_ASC');
+    const byStagesAsc = sortScenarios(fixtureScenarios, 'STAGES_ASC');
     assert.ok(
       byStagesAsc[0].stages.length <=
         byStagesAsc[byStagesAsc.length - 1].stages.length
     );
 
-    const byName = sortScenarios(ATTACK_SCENARIOS, 'NAME_ASC');
+    const byName = sortScenarios(fixtureScenarios, 'NAME_ASC');
     assert.ok(byName[0].name.localeCompare(byName[1].name) <= 0);
 
-    const byMitre = sortScenarios(ATTACK_SCENARIOS, 'MITRE_CODE');
+    const byMitre = sortScenarios(fixtureScenarios, 'MITRE_CODE');
     assert.ok(byMitre[0].code.localeCompare(byMitre[1].code) <= 0);
 
     // 3. Categorize by CATEGORY, MITRE_PHASE, and FLAT
-    const catGroups = categorizeScenarios(ATTACK_SCENARIOS, 'CATEGORY');
+    const catGroups = categorizeScenarios(fixtureScenarios, 'CATEGORY');
     assert.ok(catGroups.length >= 3);
     const totalInCatGroups = catGroups.reduce(
       (acc, g) => acc + g.scenarios.length,
       0
     );
-    assert.equal(totalInCatGroups, ATTACK_SCENARIOS.length);
+    assert.equal(totalInCatGroups, fixtureScenarios.length);
 
-    const tacticGroups = categorizeScenarios(ATTACK_SCENARIOS, 'MITRE_PHASE');
-    assert.ok(tacticGroups.length >= 2);
+    const tacticGroups = categorizeScenarios(fixtureScenarios, 'MITRE_PHASE');
+    assert.ok(tacticGroups.length >= 1);
     const totalInTacticGroups = tacticGroups.reduce(
       (acc, g) => acc + g.scenarios.length,
       0
     );
-    assert.equal(totalInTacticGroups, ATTACK_SCENARIOS.length);
+    assert.equal(totalInTacticGroups, fixtureScenarios.length);
 
     const flatGroups = categorizeScenarios(ATTACK_SCENARIOS, 'FLAT');
     assert.equal(flatGroups.length, 1);

@@ -30,10 +30,51 @@ const PROCESS_HOLLOWING_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.Comp
   'memory-forensics': dynamic(() => import('./clips/MemoryDiffClip'), { ssr: false, loading: () => <ClipLoading /> }),
 };
 
-const MalwareTechnicalClipSlot = dynamic(
-  () => import('./malware-clips/MalwareTechnicalClipSlot'),
-  { ssr: false, loading: () => <ClipLoading /> }
-);
+const AMSI_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/amsi-reflective-dll/AmsiStep1LookupClip').then(
+        (m) => m.AmsiStep1LookupClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/amsi-reflective-dll/AmsiStep2VirtualProtectClip').then(
+        (m) => m.AmsiStep2VirtualProtectClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/amsi-reflective-dll/AmsiStep3PatchPrologueClip').then(
+        (m) => m.AmsiStep3PatchPrologueClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/amsi-reflective-dll/AmsiStep4ReflectiveLoadClip').then(
+        (m) => m.AmsiStep4ReflectiveLoadClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/amsi-reflective-dll/AmsiMemoryDiffClip').then(
+        (m) => m.AmsiMemoryDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const SCENARIO_TECHNICAL_CLIPS_BY_ID: Record<
+  string,
+  Partial<Record<Section3DKey, React.ComponentType>>
+> = {
+  'process-hollowing': PROCESS_HOLLOWING_CLIP_BY_SECTION,
+  'amsi-reflective-dll': AMSI_CLIP_BY_SECTION,
+};
 
 export interface TechnicalClipEmbedProps {
   scenarioId: string;
@@ -53,11 +94,8 @@ export function TechnicalClipEmbed({
   const { ref, active, activate } = useHeavyMediaSlot('clip');
   if (!hasTechnicalClip(scenarioId, sectionKey)) return null;
 
-  const isProcessHollowing = scenarioId === 'process-hollowing';
-  const ProcessHollowingClip = isProcessHollowing
-    ? PROCESS_HOLLOWING_CLIP_BY_SECTION[sectionKey]
-    : null;
-  if (isProcessHollowing && !ProcessHollowingClip) return null;
+  const ClipComponent = SCENARIO_TECHNICAL_CLIPS_BY_ID[scenarioId]?.[sectionKey];
+  if (!ClipComponent) return null;
 
   return (
     <div
@@ -67,15 +105,7 @@ export function TechnicalClipEmbed({
       data-clip-active={active ? 'true' : 'false'}
     >
       {active ? (
-        isProcessHollowing && ProcessHollowingClip ? (
-          <ProcessHollowingClip />
-        ) : (
-          <MalwareTechnicalClipSlot
-            key={`${scenarioId}:${sectionKey}`}
-            scenarioId={scenarioId}
-            sectionKey={sectionKey}
-          />
-        )
+        <ClipComponent />
       ) : (
         <button
           type="button"

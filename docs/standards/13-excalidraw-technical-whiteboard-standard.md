@@ -1,8 +1,8 @@
 # Excalidraw Technical Whiteboard Standard (`MOD-13`)
 
-> **Module ID**: `MOD-13` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
-> **Scope**: Every scenario technical teaching board under `/modules/scenarios/<id>/excalidraw/**`, shared multi-topology builders under `/lib/excalidraw-boards/**` and `/lib/scenario-2d-blueprints/**`, the shared embed `/components/excalidraw/**`, and registry wiring in `/lib/section-excalidraw-registry.ts`.  
-> **Status**: Mandatory Permanent Standard across all 188 scenarios · **Reference implementation**: `/modules/scenarios/process-hollowing/excalidraw/` and `/lib/excalidraw-boards/board-primitives.ts` (8 topologies) · **Enforced By**: `/lib/technical-clips.test.ts`.
+> **Module ID**: `MOD-13` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Supreme Production Workflow**: [`MOD-17`](./17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
+> **Scope**: Bespoke per-scenario technical chalk whiteboards under `/modules/scenarios/<id>/excalidraw/**`, the shared render/tooltip embed `/components/excalidraw/**`, and registry wiring in `/lib/section-excalidraw-registry.ts`. *(Deprecated legacy auto-compiled builders under `/lib/excalidraw-boards/**` and `/lib/scenario-2d-blueprints/**` are scheduled for Phase 1 Clean-Slate removal per `MOD-17 §2.2`.)*  
+> **Status**: Mandatory Permanent Standard for every bespoke episode rebuilt under `MOD-17` · **Reference implementation**: `/modules/scenarios/process-hollowing/excalidraw/` · **Enforced By**: `/lib/technical-clips.test.ts` & `MOD-17 §4.5` Director's Review.
 
 ---
 

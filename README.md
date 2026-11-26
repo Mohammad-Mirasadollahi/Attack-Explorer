@@ -65,6 +65,10 @@ GET /api/attacks?category=ALL&mitrePhase=ALL&severity=ALL&search=
 
 ## Docs
 
+- [Modular Engineering & Documentation Standards Index (`MOD-00` .. `MOD-17`)](./docs/standards/README.md)
+- [Bespoke Studio Redesign Pipeline & Clean-Slate Rebuild Standard (`MOD-17`)](./docs/standards/17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md)
+- [Master 188-Scenario Clean-Slate Redesign Backlog (Exact Sidebar Order)](./docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md)
+- [Preserved Primary Source Archive (188 Scenarios · 564 Authoritative URLs)](./docs/redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md)
 - [Authoritative Analytical Sources, Multi-Source Synthesis Standard & Scenario Reference Index](./docs/analytical-sources-and-references.md)
 - [Mandatory New Scenario & Article Ingestion + SEO / GEO Synchronization Standard](./docs/scenario-ingestion-and-seo-standard.md)
 - [Story-to-Spec 3-Layer Explanation & Context-Aware Inspector Standard](./docs/story-to-spec-explanation-standard.md)

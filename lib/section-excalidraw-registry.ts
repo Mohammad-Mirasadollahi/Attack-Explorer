@@ -7,8 +7,7 @@ import {
   type TechnicalBoardDescriptor,
   type TechnicalBoardSkeleton,
 } from '@/modules/scenarios/process-hollowing/excalidraw';
-import { MALWARE_EXCALIDRAW_BOARDS } from '@/lib/malware-2d-blueprints';
-import { SCENARIO_2D_EXCALIDRAW_BOARDS } from '@/lib/scenario-2d-blueprints';
+import { AMSI_REFLECTIVE_DLL_TECHNICAL_BOARDS } from '@/modules/scenarios/amsi-reflective-dll/excalidraw';
 
 export type {
   BoardTooltip,
@@ -23,8 +22,7 @@ const SCENARIO_TECHNICAL_BOARDS: Record<
   Partial<Record<Section3DKey, TechnicalBoardDescriptor>>
 > = {
   'process-hollowing': PROCESS_HOLLOWING_TECHNICAL_BOARDS,
-  ...MALWARE_EXCALIDRAW_BOARDS,
-  ...SCENARIO_2D_EXCALIDRAW_BOARDS,
+  'amsi-reflective-dll': AMSI_REFLECTIVE_DLL_TECHNICAL_BOARDS,
 };
 
 export function hasTechnicalWhiteboard(

@@ -42,7 +42,7 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
     assert.deepEqual(wildcardRule.disallow, ['/api/']);
   });
 
-  it('generates comprehensive XML sitemap covering /, /about, /sources, and all 85+ scenarios (Module 02)', () => {
+  it('generates comprehensive XML sitemap covering /, /about, /sources, and all live bespoke scenarios (Module 02)', () => {
     const entries = sitemap();
     const baseUrl = resolveSiteUrl();
     assert.ok(
@@ -54,7 +54,12 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
     assert.ok(urls.some((u) => u.endsWith('/about')));
     assert.ok(urls.some((u) => u.endsWith('/sources')));
     assert.ok(urls.some((u) => u.endsWith('/scenarios/process-hollowing')));
-    assert.ok(urls.some((u) => u.endsWith('/scenarios/log4shell-dfir')));
+    for (const scenario of ATTACK_SCENARIOS) {
+      assert.ok(
+        urls.some((u) => u.endsWith(`/scenarios/${scenario.id}`)),
+        `Expected /scenarios/${scenario.id} in XML sitemap`
+      );
+    }
   });
 
   it('generates valid Web App Manifest (Module 05)', () => {
@@ -212,129 +217,55 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
     );
   });
 
-  it('indexes all 10 new official Ransomware scenarios, the PikeRed CLR Profiler scenario + URL, and 5 famous recent Supply Chain scenarios across sitemap, JSON-LD, and agent Markdown', () => {
-    const newRansomwareIds = [
-      'alphv-blackcat-sphynx-rust-impacket-exmatter',
-      'royal-blacksuit-ransomware-chacha20-restartmanager',
-      'ransomhub-edrkiller-tdsskiller-golocks',
-      'medusa-ransomware-gaze-abyss-pdqdeploy',
-      'qilin-agenda-rust-chrome-cred-harvester-esxi',
-      'hunters-international-hive-rust-wsus-sharpwmi',
-      'inc-ransom-lynx-citrix-netscaler-wmic-mega',
-      'cactus-ransomware-qlik-sense-ssh-batch-unpacker',
-      'eightbase-phobos-smoke-loader-process-hacker',
-      'cl0p-truebot-flawedgrace-sdbbot-ransomware',
-    ];
-    const newSupplyChainIds = [
-      'rspack-solana-web3js-npm-supply-chain-2024',
-      'lottie-player-npm-ace-supply-chain-2024',
-      'circleci-oauth-github-token-rotation-breach',
-      'jetbrains-teamcity-cve-2024-27198-supply-chain-build-poisoning',
-      'pypi-pytorch-torchtriton-dependency-confusion-supply-chain',
-    ];
-    const pikeredId = 'pikered-clr-profiler-trusted-binary-loader-chain';
-    const pikeredUrl =
-      'https://www.pikered.com/en/learn/abusing-the-clr-profiler-a-trusted-binary-loader-chain-for-initial-access/';
-
+  it('indexes every live bespoke scenario across sitemap, JSON-LD, and agent Markdown while excluding unbuilt backlog slugs (MOD-17 §2.3)', () => {
     const sitemapUrls = sitemap().map((e) => e.url);
+    const llmsFullTxt = fs.readFileSync(
+      path.join(process.cwd(), 'public/llms-full.txt'),
+      'utf8'
+    );
+    const llmsTxt = fs.readFileSync(
+      path.join(process.cwd(), 'public/llms.txt'),
+      'utf8'
+    );
 
-    for (const id of [...newRansomwareIds, ...newSupplyChainIds, pikeredId]) {
-      const scenario = ATTACK_SCENARIOS.find((s) => s.id === id);
-      assert.ok(scenario, `Expected scenario ${id} in ATTACK_SCENARIOS`);
+    assert.ok(ATTACK_SCENARIOS.length >= 1);
+    for (const scenario of ATTACK_SCENARIOS) {
       assert.ok(
-        sitemapUrls.some((u) => u.endsWith(`/scenarios/${id}`)),
-        `Expected /scenarios/${id} in XML sitemap`
+        sitemapUrls.some((u) => u.endsWith(`/scenarios/${scenario.id}`)),
+        `Expected /scenarios/${scenario.id} in XML sitemap`
       );
       const jsonLd = buildScenarioJsonLd(scenario, 'https://attackexplorer.org');
       assert.equal(jsonLd['@graph'][0]['@type'], 'TechArticle');
       assert.equal(jsonLd['@graph'][1]['@type'], 'HowTo');
-      assert.equal(jsonLd['@graph'][1].step.length, 3);
-    }
+      assert.equal(jsonLd['@graph'][1].step.length, scenario.stages.length);
 
-    const pikeredScenario = ATTACK_SCENARIOS.find((s) => s.id === pikeredId)!;
-    const pikeredJsonLd = buildScenarioJsonLd(
-      pikeredScenario,
-      'https://attackexplorer.org'
-    );
-    const citations = pikeredJsonLd['@graph'][0].citation;
-    assert.ok(
-      citations.some((c: { url: string }) => c.url === pikeredUrl),
-      'Expected PikeRed CLR Profiler URL in Schema.org TechArticle citation'
-    );
-
-    const pikeredMd = buildAgentMarkdownResponse(
-      `/scenarios/${pikeredId}`,
-      undefined,
-      'https://attackexplorer.org'
-    );
-    assert.ok(pikeredMd.includes(pikeredUrl));
-    assert.ok(pikeredMd.includes('COR_ENABLE_PROFILING'));
-
-    const newCloudSaasIds = [
-      'cloud-midnight-blizzard-oauth-legacy-test-app-audit',
-      'cloud-aws-sts-federation-token-console-signin-audit',
-      'cloud-entra-id-conditional-access-device-code-phishing-audit',
-      'cloud-aws-s3-kms-external-account-encryption-extortion-audit',
-      'cloud-azure-vm-custom-script-extension-managed-identity-audit',
-      'cloud-github-actions-pull-request-target-oidc-token-audit',
-      'cloud-salesforce-connected-app-oauth-bulk-api-export-audit',
-      'cloud-aws-eks-aws-auth-configmap-system-masters-audit',
-      'cloud-gcp-cloud-build-default-service-account-artifact-audit',
-      'cloud-m365-sharepoint-ediscovery-compliance-search-export-audit',
-    ];
-    const newContainerDockerIds = [
-      'docker-engine-unauthenticated-tcp-2375-api-socket-audit',
-      'docker-var-run-docker-sock-mounted-socket-breakout-audit',
-      'docker-buildkit-runc-cache-mount-race-cve-2024-23651',
-      'container-cap-sys-admin-cgroup-release-agent-notify-audit',
-      'container-cap-sys-module-kernel-ko-insmod-load-audit',
-      'k8s-coredns-dns-poisoning-service-account-token-audit',
-      'k8s-mutating-admission-webhook-sidecar-injection-audit',
-      'k8s-daemonset-node-selector-cluster-wide-pod-scheduling-audit',
-      'k8s-ephemeral-debug-container-process-namespace-share-audit',
-      'docker-oci-registry-manifest-layer-poisoning-cosign-audit',
-    ];
-
-    for (const id of newCloudSaasIds) {
-      const scenario = ATTACK_SCENARIOS.find((s) => s.id === id);
-      assert.ok(scenario, `Expected Cloud & SaaS scenario ${id} in ATTACK_SCENARIOS`);
-      assert.equal(scenario.category, 'CLOUD_SAAS');
-      assert.ok(
-        sitemapUrls.some((u) => u.endsWith(`/scenarios/${id}`)),
-        `Expected /scenarios/${id} in XML sitemap`
+      const md = buildAgentMarkdownResponse(
+        `/scenarios/${scenario.id}`,
+        undefined,
+        'https://attackexplorer.org'
       );
+      assert.ok(md.includes(scenario.name));
+      assert.ok(llmsFullTxt.includes(`/scenarios/${scenario.id}`));
+      assert.ok(llmsTxt.includes(`/scenarios/${scenario.id}`));
     }
 
-    for (const id of newContainerDockerIds) {
-      const scenario = ATTACK_SCENARIOS.find((s) => s.id === id);
-      assert.ok(scenario, `Expected Docker/Container scenario ${id} in ATTACK_SCENARIOS`);
-      assert.equal(scenario.category, 'CONTAINERS_KUBERNETES');
-      assert.ok(
-        sitemapUrls.some((u) => u.endsWith(`/scenarios/${id}`)),
-        `Expected /scenarios/${id} in XML sitemap`
+    // Ensure purged factory scenarios are NOT advertised as live URLs until rebuilt bespoke
+    const liveIds = new Set(ATTACK_SCENARIOS.map((s) => s.id));
+    for (const retiredId of [
+      'log4shell-dfir',
+      'ad-kerberoasting',
+      'pikered-clr-profiler-trusted-binary-loader-chain',
+    ]) {
+      if (liveIds.has(retiredId)) continue;
+      assert.equal(
+        sitemapUrls.some((u) => u.endsWith(`/scenarios/${retiredId}`)),
+        false,
+        `Unbuilt scenario /scenarios/${retiredId} must not appear in XML sitemap`
       );
-    }
-
-    const batch8SpecializedExpected: Array<{ id: string; category: string }> = [
-      { id: 'ics-frostygoop-modbus-tcp-district-heating-controller-audit', category: 'ICS_OT_SCADA' },
-      { id: 'ics-stuxnet-step7-s7comm-plc-ob1-ob35-block-injection-audit', category: 'ICS_OT_SCADA' },
-      { id: 'mobile-pegasus-forcedentry-imessage-jbigh2-blastdoor-forensics', category: 'MOBILE_TELECOM_SPYWARE' },
-      { id: 'telecom-salt-typhoon-diameter-5g-http2-sbi-core-network-audit', category: 'MOBILE_TELECOM_SPYWARE' },
-      { id: 'db-snowflake-unc5537-single-factor-auth-data-egress-audit', category: 'DATABASE_DATA_PLATFORMS' },
-      { id: 'db-mongodb-mongobleed-unauthenticated-replication-oplog-audit', category: 'DATABASE_DATA_PLATFORMS' },
-      { id: 'ai-mlflow-unauthenticated-tracking-server-artifact-lfi-cve-2024-2928', category: 'AI_LLM_MLOPS_SECURITY' },
-      { id: 'ai-ollama-vllm-inference-server-model-poisoning-ssrf-audit', category: 'AI_LLM_MLOPS_SECURITY' },
-      { id: 'ivanti-vtm-apache-ofbiz-auth-bypass-cve-2024-7593-audit', category: 'ZERO_DAY_APPLIANCES' },
-      { id: 'versa-director-sdwan-guiclient-jar-upload-cve-2024-39717-audit', category: 'ZERO_DAY_APPLIANCES' },
-    ];
-
-    for (const item of batch8SpecializedExpected) {
-      const scenario = ATTACK_SCENARIOS.find((s) => s.id === item.id);
-      assert.ok(scenario, `Expected specialized scenario ${item.id} in ATTACK_SCENARIOS`);
-      assert.equal(scenario.category, item.category);
-      assert.ok(
-        sitemapUrls.some((u) => u.endsWith(`/scenarios/${item.id}`)),
-        `Expected /scenarios/${item.id} in XML sitemap`
+      assert.equal(
+        llmsFullTxt.includes(`/scenarios/${retiredId}`),
+        false,
+        `Unbuilt scenario /scenarios/${retiredId} must not appear in public/llms-full.txt`
       );
     }
   });
@@ -418,11 +349,12 @@ describe('SEO Audit Compliance Suite (Modules 01–09)', () => {
       );
       assert.equal(uiCrumbs[3].isCurrent, true);
 
-      // 4. Topic Cluster Lateral Links (getRelatedClusterScenarios returns related scenarios)
+      // 4. Topic Cluster Lateral Links (getRelatedClusterScenarios never self-links and scales with live catalog size)
       const related = getRelatedClusterScenarios(scenario, 6);
+      const expectedMinRelated = Math.min(3, Math.max(0, ATTACK_SCENARIOS.length - 1));
       assert.ok(
-        related.length >= 3 && !related.some((r) => r.id === scenario.id),
-        `Scenario "${scenario.id}" must resolve related Topic Cluster lateral scenarios`
+        related.length >= expectedMinRelated && !related.some((r) => r.id === scenario.id),
+        `Scenario "${scenario.id}" must resolve related Topic Cluster lateral scenarios without self-linking`
       );
 
       // 5. Present in /public/llms-full.txt for AI crawlers (fails if llms-full.txt is not regenerated after adding a scenario)

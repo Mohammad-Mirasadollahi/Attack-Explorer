@@ -1,19 +1,19 @@
 # Mandatory New Scenario & Article Ingestion + SEO/GEO Synchronization Standard
 
-> **Authoritative Engineering Standard** · Applies to **all** new attack scenarios, DFIR forensic case studies, CVE advisories, and technical articles added to Attack Explorer.
+> **Authoritative Engineering Standard** · Applies to **all** bespoke attack scenarios rebuilt from [`/docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md`](./redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md) or newly added to Attack Explorer under [`MOD-17`](./standards/17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md).  
 > **Aligned With:** Google Search Central Structured Data & Technical Documentation Guidelines (2025/2026), Schema.org v28+ (`TechArticle`, `HowTo`, `DefinedTerm`, `BreadcrumbList`), Princeton Generative Engine Optimization (GEO) Benchmark Study, Bing/Yandex `IndexNow` Instant Indexing Protocol, and Cybersecurity Threat Intelligence (CTI) Topic Cluster Architecture.
 
 ---
 
 ## 1. Core Mandate
 
-Whenever a new cyber attack scenario, ransomware investigation, supply-chain case study, zero-day exploit analysis, or technical article is added to Attack Explorer, **content ingestion and SEO/GEO indexing MUST be executed atomically in the same pull request / commit**.
+Under **`MOD-17` (One-Scenario-Per-Turn Studio Law)**, bulk/batch scenario ingestion (adding 5, 10, or 50 templated scenarios at once) is **permanently prohibited**. Every scenario is authored and rebuilt **one episode at a time** in exact Sidebar order, and **content ingestion + bespoke 3-surface craftsmanship + SEO/GEO indexing MUST be executed atomically in the same pull request / commit**.
 
 A scenario is **not considered complete** until it is simultaneously:
-1. Playable in the interactive 4-view canvas (`Attack_SCENARIOS` registry).
-2. Attributed to at least **3 authoritative primary sources** (CISA, Mandiant, Microsoft Threat Intelligence, CrowdStrike, Unit 42, Sophos, Picus, PikeRed, MITRE ATT&CK®, etc.).
+1. Approved via its **Phase 0 Director's Blueprint** (`/docs/screenplays/bespoke/<NNN>-<scenario-id>.md`), passing both the **Mute Test** and **Swap Test** (`MOD-17 §4.2–§4.3`), and playable in the interactive 4-view canvas (`ATTACK_SCENARIOS` registry) with bespoke 3D Three.js, bespoke 2D SVG+GSAP silent lectures, and bespoke Excalidraw chalk whiteboards verified by a `1440x900` Frame-by-Frame Browser Director's Review (`MOD-17 §4.5`).
+2. Attributed to at least **3 authoritative primary sources** (restored from [`/docs/redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md`](./redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md) and verified against live vendor advisories: CISA, Mandiant, Microsoft Threat Intelligence, CrowdStrike, Unit 42, Sophos, Picus, MITRE ATT&CK®, etc.).
 3. Enriched with **Curated Threat Intelligence (`CVE + CVSS + Attributed Threat Actor Groups`)** and rendered in the **Answer-First Forensic Fact Sheet** (satisfying Google Search Central Visible Content Parity).
-4. Indexed via static route generation (`/scenarios/[id]`), XML Sitemap (`/sitemap.xml`), Schema.org JSON-LD (`TechArticle` with `mentions`/`keywords`/`dateModified` + `HowTo` + `BreadcrumbList`), Topic Cluster Lateral Links (`getRelatedClusterScenarios`), AI Agent Markdown Content Negotiation (`Accept: text/markdown`), and `/public/llms-full.txt`.
+4. Indexed via static route generation (`/scenarios/[id]`), XML Sitemap (`/sitemap.xml`), Schema.org JSON-LD (`TechArticle` with `mentions`/`keywords`/`dateModified` + `HowTo` + `BreadcrumbList`), Topic Cluster Lateral Links (`getRelatedClusterScenarios`), AI Agent Markdown Content Negotiation (`Accept: text/markdown`), and `/public/llms-full.txt` + `/public/llms.txt` (following the Clean-Slate SEO Transition Policy in `MOD-06 §3.3` & `MOD-17 §2.3`).
 
 ---
 

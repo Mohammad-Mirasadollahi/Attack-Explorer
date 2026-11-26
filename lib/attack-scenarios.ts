@@ -1,26 +1,18 @@
 export * from '@/modules/scenarios/types';
 
 import { AttackScenario } from '@/modules/scenarios/types';
-import {
-  CANONICAL_ATTACK_SCENARIOS,
-  LEGACY_DRAFT_SCENARIOS,
-} from '@/modules/scenarios/all-scenarios';
-import { normalizeLegacyDraftScenario } from '@/modules/scenarios/legacy/normalize-legacy-draft-scenario';
+import { CANONICAL_ATTACK_SCENARIOS } from '@/modules/scenarios/all-scenarios';
 import { applyReadableStepGuidesToScenario } from './scenario-step-guides';
 import './scenario-step-guide-index';
 import { ensureCascadingProcessHierarchy } from './documentation-structural-diagrams';
 
 /**
- * Preserve the historical front-of-catalog order. Several tests and the
- * workbench default selection assume these ids occupy the early indexes.
+ * Preserve the Golden Benchmark (`process-hollowing`) at index 0.
+ * New bespoke scenarios added in Phase 2 append cleanly after it in canonical order.
  */
 const LEADING_SCENARIO_IDS = [
   'process-hollowing',
-  'log4shell-dfir',
   'amsi-reflective-dll',
-  'ad-kerberoasting',
-  'dns-tunneling-exfil',
-  'ransomware-shadow-wipe',
 ] as const;
 
 const byId = new Map(
@@ -43,8 +35,6 @@ const remainingCanonical = CANONICAL_ATTACK_SCENARIOS.filter(
 const RAW_ATTACK_SCENARIOS: AttackScenario[] = [
   ...leadingScenarios,
   ...remainingCanonical,
-  // Drafts that overlap richer canonical scenarios are dropped by dedupe.
-  ...LEGACY_DRAFT_SCENARIOS.map(normalizeLegacyDraftScenario),
 ];
 
 function dedupeScenariosById(scenarios: AttackScenario[]): AttackScenario[] {

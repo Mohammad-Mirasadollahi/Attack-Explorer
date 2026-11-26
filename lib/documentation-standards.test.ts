@@ -123,8 +123,11 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-12)',
     assert.ok(invalidCheck.violations.length >= 3);
   });
 
-  it('validates all 188 scenarios in ATTACK_SCENARIOS against the full modular standard suite (MOD-01 .. MOD-06) and ensures PikeRed and Jeffrey Appel ARTEX exist without duplicates', () => {
-    assert.equal(ATTACK_SCENARIOS.length, 188);
+  it('validates all live bespoke scenarios in ATTACK_SCENARIOS against the full modular standard suite (MOD-01 .. MOD-06) and ensures the Process Hollowing Golden Benchmark exists without duplicates', () => {
+    assert.ok(
+      ATTACK_SCENARIOS.length >= 1,
+      'Expected at least 1 live bespoke scenario in ATTACK_SCENARIOS'
+    );
     const seenIds = new Set<string>();
     for (const scenario of ATTACK_SCENARIOS) {
       assert.equal(
@@ -142,15 +145,14 @@ describe('Modular Documentation & Authoring Standard System (MOD-00 .. MOD-12)',
       );
     }
 
-    const pikeredMatches = ATTACK_SCENARIOS.filter(
-      (s) => s.id === 'pikered-clr-profiler-trusted-binary-loader-chain'
+    const hollowingMatches = ATTACK_SCENARIOS.filter(
+      (s) => s.id === 'process-hollowing'
     );
-    const artexMatches = ATTACK_SCENARIOS.filter(
-      (s) =>
-        s.id === 'jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr'
+    assert.equal(
+      hollowingMatches.length,
+      1,
+      'Expected process-hollowing Golden Benchmark to exist once in ATTACK_SCENARIOS'
     );
-    assert.equal(pikeredMatches.length, 1);
-    assert.equal(artexMatches.length, 1);
 
     const analyticalSourcesDoc = fs.readFileSync(
       path.join(process.cwd(), 'docs/analytical-sources-and-references.md'),

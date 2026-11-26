@@ -4,19 +4,12 @@ import path from 'node:path';
 import test from 'node:test';
 import { hasTechnicalClip } from './section-technical-clip-registry';
 import { ATTACK_SCENARIOS } from './attack-scenarios';
-import {
-  findTechnicalJargonInStory,
-  listScenario3DSections,
-} from './section-3d-registry';
+import { listScenario3DSections } from './section-3d-registry';
 import {
   getTechnicalWhiteboard,
   hasTechnicalWhiteboard,
   listTechnicalWhiteboardSections,
 } from './section-excalidraw-registry';
-import {
-  getMalwareTechnicalClipSpec,
-  MALWARE_TECHNICAL_CLIP_SPECS,
-} from './malware-2d-blueprints';
 import { ARROW_GAP } from './excalidraw-boards/board-primitives';
 
 const CLIPS_DIR = path.join(
@@ -134,221 +127,13 @@ test('Process Hollowing technical clips satisfy MOD-14 player contract and techn
   assert.match(memoryView, /<TechnicalClipEmbed[\s\S]*sectionKey="memory-forensics"/);
 });
 
-const JAPANESE_CHAR_REGEX = /[\u3040-\u30FF\u4E00-\u9FFF¥]/;
-
-test('All 30 MALWARE scenarios have complete MOD-13 Excalidraw whiteboards (135 boards) and MOD-14 SVG+GSAP technical clips (105 clips)', () => {
+test('All live bespoke scenarios in ATTACK_SCENARIOS have complete MOD-13 Excalidraw whiteboards and MOD-14 technical clips, and MOD-17 charter + backlog exist', async () => {
   assert.ok(ARROW_GAP >= 150, `ARROW_GAP must be >= 150px, got ${ARROW_GAP}`);
-
-  const malwareScenarios = ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE');
-  assert.equal(malwareScenarios.length, 30, 'Expected 30 MALWARE scenarios');
-
-  const seenPrefixes = new Set<string>(['s1', 's2', 's3', 's4', 's5', 'mem']);
-  let totalBoards = 0;
-  let totalClips = 0;
-
-  for (const scenario of malwareScenarios) {
-    const expected3DSections = listScenario3DSections(scenario.id).map(
-      (d) => d.sectionKey
-    );
-    assert.ok(
-      expected3DSections.length >= 3,
-      `Expected >= 3 sections for ${scenario.id}`
-    );
-
-    // MOD-14 §3: briefing MUST stay unregistered for technical clips
-    assert.equal(
-      hasTechnicalClip(scenario.id, 'briefing'),
-      false,
-      `briefing must NOT have a technical clip for ${scenario.id}`
-    );
-
-    // MOD-13: Every section (briefing, step-1..N, and memory-forensics when present) MUST have an Excalidraw whiteboard
-    const registeredBoards = listTechnicalWhiteboardSections(scenario.id);
-    assert.equal(
-      registeredBoards.length,
-      expected3DSections.length,
-      `Board count mismatch for ${scenario.id}: expected ${expected3DSections.join(',')} got ${registeredBoards.join(',')}`
-    );
-
-    for (const sectionKey of expected3DSections) {
-      assert.equal(
-        hasTechnicalWhiteboard(scenario.id, sectionKey),
-        true,
-        `Missing Excalidraw whiteboard for ${scenario.id}/${sectionKey}`
-      );
-      const board = getTechnicalWhiteboard(scenario.id, sectionKey);
-      assert.ok(board, `Null whiteboard for ${scenario.id}/${sectionKey}`);
-      totalBoards++;
-
-      assert.ok(board.skeletons.length >= 8, `Board too sparse for ${scenario.id}/${sectionKey}`);
-      assert.ok(
-        Object.keys(board.tooltips).length >= 5,
-        `Board must have tooltips for all teaching cards + sticky (${scenario.id}/${sectionKey})`
-      );
-
-      // MOD-13 rule: zero inline labels on arrows (captions must be separate text elements)
-      for (const skel of board.skeletons) {
-        if (skel.type === 'arrow') {
-          assert.equal(
-            'label' in skel && Boolean((skel as { label?: unknown }).label),
-            false,
-            `Arrow in ${scenario.id}/${sectionKey} must not have inline label`
-          );
-        }
-      }
-
-      // Every tooltip must have valid kind, title, fields, and plain-language explain
-      for (const [tipId, tip] of Object.entries(board.tooltips)) {
-        assert.ok(tip.title.trim().length > 0, `Empty tooltip title on ${scenario.id}/${sectionKey}/${tipId}`);
-        assert.ok(tip.fields.length >= 1, `Empty tooltip fields on ${scenario.id}/${sectionKey}/${tipId}`);
-        assert.ok(tip.explain.trim().length >= 20, `Too-short tooltip explain on ${scenario.id}/${sectionKey}/${tipId}`);
-      }
-
-      // MOD-14: Every non-briefing section MUST have a registered technical clip
-      if (sectionKey !== 'briefing') {
-        assert.equal(
-          hasTechnicalClip(scenario.id, sectionKey),
-          true,
-          `Missing technical clip for ${scenario.id}/${sectionKey}`
-        );
-        totalClips++;
-
-        if (scenario.id !== 'process-hollowing') {
-          const spec = getMalwareTechnicalClipSpec(scenario.id, sectionKey);
-          assert.ok(spec, `Missing MalwareTechnicalClipSpec for ${scenario.id}/${sectionKey}`);
-          assert.equal(
-            seenPrefixes.has(spec.svgPrefix),
-            false,
-            `Duplicate SVG prefix "${spec.svgPrefix}" on ${scenario.id}/${sectionKey}`
-          );
-          seenPrefixes.add(spec.svgPrefix);
-
-          assert.equal(spec.beats.length, 4, `Expected 4 beats on ${scenario.id}/${sectionKey}`);
-          assert.equal(spec.cameraLabels.length, 4, `Expected 4 cameras on ${scenario.id}/${sectionKey}`);
-
-          for (const beat of spec.beats) {
-            const jargon = findTechnicalJargonInStory(beat.story);
-            assert.deepEqual(
-              jargon,
-              [],
-              `Story jargon in ${scenario.id}/${sectionKey} beat ${beat.id}: ${jargon.join(', ')} | "${beat.story}"`
-            );
-            assert.equal(
-              JAPANESE_CHAR_REGEX.test(beat.story + beat.technical + beat.title),
-              false,
-              `Unexpected Japanese character in ${scenario.id}/${sectionKey}`
-            );
-          }
-        }
-      }
-    }
-  }
-
-  assert.equal(totalBoards, 135, `Expected exactly 135 Excalidraw boards across 30 MALWARE scenarios, got ${totalBoards}`);
-  assert.equal(totalClips, 105, `Expected exactly 105 SVG+GSAP technical clips across 30 MALWARE scenarios, got ${totalClips}`);
-  assert.equal(Object.keys(MALWARE_TECHNICAL_CLIP_SPECS).length, 29, 'Expected 29 compiled MALWARE clip scenario profiles');
-
-  // Verify MalwareTechnicalClipRenderer adheres strictly to MOD-14 & GSAP SVG safety invariants
-  const rendererSrc = fs.readFileSync(
-    path.join(
-      process.cwd(),
-      'components',
-      'technical-clip',
-      'malware-clips',
-      'MalwareTechnicalClipRenderer.tsx'
-    ),
-    'utf8'
-  );
-  assert.match(rendererSrc, /<AnimeClipStage\b/);
-  assert.match(rendererSrc, /<FilmBackdrop\s+prefix=\{spec\.svgPrefix\}\s*\/>/);
-  assert.match(rendererSrc, /clipPace\.hold/);
-  assert.match(rendererSrc, /clipPace\.end/);
-  assert.match(rendererSrc, /clipPace\.travel/);
-  assert.match(rendererSrc, /clipPace\.teach/);
-  assert.doesNotMatch(
-    rendererSrc,
-    /<g[^>]*className=[^>]*transform=\{?["'`]translate/,
-    'MalwareTechnicalClipRenderer must never combine className and transform="translate(...)" on the same <g>'
-  );
-});
-
-test('Lightweight manifest and dynamic per-group loader stay in 100% sync with compiled MALWARE 2D registry', async () => {
-  const {
-    hasAnyTechnicalWhiteboard,
-    MALWARE_2D_SECTION_MANIFEST,
-  } = await import('./malware-2d-blueprints/manifest');
-  const {
-    loadMalwareTechnicalWhiteboard,
-    loadMalwareTechnicalClipSpec,
-  } = await import('./malware-2d-blueprints/loader');
-
-  const malwareScenarios = ATTACK_SCENARIOS.filter((s) => s.category === 'MALWARE');
-  assert.equal(Object.keys(MALWARE_2D_SECTION_MANIFEST).length, 29);
-
-  for (const scenario of malwareScenarios) {
-    const sections = listScenario3DSections(scenario.id).map((d) => d.sectionKey);
-    for (const sectionKey of sections) {
-      assert.equal(
-        hasAnyTechnicalWhiteboard(scenario.id, sectionKey),
-        hasTechnicalWhiteboard(scenario.id, sectionKey),
-        `Manifest whiteboard mismatch for ${scenario.id}/${sectionKey}`
-      );
-    }
-  }
-
-  // Verify dynamic loader resolves a representative scenario from every group (1..6)
-  const samplePerGroup = [
-    'amsi-reflective-dll',
-    '3cx-desktopapp-supply-chain-lazarus',
-    'kaspersky-lazarus-byovd-fudmodule',
-    'ms-forest-blizzard-gooseegg',
-    'dfir-lsass-minidump-comsvcs-sysmon-eid10',
-    'dfir-ntfs-timestomp-mft-si-fn-mismatch-eid2',
-  ];
-
-  for (const scenarioId of samplePerGroup) {
-    const board = await loadMalwareTechnicalWhiteboard(scenarioId, 'step-1');
-    const clip = await loadMalwareTechnicalClipSpec(scenarioId, 'step-1');
-    assert.ok(board && board.skeletons.length >= 8, `Loader failed whiteboard for ${scenarioId}/step-1`);
-    assert.ok(clip && clip.beats.length === 4, `Loader failed clip for ${scenarioId}/step-1`);
-    assert.equal(
-      await loadMalwareTechnicalClipSpec(scenarioId, 'briefing'),
-      null,
-      `Loader must return null for briefing clip on ${scenarioId}`
-    );
-  }
-});
-
-test('All 188 catalog scenarios (all 13 categories) have complete MOD-13 Excalidraw whiteboards (797 boards) and MOD-14 SVG+GSAP technical clips (609 clips)', async () => {
-  const {
-    getNonMalwareTechnicalClipSpec,
-    SCENARIO_2D_CLIP_SPECS,
-  } = await import('./scenario-2d-blueprints');
-  const { SCENARIO_2D_SECTION_MANIFEST } = await import(
-    './scenario-2d-blueprints/manifest'
-  );
-  const {
-    loadAnyTechnicalClipSpec,
-    loadAnyTechnicalWhiteboard,
-  } = await import('./scenario-2d-blueprints/loader');
-  const { hasAnyTechnicalWhiteboard } = await import(
-    './malware-2d-blueprints/manifest'
+  assert.ok(
+    ATTACK_SCENARIOS.length >= 1,
+    'Expected at least 1 live bespoke scenario in ATTACK_SCENARIOS'
   );
 
-  assert.equal(ATTACK_SCENARIOS.length, 188, 'Expected 188 catalog scenarios');
-  assert.equal(
-    Object.keys(SCENARIO_2D_SECTION_MANIFEST).length,
-    158,
-    'Expected 158 non-MALWARE scenarios in scenario-2d manifest'
-  );
-  assert.equal(
-    Object.keys(SCENARIO_2D_CLIP_SPECS).length,
-    158,
-    'Expected 158 compiled non-MALWARE clip scenario profiles'
-  );
-
-  const seenPrefixes = new Set<string>(['s1', 's2', 's3', 's4', 's5', 'mem']);
-  const mechanicCounts = new Map<string, number>();
   let totalBoards = 0;
   let totalClips = 0;
 
@@ -368,6 +153,7 @@ test('All 188 catalog scenarios (all 13 categories) have complete MOD-13 Excalid
       `briefing must NOT have a technical clip for ${scenario.id}`
     );
 
+    // MOD-13: Every section (briefing, step-1..N, and memory-forensics when present) MUST have an Excalidraw whiteboard
     const registeredBoards = listTechnicalWhiteboardSections(scenario.id);
     assert.equal(
       registeredBoards.length,
@@ -376,11 +162,6 @@ test('All 188 catalog scenarios (all 13 categories) have complete MOD-13 Excalid
     );
 
     for (const sectionKey of expectedSections) {
-      assert.equal(
-        hasAnyTechnicalWhiteboard(scenario.id, sectionKey),
-        true,
-        `Manifest missing whiteboard for ${scenario.id}/${sectionKey}`
-      );
       assert.equal(
         hasTechnicalWhiteboard(scenario.id, sectionKey),
         true,
@@ -431,130 +212,47 @@ test('All 188 catalog scenarios (all 13 categories) have complete MOD-13 Excalid
           `Missing technical clip for ${scenario.id}/${sectionKey}`
         );
         totalClips++;
-
-        if (scenario.id !== 'process-hollowing') {
-          const spec =
-            scenario.category === 'MALWARE'
-              ? getMalwareTechnicalClipSpec(scenario.id, sectionKey)
-              : getNonMalwareTechnicalClipSpec(scenario.id, sectionKey);
-          assert.ok(
-            spec,
-            `Missing compiled technical clip spec for ${scenario.id}/${sectionKey}`
-          );
-          assert.equal(
-            seenPrefixes.has(spec.svgPrefix),
-            false,
-            `Duplicate global SVG prefix "${spec.svgPrefix}" on ${scenario.id}/${sectionKey}`
-          );
-          seenPrefixes.add(spec.svgPrefix);
-          mechanicCounts.set(
-            spec.mechanic,
-            (mechanicCounts.get(spec.mechanic) ?? 0) + 1
-          );
-
-          assert.equal(
-            spec.beats.length,
-            4,
-            `Expected 4 beats on ${scenario.id}/${sectionKey}`
-          );
-          assert.equal(
-            spec.cameraLabels.length,
-            4,
-            `Expected 4 camera labels on ${scenario.id}/${sectionKey}`
-          );
-
-          for (const beat of spec.beats) {
-            const jargon = findTechnicalJargonInStory(beat.story);
-            assert.deepEqual(
-              jargon,
-              [],
-              `Story jargon in ${scenario.id}/${sectionKey} beat ${beat.id}: ${jargon.join(', ')} | "${beat.story}"`
-            );
-            assert.equal(
-              JAPANESE_CHAR_REGEX.test(beat.story + beat.technical + beat.title),
-              false,
-              `Unexpected Japanese character in ${scenario.id}/${sectionKey}`
-            );
-          }
-        }
       }
     }
   }
 
-  assert.equal(
-    totalBoards,
-    797,
-    `Expected exactly 797 Excalidraw whiteboards across 188 scenarios, got ${totalBoards}`
-  );
-  assert.equal(
-    totalClips,
-    609,
-    `Expected exactly 609 SVG+GSAP technical clips across 188 scenarios, got ${totalClips}`
-  );
-  // Ensure the new domain-specific kinetic engines are actively used across the catalog
-  assert.ok(
-    mechanicCounts.size >= 12,
-    `Expected >= 12 distinct 2D kinetic clip mechanics in active use, got ${mechanicCounts.size}: ${[...mechanicCounts.keys()].join(', ')}`
-  );
+  assert.ok(totalBoards >= 7, `Expected >= 7 Excalidraw whiteboards, got ${totalBoards}`);
+  assert.ok(totalClips >= 6, `Expected >= 6 SVG+GSAP technical clips, got ${totalClips}`);
 
-  // Verify DomainKineticVisualizers.tsx adheres strictly to GSAP SVG transform safety
-  const domainVizSrc = fs.readFileSync(
-    path.join(
-      process.cwd(),
-      'components',
-      'technical-clip',
-      'malware-clips',
-      'DomainKineticVisualizers.tsx'
+  // Verify MOD-17 Bespoke Overhaul Charter & Phase 0 Backlog artifacts exist and pass Markdown standard validation
+  const { validateMarkdownDocumentStandard } = await import(
+    './documentation-standards'
+  );
+  const mod17Path = path.join(
+    process.cwd(),
+    'docs',
+    'standards',
+    '17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md'
+  );
+  assert.equal(fs.existsSync(mod17Path), true, 'Expected MOD-17 charter to exist');
+  const mod17Check = validateMarkdownDocumentStandard(
+    fs.readFileSync(mod17Path, 'utf8'),
+    'MOD-17'
+  );
+  assert.equal(
+    mod17Check.valid,
+    true,
+    `MOD-17 failed Markdown standard validation: ${mod17Check.violations.join('; ')}`
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), 'docs', 'redesign-backlog', 'MASTER-BACKLOG-SIDEBAR-ORDER.md')
     ),
-    'utf8'
+    true,
+    'Expected MASTER-BACKLOG-SIDEBAR-ORDER.md to exist'
   );
-  assert.doesNotMatch(
-    domainVizSrc,
-    /<g[^>]*className=[^>]*transform=\{?["'`]translate/,
-    'DomainKineticVisualizers must never combine className and transform="translate(...)" on the same <g>'
+  assert.equal(
+    fs.existsSync(
+      path.join(process.cwd(), 'docs', 'redesign-backlog', 'PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md')
+    ),
+    true,
+    'Expected PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md to exist'
   );
-
-  // Verify unified lazy loader resolves a representative scenario from every single category (13 categories)
-  const samplePerCategory = [
-    'amsi-reflective-dll', // MALWARE
-    'log4shell-dfir', // NETWORK_WEB
-    'ad-kerberoasting', // ACTIVE_DIRECTORY
-    'aws-cognito-iam-passrole-privesc', // CLOUD_SAAS
-    'jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr', // AI_LLM_MLOPS_SECURITY
-    'fortimanager-fgd-jump-cve-2024-47575', // ZERO_DAY_APPLIANCES
-  ];
-  // Also dynamically grab 1 scenario from each remaining category so all 13 categories are exercised
-  const seenCats = new Set<string>();
-  for (const id of samplePerCategory) {
-    const found = ATTACK_SCENARIOS.find((s) => s.id === id);
-    if (found) seenCats.add(found.category);
-  }
-  for (const s of ATTACK_SCENARIOS) {
-    if (s.id === 'process-hollowing') continue;
-    if (!seenCats.has(s.category)) {
-      seenCats.add(s.category);
-      samplePerCategory.push(s.id);
-    }
-  }
-  assert.equal(seenCats.size, 13, 'Expected sample coverage across all 13 categories');
-
-  for (const scenarioId of samplePerCategory) {
-    const board = await loadAnyTechnicalWhiteboard(scenarioId, 'step-1');
-    const clip = await loadAnyTechnicalClipSpec(scenarioId, 'step-1');
-    assert.ok(
-      board && board.skeletons.length >= 8,
-      `Unified loader failed whiteboard for ${scenarioId}/step-1`
-    );
-    assert.ok(
-      clip && clip.beats.length === 4,
-      `Unified loader failed clip for ${scenarioId}/step-1`
-    );
-    assert.equal(
-      await loadAnyTechnicalClipSpec(scenarioId, 'briefing'),
-      null,
-      `Unified loader must return null for briefing clip on ${scenarioId}`
-    );
-  }
 });
 
 test('MOD-15 unified 3D/2D/Excalidraw scenario authoring handbook exists and passes MOD-01/MOD-02 documentation validation', async () => {
@@ -576,8 +274,9 @@ test('MOD-15 unified 3D/2D/Excalidraw scenario authoring handbook exists and pas
     `MOD-15 failed Markdown standard validation: ${check.violations.join('; ')}`
   );
   assert.ok(content.includes('MOD-15'));
-  assert.ok(content.includes('network-packet-wire'));
-  assert.ok(content.includes('protocol-layer-stack'));
+  assert.ok(content.includes('MOD-17'));
+  assert.ok(content.includes('Mute Test'));
+  assert.ok(content.includes('Swap Test'));
   assert.ok(content.includes('process-hollowing'));
 });
 
