@@ -350,6 +350,50 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Harvests cloud identity tokens, escalates IAM privileges, or exfiltrates cloud data (${mitreId}) during "${contextTitle}" without deploying traditional endpoint malware, captured in CloudTrail / Unified Audit Log telemetry.`,
   },
+  {
+    pattern: /\bbcdedit(?:\.exe)?\b/i,
+    toolOrSubsystem:
+      'bcdedit.exe · Windows Boot Configuration Data (BCD) Store Editor',
+    meaningBuilder: () =>
+      `Invokes Microsoft's signed Boot Configuration Data editor (bcdedit.exe) to disable Windows Recovery Environment auto-repair (recoveryenabled No) and suppress startup failure prompts (bootstatuspolicy ignoreallfailures) in the BCD registry store.`,
+    purposeBuilder: (_cmd, contextTitle, mitreId) =>
+      `Locks the compromised server out of Windows Automatic Repair and WinRE rollback (${mitreId}) during "${contextTitle}" so administrators cannot recover from local boot snapshots after ransomware encryption.`,
+  },
+  {
+    pattern: /\blb3_black(?:\.exe)?\b|\bCreateIoCompletionPort\b|\bChaCha20\b|\bRestore-My-Files\.txt\b/i,
+    toolOrSubsystem:
+      'LockBit 3.0 Locker (lb3_black.exe) · Windows I/O Completion Port (IOCP) Encryption Engine',
+    meaningBuilder: (cmd) => {
+      if (/-pass\b/i.test(cmd)) {
+        return `Executes the password-gated LockBit 3.0 (LockBit Black) binary using the required decryption key argument (-pass) to unlock its packed configuration block in memory before starting anti-recovery and encryption threads.`;
+      }
+      if (/CreateIoCompletionPort|ChaCha20|IOCP/i.test(cmd)) {
+        return `Spawns an asynchronous Windows I/O Completion Port (CreateIoCompletionPort) worker pool that encrypts only the opening 4 KB–64 KB header stripe of each targeted file with ChaCha20, wraps per-file keys with RSA-2048, and renames files with the .lockbit extension.`;
+      }
+      return `Runs LockBit 3.0 locker routines (${cmd}) under SYSTEM authority to drop Restore-My-Files.txt, set the extortion wallpaper, and encrypt enterprise file shares.`;
+    },
+    purposeBuilder: (_cmd, contextTitle, mitreId) =>
+      `Maximizes enterprise file-share encryption speed while defeating sandbox detonation (${mitreId}) during "${contextTitle}", leaving high-velocity file-rename telemetry and ransom-note creation artifacts (Sysmon EID 11 / 13).`,
+  },
+  {
+    pattern: /\b3CXDesktopApp(?:\.exe)?\b|\bffmpeg\.dll\b|\bd3dcompiler_47\.dll\b|\b0xFEEDFACE\b|\bICONICSTEALER\b|\bGopuram\b/i,
+    toolOrSubsystem:
+      '3CXDesktopApp.exe (Electron / VoIP) · Signed Host DLL Sideloading & Supply-Chain Implant',
+    meaningBuilder: (cmd) => {
+      if (/ffmpeg\.dll|d3dcompiler_47\.dll|0xFEEDFACE|RC4/i.test(cmd)) {
+        return `Executes the genuinely EV-signed 3CXDesktopApp.exe Electron host, which side-loads trojanized unsigned ffmpeg.dll; ffmpeg.dll locates the 0xFEEDFACE marker inside d3dcompiler_47.dll and RC4-decrypts trailing shellcode into unbacked MEM_PRIVATE RWX memory.`;
+      }
+      if (/icon\d+\.ico|IconStorages|raw\.githubusercontent\.com/i.test(cmd)) {
+        return `Fetches a benign-looking .ico asset from the attacker-controlled GitHub repository (IconStorages/images) and parses the trailing Base64 string appended past the valid ICO end-of-file to resolve the live C2 server.`;
+      }
+      if (/Login Data|ICONICSTEALER|Gopuram/i.test(cmd)) {
+        return `Executes the in-memory ICONICSTEALER module inside 3CXDesktopApp.exe to harvest Chromium/Edge Login Data databases and profile high-value finance/crypto hosts for selective Gopuram backdoor deployment.`;
+      }
+      return `Runs the supply-chain-trojanized 3CXDesktopApp.exe runtime (${cmd}) inside a legitimate Electron desktop application context.`;
+    },
+    purposeBuilder: (_cmd, contextTitle, mitreId) =>
+      `Exploits software supply-chain trust in a valid 3CX EV Authenticode signature (${mitreId}) during "${contextTitle}", exposing the intrusion via Sysmon EventID 7 (unsigned child DLL), unbacked RWX memory, GitHub .ico DNS/TLS queries (EID 22/3), and behavioral EDR alerts on a VoIP process reading browser credential stores.`,
+  },
 ];
 
 // Build active rules list
@@ -434,6 +478,39 @@ export function extractCommandParameterExplanations(
     addParam(
       'delete shadows /all /quiet',
       'Deletes all Volume Shadow Copies on the system (/all) while suppressing interactive confirmation prompts (/quiet).'
+    );
+  }
+  if (/recoveryenabled\s+No/i.test(cmd)) {
+    addParam(
+      '/set {default} recoveryenabled No',
+      'Disables Windows Recovery Environment (WinRE) automatic boot recovery for the default OS loader entry.'
+    );
+  }
+  if (/bootstatuspolicy\s+ignoreallfailures/i.test(cmd)) {
+    addParam(
+      '/set {default} bootstatuspolicy ignoreallfailures',
+      'Suppresses Windows startup failure recovery menus so the host boots normally into the encrypted desktop without offering repair options.'
+    );
+  }
+  if (/-pass\s+[0-9a-f]+/i.test(cmd)) {
+    const match = cmd.match(/-pass\s+[0-9a-f]+/i);
+    if (match) {
+      addParam(
+        match[0],
+        'LockBit 3.0 anti-analysis execution password required to decrypt the binary configuration and payload body in memory.'
+      );
+    }
+  }
+  if (/0xFEEDFACE/i.test(cmd)) {
+    addParam(
+      '0xFEEDFACE',
+      '4-byte magic delimiter embedded inside trojanized d3dcompiler_47.dll marking the start of the RC4-encrypted stage-2 shellcode blob.'
+    );
+  }
+  if (/Login Data/i.test(cmd)) {
+    addParam(
+      'Login Data',
+      'Chromium/Edge SQLite credential store targeted by ICONICSTEALER to extract saved website passwords and user profiles.'
     );
   }
   if (/\besentutl(?:\.exe)?\b/i.test(cmd)) {

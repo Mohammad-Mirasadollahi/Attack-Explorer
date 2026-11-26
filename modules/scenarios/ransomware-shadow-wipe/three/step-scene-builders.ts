@@ -93,7 +93,12 @@ function buildLockbitBriefingScene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0.2, 2.1, 0.2),
-    update: (timeSec, cutawayMode: StandardCutawayMode = 'AUTO') => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const norm = (timeSec % LOCKBIT_TIMELINE_DURATION_SEC) / LOCKBIT_TIMELINE_DURATION_SEC;
       const f = evaluateLockbitChoreography(norm, cutawayMode);
 
@@ -125,9 +130,10 @@ function buildLockbitBriefingScene(
         }
       }
 
-      // Shredder cutters & ribbon confetti heap
-      backupRig.shredderRollers[0].rotation.x += 0.12 * f.shredderSpin;
-      backupRig.shredderRollers[1].rotation.x -= 0.12 * f.shredderSpin;
+      // Shredder cutters & ribbon confetti heap (deterministic angle from timeSec)
+      const shredAngle = timeSec * (2.4 + f.shredderSpin * 6.0);
+      backupRig.shredderRollers[0].rotation.x = shredAngle;
+      backupRig.shredderRollers[1].rotation.x = -shredAngle;
       const hScale = Math.max(0.01, f.ribbonHeapLevel);
       backupRig.ribbonHeap.scale.set(hScale, hScale, hScale);
       (backupRig.shredderHood.material as THREE.MeshToonMaterial).opacity =
@@ -298,7 +304,12 @@ function buildLockbitStep2Scene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0.6, 1.9, 0.2),
-    update: (timeSec, cutawayMode: StandardCutawayMode = 'AUTO') => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const cycle = (timeSec % 14) / 14;
       for (let i = 0; i < 4; i += 1) {
         const p = clamp01((cycle - (0.08 + i * 0.14)) / 0.24);
@@ -323,8 +334,8 @@ function buildLockbitStep2Scene(
         }
       }
 
-      backupRig.shredderRollers[0].rotation.x += 0.14;
-      backupRig.shredderRollers[1].rotation.x -= 0.14;
+      backupRig.shredderRollers[0].rotation.x = timeSec * 6.4;
+      backupRig.shredderRollers[1].rotation.x = -timeSec * 6.4;
       const heap = clamp01((cycle - 0.18) / 0.55);
       backupRig.ribbonHeap.scale.setScalar(Math.max(0.01, heap));
       const snap = clamp01((cycle - 0.64) / 0.18);
@@ -381,7 +392,12 @@ function buildLockbitStep3Scene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0, 2.2, 0.3),
-    update: (timeSec, cutawayMode: StandardCutawayMode = 'AUTO') => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const cycle = (timeSec % 14) / 14;
       for (let i = 0; i < 4; i += 1) {
         const start = 0.08 + i * 0.08;

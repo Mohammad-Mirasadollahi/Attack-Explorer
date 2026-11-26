@@ -12,7 +12,7 @@ export function threeCxBriefingBoard(): TechnicalBoardDescriptor {
   const sideload = { id: 'cx0-sideload', x: cicd.x + cicd.w + ARROW_GAP, w: 255 };
   const github = { id: 'cx0-github', x: sideload.x + sideload.w + ARROW_GAP, w: 250 };
 
-  const stealer = { id: 'cx0-stealer', x: 425, w: 255 };
+  const stealer = { id: 'cx0-stealer', x: sideload.x, w: 255 };
   const edr = { id: 'cx0-edr', x: stealer.x + stealer.w + ARROW_GAP, w: 255 };
 
   return {

@@ -280,5 +280,151 @@ test('MOD-15 unified 3D/2D/Excalidraw scenario authoring handbook exists and pas
   assert.ok(content.includes('process-hollowing'));
 });
 
+test('Scenarios #003 (LockBit) and #004 (3CX) satisfy cross-layer MITRE, telemetry, process-tree, and orthogonal Excalidraw invariants', async () => {
+  const { getScenarioAttribution } = await import('./attack-sources-and-legal');
+  const findSection3D = (scenarioId: string, sectionKey: string) =>
+    listScenario3DSections(scenarioId).find((d) => d.sectionKey === sectionKey) ??
+    null;
+
+  // 1. Scenarios #003 and #004 stage MITRE IDs must all exist in their authoritative attribution lists
+  for (const sid of [
+    'ransomware-shadow-wipe',
+    '3cx-desktopapp-supply-chain-lazarus',
+  ] as const) {
+    const scenario = ATTACK_SCENARIOS.find((s) => s.id === sid);
+    assert.ok(scenario, `${sid} must be registered in ATTACK_SCENARIOS`);
+    const attribution = getScenarioAttribution(scenario);
+    const attrIds = new Set(attribution.mitreTechniques.map((t) => t.id));
+    for (const stage of scenario.stages) {
+      assert.equal(
+        attrIds.has(stage.mitreTechniqueId),
+        true,
+        `${scenario.id} stage "${stage.title}" (${stage.mitreTechniqueId}) missing from attribution mitreTechniques`
+      );
+    }
+  }
+
+  // 2. LockBit (#003) canonical integrity checks
+  const lockbit = ATTACK_SCENARIOS.find((s) => s.id === 'ransomware-shadow-wipe');
+  assert.ok(lockbit, 'LockBit scenario must be registered');
+  assert.equal(lockbit.stages[3]?.mitreTechniqueId, 'T1070.001');
+  assert.equal(
+    lockbit.processTree.some((p) => p.name === 'wevtutil.exe' && p.pid === 6618),
+    true,
+    'LockBit processTree must include wevtutil.exe (PID 6618)'
+  );
+  assert.equal(
+    lockbit.telemetry.find((t) => t.id === 'lb3-3')?.info.includes('8-thread'),
+    true,
+    'LockBit Stage 3 telemetry info must align on 8-thread IOCP'
+  );
+  assert.equal(
+    lockbit.telemetry.find((t) => t.id === 'lb3-4')?.mitreId,
+    'T1070.001',
+    'LockBit Stage 4 telemetry must map to T1070.001'
+  );
+  assert.equal(
+    findSection3D('ransomware-shadow-wipe', 'step-4')?.mitreId,
+    'T1070.001'
+  );
+  assert.equal(
+    findSection3D('ransomware-shadow-wipe', 'memory-forensics'),
+    null,
+    'LockBit intentionally omits memory-forensics per MOD-17'
+  );
+
+  // Zero legacy HLJkNskOq drift across LockBit Excalidraw boards
+  for (const sectionKey of listTechnicalWhiteboardSections('ransomware-shadow-wipe')) {
+    const board = getTechnicalWhiteboard('ransomware-shadow-wipe', sectionKey);
+    assert.ok(board);
+    assert.equal(
+      JSON.stringify(board).includes('HLJkNskOq'),
+      false,
+      `LockBit whiteboard ${sectionKey} must not contain legacy HLJkNskOq artifact drift`
+    );
+  }
+
+  // 3. 3CX (#004) canonical integrity checks
+  const threeCx = ATTACK_SCENARIOS.find(
+    (s) => s.id === '3cx-desktopapp-supply-chain-lazarus'
+  );
+  assert.ok(threeCx, '3CX scenario must be registered');
+  assert.equal(
+    threeCx.processTree[0]?.name,
+    'userinit.exe',
+    '3CX processTree must root at authentic userinit.exe parent of explorer.exe'
+  );
+  assert.equal(
+    threeCx.processTree[1]?.name,
+    'explorer.exe',
+    '3CX processTree must chain userinit.exe -> explorer.exe'
+  );
+  assert.equal(
+    threeCx.processTree[1]?.ppid,
+    threeCx.processTree[0]?.pid,
+    'explorer.exe ppid must match userinit.exe pid'
+  );
+  assert.equal(
+    findSection3D('3cx-desktopapp-supply-chain-lazarus', 'memory-forensics')
+      ?.mitreId,
+    'T1574.002 / T1140'
+  );
+  const cxMemClip = fs.readFileSync(
+    path.join(
+      CLIPS_DIR,
+      '3cx-desktopapp-supply-chain-lazarus',
+      'ThreeCxMemoryDiffClip.tsx'
+    ),
+    'utf8'
+  );
+  assert.match(cxMemClip, /mitreId="T1574\.002 \/ T1140"/);
+
+  // 4. Orthogonal arrow geometry invariant for LockBit & 3CX Excalidraw boards
+  for (const sid of [
+    'ransomware-shadow-wipe',
+    '3cx-desktopapp-supply-chain-lazarus',
+  ] as const) {
+    for (const sectionKey of listTechnicalWhiteboardSections(sid)) {
+      const board = getTechnicalWhiteboard(sid, sectionKey);
+      assert.ok(board);
+      const boxes = new Map<string, { x: number; y: number; w: number; h: number }>();
+      for (const skel of board.skeletons) {
+        const s = skel as Record<string, unknown>;
+        if (
+          s.type === 'rectangle' &&
+          typeof s.id === 'string' &&
+          typeof s.x === 'number' &&
+          typeof s.y === 'number' &&
+          typeof s.width === 'number' &&
+          typeof s.height === 'number'
+        ) {
+          boxes.set(s.id, { x: s.x, y: s.y, w: s.width, h: s.height });
+        }
+      }
+      for (const skel of board.skeletons) {
+        const s = skel as Record<string, unknown>;
+        if (s.type !== 'arrow') continue;
+        const startId = (s.start as { id?: string } | undefined)?.id;
+        const endId = (s.end as { id?: string } | undefined)?.id;
+        if (!startId || !endId) continue;
+        const from = boxes.get(startId);
+        const to = boxes.get(endId);
+        assert.ok(
+          from && to,
+          `Arrow ${String(s.id)} in ${sid}/${sectionKey} references missing box`
+        );
+        const sameRow = Math.abs(from.y - to.y) <= 24;
+        const sameCol =
+          Math.abs(from.x + from.w / 2 - (to.x + to.w / 2)) <= 16;
+        assert.equal(
+          sameRow || sameCol,
+          true,
+          `Arrow ${String(s.id)} (${startId} -> ${endId}) in ${sid}/${sectionKey} is diagonal (not aligned horizontally or vertically)`
+        );
+      }
+    }
+  }
+});
+
 
 

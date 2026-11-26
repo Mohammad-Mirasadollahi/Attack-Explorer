@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { CLEANROOM_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function threeCxStep3Board(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -10,10 +10,10 @@ export function threeCxStep3Board(): TechnicalBoardDescriptor {
 
   const sleep = { id: 'cx3-sleep', x: 40, w: 235 };
   const gh = { id: 'cx3-gh', x: sleep.x + sleep.w + ARROW_GAP, w: 255 };
-  const eof = { id: 'cx3-eof', x: gh.x + gh.w + ARROW_GAP, w: 245 };
+  const eof = { id: 'cx3-eof', x: gh.x + gh.w + ARROW_GAP, w: 250 };
 
-  const c2 = { id: 'cx3-c2', x: 430, w: 260 };
-  const net = { id: 'cx3-net', x: c2.x + c2.w + ARROW_GAP, w: 250 };
+  const net = { id: 'cx3-net', x: gh.x, w: 255 };
+  const c2 = { id: 'cx3-c2', x: eof.x, w: 250 };
 
   return {
     scenarioId: '3cx-desktopapp-supply-chain-lazarus',
@@ -66,7 +66,7 @@ export function threeCxStep3Board(): TechnicalBoardDescriptor {
         kind: 'network',
         title: 'akamaitechcloudservices[.]com (TLS 443)',
         module: 'Lazarus Lookalike CDN C2 Infrastructure',
-        signature: 'POST https://akamaitechcloudservices[.]com/api/v1/sync',
+        signature: 'POST https://akamaitechcloudservices[.]com/api/v2/sync',
         fields: [
           { key: 'domain', type: 'C2', value: 'akamaitechcloudservices[.]com' },
           { key: 'masquerade', type: 'Brand', value: 'Imitates Akamai CDN naming' },
@@ -172,26 +172,6 @@ export function threeCxStep3Board(): TechnicalBoardDescriptor {
           'VOIP PROCESS EGRESS ANOMALY\nWhy is 3CXDesktopApp.exe fetching\nraw.githubusercontent.com/*.ico?',
       }),
       box({
-        id: c2.id,
-        x: c2.x,
-        y: y2,
-        w: c2.w,
-        h: h2,
-        label: 'Lazarus C2 Server\nakamaitechcloudservices\nLookalike CDN Relay',
-        stroke: CLEANROOM_CHALK.implant,
-        fill: CLEANROOM_CHALK.implantFill,
-      }),
-      ...hArrow({
-        id: 'cx3-a4',
-        fromId: c2.id,
-        toId: net.id,
-        fromRight: c2.x + c2.w,
-        toLeft: net.x,
-        midY: y2 + h2 / 2,
-        caption: 'DNS + Net',
-        stroke: CLEANROOM_CHALK.edr,
-      }),
-      box({
         id: net.id,
         x: net.x,
         y: y2,
@@ -200,6 +180,26 @@ export function threeCxStep3Board(): TechnicalBoardDescriptor {
         label: 'Sysmon EID 22 + 3\nProcess-Domain Alert\nSinkhole & Isolate',
         stroke: CLEANROOM_CHALK.edr,
         fill: CLEANROOM_CHALK.edrFill,
+      }),
+      ...hArrowLeft({
+        id: 'cx3-a4',
+        fromId: c2.id,
+        toId: net.id,
+        fromLeft: c2.x,
+        toRight: net.x + net.w,
+        midY: y2 + h2 / 2,
+        caption: 'DNS + Net',
+        stroke: CLEANROOM_CHALK.edr,
+      }),
+      box({
+        id: c2.id,
+        x: c2.x,
+        y: y2,
+        w: c2.w,
+        h: h2,
+        label: 'Lazarus C2 Server\nakamaitechcloudservices\nLookalike CDN Relay',
+        stroke: CLEANROOM_CHALK.implant,
+        fill: CLEANROOM_CHALK.implantFill,
       }),
       note(40, 464, 'Hover each box to inspect GitHub IconStorages paths, EOF stego, and C2 telemetry.', CLEANROOM_CHALK.muted),
     ],

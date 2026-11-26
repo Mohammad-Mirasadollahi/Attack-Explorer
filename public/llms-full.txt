@@ -62,12 +62,12 @@
 - **Severity:** CRITICAL
 - **MITRE ATT&CK Techniques:** T1569.002 (System Services: Service Execution), T1490 (Inhibit System Recovery), T1486 (Data Encrypted for Impact), T1070.001 (Indicator Removal: Clear Windows Event Logs)
 - **CVEs / Advisories:** CISA AA23-165A (Understanding Ransomware Threat Actors: LockBit), CVE-2023-4966
-- **Executive Summary:** Compromised Domain Admin credentials on `JUMP-OPS-02` (`10.10.15.8`) push `lb3_black.exe` over SMB `ADMIN$` (`WinSec EID 5145`) and register `PSEXESVC` (`System EID 7045`) as `NT AUTHORITY\SYSTEM` on `FS-CORP-01` (`10.10.50.14`) to launch `lb3_black.exe -pass 8f91c2a0` (`PID 6412`). The locker wipes Volume Shadow Copies (`vssadmin`, `wbadmin`, `bcdedit`) and halts `MSSQLSERVER`/`VeeamVSSSvc` (`EID 7036`), encrypts the opening 4 KB of every file on `D:\Finance` and `D:\HR` via asynchronous IOCP `ChaCha20 + RSA-2048` (`*.HLJkNskOq`), drops `HLJkNskOq.README.txt`, and executes `wevtutil cl Security` (`WinSec EID 1102`) while off-host SIEM preserves the complete attack timeline.
+- **Executive Summary:** Compromised Domain Admin credentials on `JUMP-OPS-02` (`10.10.15.8`) push `lb3_black.exe` over SMB `ADMIN$` (`WinSec EID 5145`) and register `PSEXESVC` (`System EID 7045`) as `NT AUTHORITY\SYSTEM` on `FS-CORP-01` (`10.10.50.14`) to launch `lb3_black.exe -pass 8f91c2a0` (`PID 6412`). The locker wipes Volume Shadow Copies (`vssadmin`, `wmic`, `bcdedit`) and halts `VSS`/`sqlservr`/`VeeamBackupSvc` (`EID 7036`), encrypts the opening `4 KB–64 KB` header of `4,820` files across `D:\Finance_Shares\`, `D:\HR_Records\`, and `D:\CAD_Archives\` in `11.4s` via 8-thread asynchronous IOCP `ChaCha20 + RSA-2048` (`*.lockbit`), drops `Restore-My-Files.txt` + `lb3_wall.bmp`, and executes `wevtutil.exe cl Security` (`PID 6618`, `WinSec EID 1102`) while off-host SIEM preserves the complete attack timeline.
 - **Kill-Chain Stages (4):**
   1. **[T1569.002] LATERAL PSEXEC STAGING & SYSTEM SERVICE CREATION**: `JUMP-OPS-02` copies `lb3_black.exe` to `ADMIN$` (`EID 5145`) and starts `PSEXESVC` (`EID 7045`) to launch password-gated `lb3_black.exe -pass 8f91c2a0` (`PID 6412`).
-  2. **[T1490] SHADOW COPY PURGE & BACKUP SERVICE TERMINATION**: `vssadmin delete shadows /all /quiet`, `wbadmin delete catalog`, `bcdedit` recovery lockout, and stopping `MSSQLSERVER`/`VeeamVSSSvc` (`EID 7036`).
-  3. **[T1486] HIGH-SPEED IOCP INTERMITTENT ENCRYPTION**: Multi-threaded `CreateIoCompletionPort` workers seal the first 4 KB of each file with `ChaCha20` + `RSA-2048` and append `.HLJkNskOq` while excluding `C:\Windows`.
-  4. **[T1070.001] RANSOM NOTE DROP & SECURITY EVENT LOG WIPE**: `HLJkNskOq.README.txt` drops across shares and `wevtutil cl Security` stamps `WinSec EID 1102` while off-host SIEM retains every earlier alert.
+  2. **[T1490] SHADOW COPY PURGE & BACKUP SERVICE TERMINATION**: `vssadmin.exe delete shadows /all /quiet` (`PID 6504`), `wmic shadowcopy delete`, `bcdedit.exe` recovery lockout (`PID 6540`), and stopping `VSS`/`sqlservr`/`VeeamBackupSvc` (`EID 7036`).
+  3. **[T1486] HIGH-SPEED IOCP INTERMITTENT ENCRYPTION**: 8-thread `CreateIoCompletionPort` workers seal the opening `4 KB–64 KB` header of `4,820` files in `11.4s` with `ChaCha20` + `RSA-2048` and append `.lockbit` while excluding `C:\Windows`.
+  4. **[T1070.001] RANSOM NOTE DROP & SECURITY EVENT LOG WIPE**: `Restore-My-Files.txt` drops across shares (`Sysmon EID 11`), `lb3_wall.bmp` replaces the desktop wallpaper (`Sysmon EID 13`), and `wevtutil.exe cl Security` (`PID 6618`) stamps `WinSec EID 1102` while off-host SIEM retains every earlier alert.
 - **Primary Authoritative Sources (3):**
   - CISA / FBI / MS-ISAC Joint Advisory — *Understanding Ransomware Threat Actors: LockBit (AA23-165A)*: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-165a
   - MITRE ATT&CK — *T1490 Inhibit System Recovery & T1486 Data Encrypted for Impact*: https://attack.mitre.org/techniques/T1490/
@@ -92,6 +92,6 @@
 - **Primary Authoritative Sources (3):**
   - CrowdStrike Intelligence — *3CXDesktopApp Supply Chain Compromise (Labyrinth Chollima / SmoothOperator)*: https://www.crowdstrike.com/blog/crowdstrike-detects-and-prevents-active-intrusion-campaign-targeting-3cxdesktopapp-customers/
   - Mandiant — *3CX Software Supply Chain Compromise Initiated by a Prior Software Supply Chain Compromise (UNC4736 / X_TRADER)*: https://cloud.google.com/blog/topics/threat-intelligence/3cx-software-supply-chain-compromise
-  - Kaspersky GReAT — *3CXDesktopApp Supply-Chain Attack Leads to Gopuram Backdoor*: https://securelist.com/3cxdesktopapp-supply-chain-attack-leads-to-gopuram-backdoor/109358/
+  - Kaspersky GReAT — *Gopuram Backdoor Deployed Through 3CX Supply Chain Attack*: https://securelist.com/gopuram-backdoor-deployed-through-3cx-supply-chain-attack/109344/
 
 

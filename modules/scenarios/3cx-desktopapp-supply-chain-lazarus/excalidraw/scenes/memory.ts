@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { CLEANROOM_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function threeCxMemoryBoard(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -10,10 +10,10 @@ export function threeCxMemoryBoard(): TechnicalBoardDescriptor {
 
   const clean = { id: 'cxm-clean', x: 40, w: 245 };
   const carrier = { id: 'cxm-carrier', x: clean.x + clean.w + ARROW_GAP, w: 255 };
-  const loader = { id: 'cxm-loader', x: carrier.x + carrier.w + ARROW_GAP, w: 245 };
+  const loader = { id: 'cxm-loader', x: carrier.x + carrier.w + ARROW_GAP, w: 250 };
 
-  const stage2 = { id: 'cxm-stage2', x: 430, w: 260 };
-  const triage = { id: 'cxm-triage', x: stage2.x + stage2.w + ARROW_GAP, w: 250 };
+  const triage = { id: 'cxm-triage', x: carrier.x, w: 255 };
+  const stage2 = { id: 'cxm-stage2', x: loader.x, w: 250 };
 
   return {
     scenarioId: '3cx-desktopapp-supply-chain-lazarus',
@@ -172,26 +172,6 @@ export function threeCxMemoryBoard(): TechnicalBoardDescriptor {
           'VOLATILE MEMORY RULE\nDump PID 7120 before killing process:\n2 MEM_PRIVATE RWX regions hold cleartext.',
       }),
       box({
-        id: stage2.id,
-        x: stage2.x,
-        y: y2,
-        w: stage2.w,
-        h: h2,
-        label: '0x000001C948280000\nMEM_PRIVATE RWX\nICONICSTEALER / Gopuram',
-        stroke: CLEANROOM_CHALK.cipher,
-        fill: CLEANROOM_CHALK.cipherFill,
-      }),
-      ...hArrow({
-        id: 'cxm-a4',
-        fromId: stage2.id,
-        toId: triage.id,
-        fromRight: stage2.x + stage2.w,
-        toLeft: triage.x,
-        midY: y2 + h2 / 2,
-        caption: 'PE-sieve / YARA',
-        stroke: CLEANROOM_CHALK.edr,
-      }),
-      box({
         id: triage.id,
         x: triage.x,
         y: y2,
@@ -200,6 +180,26 @@ export function threeCxMemoryBoard(): TechnicalBoardDescriptor {
         label: 'Forensic Verdict\n3 Memory Artifacts\nConfirmed in PID 7120',
         stroke: CLEANROOM_CHALK.edr,
         fill: CLEANROOM_CHALK.edrFill,
+      }),
+      ...hArrowLeft({
+        id: 'cxm-a4',
+        fromId: stage2.id,
+        toId: triage.id,
+        fromLeft: stage2.x,
+        toRight: triage.x + triage.w,
+        midY: y2 + h2 / 2,
+        caption: 'PE-sieve / YARA',
+        stroke: CLEANROOM_CHALK.edr,
+      }),
+      box({
+        id: stage2.id,
+        x: stage2.x,
+        y: y2,
+        w: stage2.w,
+        h: h2,
+        label: '0x000001C948280000\nMEM_PRIVATE RWX\nICONICSTEALER / Gopuram',
+        stroke: CLEANROOM_CHALK.cipher,
+        fill: CLEANROOM_CHALK.cipherFill,
       }),
       note(40, 464, 'Hover each memory region to inspect VAD protection flags, offsets, and YARA rules.', CLEANROOM_CHALK.muted),
     ],

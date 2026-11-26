@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { VAULT_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function lockbitStep4Board(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -12,8 +12,8 @@ export function lockbitStep4Board(): TechnicalBoardDescriptor {
   const wevt = { id: 'lb4-wevt', x: noteDrop.x + noteDrop.w + ARROW_GAP, w: 250 };
   const eid1102 = { id: 'lb4-1102', x: wevt.x + wevt.w + ARROW_GAP, w: 250 };
 
-  const siem = { id: 'lb4-siem', x: 430, w: 260 };
-  const recover = { id: 'lb4-recover', x: siem.x + siem.w + ARROW_GAP, w: 250 };
+  const recover = { id: 'lb4-recover', x: wevt.x, w: 250 };
+  const siem = { id: 'lb4-siem', x: eid1102.x, w: 250 };
 
   return {
     scenarioId: 'ransomware-shadow-wipe',
@@ -25,29 +25,29 @@ export function lockbitStep4Board(): TechnicalBoardDescriptor {
     tooltips: {
       'lb4-note': {
         kind: 'detect',
-        title: 'HLJkNskOq.README.txt & Wallpaper',
-        module: 'Extortion Artifacts in Every Folder',
-        signature: 'WriteFile("D:\\Finance\\HLJkNskOq.README.txt") + SystemParametersInfoW',
+        title: 'Restore-My-Files.txt & Wallpaper Hijack',
+        module: 'Sysmon EID 11 + EID 13 Across All Shares',
+        signature: 'CreateFileW("D:\\Finance_Shares\\Restore-My-Files.txt") + RegSetValueExW(Wallpaper)',
         fields: [
-          { key: 'note', type: 'File', value: 'HLJkNskOq.README.txt' },
-          { key: 'desktop', type: 'Win32', value: 'Wallpaper replaced with demand' },
-          { key: 'id', type: 'Victim', value: 'Unique negotiation ID embedded' },
+          { key: 'note', type: 'File', value: 'Restore-My-Files.txt (Finance/HR/CAD)' },
+          { key: 'desktop', type: 'EID 13', value: 'Wallpaper = C:\\ProgramData\\lb3_wall.bmp' },
+          { key: 'id', type: 'Victim', value: 'Unique negotiation ID + Tor portal' },
         ],
         explain:
-          'LockBit drops extortion notes in every encrypted directory and updates the desktop wallpaper so administrators immediately see the demand.',
+          'LockBit drops Restore-My-Files.txt in every encrypted directory and overwrites HKCU\\Control Panel\\Desktop\\Wallpaper so administrators immediately see the extortion demand.',
       },
       'lb4-wevt': {
         kind: 'process',
-        title: 'wevtutil.exe cl Security / System',
-        module: 'PID 7316 · MITRE T1070.001',
-        signature: 'wevtutil.exe cl Security && wevtutil.exe cl System',
+        title: 'wevtutil.exe cl Security',
+        module: 'PID 6618 · MITRE T1070.001',
+        signature: 'wevtutil.exe cl Security',
         fields: [
-          { key: 'pid', type: 'DWORD', value: '7316 (wevtutil.exe)' },
+          { key: 'pid', type: 'DWORD', value: '6618 (wevtutil.exe)' },
           { key: 'parent', type: 'DWORD', value: '6412 (lb3_black.exe)' },
-          { key: 'target', type: 'Channels', value: 'Security, System, Application EVTX' },
+          { key: 'target', type: 'Channel', value: 'Windows Security Event Log (EVTX)' },
         ],
         explain:
-          'Before exiting, the locker clears local Windows Event Log channels to strip forensic evidence of initial PsExec entry and lateral source IP.',
+          'Before exiting, the locker clears the local Windows Security Event Log to strip forensic evidence of initial PsExec entry and lateral source IP.',
       },
       'lb4-1102': {
         kind: 'detect',
@@ -106,7 +106,7 @@ export function lockbitStep4Board(): TechnicalBoardDescriptor {
         y: y1,
         w: noteDrop.w,
         h: h1,
-        label: 'HLJkNskOq.README.txt\nDropped in All Folders\nWallpaper Overwritten',
+        label: 'Restore-My-Files.txt\nSysmon EID 11 + 13\nWallpaper Overwritten',
         stroke: VAULT_CHALK.attacker,
         fill: VAULT_CHALK.attackerFill,
       }),
@@ -126,7 +126,7 @@ export function lockbitStep4Board(): TechnicalBoardDescriptor {
         y: y1,
         w: wevt.w,
         h: h1,
-        label: 'wevtutil.exe (7316)\ncl Security & System\nLocal EVTX Purged',
+        label: 'wevtutil.exe (6618)\ncl Security Channel\nLocal EVTX Purged',
         stroke: VAULT_CHALK.warn,
         fill: VAULT_CHALK.warnFill,
       }),
@@ -171,26 +171,6 @@ export function lockbitStep4Board(): TechnicalBoardDescriptor {
           'BLUE-TEAM LESSON\nLocal log wipe leaves EID 1102.\nOff-host SIEM preserves JUMP-OPS-02.',
       }),
       box({
-        id: siem.id,
-        x: siem.x,
-        y: y2,
-        w: siem.w,
-        h: h2,
-        label: 'Off-Host SIEM Intact\n5145 -> 7045 -> 1 -> 1102\nPivot: 10.10.15.8',
-        stroke: VAULT_CHALK.siem,
-        fill: VAULT_CHALK.siemFill,
-      }),
-      ...hArrow({
-        id: 'lb4-a4',
-        fromId: siem.id,
-        toId: recover.id,
-        fromRight: siem.x + siem.w,
-        toLeft: recover.x,
-        midY: y2 + h2 / 2,
-        caption: 'IR Playbook',
-        stroke: VAULT_CHALK.ok,
-      }),
-      box({
         id: recover.id,
         x: recover.x,
         y: y2,
@@ -199,6 +179,26 @@ export function lockbitStep4Board(): TechnicalBoardDescriptor {
         label: 'Clean Rebuild\nRevoke DA + KRBTGT\nWORM Backup Restore',
         stroke: VAULT_CHALK.ok,
         fill: VAULT_CHALK.okFill,
+      }),
+      ...hArrowLeft({
+        id: 'lb4-a4',
+        fromId: siem.id,
+        toId: recover.id,
+        fromLeft: siem.x,
+        toRight: recover.x + recover.w,
+        midY: y2 + h2 / 2,
+        caption: 'IR Playbook',
+        stroke: VAULT_CHALK.ok,
+      }),
+      box({
+        id: siem.id,
+        x: siem.x,
+        y: y2,
+        w: siem.w,
+        h: h2,
+        label: 'Off-Host SIEM Intact\n5145 -> 7045 -> 1 -> 1102\nPivot: 10.10.15.8',
+        stroke: VAULT_CHALK.siem,
+        fill: VAULT_CHALK.siemFill,
       }),
       note(40, 464, 'Hover any box to inspect anti-forensic clearing, EID 1102, and zero-ransom recovery.', VAULT_CHALK.muted),
     ],

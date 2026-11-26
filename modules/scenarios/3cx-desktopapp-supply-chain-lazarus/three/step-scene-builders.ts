@@ -30,6 +30,39 @@ function easeOutCubic(x: number): number {
   return 1 - Math.pow(1 - c, 3);
 }
 
+const BEAM_UP = new THREE.Vector3(0, 1, 0);
+const BEAM_FROM = new THREE.Vector3();
+const BEAM_TO = new THREE.Vector3();
+const BEAM_DIR = new THREE.Vector3();
+const BEAM_MID = new THREE.Vector3();
+const BEAM_QUAT = new THREE.Quaternion();
+const BASE_SCAN_BEAM_LEN = 3.2;
+
+function alignScanBeamBetweenObjects(
+  beam: THREE.Mesh,
+  fromObj: THREE.Object3D,
+  toObj: THREE.Object3D,
+  beamParent: THREE.Object3D
+) {
+  beamParent.updateWorldMatrix(true, false);
+  fromObj.updateWorldMatrix(true, false);
+  toObj.updateWorldMatrix(true, false);
+
+  fromObj.getWorldPosition(BEAM_FROM);
+  toObj.getWorldPosition(BEAM_TO);
+  beamParent.worldToLocal(BEAM_FROM);
+  beamParent.worldToLocal(BEAM_TO);
+
+  BEAM_DIR.subVectors(BEAM_TO, BEAM_FROM);
+  const dist = Math.max(0.05, BEAM_DIR.length());
+  BEAM_MID.addVectors(BEAM_FROM, BEAM_TO).multiplyScalar(0.5);
+
+  beam.position.copy(BEAM_MID);
+  beam.scale.set(1, dist / BASE_SCAN_BEAM_LEN, 1);
+  BEAM_QUAT.setFromUnitVectors(BEAM_UP, BEAM_DIR.normalize());
+  beam.quaternion.copy(BEAM_QUAT);
+}
+
 /**
  * 1) OVERVIEW HERO FILM (`threecx-cleanroom-briefing`)
  * Full 5-Act Cleanroom Conveyor -> Gold Hologram Press -> Phone Cutaway -> Icon Gallery -> VIP Vault.
@@ -84,7 +117,12 @@ function buildThreeCxBriefingScene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0.5, 2.2, 0.1),
-    update: (timeSec, cutawayMode: StandardCutawayMode = 'AUTO') => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const norm =
         (timeSec % THREECX_TIMELINE_DURATION_SEC) / THREECX_TIMELINE_DURATION_SEC;
       const f = evaluateThreeCxChoreography(norm, cutawayMode);
@@ -94,8 +132,14 @@ function buildThreeCxBriefingScene(
       phone.riggedGear.visible = f.riggedPartsSeated > 0.25;
       phone.amberCore.visible = f.riggedPartsSeated > 0.25;
 
-      // Phone glides cleanly along conveyor -> under official gold press -> onto trader desk
-      phone.group.position.x = -6.3 + f.phoneConveyorProgress * 8.55;
+      // Phone glides cleanly along conveyor (-6.3) -> centered under official gold press (-3.05 at p=0.45) -> onto trader desk (2.25)
+      if (f.phoneConveyorProgress <= 0.45) {
+        const t = clamp01(f.phoneConveyorProgress / 0.45);
+        phone.group.position.x = -6.3 + t * 3.25;
+      } else {
+        const t = clamp01((f.phoneConveyorProgress - 0.45) / 0.55);
+        phone.group.position.x = -3.05 + t * 5.3;
+      }
 
       // Act 2: Official Gold Hologram Press stamps genuine emerald-gold seal; inspector approves
       cleanroom.pressHead.position.y = 3.32 - f.hologramPressDown * 0.45;
@@ -123,6 +167,14 @@ function buildThreeCxBriefingScene(
 
       // Act 4: Public Gallery icon tile #4 hit by cyan scan beam -> secret crimson strip peels off
       gallery.scanBeam.visible = f.galleryScanBeam > 0.08;
+      if (gallery.scanBeam.visible) {
+        alignScanBeamBetweenObjects(
+          gallery.scanBeam,
+          phone.hoverRadio,
+          gallery.targetTile,
+          gallery.group
+        );
+      }
       gallery.targetTile.rotation.y = -f.hiddenStripPeeled * 0.28;
       gallery.hiddenStrip.position.y = -0.32 - f.hiddenStripPeeled * 0.34;
       gallery.hiddenStrip.position.z = 0.06 + f.hiddenStripPeeled * 0.26;
@@ -202,7 +254,12 @@ function buildThreeCxStep1Scene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(-0.4, 2.2, 0.2),
-    update: (timeSec, cutawayMode: StandardCutawayMode = 'AUTO') => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const cycle = (timeSec % 14) / 14;
       const armP =
         cycle < 0.32 ? Math.sin((cycle / 0.32) * Math.PI) : 0;
@@ -289,7 +346,12 @@ function buildThreeCxStep2Scene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0, 2.5, 0.2),
-    update: (timeSec, cutawayMode: StandardCutawayMode = 'AUTO') => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const cycle = (timeSec % 14) / 14;
       const lidOpen =
         cutawayMode === 'SEALED'
@@ -366,12 +428,29 @@ function buildThreeCxStep3Scene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0.4, 2.5, 0.0),
-    update: (timeSec) => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const cycle = (timeSec % 12) / 12;
       const beamOn = cycle > 0.14;
       const peel = easeOutCubic(clamp01((cycle - 0.34) / 0.38));
 
+      const lidOpen = cutawayMode === 'SEALED' ? 0 : 0.9;
+      phone.cutawayLid.position.y = lidOpen;
+      phone.cutawayLid.rotation.z = lidOpen > 0 ? -0.15 : 0;
+
       gallery.scanBeam.visible = beamOn;
+      if (beamOn) {
+        alignScanBeamBetweenObjects(
+          gallery.scanBeam,
+          phone.hoverRadio,
+          gallery.targetTile,
+          gallery.group
+        );
+      }
       gallery.targetTile.rotation.y = -peel * 0.32;
       gallery.hiddenStrip.position.y = -0.32 - peel * 0.42;
       gallery.hiddenStrip.position.z = 0.06 + peel * 0.32;
@@ -433,8 +512,17 @@ function buildThreeCxStep4Scene(
     primaryAnchor,
     secondaryAnchor,
     particleCenter: new THREE.Vector3(0.4, 2.8, 0.2),
-    update: (timeSec) => {
+    update: (
+      timeSec,
+      _phaseIndex,
+      _isDark,
+      cutawayMode: StandardCutawayMode = 'AUTO'
+    ) => {
       const cycle = (timeSec % 12) / 12;
+      const lidOpen = cutawayMode === 'SEALED' ? 0 : 0.85;
+      phone.cutawayLid.position.y = lidOpen;
+      phone.cutawayLid.rotation.z = lidOpen > 0 ? -0.15 : 0;
+
       const siphon = clamp01((cycle - 0.1) / 0.45);
       for (let k = 0; k < desk.keycards.length; k += 1) {
         const s = clamp01((siphon - k * 0.18) / 0.6);

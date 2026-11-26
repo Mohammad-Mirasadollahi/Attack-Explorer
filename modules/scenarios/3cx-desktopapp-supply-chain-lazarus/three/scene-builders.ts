@@ -419,7 +419,7 @@ export function buildDesktopPhoneConsole(
   chassis.position.y = 0.21;
   chassis.castShadow = true;
   addAnimeInkEdges(chassis, materials.inkLineMaterial, 24);
-  addInvertedHullOutline(chassis, 0.02);
+  addInvertedHullOutline(chassis, materials.inkOutlineMaterial, 1.04);
   group.add(chassis);
 
   // Dark internal circuit bay recess
@@ -748,7 +748,7 @@ export function buildTraderCredentialDeskAndVipVault(
     materials.createToonMaterial(0xe11d48)
   );
   addAnimeInkEdges(vaultCore, materials.inkLineMaterial, 24);
-  addInvertedHullOutline(vaultCore, 0.025);
+  addInvertedHullOutline(vaultCore, materials.inkOutlineMaterial, 1.055);
   vipVault.add(vaultCore);
   const crown = new THREE.Mesh(
     new THREE.TorusGeometry(0.62, 0.055, 10, 24),

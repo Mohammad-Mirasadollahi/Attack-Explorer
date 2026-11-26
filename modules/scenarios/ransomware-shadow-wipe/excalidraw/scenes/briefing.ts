@@ -9,11 +9,11 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
   const h2 = 132;
 
   const jump = { id: 'lb0-jump', x: 40, w: 235 };
-  const svc = { id: 'lb0-svc', x: jump.x + jump.w + ARROW_GAP, w: 245 };
+  const svc = { id: 'lb0-svc', x: jump.x + jump.w + ARROW_GAP, w: 250 };
   const vss = { id: 'lb0-vss', x: svc.x + svc.w + ARROW_GAP, w: 255 };
 
-  const iocp = { id: 'lb0-iocp', x: 420, w: 255 };
-  const ext = { id: 'lb0-ext', x: iocp.x + iocp.w + ARROW_GAP, w: 260 };
+  const iocp = { id: 'lb0-iocp', x: svc.x, w: 250 };
+  const ext = { id: 'lb0-ext', x: iocp.x + iocp.w + ARROW_GAP, w: 255 };
 
   return {
     scenarioId: 'ransomware-shadow-wipe',
@@ -52,41 +52,41 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
       'lb0-vss': {
         kind: 'api',
         title: 'VSS Wipe & Backup Service Kill',
-        module: 'vssadmin.exe + wbadmin + bcdedit + StopService',
+        module: 'vssadmin.exe + wmic.exe + bcdedit.exe',
         signature: 'vssadmin.exe delete shadows /all /quiet',
         fields: [
-          { key: 'pid', type: 'DWORD', value: '7024 (vssadmin.exe)' },
-          { key: 'services', type: 'EID 7036', value: 'MSSQLSERVER / VeeamVSSSvc stopped' },
+          { key: 'pids', type: 'DWORD', value: '6504 (vssadmin) · 6540 (bcdedit)' },
+          { key: 'services', type: 'EID 7036', value: 'VSS / sqlservr / VeeamBackupSvc stopped' },
           { key: 'witness', type: 'Sysmon', value: 'EID 1 (Process Create)' },
         ],
         explain:
-          'LockBit destroys local snapshots, disables Windows recovery prompts, and halts database services to release exclusive file locks before encryption begins.',
+          'LockBit destroys all local Volume Shadow Copies, disables Windows Recovery via bcdedit, and halts VSS/database services to release exclusive file locks before encryption begins.',
       },
       'lb0-iocp': {
         kind: 'api',
         title: 'IOCP Intermittent Encryption',
-        module: 'CreateIoCompletionPort + ChaCha20 + RSA-2048',
-        signature: 'EncryptFirst4KB(handle) -> Rename(*.HLJkNskOq)',
+        module: 'CreateIoCompletionPort (8 Threads) · ChaCha20 + RSA-2048',
+        signature: 'EncryptHead(4 KB-64 KB) -> MoveFileExW(*.lockbit)',
         fields: [
-          { key: 'cipher', type: 'Hybrid', value: 'ChaCha20 (4 KB stripe) + RSA-2048' },
-          { key: 'ioModel', type: 'Win32', value: 'Asynchronous IOCP worker pool' },
-          { key: 'impact', type: 'Shares', value: 'D:\\Finance & D:\\HR locked in minutes' },
+          { key: 'cipher', type: 'Hybrid', value: 'ChaCha20 (First 4 KB-64 KB) + RSA-2048' },
+          { key: 'ioModel', type: 'Win32', value: '8-thread Asynchronous IOCP worker pool' },
+          { key: 'impact', type: 'Shares', value: '4,820 files locked across Finance/HR/CAD in 11.4s' },
         ],
         explain:
-          'Intermittent encryption seals only the opening 4 KB of each file using fast ChaCha20 streams, crippling terabytes of archives before responders can disconnect the host.',
+          'Intermittent head-only encryption seals only the opening 4 KB to 64 KB of each file using fast ChaCha20 streams, locking 4,820 files in 11.4 seconds before responders can disconnect FS-CORP-01.',
       },
       'lb0-ext': {
         kind: 'detect',
         title: 'Ransom Note & Security Log Wipe',
-        module: 'wevtutil.exe cl Security + README.txt',
-        signature: 'wevtutil.exe cl Security && wevtutil.exe cl System',
+        module: 'Restore-My-Files.txt + wevtutil.exe (PID 6618)',
+        signature: 'wevtutil.exe cl Security -> WinSec Event ID 1102',
         fields: [
-          { key: 'note', type: 'NTFS', value: 'HLJkNskOq.README.txt' },
-          { key: 'logWipe', type: 'WinSec', value: 'EID 1102 (Audit Log Cleared)' },
-          { key: 'defense', type: 'SIEM', value: 'Off-host collector retains EID 7045/1/1102' },
+          { key: 'note', type: 'NTFS', value: 'Restore-My-Files.txt (Sysmon EID 11)' },
+          { key: 'logWipe', type: 'WinSec', value: 'EID 1102 (Security Audit Log Cleared)' },
+          { key: 'defense', type: 'SIEM', value: 'Remote SIEM (10.10.99.10) retains 7045/1/1102' },
         ],
         explain:
-          'Clearing local event logs leaves Event ID 1102 as a permanent tamper stamp while off-host SIEM forwarding preserves the entire attack timeline.',
+          'Dropping Restore-My-Files.txt and clearing the local Security log leaves Event ID 1102 as an un-erasable tamper stamp while off-host SIEM forwarding preserves the entire attack timeline.',
       },
       'lb0-sticky': {
         kind: 'note',
@@ -149,7 +149,7 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
         y: y1,
         w: vss.w,
         h: h1,
-        label: 'vssadmin / wbadmin\nDelete Shadow Copies\nStop MSSQL + Veeam',
+        label: 'vssadmin / bcdedit\nDelete Shadow Copies\nStop VSS + DB Svcs',
         stroke: VAULT_CHALK.warn,
         fill: VAULT_CHALK.warnFill,
       }),
@@ -160,7 +160,7 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
         midX: svc.x + svc.w / 2,
         fromBottom: y1 + h1,
         toTop: y2,
-        caption: 'IOCP Pool',
+        caption: '8 IOCP Threads',
         stroke: VAULT_CHALK.crypto,
         captionOffsetX: 16,
       }),
@@ -171,7 +171,7 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
         w: 340,
         h: h2,
         label:
-          'SIEM SURVIVAL CHECKLIST\n1) EID 7045 (PSEXESVC)\n2) EID 1 (vssadmin delete shadows)\n3) EID 7036 (Backup svc stop) + 1102',
+          'SIEM SURVIVAL CHECKLIST\n1) EID 7045 (PSEXESVC)\n2) EID 1 (vssadmin delete shadows)\n3) EID 7036 (VSS stop) + EID 1102',
       }),
       box({
         id: iocp.id,
@@ -179,7 +179,7 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
         y: y2,
         w: iocp.w,
         h: h2,
-        label: 'ChaCha20 + RSA-2048\n4 KB Intermittent Stripe\n*.HLJkNskOq Rename',
+        label: 'ChaCha20 + RSA-2048\n4 KB-64 KB Head Stripe\n4,820 *.lockbit Files',
         stroke: VAULT_CHALK.crypto,
         fill: VAULT_CHALK.cryptoFill,
       }),
@@ -199,7 +199,7 @@ export function lockbitBriefingBoard(): TechnicalBoardDescriptor {
         y: y2,
         w: ext.w,
         h: h2,
-        label: 'HLJkNskOq.README.txt\nWinSec EID 1102\nOff-Host SIEM Preserved',
+        label: 'Restore-My-Files.txt\nWinSec EID 1102\nOff-Host SIEM Intact',
         stroke: VAULT_CHALK.siem,
         fill: VAULT_CHALK.siemFill,
       }),

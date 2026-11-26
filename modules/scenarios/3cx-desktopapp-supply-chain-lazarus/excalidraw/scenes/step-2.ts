@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { CLEANROOM_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function threeCxStep2Board(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -10,10 +10,10 @@ export function threeCxStep2Board(): TechnicalBoardDescriptor {
 
   const host = { id: 'cx2-host', x: 40, w: 235 };
   const d3d = { id: 'cx2-d3d', x: host.x + host.w + ARROW_GAP, w: 255 };
-  const rc4 = { id: 'cx2-rc4', x: d3d.x + d3d.w + ARROW_GAP, w: 245 };
+  const rc4 = { id: 'cx2-rc4', x: d3d.x + d3d.w + ARROW_GAP, w: 250 };
 
-  const rwx = { id: 'cx2-rwx', x: 430, w: 260 };
-  const memscan = { id: 'cx2-scan', x: rwx.x + rwx.w + ARROW_GAP, w: 250 };
+  const memscan = { id: 'cx2-scan', x: d3d.x, w: 255 };
+  const rwx = { id: 'cx2-rwx', x: rc4.x, w: 250 };
 
   return {
     scenarioId: '3cx-desktopapp-supply-chain-lazarus',
@@ -172,26 +172,6 @@ export function threeCxStep2Board(): TechnicalBoardDescriptor {
           'TWO-DLL SPLIT EVASION\nffmpeg.dll = tiny RC4 loader\nd3dcompiler_47.dll = encrypted blob',
       }),
       box({
-        id: rwx.id,
-        x: rwx.x,
-        y: y2,
-        w: rwx.w,
-        h: h2,
-        label: '0x000001C948200000\nMEM_PRIVATE RWX\nStage-1 Shellcode',
-        stroke: CLEANROOM_CHALK.implant,
-        fill: CLEANROOM_CHALK.implantFill,
-      }),
-      ...hArrow({
-        id: 'cx2-a4',
-        fromId: rwx.id,
-        toId: memscan.id,
-        fromRight: rwx.x + rwx.w,
-        toLeft: memscan.x,
-        midY: y2 + h2 / 2,
-        caption: 'Memory Hunt',
-        stroke: CLEANROOM_CHALK.edr,
-      }),
-      box({
         id: memscan.id,
         x: memscan.x,
         y: y2,
@@ -200,6 +180,26 @@ export function threeCxStep2Board(): TechnicalBoardDescriptor {
         label: 'EDR / Moneta Alert\nUnbacked RWX Thread\n+ 0xFEEDFACE YARA',
         stroke: CLEANROOM_CHALK.edr,
         fill: CLEANROOM_CHALK.edrFill,
+      }),
+      ...hArrowLeft({
+        id: 'cx2-a4',
+        fromId: rwx.id,
+        toId: memscan.id,
+        fromLeft: rwx.x,
+        toRight: memscan.x + memscan.w,
+        midY: y2 + h2 / 2,
+        caption: 'Memory Hunt',
+        stroke: CLEANROOM_CHALK.edr,
+      }),
+      box({
+        id: rwx.id,
+        x: rwx.x,
+        y: y2,
+        w: rwx.w,
+        h: h2,
+        label: '0x000001C948200000\nMEM_PRIVATE RWX\nStage-1 Shellcode',
+        stroke: CLEANROOM_CHALK.implant,
+        fill: CLEANROOM_CHALK.implantFill,
       }),
       note(40, 464, 'Hover each box to inspect 0xFEEDFACE layout, RC4 key, and MEM_PRIVATE RWX flags.', CLEANROOM_CHALK.muted),
     ],

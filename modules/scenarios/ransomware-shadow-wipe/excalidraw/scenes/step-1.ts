@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { VAULT_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function lockbitStep1Board(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -12,8 +12,8 @@ export function lockbitStep1Board(): TechnicalBoardDescriptor {
   const admin = { id: 'lb1-admin', x: jump.x + jump.w + ARROW_GAP, w: 250 };
   const scm = { id: 'lb1-scm', x: admin.x + admin.w + ARROW_GAP, w: 250 };
 
-  const lb3 = { id: 'lb1-lb3', x: 430, w: 260 };
-  const siem = { id: 'lb1-siem', x: lb3.x + lb3.w + ARROW_GAP, w: 250 };
+  const siem = { id: 'lb1-siem', x: admin.x, w: 250 };
+  const lb3 = { id: 'lb1-lb3', x: scm.x, w: 250 };
 
   return {
     scenarioId: 'ransomware-shadow-wipe',
@@ -172,26 +172,6 @@ export function lockbitStep1Board(): TechnicalBoardDescriptor {
           'ANTI-SANDBOX KEY GUARD\nlb3_black.exe requires -pass 8f91c2a0\nSysmon EID 1 captures full CLI',
       }),
       box({
-        id: lb3.id,
-        x: lb3.x,
-        y: y2,
-        w: lb3.w,
-        h: h2,
-        label: 'lb3_black.exe (6412)\n-pass 8f91c2a0\nRSA-2048 Key Unlocked',
-        stroke: VAULT_CHALK.crypto,
-        fill: VAULT_CHALK.cryptoFill,
-      }),
-      ...hArrow({
-        id: 'lb1-a4',
-        fromId: lb3.id,
-        toId: siem.id,
-        fromRight: lb3.x + lb3.w,
-        toLeft: siem.x,
-        midY: y2 + h2 / 2,
-        caption: 'Log Forward',
-        stroke: VAULT_CHALK.siem,
-      }),
-      box({
         id: siem.id,
         x: siem.x,
         y: y2,
@@ -200,6 +180,26 @@ export function lockbitStep1Board(): TechnicalBoardDescriptor {
         label: 'SIEM Alert Fired\nSystem EID 7045\n+ WinSec EID 5145',
         stroke: VAULT_CHALK.siem,
         fill: VAULT_CHALK.siemFill,
+      }),
+      ...hArrowLeft({
+        id: 'lb1-a4',
+        fromId: lb3.id,
+        toId: siem.id,
+        fromLeft: lb3.x,
+        toRight: siem.x + siem.w,
+        midY: y2 + h2 / 2,
+        caption: 'Log Forward',
+        stroke: VAULT_CHALK.siem,
+      }),
+      box({
+        id: lb3.id,
+        x: lb3.x,
+        y: y2,
+        w: lb3.w,
+        h: h2,
+        label: 'lb3_black.exe (6412)\n-pass 8f91c2a0\nRSA-2048 Key Unlocked',
+        stroke: VAULT_CHALK.crypto,
+        fill: VAULT_CHALK.cryptoFill,
       }),
       note(40, 464, 'Containment target: isolate FS-CORP-01 and revoke CORP\\svc_admin immediately.', VAULT_CHALK.muted),
     ],

@@ -87,7 +87,7 @@ export function ThreeCxMemoryDiffClip() {
     <AnimeClipStage
       testId="technical-clip-threecx-memory"
       stageLabel="MEMORY FORENSICS"
-      mitreId="T1055"
+      mitreId="T1574.002 / T1140"
       beats={BEATS}
       cameras={CAMERAS}
       build={build}

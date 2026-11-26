@@ -12,42 +12,42 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
   const stripe = { id: 'lb3-stripe', x: iocp.x + iocp.w + ARROW_GAP, w: 255 };
   const rsa = { id: 'lb3-rsa', x: stripe.x + stripe.w + ARROW_GAP, w: 245 };
 
-  const shares = { id: 'lb3-shares', x: 430, w: 260 };
-  const canary = { id: 'lb3-canary', x: shares.x + shares.w + ARROW_GAP, w: 250 };
+  const shares = { id: 'lb3-shares', x: stripe.x, w: 255 };
+  const canary = { id: 'lb3-canary', x: rsa.x, w: 245 };
 
   return {
     scenarioId: 'ransomware-shadow-wipe',
     sectionKey: 'step-3',
     boardBadge: 'STEP #3 · T1486',
     title: 'High-Speed IOCP Intermittent Encryption (ChaCha20 + RSA-2048)',
-    subtitle: 'Asynchronous I/O completion workers encrypt only the first 4 KB per file and rename with .HLJkNskOq.',
+    subtitle: '8 asynchronous I/O completion workers encrypt only the first 4 KB-64 KB per file and rename 4,820 files to .lockbit.',
     chalkHint: 'Hover any box to inspect I/O completion mechanics, hybrid key wrapping, and canary traps.',
     tooltips: {
       'lb3-iocp': {
         kind: 'api',
-        title: 'CreateIoCompletionPort Worker Pool',
+        title: 'CreateIoCompletionPort (8 Worker Threads)',
         module: 'Multi-Core Asynchronous File I/O',
-        signature: 'CreateIoCompletionPort(hFile, hPort, key, cpuCount)',
+        signature: 'CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 8)',
         fields: [
-          { key: 'threads', type: 'Pool', value: '1 worker per CPU core' },
+          { key: 'threads', type: 'Pool', value: '8 asynchronous IOCP worker threads' },
           { key: 'flags', type: 'Win32', value: 'FILE_FLAG_OVERLAPPED' },
-          { key: 'speed', type: 'Metric', value: 'Thousands of files/min' },
+          { key: 'speed', type: 'Metric', value: '4,820 files locked in 11.4 seconds' },
         ],
         explain:
-          'Windows I/O Completion Ports let LockBit saturate NVMe/SAN throughput without waiting for blocking disk writes, drastically compressing response time.',
+          'Windows I/O Completion Ports let LockBit saturate NVMe/SAN throughput across all CPU cores without waiting for blocking disk writes, compressing response time to seconds.',
       },
       'lb3-stripe': {
         kind: 'api',
-        title: '4 KB Intermittent ChaCha20 Stripe',
+        title: 'First 4 KB-64 KB ChaCha20 Header Stripe',
         module: 'Partial-Header Encryption Strategy',
-        signature: 'ChaCha20_XOR(fileBuf[0..4095], perFileKey256)',
+        signature: 'ChaCha20_XOR(fileBuf[0..0xFFFF], perFileKey256)',
         fields: [
-          { key: 'encrypted', type: 'Offset', value: '0x0000 .. 0x0FFF (First 4 KB)' },
-          { key: 'skipped', type: 'Offset', value: 'Remaining file body untouched' },
-          { key: 'result', type: 'Format', value: 'Headers/indexes destroyed instantly' },
+          { key: 'encrypted', type: 'Offset', value: 'First 4 KB-64 KB header per file' },
+          { key: 'skipped', type: 'Offset', value: 'Lower ~85% file body untouched' },
+          { key: 'result', type: 'Format', value: 'ZIP/PDF/DB/CAD headers destroyed instantly' },
         ],
         explain:
-          'Encrypting just the opening 4 KB destroys file headers, ZIP tables, and database B-trees in a fraction of the time required for full-file encryption.',
+          'Encrypting just the opening 4 KB to 64 KB destroys file headers, ZIP tables, and database B-trees in a fraction of the time required for full-file encryption.',
       },
       'lb3-rsa': {
         kind: 'api',
@@ -64,24 +64,24 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
       },
       'lb3-shares': {
         kind: 'memory',
-        title: 'D:\\Finance & D:\\HR Mass Rename',
-        module: 'Extension .HLJkNskOq · Skip OS Core',
-        signature: 'MoveFileExW(oldPath, oldPath + ".HLJkNskOq")',
+        title: 'Finance_Shares, HR_Records & CAD_Archives',
+        module: 'Extension .lockbit · Skip OS Core',
+        signature: 'MoveFileExW(oldPath, oldPath + ".lockbit")',
         fields: [
-          { key: 'targets', type: 'Shares', value: 'D:\\Finance\\*, D:\\HR\\*' },
-          { key: 'ext', type: 'Suffix', value: '.HLJkNskOq (9-char ID)' },
+          { key: 'targets', type: 'Shares', value: 'D:\\Finance_Shares\\, D:\\HR_Records\\, D:\\CAD_Archives\\' },
+          { key: 'ext', type: 'Suffix', value: '.lockbit (4,820 files in 11.4s)' },
           { key: 'excluded', type: 'OS', value: 'C:\\Windows left bootable for note' },
         ],
         explain:
-          'LockBit intentionally spares C:\\Windows and system DLLs so FS-CORP-01 stays online to display the ransom instructions.',
+          'LockBit intentionally spares C:\\Windows and system DLLs so FS-CORP-01 stays online to display Restore-My-Files.txt and the ransom wall.',
       },
       'lb3-canary': {
         kind: 'detect',
         title: 'File-Server Canary & Entropy Tripwire',
-        module: 'FSRM / EDR Mass-Rename Detection',
+        module: 'WinSec EID 4663 / EDR Mass-Rename Detection',
         fields: [
-          { key: 'signal1', type: 'EDR', value: 'Rapid high-entropy 4 KB writes' },
-          { key: 'signal2', type: 'FSRM', value: 'Canary file renamed to .HLJkNskOq' },
+          { key: 'signal1', type: 'EDR', value: 'Rapid high-entropy 4 KB-64 KB header writes' },
+          { key: 'signal2', type: 'FSRM', value: 'Canary file renamed to *.lockbit' },
           { key: 'action', type: 'Auto', value: 'Kill PID 6412 & cut SMB sessions' },
         ],
         explain:
@@ -92,11 +92,11 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
         title: 'Why Intermittent Beats Full-Disk Speed',
         module: 'LockBit 3.0 Throughput Engineering',
         fields: [
-          { key: '100MBFile', type: 'Write', value: 'Only 4 KB written instead of 100 MB' },
-          { key: 'speedup', type: 'Ratio', value: '> 50x faster on large DB/VHDX files' },
+          { key: '100MBFile', type: 'Write', value: 'Only 4 KB-64 KB written instead of 100 MB' },
+          { key: 'speedup', type: 'Ratio', value: '4,820 files locked in 11.4 seconds' },
         ],
         explain:
-          'Intermittent striping makes huge financial databases and VM disks unusable in milliseconds while generating minimal raw disk write volume.',
+          'Intermittent striping makes huge financial databases and CAD archives unusable in milliseconds while generating minimal raw disk write volume.',
       },
     },
     skeletons: [
@@ -118,7 +118,7 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
         fromRight: iocp.x + iocp.w,
         toLeft: stripe.x,
         midY: y1 + h1 / 2,
-        caption: 'First 4 KB',
+        caption: '4 KB-64 KB',
         stroke: VAULT_CHALK.crypto,
       }),
       box({
@@ -127,7 +127,7 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
         y: y1,
         w: stripe.w,
         h: h1,
-        label: 'ChaCha20 Stream\n0x0000..0x0FFF Sealed\nTail Bytes Skipped',
+        label: 'ChaCha20 Stream\nFirst 4 KB-64 KB Sealed\nTail Bytes Skipped',
         stroke: VAULT_CHALK.attacker,
         fill: VAULT_CHALK.attackerFill,
       }),
@@ -169,7 +169,7 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
         w: 350,
         h: h2,
         label:
-          'INTERMITTENT ENCRYPTION MATH\n4 KB header lock corrupts 100 GB DBs\nC:\\Windows skipped to keep host up',
+          'INTERMITTENT ENCRYPTION MATH\n4 KB-64 KB header lock ruins 100 GB DBs\n4,820 files locked in 11.4 seconds',
       }),
       box({
         id: shares.id,
@@ -177,7 +177,7 @@ export function lockbitStep3Board(): TechnicalBoardDescriptor {
         y: y2,
         w: shares.w,
         h: h2,
-        label: 'D:\\Finance & D:\\HR\nRenamed *.HLJkNskOq\nOS Files Excluded',
+        label: 'Finance / HR / CAD\nRenamed *.lockbit\nOS Files Excluded',
         stroke: VAULT_CHALK.vault,
         fill: VAULT_CHALK.vaultFill,
       }),

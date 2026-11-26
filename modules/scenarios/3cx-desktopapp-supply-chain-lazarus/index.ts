@@ -11,7 +11,7 @@ export const scenario: AttackScenario = {
   severity: 'CRITICAL',
   primaryMitrePhase: 1,
   overview:
-    'In Lazarus (SmoothOperator): 3CXDesktopApp Supply Chain & Gopuram (CVE-2023-29059, MITRE ATT&CK T1195.002, T1102.001, and T1555.003), threat actors pivot from an earlier X_TRADER compromise into the 3CX Windows build pipeline to ship trojanized DLLs inside a validly signed VoIP installer. The attack unfolds in one continuous arc: inserting rigged ffmpeg.dll and oversized d3dcompiler_47.dll prior to 3CX Authenticode signing, then side-loading ffmpeg.dll to RC4-decrypt shellcode past marker 0xFEEDFACE into unbacked RWX RAM, then fetching innocent GitHub IconStorages .ico files carrying hidden Base64 C2 trailers, then stealing browser credentials via ICONICSTEALER and selectively deploying Gopuram to high-value finance targets. Steps #1-#4 trace the full supply chain; Memory Forensics compares clean vs. trojanized d3dcompiler_47.dll and live RWX RAM. Primary detection: Sysmon Event ID 7/22, YARA 0xFEEDFACE memory rules, and behavioral EDR alerts on VoIP apps reading Chrome Login Data.',
+    'In Lazarus (SmoothOperator): 3CXDesktopApp Supply Chain & Gopuram (CVE-2023-29059, MITRE ATT&CK T1195.002, T1574.002, T1102.001, and T1555.003), threat actors pivot from an earlier X_TRADER compromise into the 3CX Windows build pipeline to ship trojanized DLLs inside a validly signed VoIP installer. The attack unfolds in one continuous arc: inserting rigged ffmpeg.dll and oversized d3dcompiler_47.dll prior to 3CX Authenticode signing, then side-loading ffmpeg.dll to RC4-decrypt shellcode past marker 0xFEEDFACE into unbacked RWX RAM, then fetching innocent GitHub IconStorages .ico files carrying hidden Base64 C2 trailers, then stealing browser credentials via ICONICSTEALER and selectively deploying Gopuram to high-value finance targets. Steps #1-#4 trace the full supply chain; Memory Forensics compares clean vs. trojanized d3dcompiler_47.dll and live RWX RAM. Primary detection: Sysmon Event ID 7/22, YARA 0xFEEDFACE memory rules, and behavioral EDR alerts on VoIP apps reading Chrome Login Data.',
   specs: [
     { term: 'MITRE TECHNIQUES', value: 'T1195.002 (Supply Chain) · T1574.002 (Side-Load) · T1102.001 (.ico C2) · T1555.003' },
     { term: 'ROOT CAUSE', value: 'Cascading Compromise (X_TRADER -> 3CX CI/CD Build Server · CVE-2023-29059)' },
@@ -134,6 +134,17 @@ export const scenario: AttackScenario = {
     },
   ],
   processTree: [
+    {
+      pid: 1480,
+      ppid: 944,
+      name: 'userinit.exe',
+      commandLine: 'C:\\Windows\\System32\\userinit.exe',
+      user: 'CORP\\d.chen',
+      integrity: 'Medium',
+      status: 'normal',
+      activeFromStage: 1,
+      apiCalls: ['CreateProcessW(C:\\Windows\\Explorer.EXE)'],
+    },
     {
       pid: 2410,
       ppid: 1480,
@@ -321,7 +332,7 @@ export const stepGuide: RawScenarioStepGuideData = {
       storyAnalogy:
         'Now humming inside the desk phone, the hidden holographic radio casts a thin cyan scan beam across a public art-gallery wall lined with six innocent framed portrait tiles. As the beam lands on tile number four, a concealed crimson paper ribbon peels cleanly off the bottom frame border—revealing secret coordinates tucked behind an ordinary public picture while ordinary observers see only a normal gallery wall.',
       simpleExplanation:
-        'To prevent network defenders from immediately blocking a hardcoded malicious IP address—and to outwait automated sandboxes—the SmoothOperator shellcode sleeps for several days before fetching its live Command-and-Control address from a public GitHub dead-drop repository (raw.githubusercontent.com/IconStorages/images/main/icon1.ico through icon15.ico). Each downloaded .ico file renders as a completely normal Windows icon image if opened, but Lazarus appended an encrypted Base64 string strictly past the image End-of-File marker. The in-memory loader slices off that trailing Base64 strip, decrypts it to obtain the live lookalike domain (akamaitechcloudservices[.]com), and initiates HTTPS staging.',
+        'To prevent network defenders from immediately blocking a hardcoded malicious IP address—and to outwait automated sandboxes—the SmoothOperator shellcode sleeps for several days before fetching its live Command-and-Control address from a public GitHub dead-drop repository (raw.githubusercontent.com/IconStorages/images/main/icon1.ico through icon16.ico). Each downloaded .ico file renders as a completely normal Windows icon image if opened, but Lazarus appended an encrypted Base64 string strictly past the image End-of-File marker. The in-memory loader slices off that trailing Base64 strip, decrypts it to obtain the live lookalike domain (akamaitechcloudservices[.]com), and initiates HTTPS staging.',
       howItWorksInPractice:
         'Abusing raw.githubusercontent.com as a Dead-Drop Resolver (MITRE T1102.001) lets the attacker blend C2 discovery into encrypted TLS 1.3 traffic destined for a universally trusted developer CDN while allowing instant C2 rotation simply by uploading updated .ico tiles. Even so, correlating Sysmon Event ID 22 (DNSQuery) and Sysmon Event ID 3 (NetworkConnect) immediately reveals a glaring process-to-network anomaly: a corporate desk VoIP phone (3CXDesktopApp.exe) has zero legitimate operational reason to download .ico files from a random GitHub repository and pivot to newly registered lookalike domains.',
       diagramAlignment:

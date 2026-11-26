@@ -171,9 +171,10 @@ export const BATCH_1_TO_4_ATTRIBUTIONS: Record<string, ScenarioAttributionProfil
       { id: 'T1195.002', name: 'Supply Chain Compromise: Compromise Software Supply Chain', tactic: 'Initial Access', url: 'https://attack.mitre.org/techniques/T1195/002/' },
       { id: 'T1574.002', name: 'Hijack Execution Flow: DLL Side-Loading (ffmpeg.dll)', tactic: 'Defense Evasion', url: 'https://attack.mitre.org/techniques/T1574/002/' },
       { id: 'T1102.001', name: 'Web Service: Dead Drop Resolver (GitHub IconStorages .ico)', tactic: 'Command and Control', url: 'https://attack.mitre.org/techniques/T1102/001/' },
+      { id: 'T1555.003', name: 'Credentials from Password Stores: Credentials from Web Browsers (ICONICSTEALER)', tactic: 'Credential Access', url: 'https://attack.mitre.org/techniques/T1555/003/' },
     ],
     multiSourceSynthesis:
-      'Synthesizes 3 complementary sources: (1) CrowdStrike ("SmoothOperator" / Labyrinth Chollima) detected the initial behavioral anomaly in 3CXDesktopApp.exe, dissecting the trojanized ffmpeg.dll side-load, the 0xFEEDFACE RC4 decryption of d3dcompiler_47.dll, and the GitHub IconStorages .ico dead-drop resolver; (2) Mandiant (UNC4736) revealed how 3CX’s build environment was originally breached via an earlier X_TRADER supply chain attack ( cascading supply chain compromise) and analyzed ICONICSTEALER; and (3) Kaspersky GReAT discovered that select victims received the sophisticated Gopuram backdoor.',
+      'Synthesizes 3 complementary sources: (1) CrowdStrike ("SmoothOperator" / Labyrinth Chollima) detected the initial behavioral anomaly in 3CXDesktopApp.exe, dissecting the trojanized ffmpeg.dll side-load, the 0xFEEDFACE RC4 decryption of d3dcompiler_47.dll, and the GitHub IconStorages .ico dead-drop resolver; (2) Mandiant (UNC4736) revealed how 3CX’s build environment was originally breached via an earlier X_TRADER supply chain attack (cascading supply chain compromise) and analyzed ICONICSTEALER; and (3) Kaspersky GReAT discovered that select victims received the sophisticated Gopuram backdoor.',
     primarySources: [
       {
         id: 'crowdstrike-3cx-smoothoperator',

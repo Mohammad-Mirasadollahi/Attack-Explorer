@@ -86,12 +86,25 @@ export default function ExcalidrawBoard({
       skeletons as Parameters<typeof convertToExcalidrawElements>[0],
       { regenerateIds: false }
     );
+    const byId = new Map(raw.map((el) => [el.id, el]));
     return raw.map((el) => {
       if (el.type === 'text' && !el.containerId) {
         return {
           ...el,
           width: Math.ceil(el.width * 1.32 + 40),
         };
+      }
+      if (el.type === 'text' && el.containerId) {
+        const parent = byId.get(el.containerId);
+        if (parent && parent.width > 24) {
+          const maxInnerW = Math.max(el.width, Math.floor(parent.width - 14));
+          const widened = Math.min(maxInnerW, Math.ceil(el.width * 1.32 + 24));
+          return {
+            ...el,
+            width: widened,
+            x: parent.x + (parent.width - widened) / 2,
+          };
+        }
       }
       return el;
     });

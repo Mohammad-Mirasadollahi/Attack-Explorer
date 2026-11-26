@@ -443,13 +443,13 @@ export default async function ScenarioLandingPage({
             <h2 className="text-lg font-bold text-zinc-950 dark:text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-500" />
               <span>
-                Virtual Memory Forensics: Signed On-Disk Image vs Hollowed RWX RAM
+                Virtual Memory Forensics: {memory3d.title}
               </span>
             </h2>
             <StandardStoryTechnicalSection
               scenarioId={scenario.id}
               sectionKey="memory-forensics"
-              storyHeading="Real-World Story Analogy · Signed Disk vs Hollowed RAM"
+              storyHeading={`Real-World Story Analogy · ${memory3d.title}`}
               storyAnalogy={memory3d.storyCue}
               technicalHeading="Technical VAD / PE-Sieve Diff"
               technicalText={memory3d.technicalCue}

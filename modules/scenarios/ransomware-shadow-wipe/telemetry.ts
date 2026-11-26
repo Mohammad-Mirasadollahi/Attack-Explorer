@@ -119,7 +119,7 @@ level: critical`,
     sourceType: 'WIN32_API',
     protocolOrEventId: 'WinSec 4663 + IOCP Burst',
     shortAction: 'HEAD-ONLY ENCRYPT',
-    info: '4-thread CreateIoCompletionPort pool encrypts first 4 KB-64 KB headers (ChaCha20 + RSA-2048) & renames 4,820 files to .lockbit',
+    info: '8-thread CreateIoCompletionPort pool encrypts first 4 KB-64 KB headers (ChaCha20 + RSA-2048) & renames 4,820 files to .lockbit',
     sizeOrCode: '4,820 Files',
     severity: 'CRITICAL',
     mitreId: 'T1486',
@@ -169,9 +169,9 @@ VelocityMetric:    4,820 files modified & renamed in 11.4 seconds`,
     info: 'Drops Restore-My-Files.txt across all shares, sets wallpaper registry key, and triggers WinSec EID 1102 via wevtutil cl Security',
     sizeOrCode: 'EID 1102',
     severity: 'CRITICAL',
-    mitreId: 'T1070.004',
+    mitreId: 'T1070.001',
     explanation:
-      'After locking the file shares, LockBit drops Restore-My-Files.txt in every folder (Sysmon EID 11), overrides desktop wallpaper via registry (Sysmon EID 13), and attempts to clear Windows Security logs via wevtutil cl Security—which ironically writes an unerasable Windows Security Event ID 1102 alert into the SIEM.',
+      'After locking the file shares, LockBit drops Restore-My-Files.txt in every folder (Sysmon EID 11), overrides desktop wallpaper via registry (Sysmon EID 13), and spawns wevtutil.exe (PID 6618) to run wevtutil cl Security—which ironically writes an unerasable Windows Security Event ID 1102 alert into the SIEM.',
     rawLog: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
   <System>
     <Provider Name="Microsoft-Windows-Eventlog"/>
@@ -184,6 +184,7 @@ VelocityMetric:    4,820 files modified & renamed in 11.4 seconds`,
       <SubjectUserName>FS-CORP-01$</SubjectUserName>
       <SubjectDomainName>CORP</SubjectDomainName>
       <Channel>Security</Channel>
+      <TriggerProcessId>6618</TriggerProcessId>
       <TriggerCommand>wevtutil.exe cl Security</TriggerCommand>
       <CompanionArtifact>D:\\Finance_Shares\\Restore-My-Files.txt (Sysmon EID 11)</CompanionArtifact>
     </LogFileCleared>

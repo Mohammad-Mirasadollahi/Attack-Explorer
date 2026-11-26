@@ -229,16 +229,28 @@ export const SCENARIO_ATTRIBUTION_MAP: Record<
     scenarioCode: 'T1486 / T1490',
     mitreTechniques: [
       {
+        id: 'T1569.002',
+        name: 'System Services: Service Execution (PsExec PSEXESVC)',
+        tactic: 'Execution',
+        url: 'https://attack.mitre.org/techniques/T1569/002/',
+      },
+      {
         id: 'T1490',
-        name: 'Inhibit System Recovery (vssadmin / wmic shadowcopy delete)',
+        name: 'Inhibit System Recovery (vssadmin / wmic / bcdedit)',
         tactic: 'Impact',
         url: 'https://attack.mitre.org/techniques/T1490/',
       },
       {
         id: 'T1486',
-        name: 'Data Encrypted for Impact',
+        name: 'Data Encrypted for Impact (Intermittent IOCP ChaCha20 + RSA-2048)',
         tactic: 'Impact',
         url: 'https://attack.mitre.org/techniques/T1486/',
+      },
+      {
+        id: 'T1070.001',
+        name: 'Indicator Removal: Clear Windows Event Logs (wevtutil cl Security -> EID 1102)',
+        tactic: 'Defense Evasion',
+        url: 'https://attack.mitre.org/techniques/T1070/001/',
       },
     ],
     multiSourceSynthesis:

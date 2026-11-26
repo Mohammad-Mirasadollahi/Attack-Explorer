@@ -249,7 +249,7 @@ export function buildPsExecDispatchHatch(
   );
   capBody.rotation.z = Math.PI / 2;
   addAnimeInkEdges(capBody, materials.inkLineMaterial, 28);
-  addInvertedHullOutline(capBody, 0.025);
+  addInvertedHullOutline(capBody, materials.inkOutlineMaterial, 1.05);
   capsule.add(capBody);
 
   const capNose = new THREE.Mesh(
@@ -383,7 +383,7 @@ export function buildBackupReelRackAndShredder(
     );
     flange.rotation.x = Math.PI / 2;
     addAnimeInkEdges(flange, materials.inkLineMaterial, 28);
-    addInvertedHullOutline(flange, 0.02);
+    addInvertedHullOutline(flange, materials.inkOutlineMaterial, 1.045);
     reel.add(flange);
 
     // Inner blue archival tape core
@@ -628,12 +628,16 @@ export function buildFourVaultFilingWallAndGantry(
     cabBase.position.set(0, 0.09, 0);
     vault.add(cabBase);
 
-    const cabTop = new THREE.Mesh(
-      new THREE.BoxGeometry(1.18, 0.14, 1.04),
-      materials.createToonMaterial(0x334155)
-    );
-    cabTop.position.set(0, 2.32, 0);
-    vault.add(cabTop);
+    // Slotted top frame rails (front + rear) leaving a clean central stamping channel for the overhead IOCP arm
+    for (const topZ of [-0.43, 0.43]) {
+      const cabTopRail = new THREE.Mesh(
+        new THREE.BoxGeometry(1.18, 0.14, 0.18),
+        materials.createToonMaterial(0x334155)
+      );
+      cabTopRail.position.set(0, 2.32, topZ);
+      addAnimeInkEdges(cabTopRail, materials.inkLineMaterial, 24);
+      vault.add(cabTopRail);
+    }
 
     for (const sideX of [-0.55, 0.55]) {
       const side = new THREE.Mesh(
@@ -695,7 +699,7 @@ export function buildFourVaultFilingWallAndGantry(
       materials.createToonMaterial(0xdc2626)
     );
     addAnimeInkEdges(lockBody, materials.inkLineMaterial, 24);
-    addInvertedHullOutline(lockBody, 0.025);
+    addInvertedHullOutline(lockBody, materials.inkOutlineMaterial, 1.055);
     padlock.add(lockBody);
 
     const shackle = new THREE.Mesh(
@@ -812,7 +816,7 @@ export function buildGlassEntranceAndRansomPress(
     materials.createToonMaterial(0x991b1b)
   );
   addAnimeInkEdges(placardBoard, materials.inkLineMaterial, 24);
-  addInvertedHullOutline(placardBoard, 0.025);
+  addInvertedHullOutline(placardBoard, materials.inkOutlineMaterial, 1.04);
   placardGroup.add(placardBoard);
 
   const placardFace = new THREE.Mesh(

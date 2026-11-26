@@ -342,7 +342,7 @@ export const LOCKBIT_SECTION_SCENES: Partial<
     sectionKey: 'step-4',
     sceneKind: 'lockbit-step4-ransomnote',
     stageBadge: 'STEP #4 · EXTORTION NOTICE & AUDIT WITNESS',
-    mitreId: 'T1070.004',
+    mitreId: 'T1070.001',
     title: 'Glass Door Extortion Placard & Violet Ceiling Witness',
     storyCue:
       'A mechanical press bolts a bright crimson extortion placard onto the glass entrance door and turns the lobby screen solid red, while an attempt to smash the log vault makes the ceiling audit beacon flare brilliant violet.',

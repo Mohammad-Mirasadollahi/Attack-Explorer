@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { CLEANROOM_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function threeCxStep1Board(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -10,10 +10,10 @@ export function threeCxStep1Board(): TechnicalBoardDescriptor {
 
   const xtrader = { id: 'cx1-xtrader', x: 40, w: 235 };
   const staging = { id: 'cx1-staging', x: xtrader.x + xtrader.w + ARROW_GAP, w: 255 };
-  const press = { id: 'cx1-press', x: staging.x + staging.w + ARROW_GAP, w: 245 };
+  const press = { id: 'cx1-press', x: staging.x + staging.w + ARROW_GAP, w: 250 };
 
-  const wks = { id: 'cx1-wks', x: 430, w: 255 };
-  const eid7 = { id: 'cx1-eid7', x: wks.x + wks.w + ARROW_GAP, w: 255 };
+  const eid7 = { id: 'cx1-eid7', x: staging.x, w: 255 };
+  const wks = { id: 'cx1-wks', x: press.x, w: 250 };
 
   return {
     scenarioId: '3cx-desktopapp-supply-chain-lazarus',
@@ -172,26 +172,6 @@ export function threeCxStep1Board(): TechnicalBoardDescriptor {
           'WHY SIGNATURES ALONE FAILED\nOuter MSI passed SmartScreen & EV.\nOnly child-DLL audit caught ffmpeg.dll.',
       }),
       box({
-        id: wks.id,
-        x: wks.x,
-        y: y2,
-        w: wks.w,
-        h: h2,
-        label: 'WKS-TRD-14 (10.10.8.41)\n3CXDesktopApp.exe\nPID 7120 Launched',
-        stroke: CLEANROOM_CHALK.cleanroom,
-        fill: CLEANROOM_CHALK.cleanroomFill,
-      }),
-      ...hArrow({
-        id: 'cx1-a4',
-        fromId: wks.id,
-        toId: eid7.id,
-        fromRight: wks.x + wks.w,
-        toLeft: eid7.x,
-        midY: y2 + h2 / 2,
-        caption: 'ImageLoad',
-        stroke: CLEANROOM_CHALK.edr,
-      }),
-      box({
         id: eid7.id,
         x: eid7.x,
         y: y2,
@@ -200,6 +180,26 @@ export function threeCxStep1Board(): TechnicalBoardDescriptor {
         label: 'Sysmon Event ID 7\nSigned Host Loads\nUnsigned ffmpeg.dll',
         stroke: CLEANROOM_CHALK.edr,
         fill: CLEANROOM_CHALK.edrFill,
+      }),
+      ...hArrowLeft({
+        id: 'cx1-a4',
+        fromId: wks.id,
+        toId: eid7.id,
+        fromLeft: wks.x,
+        toRight: eid7.x + eid7.w,
+        midY: y2 + h2 / 2,
+        caption: 'ImageLoad',
+        stroke: CLEANROOM_CHALK.edr,
+      }),
+      box({
+        id: wks.id,
+        x: wks.x,
+        y: y2,
+        w: wks.w,
+        h: h2,
+        label: 'WKS-TRD-14 (10.10.8.41)\n3CXDesktopApp.exe\nPID 7120 Launched',
+        stroke: CLEANROOM_CHALK.cleanroom,
+        fill: CLEANROOM_CHALK.cleanroomFill,
       }),
       note(40, 464, 'Hover each box to inspect X_TRADER origin, EV signing trust, and Sysmon EID 7.', CLEANROOM_CHALK.muted),
     ],

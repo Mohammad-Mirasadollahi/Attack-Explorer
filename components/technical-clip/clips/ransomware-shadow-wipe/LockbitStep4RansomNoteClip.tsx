@@ -88,7 +88,7 @@ export function LockbitStep4RansomNoteClip() {
     <AnimeClipStage
       testId="technical-clip-lockbit-step4"
       stageLabel="STEP #4"
-      mitreId="T1070.004"
+      mitreId="T1070.001"
       beats={BEATS}
       cameras={CAMERAS}
       build={build}
@@ -146,7 +146,7 @@ export function LockbitStep4RansomNoteClip() {
             HKCU\Control Panel\Desktop
           </text>
           <text x="600" y="288" textAnchor="middle" fill="#f87171" fontSize="12" fontWeight="700" fontFamily={FONT}>
-            Wallpaper = C:\ProgramData\lb3.bmp
+            Wallpaper = C:\ProgramData\lb3_wall.bmp
           </text>
           <text x="600" y="324" textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily={FONT}>
             Immediate visual extortion lock screen
@@ -160,7 +160,7 @@ export function LockbitStep4RansomNoteClip() {
             3. Audit Wipe Attempt
           </text>
           <text x="978" y="198" textAnchor="middle" fill="#c084fc" fontSize="12" fontFamily={FONT}>
-            T1070.004 · Indicator Removal
+            T1070.001 · Clear Event Logs
           </text>
           <rect x="832" y="220" width="292" height="136" rx="10" fill="#0f172a" stroke="#a855f7" />
           <text x="978" y="262" textAnchor="middle" fill="#fde68a" fontSize="13" fontWeight="700" fontFamily={FONT}>

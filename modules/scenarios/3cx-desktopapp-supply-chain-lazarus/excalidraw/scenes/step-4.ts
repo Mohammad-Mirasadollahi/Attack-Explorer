@@ -1,6 +1,6 @@
 import type { TechnicalBoardDescriptor } from '@/lib/section-excalidraw-registry';
 import { CLEANROOM_CHALK } from '../chalk';
-import { ARROW_GAP, box, hArrow, note, sticky, title, vArrow } from '../helpers';
+import { ARROW_GAP, box, hArrow, hArrowLeft, note, sticky, title, vArrow } from '../helpers';
 
 export function threeCxStep4Board(): TechnicalBoardDescriptor {
   const y1 = 92;
@@ -10,10 +10,10 @@ export function threeCxStep4Board(): TechnicalBoardDescriptor {
 
   const stealer = { id: 'cx4-stealer', x: 40, w: 240 };
   const browser = { id: 'cx4-browser', x: stealer.x + stealer.w + ARROW_GAP, w: 255 };
-  const triage = { id: 'cx4-triage', x: browser.x + browser.w + ARROW_GAP, w: 245 };
+  const triage = { id: 'cx4-triage', x: browser.x + browser.w + ARROW_GAP, w: 250 };
 
-  const gopuram = { id: 'cx4-gopuram', x: 430, w: 260 };
-  const falcon = { id: 'cx4-falcon', x: gopuram.x + gopuram.w + ARROW_GAP, w: 250 };
+  const falcon = { id: 'cx4-falcon', x: browser.x, w: 255 };
+  const gopuram = { id: 'cx4-gopuram', x: triage.x, w: 250 };
 
   return {
     scenarioId: '3cx-desktopapp-supply-chain-lazarus',
@@ -171,26 +171,6 @@ export function threeCxStep4Board(): TechnicalBoardDescriptor {
           'BEHAVIOR BEATS SIGNATURES\nValid EV cert could not hide a VoIP app\nreading Chrome Login Data + RWX RAM.',
       }),
       box({
-        id: gopuram.id,
-        x: gopuram.x,
-        y: y2,
-        w: gopuram.w,
-        h: h2,
-        label: 'Gopuram Backdoor\nWKS-TRD-14 Targeted\nInteractive Stage-2',
-        stroke: CLEANROOM_CHALK.implant,
-        fill: CLEANROOM_CHALK.implantFill,
-      }),
-      ...hArrow({
-        id: 'cx4-a4',
-        fromId: gopuram.id,
-        toId: falcon.id,
-        fromRight: gopuram.x + gopuram.w,
-        toLeft: falcon.x,
-        midY: y2 + h2 / 2,
-        caption: 'EDR Tripwire',
-        stroke: CLEANROOM_CHALK.edr,
-      }),
-      box({
         id: falcon.id,
         x: falcon.x,
         y: y2,
@@ -199,6 +179,26 @@ export function threeCxStep4Board(): TechnicalBoardDescriptor {
         label: 'CrowdStrike Alert\nVoIP -> Browser Vault\nIsolate & Rotate Creds',
         stroke: CLEANROOM_CHALK.edr,
         fill: CLEANROOM_CHALK.edrFill,
+      }),
+      ...hArrowLeft({
+        id: 'cx4-a4',
+        fromId: gopuram.id,
+        toId: falcon.id,
+        fromLeft: gopuram.x,
+        toRight: falcon.x + falcon.w,
+        midY: y2 + h2 / 2,
+        caption: 'EDR Tripwire',
+        stroke: CLEANROOM_CHALK.edr,
+      }),
+      box({
+        id: gopuram.id,
+        x: gopuram.x,
+        y: y2,
+        w: gopuram.w,
+        h: h2,
+        label: 'Gopuram Backdoor\nWKS-TRD-14 Targeted\nInteractive Stage-2',
+        stroke: CLEANROOM_CHALK.implant,
+        fill: CLEANROOM_CHALK.implantFill,
       }),
       note(40, 464, 'Hover each box to inspect ICONICSTEALER targets, Gopuram escalation, and EDR containment.', CLEANROOM_CHALK.muted),
     ],

@@ -13,7 +13,7 @@ export const scenario: AttackScenario = {
   overview:
     'In LockBit Ransomware Behavioral Analysis: VSS Wipe & Fast Encryption (MITRE ATT&CK T1490 and T1486), an affiliate pivots from a breached jump-host onto corporate file server FS-CORP-01 to destroy local backups before locking thousands of files in seconds. The attack unfolds in one continuous arc: staging the LockBit binary over SMB via PsExec as SYSTEM, then deleting all Volume Shadow Copies and disabling Windows Recovery, then unleashing multi-threaded I/O Completion Port workers to encrypt only the first 4 KB to 64 KB header of every document, then bolting extortion notices across every folder and attempting to clear Security logs. Steps #1-#2 cover remote service staging and recovery sabotage; Steps #3-#4 cover high-speed head-only encryption and extortion artifacts. Primary detection: Windows System Event ID 7045, Sysmon Event ID 1 for vssadmin and bcdedit, high-velocity file-rename alerts, and Security Event ID 1102.',
   specs: [
-    { term: 'MITRE TECHNIQUES', value: 'T1569.002 (PsExec) · T1490 (Shadow Wipe) · T1486 (Head-Only Encrypt)' },
+    { term: 'MITRE TECHNIQUES', value: 'T1569.002 (PsExec) · T1490 (Shadow Wipe) · T1486 (Head-Only Encrypt) · T1070.001 (Log Clear)' },
     { term: 'KEY TOOLS & APIS', value: 'PSEXESVC, vssadmin.exe, bcdedit.exe, CreateIoCompletionPort, wevtutil.exe' },
     { term: 'DETECTION SOURCES', value: 'WinSec 5145 & 1102 · System 7045 & 7036 · Sysmon EID 1, 11, 13' },
     { term: 'TARGET HOST', value: 'FS-CORP-01 (10.10.50.14) · D:\\Finance_Shares\\, D:\\HR_Records\\' },
@@ -154,6 +154,7 @@ export const scenario: AttackScenario = {
         'MoveFileExW(*.lockbit)',
         'CreateFileW(Restore-My-Files.txt)',
         'RegSetValueExW(Desktop\\Wallpaper)',
+        'CreateProcessW(wevtutil.exe cl Security)',
       ],
     },
     {
@@ -177,6 +178,17 @@ export const scenario: AttackScenario = {
       status: 'malicious',
       activeFromStage: 2,
       apiCalls: ['NtSetSystemEnvironmentValueEx(WinRE Disabled)'],
+    },
+    {
+      pid: 6618,
+      ppid: 6412,
+      name: 'wevtutil.exe',
+      commandLine: 'wevtutil.exe cl Security',
+      user: 'NT AUTHORITY\\SYSTEM',
+      integrity: 'SYSTEM',
+      status: 'malicious',
+      activeFromStage: 4,
+      apiCalls: ['EvtClearLog(Security)', 'WinSec EventID 1102 Emitted'],
     },
   ],
   stages: [
@@ -238,7 +250,7 @@ export const scenario: AttackScenario = {
       description:
         'Worker threads write Restore-My-Files.txt inside every locked directory, hijack the desktop wallpaper registry value, and run wevtutil cl Security—triggering Security Event ID 1102 in the SIEM.',
       mitreTacticPhase: 7,
-      mitreTechniqueId: 'T1070.004',
+      mitreTechniqueId: 'T1070.001',
       mitreTechniqueName: 'Indicator Removal: Clear Windows Event Logs',
       activeNodeIds: ['lockbit_worker', 'file_server', 'siem_audit'],
       compromisedNodeIds: ['jump_host', 'file_server', 'lockbit_worker', 'vss_archive'],
@@ -260,7 +272,7 @@ export const stepGuide: RawScenarioStepGuideData = {
     storyAnalogy:
       'Picture a busy municipal records hall divided into two wings: on the left sits a climate-controlled safety archive with four spinning silver microfilm backup reels beside an emergency green recovery lever, and on the right stand four glass-fronted filing vaults stacked with crisp white paper ledgers. Suddenly, an armored brass dispatch capsule shoots down an overhead service chute from a remote hallway, unlocks the hall master breaker, and wakes a roaring industrial ribbon shredder. Before touching a single active ledger, the saboteur feeds all four silver backup reels straight into the shredder teeth until silver confetti fills the bin and snaps the green recovery lever clean off its hinge. Instantly, four synchronized overhead stamping arms plunge in parallel across all four filing vaults—stamping a blazing crimson lock band strictly across the top header strip of every ledger stack while leaving the lower white pages untouched—slamming four heavy cast-iron padlocks shut and bolting a giant crimson extortion notice across the glass entrance door while the ceiling audit lamp flashes bright violet.',
     plainSummary:
-      'In this scenario (MITRE ATT&CK T1569.002, T1490, and T1486) targeting corporate file server FS-CORP-01 (10.10.50.14), a LockBit 3.0 affiliate executes an automated recovery-destruction and rapid head-only encryption blitz. The attack unfolds in one continuous arc: remote PsExec service deployment over SMB as SYSTEM, then systematic Volume Shadow Copy deletion and boot-recovery disabling, then high-speed multi-threaded I/O Completion Port encryption of only the opening 4 KB to 64 KB of every document, then mass extortion-note placement paired with an Event Log clearing attempt. Steps #1-#4 trace each forensic artifact from System Event ID 7045 through Sysmon Event ID 1, mass .lockbit renames, and Security Event ID 1102.',
+      'In this scenario (MITRE ATT&CK T1569.002, T1490, T1486, and T1070.001) targeting corporate file server FS-CORP-01 (10.10.50.14), a LockBit 3.0 affiliate executes an automated recovery-destruction and rapid head-only encryption blitz. The attack unfolds in one continuous arc: remote PsExec service deployment over SMB as SYSTEM, then systematic Volume Shadow Copy deletion and boot-recovery disabling, then high-speed multi-threaded I/O Completion Port encryption of only the opening 4 KB to 64 KB of every document, then mass extortion-note placement paired with an Event Log clearing attempt. Steps #1-#4 trace each forensic artifact from System Event ID 7045 through Sysmon Event ID 1, mass .lockbit renames, and Security Event ID 1102.',
     diagramTopologySummary:
       'On the diagram: Start at Node ① (JUMP-OPS-02 10.10.15.8) pushing the PsExec service to Node ② (FS-CORP-01 10.10.50.14), watch Node ③ (lb3_black.exe PID 6412) wipe Node ④ (VSS & WinRE Backups) before encrypting Node ② shares at high speed, while Node ⑤ (SIEM & EDR Audit) captures Event IDs 7045, 1, 7036, 11, and 1102.',
     documentedAdvisory:
@@ -314,7 +326,7 @@ export const stepGuide: RawScenarioStepGuideData = {
     },
     {
       stepNumber: 4,
-      mitreId: 'T1070.004',
+      mitreId: 'T1070.001',
       plainTitle: 'Dropping Extortion Notices, Hijacking Wallpaper & Triggering Audit Clear EID 1102',
       storyAnalogy:
         'With every filing vault padlocked shut, a mechanical placard press bolts a giant crimson extortion notice directly onto the glass entrance door and flips the hall display monitor solid red—and when the saboteur tries to smash the overhead audit ticker to erase their tracks, a protected ceiling glass beacon flares unmistakable bright violet across the entire room.',

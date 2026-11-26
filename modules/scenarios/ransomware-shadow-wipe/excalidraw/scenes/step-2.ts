@@ -10,17 +10,17 @@ export function lockbitStep2Board(): TechnicalBoardDescriptor {
 
   const locker = { id: 'lb2-locker', x: 40, w: 235 };
   const vss = { id: 'lb2-vss', x: locker.x + locker.w + ARROW_GAP, w: 255 };
-  const bcd = { id: 'lb2-bcd', x: vss.x + vss.w + ARROW_GAP, w: 245 };
+  const bcd = { id: 'lb2-bcd', x: vss.x + vss.w + ARROW_GAP, w: 250 };
 
-  const svc = { id: 'lb2-svc', x: 430, w: 255 };
-  const detect = { id: 'lb2-detect', x: svc.x + svc.w + ARROW_GAP, w: 255 };
+  const svc = { id: 'lb2-svc', x: vss.x, w: 255 };
+  const detect = { id: 'lb2-detect', x: bcd.x, w: 250 };
 
   return {
     scenarioId: 'ransomware-shadow-wipe',
     sectionKey: 'step-2',
     boardBadge: 'STEP #2 · T1490',
     title: 'Inhibit System Recovery: Shadow Wipe & Service Kill',
-    subtitle: 'LockBit erases local Volume Shadow Copies, disables recovery boot, and stops MSSQL/Veeam to unlock files.',
+    subtitle: 'LockBit erases local Volume Shadow Copies via vssadmin/wmic, disables WinRE via bcdedit, and halts VSS/DB services.',
     chalkHint: 'Hover any box to inspect exact destruction commands and high-severity EDR triggers.',
     tooltips: {
       'lb2-locker': {
@@ -38,42 +38,42 @@ export function lockbitStep2Board(): TechnicalBoardDescriptor {
       },
       'lb2-vss': {
         kind: 'api',
-        title: 'vssadmin.exe & wbadmin.exe',
-        module: 'PID 7024 · Shadow Copy & Catalog Purge',
-        signature: 'vssadmin delete shadows /all /quiet && wbadmin delete catalog -quiet',
+        title: 'vssadmin.exe & wmic.exe',
+        module: 'PID 6504 · Shadow Copy Snapshot Purge',
+        signature: 'vssadmin.exe delete shadows /all /quiet && wmic shadowcopy delete /nointeractive',
         fields: [
-          { key: 'cmd1', type: 'CLI', value: 'vssadmin delete shadows /all /quiet' },
-          { key: 'cmd2', type: 'CLI', value: 'wbadmin delete catalog -quiet' },
-          { key: 'fallback', type: 'WMI', value: 'Win32_ShadowCopy.Delete()' },
+          { key: 'pid', type: 'DWORD', value: '6504 (vssadmin.exe)' },
+          { key: 'cmd1', type: 'CLI', value: 'vssadmin.exe delete shadows /all /quiet' },
+          { key: 'fallback', type: 'WMI', value: 'wmic.exe shadowcopy delete /nointeractive' },
         ],
         explain:
-          'Erasing NTFS Volume Shadow Copies and Windows Server Backup catalogs wipes point-in-time local file history across all mounted drives.',
+          'Invoking IVssBackupComponents::DeleteSnapshots via vssadmin and WMI wipes every point-in-time Volume Shadow Copy snapshot across FS-CORP-01.',
       },
       'lb2-bcd': {
         kind: 'api',
-        title: 'bcdedit.exe Recovery Lockout',
+        title: 'bcdedit.exe Recovery Lockout (PID 6540)',
         module: 'Boot Configuration Data Tampering',
-        signature: 'bcdedit /set {default} recoveryenabled No && bootstatuspolicy ignoreallfailures',
+        signature: 'bcdedit.exe /set {default} recoveryenabled No && bootstatuspolicy ignoreallfailures',
         fields: [
+          { key: 'pid', type: 'DWORD', value: '6540 (bcdedit.exe)' },
           { key: 'recovery', type: 'BCD', value: 'recoveryenabled No' },
           { key: 'boot', type: 'BCD', value: 'bootstatuspolicy ignoreallfailures' },
-          { key: 'purpose', type: 'Impact', value: 'Blocks WinRE repair shell' },
         ],
         explain:
-          'Disabling Windows Recovery Environment ensures admins cannot boot straight into local recovery tools after reboot.',
+          'Disabling Windows Recovery Environment (WinRE) ensures admins cannot boot straight into local startup repair after reboot.',
       },
       'lb2-svc': {
         kind: 'detect',
-        title: 'MSSQLSERVER & VeeamVSSSvc Terminated',
+        title: 'VSS, sqlservr & VeeamBackupSvc Terminated',
         module: 'System Event ID 7036 · File Lock Release',
         signature: 'ControlService(hSvc, SERVICE_CONTROL_STOP)',
         fields: [
-          { key: 'db', type: 'Service', value: 'MSSQLSERVER -> Stopped' },
-          { key: 'backup', type: 'Service', value: 'VeeamVSSSvc -> Stopped' },
+          { key: 'vss', type: 'Service', value: 'Volume Shadow Copy (VSS) -> Stopped' },
+          { key: 'backup', type: 'Service', value: 'sqlservr / VeeamBackupSvc -> Stopped' },
           { key: 'reason', type: 'NTFS', value: 'Releases exclusive .mdf/.bak handles' },
         ],
         explain:
-          'Running database and backup daemons hold exclusive OS file locks; stopping them lets the encryptor lock .mdf, .ldf, and .vbk archives cleanly.',
+          'Halting VSS, database, and backup daemons stops new shadow snapshots and releases exclusive file locks before head-only encryption starts.',
       },
       'lb2-detect': {
         kind: 'detect',
@@ -127,7 +127,7 @@ export function lockbitStep2Board(): TechnicalBoardDescriptor {
         y: y1,
         w: vss.w,
         h: h1,
-        label: 'vssadmin.exe (7024)\ndelete shadows /all\nwbadmin delete catalog',
+        label: 'vssadmin.exe (6504)\ndelete shadows /all\nwmic shadowcopy delete',
         stroke: VAULT_CHALK.warn,
         fill: VAULT_CHALK.warnFill,
       }),
@@ -147,15 +147,15 @@ export function lockbitStep2Board(): TechnicalBoardDescriptor {
         y: y1,
         w: bcd.w,
         h: h1,
-        label: 'bcdedit.exe\nrecoveryenabled No\nignoreallfailures',
+        label: 'bcdedit.exe (6540)\nrecoveryenabled No\nignoreallfailures',
         stroke: VAULT_CHALK.attacker,
         fill: VAULT_CHALK.attackerFill,
       }),
       ...vArrow({
         id: 'lb2-a3',
-        fromId: locker.id,
+        fromId: vss.id,
         toId: svc.id,
-        midX: svc.x + svc.w / 2,
+        midX: vss.x + vss.w / 2,
         fromBottom: y1 + h1,
         toTop: y2,
         caption: 'StopService',
@@ -177,7 +177,7 @@ export function lockbitStep2Board(): TechnicalBoardDescriptor {
         y: y2,
         w: svc.w,
         h: h2,
-        label: 'System EID 7036\nMSSQLSERVER Stopped\nVeeamVSSSvc Stopped',
+        label: 'System EID 7036\nVSS Service Stopped\nsqlservr / Veeam Halted',
         stroke: VAULT_CHALK.crypto,
         fill: VAULT_CHALK.cryptoFill,
       }),
