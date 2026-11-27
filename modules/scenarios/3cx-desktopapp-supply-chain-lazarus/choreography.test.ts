@@ -3,6 +3,11 @@ import { describe, it } from 'node:test';
 import {
   THREECX_STORY_ACTS,
   evaluateThreeCxChoreography,
+  evaluateThreeCxMemoryDiffState,
+  evaluateThreeCxStep1State,
+  evaluateThreeCxStep2State,
+  evaluateThreeCxStep3State,
+  evaluateThreeCxStep4State,
   getActiveThreeCxActIndex,
 } from './choreography';
 
@@ -67,5 +72,31 @@ describe('3cx-desktopapp-supply-chain-lazarus choreography state machine', () =>
 
     assert.equal(evaluateThreeCxChoreography(0.27, 'OPEN').cutawayOpen, 1);
     assert.equal(evaluateThreeCxChoreography(0.55, 'SEALED').cutawayOpen, 0);
+  });
+
+  it('MOD-18 standalone per-section engines drive Steps 1..4 & Memory Diff deterministically', () => {
+    const s1 = evaluateThreeCxStep1State(12.2);
+    assert.equal(s1.phase, 2);
+    assert.equal(s1.hologramAuthentic, true);
+    assert.ok(s1.inspectorGreenPass > 0.7);
+
+    const s2 = evaluateThreeCxStep2State(12.8);
+    assert.equal(s2.phase, 2);
+    assert.equal(s2.rwxAllocated, true);
+    assert.equal(evaluateThreeCxStep2State(0.2, 'OPEN').cutawayOpen, 1);
+    assert.equal(evaluateThreeCxStep2State(10, 'SEALED').cutawayOpen, 0);
+
+    const s3 = evaluateThreeCxStep3State(10.8);
+    assert.equal(s3.phase, 2);
+    assert.equal(s3.stripPeeled, 1);
+    assert.ok(s3.c2DishLocked > 0.7);
+
+    const s4 = evaluateThreeCxStep4State(10.8);
+    assert.equal(s4.phase, 2);
+    assert.equal(s4.containmentActive, true);
+
+    const mem = evaluateThreeCxMemoryDiffState(10.8);
+    assert.equal(mem.phase, 2);
+    assert.ok(mem.floatingCoreLift > 0.8);
   });
 });

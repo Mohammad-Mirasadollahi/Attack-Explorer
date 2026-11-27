@@ -4,6 +4,11 @@ import {
   LSASS_STORY_ACTS,
   LSASS_TIMELINE_DURATION_SEC,
   evaluateLsassChoreography,
+  evaluateLsassMemoryPplDiffState,
+  evaluateLsassStep1State,
+  evaluateLsassStep2State,
+  evaluateLsassStep3State,
+  evaluateLsassStep4State,
 } from './choreography';
 
 test('LSASS MiniDump choreography covers full 5-act timeline contiguously from 0 to 1', () => {
@@ -55,4 +60,28 @@ test('LSASS choreography respects OPEN and SEALED cutaway overrides', () => {
 
   const forcedSealed = evaluateLsassChoreography(0.55, 'SEALED');
   assert.equal(forcedSealed.cutawayOpen, 0);
+});
+
+test('MOD-18 standalone LSASS per-section engines drive Steps 1..4 & PPL Diff deterministically', () => {
+  const s1 = evaluateLsassStep1State(13.0);
+  assert.equal(s1.phase, 2);
+  assert.equal(s1.pidLocked, true);
+
+  const s2 = evaluateLsassStep2State(13.5);
+  assert.equal(s2.phase, 2);
+  assert.ok(s2.xrayConeActive > 0.8);
+  assert.equal(evaluateLsassStep2State(0.2, 'OPEN').cutawayOpen, 1);
+  assert.equal(evaluateLsassStep2State(10, 'SEALED').cutawayOpen, 0);
+
+  const s3 = evaluateLsassStep3State(13.5);
+  assert.equal(s3.phase, 2);
+  assert.equal(s3.mdmpStamped, true);
+
+  const s4 = evaluateLsassStep4State(13.5);
+  assert.equal(s4.phase, 2);
+  assert.equal(s4.isolated, true);
+
+  const mem = evaluateLsassMemoryPplDiffState(13.5);
+  assert.equal(mem.phase, 2);
+  assert.ok(mem.shieldRepelPulse > 0.8);
 });

@@ -203,3 +203,178 @@ export function evaluateThreeCxChoreography(
     edrBehavioralAlert,
   };
 }
+
+// ---------------------------------------------------------------------------
+// MOD-18 Standalone Per-Section Engines (Steps 1..4 + Memory Diff)
+// ---------------------------------------------------------------------------
+
+export interface ThreeCxStep1State {
+  phase: 0 | 1 | 2;
+  sabotageArmExtend: number;
+  riggedPartsSeated: number;
+  phoneXProgress: number;
+  pressStampDown: number;
+  hologramAuthentic: boolean;
+  inspectorGreenPass: number;
+  cutawayOpen: number;
+}
+
+export function evaluateThreeCxStep1State(
+  timeSec: number,
+  cutawayMode: ThreeCxCutawayMode = 'AUTO'
+): ThreeCxStep1State {
+  const t = clamp01((timeSec % 14) / 14);
+  const phase: 0 | 1 | 2 = t < 4.8 / 14 ? 0 : t < 9.6 / 14 ? 1 : 2;
+  const sabotageArmExtend =
+    t < 0.36 ? smoothstep(0.04, 0.16, t) * (1 - smoothstep(0.24, 0.35, t)) : 0;
+  const riggedPartsSeated = smoothstep(0.14, 0.25, t);
+  const toPress = smoothstep(0.28, 0.44, t) * 0.5;
+  const toGate = smoothstep(0.64, 0.84, t) * 0.5;
+  const phoneXProgress = clamp01(toPress + toGate);
+  const pressStampDown =
+    t >= 0.44 && t <= 0.64
+      ? smoothstep(0.44, 0.52, t) * (1 - smoothstep(0.55, 0.64, t))
+      : 0;
+  const hologramAuthentic = t >= 0.52;
+  const inspectorGreenPass = smoothstep(0.72, 0.92, t);
+  const autoCut = 1 - smoothstep(0.27, 0.38, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phase,
+    sabotageArmExtend,
+    riggedPartsSeated,
+    phoneXProgress,
+    pressStampDown,
+    hologramAuthentic,
+    inspectorGreenPass,
+    cutawayOpen,
+  };
+}
+
+export interface ThreeCxStep2State {
+  phase: 0 | 1 | 2;
+  cutawayOpen: number;
+  gearAngle: number;
+  prismCracked: number;
+  rc4Unwind: number;
+  hoverRadioScale: number;
+  rwxAllocated: boolean;
+}
+
+export function evaluateThreeCxStep2State(
+  timeSec: number,
+  cutawayMode: ThreeCxCutawayMode = 'AUTO'
+): ThreeCxStep2State {
+  const t = clamp01((timeSec % 14) / 14);
+  const phase: 0 | 1 | 2 = t < 4.5 / 14 ? 0 : t < 9.2 / 14 ? 1 : 2;
+  const autoCut = smoothstep(0.05, 0.24, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  const gearAngle = t * Math.PI * 14;
+  const prismCracked = smoothstep(0.32, 0.58, t);
+  const rc4Unwind = smoothstep(0.56, 0.86, t);
+  const hoverRadioScale = smoothstep(0.66, 0.92, t);
+  return {
+    phase,
+    cutawayOpen,
+    gearAngle,
+    prismCracked,
+    rc4Unwind,
+    hoverRadioScale,
+    rwxAllocated: hoverRadioScale > 0.5,
+  };
+}
+
+export interface ThreeCxStep3State {
+  phase: 0 | 1 | 2;
+  scanBeamActive: number;
+  tileTilt: number;
+  stripPeeled: number;
+  c2DishLocked: number;
+  cutawayOpen: number;
+}
+
+export function evaluateThreeCxStep3State(
+  timeSec: number,
+  cutawayMode: ThreeCxCutawayMode = 'AUTO'
+): ThreeCxStep3State {
+  const t = clamp01((timeSec % 12) / 12);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const scanBeamActive = smoothstep(0.06, 0.24, t);
+  const tileTilt = smoothstep(0.32, 0.52, t);
+  const stripPeeled = smoothstep(0.38, 0.68, t);
+  const c2DishLocked = smoothstep(0.66, 0.92, t);
+  const autoCut = smoothstep(0.34, 0.52, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phase,
+    scanBeamActive,
+    tileTilt,
+    stripPeeled,
+    c2DishLocked,
+    cutawayOpen,
+  };
+}
+
+export interface ThreeCxStep4State {
+  phase: 0 | 1 | 2;
+  keycardSiphon: number;
+  vipTetherActive: number;
+  edrAlertLevel: number;
+  containmentActive: boolean;
+  cutawayOpen: number;
+}
+
+export function evaluateThreeCxStep4State(
+  timeSec: number,
+  cutawayMode: ThreeCxCutawayMode = 'AUTO'
+): ThreeCxStep4State {
+  const t = clamp01((timeSec % 12) / 12);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const keycardSiphon = smoothstep(0.05, 0.42, t);
+  const vipTetherActive = smoothstep(0.34, 0.66, t);
+  const edrAlertLevel = smoothstep(0.64, 0.9, t);
+  const autoCut = smoothstep(0.08, 0.28, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phase,
+    keycardSiphon,
+    vipTetherActive,
+    edrAlertLevel,
+    containmentActive: edrAlertLevel > 0.5,
+    cutawayOpen,
+  };
+}
+
+export interface ThreeCxMemoryDiffState {
+  phase: 0 | 1 | 2;
+  laserSweepX: number;
+  amberTrailerHighlight: number;
+  floatingCoreLift: number;
+  cutawayOpen: number;
+}
+
+export function evaluateThreeCxMemoryDiffState(
+  timeSec: number,
+  cutawayMode: ThreeCxCutawayMode = 'AUTO'
+): ThreeCxMemoryDiffState {
+  const t = clamp01((timeSec % 12) / 12);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const laserSweepX = -3.4 + smoothstep(0.06, 0.92, t) * 7.2;
+  const amberTrailerHighlight = smoothstep(0.32, 0.6, t);
+  const floatingCoreLift = smoothstep(0.62, 0.9, t);
+  const autoCut = smoothstep(0.18, 0.42, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phase,
+    laserSweepX,
+    amberTrailerHighlight,
+    floatingCoreLift,
+    cutawayOpen,
+  };
+}
+

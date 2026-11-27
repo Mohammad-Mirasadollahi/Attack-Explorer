@@ -314,10 +314,10 @@ export const AMSI_REFLECTIVE_DLL_SECTION_SCENES: Partial<
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [1.6, 3.8, 7.6], target: [-0.2, 2.5, 0.5] },
-      { id: 'VIEW_A', label: 'Bolt Close-Up', position: [1.4, 2.7, 4.9], target: [0.5, 2.4, 1.0] },
-      { id: 'VIEW_B', label: 'UV Sensor', position: [-3.2, 3.8, 5.4], target: [-1.8, 3.4, 1.0] },
-      { id: 'VIEW_C', label: 'Wide Cabinet', position: [-3.4, 4.4, 8.8], target: [0.0, 2.4, 0.4] },
+      { id: 'DIRECTOR', label: 'Director', position: [1.4, 3.9, 8.6], target: [0.0, 2.2, 0.3] },
+      { id: 'VIEW_A', label: 'CoW Fork & Bolt', position: [2.8, 2.9, 5.4], target: [1.4, 1.9, 0.6] },
+      { id: 'VIEW_B', label: 'UV Sensor', position: [-3.4, 4.2, 5.6], target: [-1.9, 3.6, 0.5] },
+      { id: 'VIEW_C', label: 'Wide Lockroom', position: [-3.2, 4.6, 9.2], target: [0.0, 2.2, 0.2] },
     ],
   },
 
@@ -399,10 +399,10 @@ export const AMSI_REFLECTIVE_DLL_SECTION_SCENES: Partial<
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [-0.3, 3.6, 7.6], target: [0.1, 2.7, 0.5] },
-      { id: 'VIEW_A', label: 'Fuse Rack Macro', position: [-0.5, 2.9, 4.8], target: [-0.5, 2.7, 1.1] },
-      { id: 'VIEW_B', label: 'Dead Wire & Tower', position: [3.6, 5.2, 6.8], target: [2.2, 4.1, -1.8] },
-      { id: 'VIEW_C', label: 'Side Cutaway', position: [-5.2, 3.9, 6.6], target: [0.0, 2.6, 0.2] },
+      { id: 'DIRECTOR', label: 'Director', position: [0.2, 3.8, 8.6], target: [0.4, 2.0, 0.1] },
+      { id: 'VIEW_A', label: 'Fuse Rack Macro', position: [-1.5, 3.1, 5.1], target: [-1.35, 1.9, 0.4] },
+      { id: 'VIEW_B', label: 'Dead Wire & Console', position: [3.8, 3.8, 6.2], target: [3.2, 2.0, -0.4] },
+      { id: 'VIEW_C', label: 'Side Cutaway', position: [-5.2, 4.0, 6.6], target: [-0.4, 2.0, 0.2] },
     ],
   },
 
@@ -569,10 +569,10 @@ export const AMSI_REFLECTIVE_DLL_SECTION_SCENES: Partial<
       },
     ],
     cameraPresets: [
-      { id: 'DIRECTOR', label: 'Director', position: [0.6, 4.4, 10.6], target: [0.6, 1.9, 0.1] },
-      { id: 'VIEW_A', label: 'Clean vs Dirty', position: [-1.4, 3.2, 6.4], target: [-1.4, 1.6, 0.2] },
-      { id: 'VIEW_B', label: 'Unbacked Drone', position: [4.8, 3.6, 6.4], target: [4.5, 2.2, 0.1] },
-      { id: 'VIEW_C', label: 'Overhead Bench', position: [0.6, 8.2, 7.6], target: [0.6, 1.6, 0.1] },
+      { id: 'DIRECTOR', label: 'Director', position: [0.0, 4.4, 10.8], target: [0.0, 1.9, 0.2] },
+      { id: 'VIEW_A', label: 'Clean vs Dirty', position: [-1.8, 3.2, 6.4], target: [-1.8, 1.6, 0.2] },
+      { id: 'VIEW_B', label: 'Unbacked Drone', position: [4.2, 3.5, 6.4], target: [3.6, 2.1, 0.2] },
+      { id: 'VIEW_C', label: 'Overhead Bench', position: [0.0, 8.2, 7.6], target: [0.0, 1.6, 0.2] },
     ],
   },
 };

@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   ANIME_3D_STAGE_STANDARD,
   computeActivePhaseIndex,
@@ -402,5 +404,58 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
     );
     assert.ok(totalMemoryForensics >= 1, `Expected >= 1 memory-forensics scene, got ${totalMemoryForensics}`);
     assert.ok(totalSections >= 7, `Expected >= 7 bespoke 3D sections, got ${totalSections}`);
+  });
+
+  it('MOD-18 Anti-Slicing Guard: all 10 non-hollowing scenarios ship dedicated standalone step & memory 3D modules without Overview slicing', () => {
+    const repoRoot = process.cwd();
+    const overviewSlicingImportRegex = /from\s+['"]\.\/scene-builders['"]/;
+    let auditedStandaloneFiles = 0;
+
+    for (const scenario of ATTACK_SCENARIOS) {
+      if (scenario.id === 'process-hollowing') continue;
+
+      const threeDir = path.join(repoRoot, 'modules', 'scenarios', scenario.id, 'three');
+      const expectedFiles = [
+        'step-1-scene.ts',
+        'step-2-scene.ts',
+        'step-3-scene.ts',
+        'step-4-scene.ts',
+      ];
+      if (hasSection3DScene(scenario.id, 'memory-forensics')) {
+        expectedFiles.push('memory-diff-scene.ts');
+      }
+
+      for (const fileName of expectedFiles) {
+        const fullPath = path.join(threeDir, fileName);
+        assert.equal(
+          fs.existsSync(fullPath),
+          true,
+          `MOD-18 violation: missing standalone scene module ${scenario.id}/three/${fileName}`
+        );
+        const source = fs.readFileSync(fullPath, 'utf8');
+        assert.equal(
+          overviewSlicingImportRegex.test(source),
+          false,
+          `MOD-18 violation: ${scenario.id}/three/${fileName} must NOT import ./scene-builders (Overview station slicing forbidden)`
+        );
+        assert.equal(
+          source.includes('buildStepRoomShell('),
+          true,
+          `MOD-18 violation: ${scenario.id}/three/${fileName} must build its own architectural room via buildStepRoomShell(...)`
+        );
+        assert.equal(
+          source.includes('disposeStepScene('),
+          true,
+          `MOD-18 violation: ${scenario.id}/three/${fileName} must dispose GPU resources deterministically via disposeStepScene(...)`
+        );
+        auditedStandaloneFiles++;
+      }
+    }
+
+    assert.equal(
+      auditedStandaloneFiles,
+      49,
+      `Expected 49 MOD-18 standalone step/memory scene files across 10 scenarios, audited ${auditedStandaloneFiles}`
+    );
   });
 });

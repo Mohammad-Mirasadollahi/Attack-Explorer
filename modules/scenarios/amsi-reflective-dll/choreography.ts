@@ -277,3 +277,181 @@ export function evaluateAmsiChoreography(
     warehouseScaleKg: 0,
   };
 }
+
+// ============================================================================
+// MOD-18 DEDICATED PER-SECTION 3-PHASE CHOREOGRAPHY ENGINES
+// ============================================================================
+
+export interface AmsiStep1State {
+  phaseIndex: number;
+  scrollUnroll: number;
+  magnifierX: number;
+  addressLocked: number;
+  paperTapeProgress: number;
+  cutawayLift: number;
+}
+
+export function evaluateAmsiStep1State(
+  rawT: number,
+  cutawayMode: AmsiCutawayMode = 'AUTO'
+): AmsiStep1State {
+  const t = clamp01(rawT);
+  const phaseIndex = t < 0.33 ? 0 : t < 0.67 ? 1 : 2;
+  const scrollUnroll = easeOutCubic(segment(t, 0.04, 0.32));
+  const magnifierX = -2.4 + easeInOutQuad(segment(t, 0.28, 0.66)) * 2.55;
+  const addressLocked = easeOutCubic(segment(t, 0.56, 0.72));
+  const paperTapeProgress = easeOutCubic(segment(t, 0.64, 0.96));
+  const autoCutaway = easeInOutQuad(segment(t, 0.34, 0.62));
+  const cutawayLift =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phaseIndex,
+    scrollUnroll,
+    magnifierX,
+    addressLocked,
+    paperTapeProgress,
+    cutawayLift,
+  };
+}
+
+export interface AmsiStep2State {
+  phaseIndex: number;
+  wrenchAngle: number;
+  hatchOpenRad: number;
+  cowForkSlide: number;
+  rwxGlow: number;
+  ring0Beacon: number;
+  cutawayLift: number;
+}
+
+export function evaluateAmsiStep2State(
+  rawT: number,
+  cutawayMode: AmsiCutawayMode = 'AUTO'
+): AmsiStep2State {
+  const t = clamp01(rawT);
+  const phaseIndex = t < 0.33 ? 0 : t < 0.67 ? 1 : 2;
+  const wrenchAngle = easeInOutQuad(segment(t, 0.22, 0.54)) * Math.PI * 2.0;
+  const hatchOpenRad = easeOutCubic(segment(t, 0.34, 0.62)) * ((105 * Math.PI) / 180);
+  const cowForkSlide = easeInOutQuad(segment(t, 0.38, 0.68));
+  const rwxGlow = easeOutCubic(segment(t, 0.42, 0.68));
+  const ring0Beacon = easeOutCubic(segment(t, 0.66, 0.92));
+  const autoCutaway = easeInOutQuad(segment(t, 0.34, 0.60));
+  const cutawayLift =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phaseIndex,
+    wrenchAngle,
+    hatchOpenRad,
+    cowForkSlide,
+    rwxGlow,
+    ring0Beacon,
+    cutawayLift,
+  };
+}
+
+export interface AmsiStep3State {
+  phaseIndex: number;
+  fusesExtracted: number;
+  jumperSeated: number;
+  wirePower: number;
+  hatchRelocked: number;
+  bounceProgress: number;
+  cutawayLift: number;
+}
+
+export function evaluateAmsiStep3State(
+  rawT: number,
+  cutawayMode: AmsiCutawayMode = 'AUTO'
+): AmsiStep3State {
+  const t = clamp01(rawT);
+  const phaseIndex = t < 0.33 ? 0 : t < 0.70 ? 1 : 2;
+  const fusesExtracted = easeInOutQuad(segment(t, 0.08, 0.36));
+  const jumperSeated = easeOutCubic(segment(t, 0.36, 0.64));
+  const wirePower = clamp01(1 - easeOutCubic(segment(t, 0.56, 0.68)));
+  const hatchRelocked = easeInOutQuad(segment(t, 0.70, 0.90));
+  const bounceProgress = segment(t, 0.66, 0.98);
+  const autoCutaway = clamp01(
+    easeOutCubic(segment(t, 0.05, 0.22)) - easeInOutQuad(segment(t, 0.74, 0.92)) * 0.55
+  );
+  const cutawayLift =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phaseIndex,
+    fusesExtracted,
+    jumperSeated,
+    wirePower,
+    hatchRelocked,
+    bounceProgress,
+    cutawayLift,
+  };
+}
+
+export interface AmsiStep4State {
+  phaseIndex: number;
+  capsuleDrop: number;
+  droneAssembly: number;
+  droneHoverY: number;
+  droneSpinRad: number;
+  clrEtwLock: number;
+  floorScaleKg: number;
+  cutawayLift: number;
+}
+
+export function evaluateAmsiStep4State(
+  rawT: number,
+  cutawayMode: AmsiCutawayMode = 'AUTO'
+): AmsiStep4State {
+  const t = clamp01(rawT);
+  const phaseIndex = t < 0.33 ? 0 : t < 0.67 ? 1 : 2;
+  const capsuleDrop = easeOutCubic(segment(t, 0.05, 0.34));
+  const droneAssembly = easeInOutQuad(segment(t, 0.34, 0.72));
+  const droneHoverY = 2.05 + droneAssembly * 0.38;
+  const droneSpinRad = segment(t, 0.42, 1.0) * Math.PI * 3.5;
+  const clrEtwLock = easeOutCubic(segment(t, 0.68, 0.95));
+  const autoCutaway = easeInOutQuad(segment(t, 0.30, 0.62));
+  const cutawayLift =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phaseIndex,
+    capsuleDrop,
+    droneAssembly,
+    droneHoverY,
+    droneSpinRad,
+    clrEtwLock,
+    floorScaleKg: 0,
+    cutawayLift,
+  };
+}
+
+export interface AmsiMemoryDiffState {
+  phaseIndex: number;
+  scannerX: number;
+  dirtyHighlight: number;
+  unbackedHighlight: number;
+  droneSpinRad: number;
+  cutawayLift: number;
+}
+
+export function evaluateAmsiMemoryDiffState(
+  rawT: number,
+  cutawayMode: AmsiCutawayMode = 'AUTO'
+): AmsiMemoryDiffState {
+  const t = clamp01(rawT);
+  const phaseIndex = t < 0.33 ? 0 : t < 0.67 ? 1 : 2;
+  const scannerX = -3.8 + easeInOutQuad(segment(t, 0.06, 0.92)) * 7.6;
+  const dirtyHighlight = easeOutCubic(segment(t, 0.34, 0.56));
+  const unbackedHighlight = easeOutCubic(segment(t, 0.66, 0.90));
+  const droneSpinRad = t * Math.PI * 3.0;
+  const autoCutaway = easeInOutQuad(segment(t, 0.28, 0.62));
+  const cutawayLift =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phaseIndex,
+    scannerX,
+    dirtyHighlight,
+    unbackedHighlight,
+    droneSpinRad,
+    cutawayLift,
+  };
+}
+

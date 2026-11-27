@@ -4,6 +4,11 @@ import {
   AMSI_STORY_ACTS,
   AMSI_TIMELINE_DURATION_SEC,
   evaluateAmsiChoreography,
+  evaluateAmsiMemoryDiffState,
+  evaluateAmsiStep1State,
+  evaluateAmsiStep2State,
+  evaluateAmsiStep3State,
+  evaluateAmsiStep4State,
   getActiveAmsiActIndex,
 } from './choreography';
 
@@ -85,5 +90,33 @@ describe('amsi-reflective-dll choreography state machine', () => {
   it('respects explicit OPEN and SEALED cutaway overrides', () => {
     assert.equal(evaluateAmsiChoreography(0.1, 'OPEN').cutawayAmount, 1);
     assert.equal(evaluateAmsiChoreography(0.5, 'SEALED').cutawayAmount, 0);
+  });
+
+  it('MOD-18 standalone per-section engines progress deterministically across 3 phases and honor cutaway', () => {
+    const s1Late = evaluateAmsiStep1State(0.9, 'AUTO');
+    assert.equal(s1Late.phaseIndex, 2);
+    assert.ok(s1Late.addressLocked > 0.9 && s1Late.paperTapeProgress > 0.8);
+    assert.equal(evaluateAmsiStep1State(0.1, 'OPEN').cutawayLift, 1);
+
+    const s2Mid = evaluateAmsiStep2State(0.65, 'AUTO');
+    assert.ok(s2Mid.cowForkSlide > 0.8 && s2Mid.rwxGlow > 0.8);
+    assert.ok(evaluateAmsiStep2State(0.9, 'AUTO').ring0Beacon > 0.8);
+    assert.equal(evaluateAmsiStep2State(0.5, 'SEALED').cutawayLift, 0);
+
+    const s3End = evaluateAmsiStep3State(0.92, 'AUTO');
+    assert.equal(s3End.fusesExtracted, 1);
+    assert.equal(s3End.jumperSeated, 1);
+    assert.equal(s3End.wirePower, 0);
+    assert.ok(s3End.hatchRelocked > 0.9);
+
+    const s4End = evaluateAmsiStep4State(0.92, 'AUTO');
+    assert.equal(s4End.floorScaleKg, 0);
+    assert.equal(s4End.droneAssembly, 1);
+    assert.ok(s4End.clrEtwLock > 0.8);
+
+    const memEnd = evaluateAmsiMemoryDiffState(0.92, 'AUTO');
+    assert.equal(memEnd.phaseIndex, 2);
+    assert.ok(memEnd.dirtyHighlight === 1 && memEnd.unbackedHighlight === 1);
+    assert.equal(evaluateAmsiMemoryDiffState(0.1, 'OPEN').cutawayLift, 1);
   });
 });

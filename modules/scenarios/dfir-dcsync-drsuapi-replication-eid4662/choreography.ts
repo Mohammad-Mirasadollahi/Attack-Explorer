@@ -64,3 +64,151 @@ export function evaluateDcsyncChoreography(
     peerGateShield,
   };
 }
+
+export const DCSYNC_STEP_DURATION_SEC = 15;
+
+export interface DcsyncStep1Frame {
+  phaseIndex: number;
+  crownSpinBoost: number;
+  badRibbonFlare: number;
+  eid5136AuditScan: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDcsyncStep1State(
+  tNormRaw: number,
+  cutawayMode: DcsyncCutawayMode = 'AUTO'
+): DcsyncStep1Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const crownSpinBoost = smooth(t, 0.04, 0.32);
+  const badRibbonFlare = smooth(t, 0.34, 0.66);
+  const eid5136AuditScan = smooth(t, 0.66, 0.94);
+  const autoCut = smooth(t, 0.24, 0.38);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    crownSpinBoost,
+    badRibbonFlare,
+    eid5136AuditScan,
+    cutawayOpen,
+  };
+}
+
+export interface DcsyncStep2Frame {
+  phaseIndex: number;
+  vanDockProgress: number;
+  capsuleStreamProgress: number;
+  zeekWireAlert: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDcsyncStep2State(
+  tNormRaw: number,
+  cutawayMode: DcsyncCutawayMode = 'AUTO'
+): DcsyncStep2Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const vanDockProgress = smooth(t, 0.04, 0.34);
+  const capsuleStreamProgress = smooth(t, 0.32, 0.72);
+  const zeekWireAlert = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.26, 0.40);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    vanDockProgress,
+    capsuleStreamProgress,
+    zeekWireAlert,
+    cutawayOpen,
+  };
+}
+
+export interface DcsyncStep3Frame {
+  phaseIndex: number;
+  eid4662Flash: number;
+  logonIdJoinBeam: number;
+  p1SirenFlare: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDcsyncStep3State(
+  tNormRaw: number,
+  cutawayMode: DcsyncCutawayMode = 'AUTO'
+): DcsyncStep3Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const eid4662Flash = smooth(t, 0.04, 0.34);
+  const logonIdJoinBeam = smooth(t, 0.34, 0.68);
+  const p1SirenFlare = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.16, 0.32);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    eid4662Flash,
+    logonIdJoinBeam,
+    p1SirenFlare,
+    cutawayOpen,
+  };
+}
+
+export interface DcsyncStep4Frame {
+  phaseIndex: number;
+  ribbonStripProgress: number;
+  doubleResetRotation: number;
+  peerShieldLock: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDcsyncStep4State(
+  tNormRaw: number,
+  cutawayMode: DcsyncCutawayMode = 'AUTO'
+): DcsyncStep4Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const ribbonStripProgress = smooth(t, 0.04, 0.34);
+  const doubleResetRotation = smooth(t, 0.34, 0.68);
+  const peerShieldLock = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.14, 0.28);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    ribbonStripProgress,
+    doubleResetRotation,
+    peerShieldLock,
+    cutawayOpen,
+  };
+}
+
+export interface DcsyncMemoryDiffFrame {
+  phaseIndex: number;
+  exposedRibbonPulse: number;
+  auditSweepProgress: number;
+  hardenedDaclGlow: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDcsyncMemoryDiffState(
+  tNormRaw: number,
+  cutawayMode: DcsyncCutawayMode = 'AUTO'
+): DcsyncMemoryDiffFrame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const exposedRibbonPulse = smooth(t, 0.04, 0.34);
+  const auditSweepProgress = smooth(t, 0.30, 0.72);
+  const hardenedDaclGlow = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.12, 0.26);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    exposedRibbonPulse,
+    auditSweepProgress,
+    hardenedDaclGlow,
+    cutawayOpen,
+  };
+}
+

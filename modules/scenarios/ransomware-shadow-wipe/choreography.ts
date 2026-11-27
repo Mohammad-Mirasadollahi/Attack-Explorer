@@ -224,3 +224,185 @@ export function evaluateLockbitChoreography(
     auditWipeAlarmActive,
   };
 }
+
+// ---------------------------------------------------------------------------
+// MOD-18 Standalone Per-Section Engines (Steps 1..4)
+// ---------------------------------------------------------------------------
+
+export interface LockbitStep1State {
+  phase: 0 | 1 | 2;
+  capsuleTravel: number;
+  latchEngaged: number;
+  breakerDown: number;
+  auditTickerExtend: number;
+  cutawayOpen: number;
+  alarmAmber: boolean;
+}
+
+export function evaluateLockbitStep1State(
+  timeSec: number,
+  cutawayMode: LockbitCutawayMode = 'AUTO'
+): LockbitStep1State {
+  const t = clamp01((timeSec % 12) / 12);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const capsuleTravel = smoothstep(0.04, 0.34, t);
+  const latchEngaged = smoothstep(0.3, 0.42, t);
+  const breakerDown = smoothstep(0.38, 0.64, t);
+  const auditTickerExtend = smoothstep(0.66, 0.94, t);
+  const autoCutaway = smoothstep(0.08, 0.22, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phase,
+    capsuleTravel,
+    latchEngaged,
+    breakerDown,
+    auditTickerExtend,
+    cutawayOpen,
+    alarmAmber: breakerDown > 0.55,
+  };
+}
+
+export interface LockbitStep2State {
+  phase: 0 | 1 | 2;
+  reelProgress: [number, number, number, number];
+  shredderSpin: number;
+  ribbonHeapLevel: number;
+  leverStrain: number;
+  leverSnapped: boolean;
+  leverFallProgress: number;
+  cutawayOpen: number;
+  vssStopped: boolean;
+}
+
+export function evaluateLockbitStep2State(
+  timeSec: number,
+  cutawayMode: LockbitCutawayMode = 'AUTO'
+): LockbitStep2State {
+  const t = clamp01((timeSec % 14) / 14);
+  const phase: 0 | 1 | 2 = t < 4.8 / 14 ? 0 : t < 9.6 / 14 ? 1 : 2;
+  const reelProgress: [number, number, number, number] = [
+    smoothstep(0.04, 0.24, t),
+    smoothstep(0.14, 0.36, t),
+    smoothstep(0.34, 0.54, t),
+    smoothstep(0.46, 0.66, t),
+  ];
+  const shredderSpin =
+    t >= 0.05 && t <= 0.74
+      ? smoothstep(0.05, 0.14, t) * (1 - smoothstep(0.66, 0.74, t) * 0.75)
+      : 0.15;
+  const ribbonHeapLevel = smoothstep(0.16, 0.68, t);
+  const leverStrain = smoothstep(0.66, 0.77, t);
+  const leverSnapped = t >= 0.76;
+  const leverFallProgress = smoothstep(0.76, 0.9, t);
+  const autoCutaway = smoothstep(0.12, 0.28, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phase,
+    reelProgress,
+    shredderSpin,
+    ribbonHeapLevel,
+    leverStrain,
+    leverSnapped,
+    leverFallProgress,
+    cutawayOpen,
+    vssStopped: ribbonHeapLevel > 0.45,
+  };
+}
+
+export interface LockbitStep3State {
+  phase: 0 | 1 | 2;
+  armPlunge: [number, number, number, number];
+  headerScorched: [number, number, number, number];
+  padlockShut: [number, number, number, number];
+  lockedFileCount: number;
+  bodyUntouchedRatio: number;
+  cutawayOpen: number;
+}
+
+export function evaluateLockbitStep3State(
+  timeSec: number,
+  cutawayMode: LockbitCutawayMode = 'AUTO'
+): LockbitStep3State {
+  const t = clamp01((timeSec % 14) / 14);
+  const phase: 0 | 1 | 2 = t < 4.8 / 14 ? 0 : t < 9.6 / 14 ? 1 : 2;
+  const wave = (s: number, p: number, e: number) =>
+    t < s || t > e ? 0 : t <= p ? smoothstep(s, p, t) : 1 - smoothstep(p, e, t);
+  const armPlunge: [number, number, number, number] = [
+    Math.max(wave(0.06, 0.18, 0.34), wave(0.36, 0.46, 0.6)),
+    Math.max(wave(0.11, 0.23, 0.39), wave(0.41, 0.51, 0.65)),
+    Math.max(wave(0.16, 0.28, 0.44), wave(0.46, 0.56, 0.7)),
+    Math.max(wave(0.21, 0.33, 0.49), wave(0.51, 0.61, 0.74)),
+  ];
+  const headerScorched: [number, number, number, number] = [
+    smoothstep(0.34, 0.48, t),
+    smoothstep(0.39, 0.53, t),
+    smoothstep(0.44, 0.58, t),
+    smoothstep(0.49, 0.63, t),
+  ];
+  const padlockShut: [number, number, number, number] = [
+    smoothstep(0.68, 0.78, t),
+    smoothstep(0.72, 0.82, t),
+    smoothstep(0.76, 0.86, t),
+    smoothstep(0.8, 0.9, t),
+  ];
+  const lockedFileCount = Math.round(smoothstep(0.32, 0.9, t) * 4820);
+  const autoCutaway = smoothstep(0.14, 0.3, t) * (1 - smoothstep(0.88, 0.96, t) * 0.35);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phase,
+    armPlunge,
+    headerScorched,
+    padlockShut,
+    lockedFileCount,
+    bodyUntouchedRatio: 0.85,
+    cutawayOpen,
+  };
+}
+
+export interface LockbitStep4State {
+  phase: 0 | 1 | 2;
+  pressArmSwing: number;
+  placardBolted: number;
+  wallpaperFlipped: boolean;
+  wallpaperBlend: number;
+  wipeStrikeProgress: number;
+  auditVioletFlare: number;
+  eid1102Active: boolean;
+  cutawayOpen: number;
+}
+
+export function evaluateLockbitStep4State(
+  timeSec: number,
+  cutawayMode: LockbitCutawayMode = 'AUTO'
+): LockbitStep4State {
+  const t = clamp01((timeSec % 12) / 12);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const pressArmSwing = smoothstep(0.05, 0.28, t) * (1 - smoothstep(0.34, 0.44, t) * 0.4);
+  const placardBolted = smoothstep(0.12, 0.34, t);
+  const wallpaperBlend = smoothstep(0.36, 0.58, t);
+  const wallpaperFlipped = wallpaperBlend >= 0.5;
+  const wipeStrikeProgress =
+    t >= 0.66 && t <= 0.84
+      ? smoothstep(0.66, 0.74, t) * (1 - smoothstep(0.75, 0.84, t))
+      : 0;
+  const auditVioletFlare = smoothstep(0.72, 0.92, t);
+  const eid1102Active = t >= 0.74;
+  const autoCutaway = smoothstep(0.62, 0.76, t);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCutaway;
+  return {
+    phase,
+    pressArmSwing,
+    placardBolted,
+    wallpaperFlipped,
+    wallpaperBlend,
+    wipeStrikeProgress,
+    auditVioletFlare,
+    eid1102Active,
+    cutawayOpen,
+  };
+}
+

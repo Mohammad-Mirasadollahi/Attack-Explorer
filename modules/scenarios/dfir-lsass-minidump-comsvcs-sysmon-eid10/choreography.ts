@@ -97,3 +97,138 @@ export function evaluateLsassChoreography(
     vaultWheelAngle,
   };
 }
+
+// ---------------------------------------------------------------------------
+// MOD-18 Standalone Per-Section Engines (Steps 1..4 + Memory Diff)
+// ---------------------------------------------------------------------------
+
+export interface LsassStep1State {
+  phase: 0 | 1 | 2;
+  badgeRise: number;
+  directoryScan: number;
+  pidLocked: boolean;
+  cutawayOpen: number;
+}
+
+export function evaluateLsassStep1State(
+  timeSec: number,
+  cutawayMode: LsassCutawayMode = 'AUTO'
+): LsassStep1State {
+  const t = clamp01((((timeSec % 15) + 15) % 15) / 15);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const badgeRise = segment(t, 0.04, 0.34);
+  const directoryScan = segment(t, 0.34, 0.68);
+  const pidLocked = t >= 0.64;
+  const autoCut = segment(t, 0.08, 0.28);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return { phase, badgeRise, directoryScan, pidLocked, cutawayOpen };
+}
+
+export interface LsassStep2State {
+  phase: 0 | 1 | 2;
+  cartRoll: number;
+  apertureOpen: number;
+  xrayConeActive: number;
+  cutawayOpen: number;
+}
+
+export function evaluateLsassStep2State(
+  timeSec: number,
+  cutawayMode: LsassCutawayMode = 'AUTO'
+): LsassStep2State {
+  const t = clamp01((((timeSec % 15) + 15) % 15) / 15);
+  const phase: 0 | 1 | 2 = t < 4.8 / 15 ? 0 : t < 9.8 / 15 ? 1 : 2;
+  const cartRoll = segment(t, 0.04, 0.32);
+  const apertureOpen = segment(t, 0.32, 0.62);
+  const xrayConeActive = segment(t, 0.62, 0.92);
+  const autoCut = segment(t, 0.3, 0.5);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return { phase, cartRoll, apertureOpen, xrayConeActive, cutawayOpen };
+}
+
+export interface LsassStep3State {
+  phase: 0 | 1 | 2;
+  flashIntensity: number;
+  negativeEject: number;
+  sleeveInsert: number;
+  mdmpStamped: boolean;
+  cutawayOpen: number;
+}
+
+export function evaluateLsassStep3State(
+  timeSec: number,
+  cutawayMode: LsassCutawayMode = 'AUTO'
+): LsassStep3State {
+  const t = clamp01((((timeSec % 15) + 15) % 15) / 15);
+  const phase: 0 | 1 | 2 = t < 4.5 / 15 ? 0 : t < 9.8 / 15 ? 1 : 2;
+  const flashIntensity =
+    t < 0.36 ? segment(t, 0.04, 0.2) * (1 - segment(t, 0.24, 0.36) * 0.6) : 0.2;
+  const negativeEject = segment(t, 0.3, 0.66);
+  const sleeveInsert = segment(t, 0.66, 0.94);
+  const autoCut = segment(t, 0.14, 0.34);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phase,
+    flashIntensity,
+    negativeEject,
+    sleeveInsert,
+    mdmpStamped: negativeEject > 0.45,
+    cutawayOpen,
+  };
+}
+
+export interface LsassStep4State {
+  phase: 0 | 1 | 2;
+  boothAlarm: number;
+  callTraceBeam: number;
+  pplShieldDrop: number;
+  isolated: boolean;
+  cutawayOpen: number;
+}
+
+export function evaluateLsassStep4State(
+  timeSec: number,
+  cutawayMode: LsassCutawayMode = 'AUTO'
+): LsassStep4State {
+  const t = clamp01((((timeSec % 15) + 15) % 15) / 15);
+  const phase: 0 | 1 | 2 = t < 4.8 / 15 ? 0 : t < 10 / 15 ? 1 : 2;
+  const boothAlarm = segment(t, 0.04, 0.3);
+  const callTraceBeam = segment(t, 0.32, 0.65);
+  const pplShieldDrop = segment(t, 0.66, 0.94);
+  const autoCut = segment(t, 0.24, 0.45);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phase,
+    boothAlarm,
+    callTraceBeam,
+    pplShieldDrop,
+    isolated: pplShieldDrop > 0.5,
+    cutawayOpen,
+  };
+}
+
+export interface LsassMemoryPplDiffState {
+  phase: 0 | 1 | 2;
+  auditSweepX: number;
+  shieldRepelPulse: number;
+  cutawayOpen: number;
+}
+
+export function evaluateLsassMemoryPplDiffState(
+  timeSec: number,
+  cutawayMode: LsassCutawayMode = 'AUTO'
+): LsassMemoryPplDiffState {
+  const t = clamp01((((timeSec % 15) + 15) % 15) / 15);
+  const phase: 0 | 1 | 2 = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const auditSweepX = -4.2 + segment(t, 0.06, 0.92) * 8.4;
+  const shieldRepelPulse = segment(t, 0.64, 0.94);
+  const autoCut = segment(t, 0.16, 0.38);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return { phase, auditSweepX, shieldRepelPulse, cutawayOpen };
+}
+

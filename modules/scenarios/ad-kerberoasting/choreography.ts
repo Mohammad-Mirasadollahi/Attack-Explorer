@@ -67,3 +67,165 @@ export function evaluateKerbChoreography(
     auditLanternBeam,
   };
 }
+
+export const KERB_STEP_DURATION_SEC = 15;
+
+export interface KerbStep1Frame {
+  phaseIndex: number;
+  badgeApproach: number;
+  ldapScanSweep: number;
+  targetHighlight: number;
+  canaryAuditPulse: number;
+  cutawayOpen: number;
+}
+
+export function evaluateKerbStep1State(
+  tNormRaw: number,
+  cutawayMode: KerbCutawayMode = 'AUTO'
+): KerbStep1Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const badgeApproach = smooth(t, 0.03, 0.30);
+  const ldapScanSweep = smooth(t, 0.25, 0.68);
+  const targetHighlight = smooth(t, 0.38, 0.66);
+  const canaryAuditPulse = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.28, 0.42);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    badgeApproach,
+    ldapScanSweep,
+    targetHighlight,
+    canaryAuditPulse,
+    cutawayOpen,
+  };
+}
+
+export interface KerbStep2Frame {
+  phaseIndex: number;
+  capsuleTravel: number;
+  stampStrike: number;
+  voucherSlide: number;
+  eid4769Flash: number;
+  cutawayOpen: number;
+}
+
+export function evaluateKerbStep2State(
+  tNormRaw: number,
+  cutawayMode: KerbCutawayMode = 'AUTO'
+): KerbStep2Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const capsuleTravel = smooth(t, 0.04, 0.34);
+  const stampDown = smooth(t, 0.36, 0.50);
+  const stampUp = smooth(t, 0.54, 0.66);
+  const stampStrike = clamp01(stampDown - stampUp * 0.85);
+  const voucherSlide = smooth(t, 0.48, 0.78);
+  const eid4769Flash = smooth(t, 0.66, 0.94);
+  const autoCut = smooth(t, 0.32, 0.46);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    capsuleTravel,
+    stampStrike,
+    voucherSlide,
+    eid4769Flash,
+    cutawayOpen,
+  };
+}
+
+export interface KerbStep3Frame {
+  phaseIndex: number;
+  voucherLoad: number;
+  tumblerRpm: number;
+  sealFracture: number;
+  keycardRise: number;
+  cutawayOpen: number;
+}
+
+export function evaluateKerbStep3State(
+  tNormRaw: number,
+  cutawayMode: KerbCutawayMode = 'AUTO'
+): KerbStep3Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const voucherLoad = smooth(t, 0.04, 0.30);
+  const tumblerRpm = smooth(t, 0.28, 0.66);
+  const sealFracture = smooth(t, 0.54, 0.74);
+  const keycardRise = smooth(t, 0.66, 0.94);
+  const autoCut = smooth(t, 0.14, 0.28);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    voucherLoad,
+    tumblerRpm,
+    sealFracture,
+    keycardRise,
+    cutawayOpen,
+  };
+}
+
+export interface KerbStep4Frame {
+  phaseIndex: number;
+  keycardGlide: number;
+  doorBreach: number;
+  serviceInstall: number;
+  emeraldShieldDrop: number;
+  cutawayOpen: number;
+}
+
+export function evaluateKerbStep4State(
+  tNormRaw: number,
+  cutawayMode: KerbCutawayMode = 'AUTO'
+): KerbStep4Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const keycardGlide = smooth(t, 0.04, 0.35);
+  const doorBreach = smooth(t, 0.34, 0.62);
+  const serviceInstall = smooth(t, 0.48, 0.68);
+  const emeraldShieldDrop = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.30, 0.44);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    keycardGlide,
+    doorBreach,
+    serviceInstall,
+    emeraldShieldDrop,
+    cutawayOpen,
+  };
+}
+
+export interface KerbMemoryDiffFrame {
+  phaseIndex: number;
+  rc4CrackIntensity: number;
+  auditSweepProgress: number;
+  aesVaultPulse: number;
+  cutawayOpen: number;
+}
+
+export function evaluateKerbMemoryDiffState(
+  tNormRaw: number,
+  cutawayMode: KerbCutawayMode = 'AUTO'
+): KerbMemoryDiffFrame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const rc4CrackIntensity = smooth(t, 0.04, 0.34);
+  const auditSweepProgress = smooth(t, 0.30, 0.72);
+  const aesVaultPulse = smooth(t, 0.66, 0.95);
+  const autoCut = smooth(t, 0.12, 0.26);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    rc4CrackIntensity,
+    auditSweepProgress,
+    aesVaultPulse,
+    cutawayOpen,
+  };
+}
+

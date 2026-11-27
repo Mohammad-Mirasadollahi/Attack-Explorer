@@ -116,3 +116,157 @@ export function evaluateDnsTunnelChoreography(
     egressLocked: p >= 0.35,
   };
 }
+
+export const DNSTUN_STEP_DURATION_SEC = 15;
+export type DnsTunnelStepCutawayMode = 'AUTO' | 'OPEN' | 'SEALED';
+
+function smooth(t: number, start: number, end: number): number {
+  const x = seg(t, start, end);
+  return x * x * (3 - 2 * x);
+}
+
+export interface DnstunStep1Frame {
+  phaseIndex: number;
+  guillotineSlice: number;
+  stripLiftProgress: number;
+  skylightLockBeam: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDnstunStep1State(
+  tNormRaw: number,
+  cutawayMode: DnsTunnelStepCutawayMode = 'AUTO'
+): DnstunStep1Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const guillotineSlice = smooth(t, 0.04, 0.34);
+  const stripLiftProgress = smooth(t, 0.24, 0.66);
+  const skylightLockBeam = smooth(t, 0.64, 0.94);
+  const autoCut = smooth(t, 0.28, 0.42);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    guillotineSlice,
+    stripLiftProgress,
+    skylightLockBeam,
+    cutawayOpen,
+  };
+}
+
+export interface DnstunStep2Frame {
+  phaseIndex: number;
+  pigeonArcProgress: number;
+  lanternReplyPulse: number;
+  zeekHubMonitor: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDnstunStep2State(
+  tNormRaw: number,
+  cutawayMode: DnsTunnelStepCutawayMode = 'AUTO'
+): DnstunStep2Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const pigeonArcProgress = smooth(t, 0.04, 0.56);
+  const lanternReplyPulse = smooth(t, 0.38, 0.74);
+  const zeekHubMonitor = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.16, 0.30);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    pigeonArcProgress,
+    lanternReplyPulse,
+    zeekHubMonitor,
+    cutawayOpen,
+  };
+}
+
+export interface DnstunStep3Frame {
+  phaseIndex: number;
+  baselineCalmLevel: number;
+  entropySpikeHeight: number;
+  nodAlarmFlare: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDnstunStep3State(
+  tNormRaw: number,
+  cutawayMode: DnsTunnelStepCutawayMode = 'AUTO'
+): DnstunStep3Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const baselineCalmLevel = smooth(t, 0.04, 0.32);
+  const entropySpikeHeight = smooth(t, 0.32, 0.68);
+  const nodAlarmFlare = smooth(t, 0.66, 0.94);
+  const autoCut = smooth(t, 0.16, 0.30);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    baselineCalmLevel,
+    entropySpikeHeight,
+    nodAlarmFlare,
+    cutawayOpen,
+  };
+}
+
+export interface DnstunStep4Frame {
+  phaseIndex: number;
+  rpzNetDrop: number;
+  seawallShutterRaise: number;
+  workstationQuarantine: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDnstunStep4State(
+  tNormRaw: number,
+  cutawayMode: DnsTunnelStepCutawayMode = 'AUTO'
+): DnstunStep4Frame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const rpzNetDrop = smooth(t, 0.04, 0.35);
+  const seawallShutterRaise = smooth(t, 0.35, 0.68);
+  const workstationQuarantine = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.14, 0.28);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    rpzNetDrop,
+    seawallShutterRaise,
+    workstationQuarantine,
+    cutawayOpen,
+  };
+}
+
+export interface DnstunMemoryDiffFrame {
+  phaseIndex: number;
+  stagingChurnPulse: number;
+  forensicBeamSweep: number;
+  rpzSinkholeGlow: number;
+  cutawayOpen: number;
+}
+
+export function evaluateDnstunMemoryDiffState(
+  tNormRaw: number,
+  cutawayMode: DnsTunnelStepCutawayMode = 'AUTO'
+): DnstunMemoryDiffFrame {
+  const t = clamp01(tNormRaw);
+  const phaseIndex = t < 1 / 3 ? 0 : t < 2 / 3 ? 1 : 2;
+  const stagingChurnPulse = smooth(t, 0.04, 0.34);
+  const forensicBeamSweep = smooth(t, 0.30, 0.72);
+  const rpzSinkholeGlow = smooth(t, 0.68, 0.94);
+  const autoCut = smooth(t, 0.12, 0.26);
+  const cutawayOpen =
+    cutawayMode === 'OPEN' ? 1 : cutawayMode === 'SEALED' ? 0 : autoCut;
+  return {
+    phaseIndex,
+    stagingChurnPulse,
+    forensicBeamSweep,
+    rpzSinkholeGlow,
+    cutawayOpen,
+  };
+}
+

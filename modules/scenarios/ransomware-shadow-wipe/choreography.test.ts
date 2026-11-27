@@ -3,6 +3,10 @@ import { describe, it } from 'node:test';
 import {
   LOCKBIT_STORY_ACTS,
   evaluateLockbitChoreography,
+  evaluateLockbitStep1State,
+  evaluateLockbitStep2State,
+  evaluateLockbitStep3State,
+  evaluateLockbitStep4State,
   getActiveLockbitActIndex,
 } from './choreography';
 
@@ -72,5 +76,29 @@ describe('ransomware-shadow-wipe choreography state machine', () => {
 
     assert.equal(evaluateLockbitChoreography(0.1, 'OPEN').cutawayOpen, 1);
     assert.equal(evaluateLockbitChoreography(0.5, 'SEALED').cutawayOpen, 0);
+  });
+
+  it('MOD-18 standalone per-section engines drive Steps 1..4 deterministically with cutaway overrides', () => {
+    const s1Late = evaluateLockbitStep1State(10.5);
+    assert.equal(s1Late.phase, 2);
+    assert.equal(s1Late.alarmAmber, true);
+    assert.ok(s1Late.auditTickerExtend > 0.7);
+    assert.equal(evaluateLockbitStep1State(1, 'OPEN').cutawayOpen, 1);
+    assert.equal(evaluateLockbitStep1State(8, 'SEALED').cutawayOpen, 0);
+
+    const s2Late = evaluateLockbitStep2State(12.2);
+    assert.equal(s2Late.phase, 2);
+    assert.equal(s2Late.leverSnapped, true);
+    assert.equal(s2Late.vssStopped, true);
+
+    const s3Late = evaluateLockbitStep3State(12.8);
+    assert.equal(s3Late.phase, 2);
+    assert.equal(s3Late.bodyUntouchedRatio, 0.85);
+    assert.equal(s3Late.lockedFileCount, 4820);
+
+    const s4Late = evaluateLockbitStep4State(10.8);
+    assert.equal(s4Late.phase, 2);
+    assert.equal(s4Late.wallpaperFlipped, true);
+    assert.equal(s4Late.eid1102Active, true);
   });
 });
