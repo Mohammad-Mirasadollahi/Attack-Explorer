@@ -25,7 +25,7 @@ Import domain code as `@/modules/scenarios/...`. `npm run scenarios:registry` re
 
 Because **Attack Explorer** unifies interactive 2D network diagrams, kernel/process memory maps, raw SIEM/Sysmon telemetry, 3-layer pedagogical narratives, bespoke cel-shaded 3D cinema worlds, bespoke 2D silent lectures, bespoke Excalidraw chalk whiteboards, multi-vendor threat intelligence citations, and programmatic SEO/GEO structured data, **a single monolithic style guide cannot govern every artifact effectively**.
 
-Instead, the Attack Explorer Documentation & Content Authoring Standard is architected as **specialized, composable modules (`MOD-01` through `MOD-17`)**, governed at the top by **`MOD-17` (Bespoke Studio Redesign Pipeline, Clean-Slate Rebuild & Quality Gates)** and sequenced by the **Sidebar Master Backlog**.
+Instead, the Attack Explorer Documentation & Content Authoring Standard is architected as **specialized, composable modules (`MOD-01` through `MOD-18`)**, governed at the top by **`MOD-17` (Bespoke Studio Redesign Pipeline, Clean-Slate Rebuild & Quality Gates)** and **`MOD-18` (Per-Section Standalone 3D Diorama & Dedicated Engine Standard)**, and sequenced by the **Sidebar Master Backlog**.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -54,6 +54,8 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
  │                     │         │                     │         │   3-Surface Manual  │
  │                     │         │                     │         │ • MOD-16: 1-to-1    │
  │                     │         │                     │         │   World & Blueprint │
+ │                     │         │                     │         │ • MOD-18: Per-Step  │
+ │                     │         │                     │         │   Standalone 3D     │
  └──────────┬──────────┘         └──────────┬──────────┘         └──────────┬──────────┘
             │                               │                               │
             └───────────────────────────────┼───────────────────────────────┘
@@ -67,7 +69,7 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 
 ---
 
-## 2. Directory of Standard Modules (`MOD-01` .. `MOD-17`)
+## 2. Directory of Standard Modules (`MOD-01` .. `MOD-18`)
 
 | Module ID | File Path | Title & Domain Responsibility | When You MUST Load This Module |
 | :--- | :--- | :--- | :--- |
@@ -88,6 +90,7 @@ Instead, the Attack Explorer Documentation & Content Authoring Standard is archi
 | **`MOD-15`** | [`/docs/standards/15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md) | **Unified Bespoke 3D Anime, 2D Silent Lecture & Excalidraw Whiteboard Authoring Handbook** | Whenever assembling all three bespoke visual surfaces for a single scenario episode alongside `MOD-17`. |
 | **`MOD-16`** | [`/docs/standards/16-dynamic-real-world-environment-and-screenplay-standard.md`](./16-dynamic-real-world-environment-and-screenplay-standard.md) | **1-to-1 Physical Mechanism Environment, Director's Blueprint & 3-Way Alignment Standard** | **Mandatory for every episode**: enforces literal 1-to-1 physical embodiment (Mute Test + Swap Test), docs-only bespoke Director's Blueprints, and retires the legacy 28-place batch template generator. |
 | **`MOD-17`** | [`/docs/standards/17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md`](./17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md) | **Bespoke Studio Redesign Pipeline, Clean-Slate Rebuild & Quality Gates Standard** | **START HERE ALWAYS**: governs the Clean-Slate Rebuild, Sidebar Order Queue, One-Scenario-Per-Turn Law, Mute/Swap Filters, User Blueprint Approval Gate, Shared Shell vs. Bespoke Engine Split, and Frame-by-Frame Director's Review. |
+| **`MOD-18`** | [`/docs/standards/18-per-section-standalone-3d-diorama-and-engine-standard.md`](./18-per-section-standalone-3d-diorama-and-engine-standard.md) | **Per-Section Standalone 3D Diorama, Independent Micro-Screenplay & Dedicated Engine Standard** | **MANDATORY FOR EVERY STEP & MEMORY 3D SECTION**: bans Overview station slicing (`step-1..N` and `memory-forensics` must each own a standalone set, `>= 2` exclusive articulated props, dedicated 3-phase choreography engine, working Cutaway, and 4 custom camera presets, matching `process-hollowing`). |
 
 ---
 
@@ -97,12 +100,12 @@ Before writing or editing any content, identify your task type in the table belo
 
 | Task Type | Required Modules (Execute in Order) | Primary Target Files |
 | :--- | :--- | :--- |
-| **1. Rebuilding or Adding a Single Scenario Episode (Full Bespoke 3D + 2D + Whiteboard)** | **`MOD-17`** → `MOD-16` → `MOD-15` → `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-05` → `MOD-06` → `MOD-07` | `/docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md`, `/docs/screenplays/bespoke/<NNN>-<id>.md`, `/modules/scenarios/<id>/**`, `/lib/attack-sources-and-legal.ts`, `/lib/threat-intel-service.ts`, `/public/llms-full.txt` |
+| **1. Rebuilding or Adding a Single Scenario Episode (Full Bespoke 3D + 2D + Whiteboard)** | **`MOD-17`** → **`MOD-18`** → `MOD-16` → `MOD-15` → `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-05` → `MOD-06` → `MOD-07` | `/docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md`, `/docs/screenplays/bespoke/<NNN>-<id>.md`, `/modules/scenarios/<id>/**`, `/lib/attack-sources-and-legal.ts`, `/lib/threat-intel-service.ts`, `/public/llms-full.txt` |
 | **2. Writing or Revising a Step-by-Step Operational Guide** | `MOD-17` → `MOD-01` → `MOD-02` → `MOD-03` → `MOD-11` → `MOD-04` → `MOD-06` → `MOD-07` → `MOD-08` → `MOD-12` | `/modules/scenarios/<id>/index.ts`, `/lib/scenario-step-guides.ts`, `/components/step-guide/**`, `/components/StepByStepGuidePanel.tsx`, `/components/inspector/tabs/StepsTab.tsx` |
 | **3. Writing a New Engineering / Architecture Markdown Document** | `MOD-01` → `MOD-02` → `MOD-03` → `MOD-07` | `/docs/**/*.md`, `/seo-audit/**/*.md` |
 | **4. Adding Raw SIEM Logs, Memory Maps, or CLI Explanations** | `MOD-03` → `MOD-04` → `MOD-05` → `MOD-07` | `/lib/command-line-explanations.ts`, `/modules/scenarios/<id>/index.ts` |
 | **5. Updating Workbench UI Components, Badges, or Tooltips** | `MOD-02` → `MOD-06` → `MOD-07` → `MOD-08` → `MOD-12` | `/components/**/*.tsx`, `/lib/ui-text-standards.ts`, `/lib/diagram-memory-store.ts` |
-| **6. Authoring a Bespoke Scenario 3D World & Choreography (`three/` + `choreography.ts`)** | `MOD-17` → `MOD-16` → `MOD-09` → `MOD-10` → `MOD-08` → `MOD-07` | `/docs/screenplays/bespoke/<NNN>-<id>.md`, `/modules/scenarios/<id>/choreography.ts`, `/modules/scenarios/<id>/three/**`, `/modules/scenarios/three-registry.ts` |
+| **6. Authoring a Bespoke Scenario 3D World & Per-Section Engines (`three/` + `choreography.ts`)** | `MOD-17` → **`MOD-18`** → `MOD-16` → `MOD-09` → `MOD-10` → `MOD-08` → `MOD-07` | `/docs/screenplays/bespoke/<NNN>-<id>.md`, `/modules/scenarios/<id>/choreography.ts`, `/modules/scenarios/<id>/three/**`, `/modules/scenarios/three-registry.ts` |
 | **7. Refactoring Inspector Tabs / Overview Cleanup / Process Hierarchy Placement** | `MOD-11` → `MOD-08` → `MOD-12` → `MOD-07` | `/components/inspector/**`, `/components/InspectorPanel.tsx`, `/components/step-guide/**`, `/components/StepByStepGuidePanel.tsx`, `/components/inspector-minimap/**`, `/components/InspectorContextMiniMap.tsx` |
 | **8. Authoring Bespoke Excalidraw Technical Whiteboards** | `MOD-17` → `MOD-13` → `MOD-15` → `MOD-08` → `MOD-03` → `MOD-04` → `MOD-07` | `/modules/scenarios/<id>/excalidraw/**`, `/lib/section-excalidraw-registry.ts`, `/components/excalidraw/**` |
 | **9. Authoring Bespoke SVG + GSAP Silent Lecture Clips** | `MOD-17` → `MOD-14` → `MOD-15` → `MOD-08` → `MOD-09` → `MOD-03` → `MOD-07` | `/components/technical-clip/clips/**`, `/modules/scenarios/<id>/**`, `/lib/section-technical-clip-registry.ts` |
@@ -136,6 +139,7 @@ Every rule in `MOD-01` through `MOD-12` is backed by executable contracts in [`/
 4. **Overview Ownership & Inspector Shell (`MOD-12`)**: Cascading Process → Process Hierarchy; VAD → Memory; Stage Filter off Overview; sidebar labels without `(N)` counts; Steps without Auto-Play / legend cards; code under `/components/inspector/**`.
 5. **1-to-1 Physical Mechanism Law (`MOD-16`)**: Never recycle generic rooms, vehicles, or metaphors across unrelated attacks; every physical prop and motion must literally execute the vulnerability's real mechanism.
 6. **One-Stop Section Gate (`validateSectionFullClarityStandard`)**: Automatically enforced by `validateScenarioAgainstModularStandards()` for every Step/Memory section so prose clarity never regresses.
+7. **Per-Section Standalone 3D Law (`MOD-18`)**: Every Step (`step-1..N`) and `memory-forensics` 3D scene MUST be an independent diorama with its own dedicated room/set, `>= 2` exclusive articulated props, independent 3-phase choreography engine (`choreography.ts`), working Cutaway, and 4 custom camera presets—never a cropped/sliced Overview station or trivial `Math.sin` idle loop.
 
 Run the full verification suite:
 

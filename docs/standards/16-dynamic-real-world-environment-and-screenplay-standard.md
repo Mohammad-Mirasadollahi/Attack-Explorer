@@ -1,6 +1,6 @@
 # Dynamic Real-World Physical Environment, Director's Blueprint & 3-Way Alignment Standard (`MOD-16`)
 
-> **Module ID**: `MOD-16` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Supreme Studio Standard**: [`MOD-17`](./17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md)  
+> **Module ID**: `MOD-16` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Supreme Studio Standard**: [`MOD-17`](./17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md) · **Per-Section 3D Law**: [`MOD-18`](./18-per-section-standalone-3d-diorama-and-engine-standard.md)  
 > **Scope**: Mandatory standard governing bespoke 1-to-1 real-world physical mechanism environments, docs-only Director's Blueprint screenplays (`/docs/screenplays/bespoke/**`), strict Mute Test & Swap Test filters, and 3-way Story ↔ 3D Three.js ↔ 2D SVG+GSAP alignment.  
 > **Status**: Mandatory Permanent Standard (Revised under `MOD-17`) · **Reference Benchmark**: `process-hollowing` (Armored Bank Truck & Bank Garage) · **Deprecation Notice**: The legacy 28-place auto-assignment script (`scripts/build-cinema-screenplays.ts`) and generic `scenario-world-composer.ts` are **DEPRECATED** and scheduled for removal in Phase 1 Clean-Slate Code Cleanup (`MOD-17 §2.2`).
 
@@ -89,6 +89,7 @@ Every scenario's **prose**, **bespoke 3D Three.js engine**, **bespoke 2D SVG+GSA
 | Running `build-cinema-screenplays.ts` to batch-assign scenarios across 28 recycled places. | Author 1 bespoke episode per turn in Sidebar order with a user-approved Director's Blueprint (`MOD-17`). |
 | Placing Kerberoasting in a Courthouse while its story text mentions a Grand Hotel, or repeating one hotel-guestbook story across OAuth, noPac, and Scattered Spider. | Design a dedicated physical mechanism unique to the vulnerability that passes both the **Mute Test** and **Swap Test**. |
 | Reusing `scenario-world-composer.ts` with static left/right props and decorative glowing arcs. | Build a dedicated `/modules/scenarios/<id>/choreography.ts` and `/modules/scenarios/<id>/three/` with articulated props performing real state changes. |
+| **Overview Station Slicing (`MOD-18` Violation)**: Importing Overview station builders (`buildStation()`, `buildVault()`, etc.) into `step-scene-builders.ts` and merely zooming or oscillating props with `Math.sin(t)`. | Give **every** section (`step-1..N` and `memory-forensics`) its own standalone room/set (`step-K-scene.ts`, `memory-diff-scene.ts`), `>= 2` exclusive articulated props, and an independent deterministic 3-phase choreography engine (`MOD-18`). |
 | Exposing `/docs/screenplays/` markdown files or links inside React UI components. | Keep `/docs/screenplays/` strictly docs-only with zero references in `/app/**` or `/components/**`. |
 | Modifying `process-hollowing` or weakening its visual benchmark. | Keep `process-hollowing` 100% untouched as the permanent Armored Bank Truck gold standard. |
 
@@ -136,6 +137,7 @@ Every scenario's **prose**, **bespoke 3D Three.js engine**, **bespoke 2D SVG+GSA
 - [ ] **Director's Blueprint Approved**: Is the scenario's bespoke shot-by-shot blueprint stored under `/docs/screenplays/bespoke/<NNN>-<id>.md` (docs-only, zero UI references) and approved by the user before coding?
 - [ ] **Mute Test & Swap Test Passed**: Do articulated 3D props explain the exact mechanism silently without text, and does the physical world fail if transplanted onto another attack?
 - [ ] **100% 3-Way Alignment**: Do Story text, 3D articulated props/signboards/cameras, 2D silent lecture clips, and Excalidraw whiteboards match verbatim with zero contradictions or mid-sentence cutoffs?
+- [ ] **Zero Overview Station Slicing (`MOD-18`)**: Does every Step (`step-1..N`) and `memory-forensics` 3D scene own a standalone set, `>= 2` exclusive articulated props, and a dedicated 3-phase engine rather than cropping Overview stations?
 - [ ] **Zero Legacy Factory Code**: Does the rebuilt scenario avoid `scenario-world-composer.ts` and the retired 28-place template pool?
 - [ ] **Zero Story Jargon & Zero Japanese Characters**: Do all Story fields pass `findTechnicalJargonInStory() === []` and contain zero Japanese characters?
 - [ ] **Benchmark Preserved**: Is `process-hollowing` completely untouched?

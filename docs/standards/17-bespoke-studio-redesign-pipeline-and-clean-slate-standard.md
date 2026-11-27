@@ -1,7 +1,7 @@
 # Bespoke Studio Redesign Pipeline, Clean-Slate Rebuild & Quality Gates Standard (`MOD-17`)
 
-> **Module ID**: `MOD-17` · **Parent Index**: [`/docs/standards/README.md`](./README.md)  
-> **Scope**: Supreme authoring, redesign, and quality-governance standard for **Attack Explorer** — superseding all batch-generation, 28-place template composer, and automated narrative rollout pipelines across `/modules/scenarios/**`, `/components/three/**`, `/components/technical-clip/**`, `/components/excalidraw/**`, `/lib/**`, and `/scripts/**`.  
+> **Module ID**: `MOD-17` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Per-Section 3D Law**: [`MOD-18`](./18-per-section-standalone-3d-diorama-and-engine-standard.md)  
+> **Scope**: Supreme authoring, redesign, and quality-governance standard for **Attack Explorer** — superseding all batch-generation, 28-place template composer, Overview station slicing (`MOD-18`), and automated narrative rollout pipelines across `/modules/scenarios/**`, `/components/three/**`, `/components/technical-clip/**`, `/components/excalidraw/**`, `/lib/**`, and `/scripts/**`.  
 > **Status**: Mandatory Permanent Standard · **Golden Benchmark**: `process-hollowing` (Armored Bank Truck & Bank Garage) · **Master Queue**: [`/docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md`](../redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md) & [`/docs/redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md`](../redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md)
 
 ---
@@ -180,6 +180,13 @@ Before writing code for any scenario, author a dedicated **Director's Blueprint*
 - **Act 4 (65%–85%) — Weaponized Execution / Objective**: Mutated object travels or unlocks target.
 - **Act 5 (85%–100%) — Contrast Finale & Forensic Witness**: Security guard/system perception vs. hidden reality + sensor alarm beat.
 
+## 4B. Per-Section Standalone 3D Micro-Screenplays (`MOD-18` — Mandatory Zero Overview Slicing)
+For **each** `step-1..N` and optional `memory-forensics` section, define an independent 3D diorama (NEVER a cropped Overview station):
+- **Dedicated Set / Room & Palette** (architecturally distinct from Overview and sibling steps)
+- **Exclusive Articulated Hero Props (`>= 2`)** unique to this step's micro-mechanism
+- **Independent 3-Phase Engine (`0%→33%` Setup / `33%→68%` Core Mutation / `68%→100%` Forensic Witness)** aligned to `phases[]`
+- **Dedicated Cutaway Mechanism** (`AUTO`/`OPEN`/`SEALED`) & **4 Custom Camera Presets**
+
 ## 5. Mandatory 5-Shot Camera Shot List
 1. **Establishing Wide Shot** (Preset 1 — `Director` / `Overview`): Introduces normal safe environment and cast geometry.
 2. **Inciting Action / Push-In Close-Up** (Preset 2): Moves tight onto the exact vulnerability entry point.
@@ -202,7 +209,7 @@ Scaling to 188 hand-crafted interactive episodes without bloating bundle size or
 
 | Boundary Category | Ownership Rule | Exact Modules & Responsibilities |
 | :--- | :--- | :--- |
-| **100% BESPOKE PER SCENARIO** *(NEVER shared across scenarios)* | Lives exclusively inside `/modules/scenarios/<scenario-id>/` (and bespoke 2D clips per scenario). | • `index.ts`: Scenario technical data, stages, telemetry, process tree, optional memory blocks, step guide.<br>• `choreography.ts`: Pure deterministic timeline state machine (`0%..100%` prop states, acts, camera keyframes) with unit tests (`choreography.test.ts`).<br>• `three/`: Articulated cel-shaded 3D models, custom environment geometry, per-act object animations, camera director path, deterministic `dispose()`.<br>• `clips/` (or bespoke per-scenario clip components): Custom SVG + GSAP silent lecture per step (`MOD-14`).<br>• `excalidraw/`: Modular chalk boards (`briefing.ts`, `step-1..N.ts`, optional `memory.ts`) (`MOD-13`). |
+| **100% BESPOKE PER SCENARIO & PER SECTION (`MOD-18`)** *(NEVER shared across scenarios; NEVER sliced from Overview)* | Lives exclusively inside `/modules/scenarios/<scenario-id>/` (and bespoke 2D clips per scenario). | • `index.ts`: Scenario technical data, stages, telemetry, process tree, optional memory blocks, step guide.<br>• `choreography.ts`: Pure deterministic timeline state machines for Overview (`0%..100%`) **AND** each standalone section (`computeStep1State..computeStepNState`, `computeMemoryDiffState`) with unit tests (`choreography.test.ts`).<br>• `three/`: Modular standalone scenes (`overview-scene.ts`, `step-1-scene.ts..step-N-scene.ts`, optional `memory-diff-scene.ts`, optional `shared-cast.ts` for recurring character/artifact silhouette continuity only), per-section exclusive props, custom camera presets, working Cutaway, deterministic `dispose()`.<br>• `clips/` (or bespoke per-scenario clip components): Custom SVG + GSAP silent lecture per step (`MOD-14`).<br>• `excalidraw/`: Modular chalk boards (`briefing.ts`, `step-1..N.ts`, optional `memory.ts`) (`MOD-13`). |
 | **SHARED INFRASTRUCTURE ONLY** *(Zero creative or narrative logic)* | Lives in `/components/three/`, `/components/technical-clip/`, `/components/excalidraw/`, and `/modules/scenarios/three-registry.ts`. | • Playback HUD shell (`Play/Pause`, `Replay`, Act jump pills, `0.5x/1x/1.5x` speed, `Cutaway AUTO/OPEN/SEALED`, 4 camera buttons, `Labels`, `Bloom`, `Full Page`, timeline scrubber).<br>• Visual shader utilities (`anime-toon-materials.ts` stepped toon ramp, ink outlines, bloom pass, zero clutter particles).<br>• WebGL lifecycle coordinator, software-WebGL resilience, `IntersectionObserver` auto-pause/standby, and GPU resource disposal.<br>• **Lazy Dynamic Loading (`import()`)**: Only the single active scenario's bespoke 3D/2D/Whiteboard modules ever load into memory. |
 
 ---
@@ -269,6 +276,7 @@ Before marking any rebuilt scenario `COMPLETED` in `/docs/redesign-backlog/MASTE
 - [ ] **Mute Test Passed**: With all labels/captions hidden, do the articulated 3D prop movements and 2D silent lecture clips clearly communicate the exact technical mechanism?
 - [ ] **Swap Test Passed**: Is the physical environment and mechanical choreography uniquely tied to this vulnerability so it cannot be transplanted onto another attack?
 - [ ] **100% Bespoke Visual Stack**: Are 3D scene/choreography, 2D silent lecture clips (`step-1..N` + optional `memory-forensics`, never `briefing`), and Excalidraw whiteboards (`briefing`, `step-1..N`, optional `memory-forensics`) all hand-crafted specifically for this scenario with zero factory template composers?
+- [ ] **Per-Section Standalone 3D Compliance (`MOD-18`)**: Does **every** `step-1..N` and `memory-forensics` 3D stage mount its own standalone scene (`step-K-scene.ts` / `memory-diff-scene.ts`) with a dedicated room/set, `>= 2` exclusive articulated props, independent 3-phase `choreography.ts` engine, working Cutaway, and 4 custom camera presets—with zero Overview station slicing?
 - [ ] **Story & Technical Clarity (`MOD-02`, `MOD-03`, `MOD-08`, `MOD-11`)**: Zero technical jargon in Story fields, zero Japanese characters, zero mid-sentence truncated titles/signboards, explicit `storyMappings` (4 or 6 pairs), Overview strictly roadmap-only, and per-token inline parentheticals in Step/Memory deep-dives?
 - [ ] **Clean Lazy Loading & Cleanup**: Does the scenario load lazily via dynamic `import()` without bloating `/`, and does `dispose()` free all Three.js geometries, materials, and textures?
 - [ ] **Director's Review Passed**: Were real-browser frames at `1440×900` visually inspected across every Act (`0%..100%`) with zero geometry clipping, zero HUD/signboard overlap, natural weighted motion, and zero console/WebGL errors?
