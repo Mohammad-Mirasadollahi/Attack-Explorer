@@ -114,7 +114,7 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     },
     purposeBuilder: (cmd, contextTitle, mitreId) => {
       if (/comsvcs\.dll/i.test(cmd)) {
-        return `Dumps the full virtual memory of lsass.exe to disk (${mitreId}) using a built-in Microsoft DLL (comsvcs.dll -> MiniDumpWriteDump) instead of dropping third-party tools like procdump.exe or mimikatz.exe, triggering Sysmon EventID 10 with GrantedAccess=0x1FFFFF.`;
+        return `Dumps the full virtual memory of lsass.exe to disk (${mitreId}) using a built-in Microsoft DLL (comsvcs.dll -> dbgcore.dll!MiniDumpWriteDump) instead of dropping third-party tools like procdump.exe or mimikatz.exe, triggering Sysmon EventID 10 with GrantedAccess=0x1010 / 0x1FFFFF.`;
       }
       return `Proxies execution of malicious DLL code (${mitreId}) through a trusted, Microsoft-signed system binary during "${contextTitle}" to evade application allowlisting and process-name heuristics.`;
     },
@@ -394,6 +394,28 @@ const TOOL_KNOWLEDGE_BASE: ToolRule[] = [
     purposeBuilder: (_cmd, contextTitle, mitreId) =>
       `Exploits software supply-chain trust in a valid 3CX EV Authenticode signature (${mitreId}) during "${contextTitle}", exposing the intrusion via Sysmon EventID 7 (unsigned child DLL), unbacked RWX memory, GitHub .ico DNS/TLS queries (EID 22/3), and behavioral EDR alerts on a VoIP process reading browser credential stores.`,
   },
+  {
+    pattern: /\bliblzma\b|\bbuild-to-host\.m4\b|\bbad-3-corrupt_lzma2\.xz\b|\bcrc64_resolve\b|\bRSA_public_decrypt\b|\bperf\s+record\b|\bvalgrind\b|\breadelf\b|\bldd\b/i,
+    toolOrSubsystem:
+      'Linux ELF Dynamic Linker (ld-linux) / XZ Utils liblzma & OpenSSH Forensics Toolchain',
+    meaningBuilder: (cmd) => {
+      if (/build-to-host\.m4|bad-3-corrupt_lzma2\.xz|liblzma_la-crc64-fast\.o/i.test(cmd)) {
+        return `Executes the release-tarball-only Autotools build script (m4/build-to-host.m4) to decode and extract the obfuscated ELF object (liblzma_la-crc64-fast.o) hidden inside binary test fixture tests/files/bad-3-corrupt_lzma2.xz and link it into liblzma.so.5.6.1 during x86_64 Debian/RPM packaging.`;
+      }
+      if (/crc64_resolve|_dl_audit_preinit|RSA_public_decrypt|0x55B2C4198048/i.test(cmd)) {
+        return `Invokes the backdoored GNU IFUNC resolver (crc64_resolve) inside liblzma.so.5.6.1 before sshd main() runs, installing a _dl_audit_preinit hook that rewrites sshd .got.plt slot 0x55B2C4198048 (RSA_public_decrypt) from libcrypto.so.3 to liblzma.so.5.6.1 before Full RELRO locks the table read-only.`;
+      }
+      if (/perf\s+record|valgrind|508\s*ms/i.test(cmd)) {
+        return `Profiles live sshd CPU execution cycles with Linux perf record or Valgrind to isolate the +508 ms pre-authentication handshake delay originating inside stripped symbols of liblzma.so.5.6.1.`;
+      }
+      if (/readelf|ldd/i.test(cmd)) {
+        return `Inspects ELF shared-object dependency chains (ldd) and symbol/IFUNC relocation tables (readelf) to verify whether sshd transitively loads vulnerable liblzma.so.5.6.x via libsystemd.so.0.`;
+      }
+      return `Runs Linux ELF supply-chain build, dynamic-linker, or performance-forensics tooling (${cmd}) associated with CVE-2024-3094 (XZ Utils backdoor).`;
+    },
+    purposeBuilder: (_cmd, contextTitle, mitreId) =>
+      `Implements or forensically audits the CVE-2024-3094 XZ Utils supply-chain backdoor (${mitreId}) during "${contextTitle}", bridging tarball-only build injection, pre-RELRO GNU IFUNC GOT hijacking, Ed448 pre-auth root RCE, and +508 ms perf discovery.`,
+  },
 ];
 
 // Build active rules list
@@ -622,6 +644,60 @@ export function extractCommandParameterExplanations(
     addParam(
       'module=<target_module>',
       'CWP dispatcher parameter that includes /usr/local/cwpsrv/var/services/user_files/modules/<module>.php prior to exiting on unauthenticated redirects.'
+    );
+  }
+  if (/m4\/build-to-host\.m4/i.test(cmd)) {
+    addParam(
+      'm4/build-to-host.m4',
+      'Release-tarball-only Autotools macro (absent from upstream Git) that extracts and compiles the XZ backdoor object on x86_64 Debian/RPM builds.'
+    );
+  }
+  if (/bad-3-corrupt_lzma2\.xz/i.test(cmd)) {
+    addParam(
+      'bad-3-corrupt_lzma2.xz',
+      'Binary unit-test fixture committed to XZ Git carrying the obfuscated precompiled backdoor ELF object.'
+    );
+  }
+  if (/crc64_resolve|_dl_audit_preinit/i.test(cmd)) {
+    addParam(
+      'crc64_resolve / _dl_audit_preinit',
+      'GNU IFUNC early dynamic-linker resolver hook executing inside ld-linux before sshd main() and before Full RELRO locks .got.plt.'
+    );
+  }
+  if (/RSA_public_decrypt|0x55B2C4198048/i.test(cmd)) {
+    addParam(
+      'RSA_public_decrypt (0x55B2C4198048)',
+      'Hijacked OpenSSL .got.plt entry inside sshd redirected from libcrypto.so.3 to the Ed448 pre-auth gate inside liblzma.so.5.6.1.'
+    );
+  }
+  if (/\bperf\s+record\b/i.test(cmd)) {
+    addParam(
+      'perf record -g',
+      'Linux kernel performance profiler sampling call-graph stack frames to expose the +508 ms CPU hotspot inside liblzma.so.5.6.1.'
+    );
+  }
+  if (/\btasklist\b/i.test(cmd)) {
+    addParam(
+      'tasklist /fi "imagename eq lsass.exe"',
+      'Built-in Windows process enumerator queried to discover the numeric Process ID (PID 684) of lsass.exe required as the first argument to comsvcs.dll!MiniDump.'
+    );
+  }
+  if (/\bpypykatz\b/i.test(cmd)) {
+    addParam(
+      'pypykatz lsa minidump',
+      'Offline Python implementation of Mimikatz used off-host to parse Windows MDMP minidump headers and decrypt lsasrv.dll NTLM hashes and Kerberos TGTs.'
+    );
+  }
+  if (/\bRunAsPPL\b|\bLsaIso\.exe\b/i.test(cmd)) {
+    addParam(
+      'RunAsPPL = 1 / LsaIso.exe',
+      'Windows LSA Protection (PsProtectedSignerLsa-Light) and VBS Credential Guard controls that reject non-PPL OpenProcess(0x1010) calls with STATUS_ACCESS_DENIED (0xC0000022).'
+    );
+  }
+  if (/\bdbgcore\.dll\b/i.test(cmd)) {
+    addParam(
+      'dbgcore.dll!MiniDumpWriteDump',
+      'Windows debugging helper library invoked by comsvcs.dll to serialize full virtual memory (MiniDumpWithFullMemory = 0x2) into an MDMP file (magic 4D 44 4D 50 93 A7).'
     );
   }
 

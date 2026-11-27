@@ -137,6 +137,272 @@ const THREECX_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>
   ),
 };
 
+const XZ_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/xz-utils-cve-2024-3094-backdoor/XzStep1TestFixtureInjectClip').then(
+        (m) => m.XzStep1TestFixtureInjectClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/xz-utils-cve-2024-3094-backdoor/XzStep2IfuncGotHijackClip').then(
+        (m) => m.XzStep2IfuncGotHijackClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/xz-utils-cve-2024-3094-backdoor/XzStep3Ed448AuthBypassClip').then(
+        (m) => m.XzStep3Ed448AuthBypassClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/xz-utils-cve-2024-3094-backdoor/XzStep4LatencyForensicsClip').then(
+        (m) => m.XzStep4LatencyForensicsClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/xz-utils-cve-2024-3094-backdoor/XzMemoryGotPltDiffClip').then(
+        (m) => m.XzMemoryGotPltDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const LSASS_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/dfir-lsass-minidump-comsvcs-sysmon-eid10/LsassStep1SeDebugClip').then(
+        (m) => m.LsassStep1SeDebugClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/dfir-lsass-minidump-comsvcs-sysmon-eid10/LsassStep2ComsvcsOpenProcessClip').then(
+        (m) => m.LsassStep2ComsvcsOpenProcessClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/dfir-lsass-minidump-comsvcs-sysmon-eid10/LsassStep3MiniDumpFileClip').then(
+        (m) => m.LsassStep3MiniDumpFileClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/dfir-lsass-minidump-comsvcs-sysmon-eid10/LsassStep4SysmonCallTraceClip').then(
+        (m) => m.LsassStep4SysmonCallTraceClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/dfir-lsass-minidump-comsvcs-sysmon-eid10/LsassMemoryPplDiffClip').then(
+        (m) => m.LsassMemoryPplDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const KERB_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/ad-kerberoasting/KerbStep1SpnEnumClip').then(
+        (m) => m.KerbStep1SpnEnumClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/ad-kerberoasting/KerbStep2Rc4TgsClip').then(
+        (m) => m.KerbStep2Rc4TgsClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/ad-kerberoasting/KerbStep3HashcatCrackClip').then(
+        (m) => m.KerbStep3HashcatCrackClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/ad-kerberoasting/KerbStep4PthLateralClip').then(
+        (m) => m.KerbStep4PthLateralClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/ad-kerberoasting/KerbMemoryRc4AesDiffClip').then(
+        (m) => m.KerbMemoryRc4AesDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const ZLOG_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/zerologon-netlogon-cve-2020-1472/ZlogStep1ZeroIvClip').then(
+        (m) => m.ZlogStep1ZeroIvClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/zerologon-netlogon-cve-2020-1472/ZlogStep2Eid5805Clip').then(
+        (m) => m.ZlogStep2Eid5805Clip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/zerologon-netlogon-cve-2020-1472/ZlogStep3Eid4742Clip').then(
+        (m) => m.ZlogStep3Eid4742Clip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/zerologon-netlogon-cve-2020-1472/ZlogStep4SecureRpcClip').then(
+        (m) => m.ZlogStep4SecureRpcClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/zerologon-netlogon-cve-2020-1472/ZlogMemoryIvDiffClip').then(
+        (m) => m.ZlogMemoryIvDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const DCSYNC_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/dfir-dcsync-drsuapi-replication-eid4662/DcsyncStep1AclClip').then(
+        (m) => m.DcsyncStep1AclClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/dfir-dcsync-drsuapi-replication-eid4662/DcsyncStep2DrsrClip').then(
+        (m) => m.DcsyncStep2DrsrClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/dfir-dcsync-drsuapi-replication-eid4662/DcsyncStep3Eid4662Clip').then(
+        (m) => m.DcsyncStep3Eid4662Clip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/dfir-dcsync-drsuapi-replication-eid4662/DcsyncStep4KrbtgtClip').then(
+        (m) => m.DcsyncStep4KrbtgtClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/dfir-dcsync-drsuapi-replication-eid4662/DcsyncMemoryAclDiffClip').then(
+        (m) => m.DcsyncMemoryAclDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const LOG4J_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/log4shell-dfir/Log4jStep1IngressClip').then(
+        (m) => m.Log4jStep1IngressClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/log4shell-dfir/Log4jStep2LookupClip').then(
+        (m) => m.Log4jStep2LookupClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/log4shell-dfir/Log4jStep3EgressClip').then(
+        (m) => m.Log4jStep3EgressClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/log4shell-dfir/Log4jStep4AirlockClip').then(
+        (m) => m.Log4jStep4AirlockClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/log4shell-dfir/Log4jMemoryClassDiffClip').then(
+        (m) => m.Log4jMemoryClassDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const DNSTUN_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/dns-tunneling-exfil/DnstunStep1ChunkClip').then(
+        (m) => m.DnstunStep1ChunkClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/dns-tunneling-exfil/DnstunStep2Sysmon22Clip').then(
+        (m) => m.DnstunStep2Sysmon22Clip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/dns-tunneling-exfil/DnstunStep3TxtBeaconClip').then(
+        (m) => m.DnstunStep3TxtBeaconClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/dns-tunneling-exfil/DnstunStep4RpzClip').then(
+        (m) => m.DnstunStep4RpzClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/dns-tunneling-exfil/DnstunMemoryEntropyDiffClip').then(
+        (m) => m.DnstunMemoryEntropyDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
 const SCENARIO_TECHNICAL_CLIPS_BY_ID: Record<
   string,
   Partial<Record<Section3DKey, React.ComponentType>>
@@ -145,6 +411,13 @@ const SCENARIO_TECHNICAL_CLIPS_BY_ID: Record<
   'amsi-reflective-dll': AMSI_CLIP_BY_SECTION,
   'ransomware-shadow-wipe': LOCKBIT_CLIP_BY_SECTION,
   '3cx-desktopapp-supply-chain-lazarus': THREECX_CLIP_BY_SECTION,
+  'xz-utils-cve-2024-3094-backdoor': XZ_CLIP_BY_SECTION,
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': LSASS_CLIP_BY_SECTION,
+  'ad-kerberoasting': KERB_CLIP_BY_SECTION,
+  'zerologon-netlogon-cve-2020-1472': ZLOG_CLIP_BY_SECTION,
+  'dfir-dcsync-drsuapi-replication-eid4662': DCSYNC_CLIP_BY_SECTION,
+  'log4shell-dfir': LOG4J_CLIP_BY_SECTION,
+  'dns-tunneling-exfil': DNSTUN_CLIP_BY_SECTION,
 };
 
 export interface TechnicalClipEmbedProps {

@@ -14,8 +14,8 @@
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
 │  • Total Catalog Scenarios Tracked : 188  (13 Sidebar Categories)                        │
 │  • Golden Benchmark Live (Untouched): 1    (#001 process-hollowing)                      │
-│  • Bespoke Studio Rebuilds Completed: 3    (#002, #003, #004)                             │
-│  • Pending Clean-Slate Rebuild      : 184  (#005 .. #188 in strict Sidebar order)        │
+│  • Bespoke Studio Rebuilds Completed: 10   (#002, #003, #004, #016, #020, #031, #037, #039, #047, #048) │
+│  • Pending Clean-Slate Rebuild      : 177  (remaining queue in strict Sidebar order)     │
 │  • Priority Tier Breakdown          : Tier 1: 55  | Tier 2: 107 | Tier 3: 26           │
 │  • Preserved Primary Source URLs    : 564  authoritative links archived safely           │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
@@ -67,19 +67,19 @@
 | **#002** | `MALWARE` | `amsi-reflective-dll` | Fileless AMSI Memory Bypass & Reflective DLL Injection | `COMPLETED` |
 | **#003** | `RANSOMWARE_EXTORTION` | `ransomware-shadow-wipe` | LockBit 3.0 Ransomware Behavioral Analysis: VSS Wipe & Fast IOCP Encryption | `COMPLETED` |
 | **#004** | `SUPPLY_CHAIN_CICD` | `3cx-desktopapp-supply-chain-lazarus` | CrowdStrike, Kaspersky & Mandiant — Lazarus (SmoothOperator): 3CXDesktopApp Supply Chain & Gopuram | `COMPLETED` |
-| **#016** | `MALWARE` | `xz-utils-cve-2024-3094-backdoor` | Andres Freund, Red Hat & Kaspersky — XZ Utils (liblzma) IFUNC sshd Supply Chain Backdoor | `PENDING_REBUILD` |
-| **#020** | `MALWARE` | `dfir-lsass-minidump-comsvcs-sysmon-eid10` | Microsoft Sysinternals & Splunk SURGe DFIR — LSASS MiniDump via comsvcs.dll & Sysmon EventID 10 | `PENDING_REBUILD` |
+| **#016** | `MALWARE` | `xz-utils-cve-2024-3094-backdoor` | Andres Freund, Red Hat & Kaspersky — XZ Utils (liblzma) IFUNC sshd Supply Chain Backdoor | `COMPLETED` |
+| **#020** | `MALWARE` | `dfir-lsass-minidump-comsvcs-sysmon-eid10` | Microsoft Sysinternals & Splunk SURGe DFIR — LSASS MiniDump via comsvcs.dll & Sysmon EventID 10 | `COMPLETED` |
 | **#030** | `MALWARE` | `pikered-clr-profiler-trusted-binary-loader-chain` | PikeRed Research & MITRE T1574.012 — Abusing the .NET CLR Profiler: VHDX MotW Bypass & Trusted-Binary Loader Chain (KeePass.exe -> clr.dll) | `PENDING_REBUILD` |
-| **#031** | `ACTIVE_DIRECTORY` | `ad-kerberoasting` | Active Directory Kerberoasting & Pass-the-Hash Lateral Movement | `PENDING_REBUILD` |
+| **#031** | `ACTIVE_DIRECTORY` | `ad-kerberoasting` | Active Directory Kerberoasting & Pass-the-Hash Lateral Movement | `COMPLETED` |
 | **#032** | `ACTIVE_DIRECTORY` | `ms-midnight-blizzard-oauth` | Microsoft Threat Intel — Midnight Blizzard (APT29): OAuth App Persistence & EWS Exfiltration | `PENDING_REBUILD` |
 | **#033** | `ACTIVE_DIRECTORY` | `ms-volt-typhoon-lotl` | Microsoft & CISA — Volt Typhoon: Living-off-the-Land ntdsutil IFM & netsh Portproxy | `PENDING_REBUILD` |
 | **#035** | `ACTIVE_DIRECTORY` | `printnightmare-spooler-cve-2021-34527` | Microsoft, Rapid7 & Elastic — Windows "PrintNightmare": RpcAddPrinterDriverEx Remote SYSTEM RCE | `PENDING_REBUILD` |
-| **#037** | `ACTIVE_DIRECTORY` | `zerologon-netlogon-cve-2020-1472` | Secura, CISA & CrowdStrike — Active Directory "Zerologon": Netlogon AES-CFB8 All-Zero IV Takeover | `PENDING_REBUILD` |
+| **#037** | `ACTIVE_DIRECTORY` | `zerologon-netlogon-cve-2020-1472` | Secura, CISA & CrowdStrike — Active Directory "Zerologon": Netlogon AES-CFB8 All-Zero IV Takeover | `COMPLETED` |
 | **#038** | `ACTIVE_DIRECTORY` | `dfir-adcs-esc1-petitpotam-certificate-enrollment-eid4886` | SpecterOps, Microsoft ADV210003 & CISA DFIR — AD CS ESC1 SubjectAltName Spoofing & PKINIT Forensics (EID 4886 / 4768) | `PENDING_REBUILD` |
-| **#039** | `ACTIVE_DIRECTORY` | `dfir-dcsync-drsuapi-replication-eid4662` | Microsoft Security Auditing & CISA DFIR — Active Directory DCSync DRSUAPI Replication (EventID 4662) | `PENDING_REBUILD` |
+| **#039** | `ACTIVE_DIRECTORY` | `dfir-dcsync-drsuapi-replication-eid4662` | Microsoft Security Auditing & CISA DFIR — Active Directory DCSync DRSUAPI Replication (EventID 4662) | `COMPLETED` |
 | **#041** | `ACTIVE_DIRECTORY` | `dfir-golden-ticket-krbtgt-eid4768-4769-lifetime-anomaly` | Microsoft Defender for Identity, CERT-FR & MITRE DFIR — Kerberos Golden Ticket Forgery Forensics (EID 4768 / 4769) | `PENDING_REBUILD` |
-| **#047** | `NETWORK_WEB` | `log4shell-dfir` | Log4Shell JNDI Injection to Reverse Shell (DFIR Log Trace) | `PENDING_REBUILD` |
-| **#048** | `NETWORK_WEB` | `dns-tunneling-exfil` | DNS Tunneling C2 & High-Entropy Subdomain Data Exfiltration | `PENDING_REBUILD` |
+| **#047** | `NETWORK_WEB` | `log4shell-dfir` | Log4Shell JNDI Injection to Reverse Shell (DFIR Log Trace) | `COMPLETED` |
+| **#048** | `NETWORK_WEB` | `dns-tunneling-exfil` | DNS Tunneling C2 & High-Entropy Subdomain Data Exfiltration | `COMPLETED` |
 | **#053** | `NETWORK_WEB` | `cl0p-moveit-transfer-cve-2023-34362` | Mandiant, Huntress & CISA — CL0P (FIN11): MOVEit Transfer SQLi, ISAPI Deserialization & LEMURLOOT | `PENDING_REBUILD` |
 | **#058** | `NETWORK_WEB` | `openssh-regreSSHion-cve-2024-6387` | Qualys TRU & CISA — OpenSSH "regreSSHion": SIGALRM Async-Signal-Unsafe syslog() Heap RCE | `PENDING_REBUILD` |
 | **#060** | `NETWORK_WEB` | `proxyshell-exchange-cve-2021-34473` | DEVCORE, Mandiant & CISA — Microsoft Exchange "ProxyShell": Autodiscover SSRF to MailboxExport Webshell | `PENDING_REBUILD` |
@@ -142,11 +142,11 @@
 | **#013** | `ms-salt-typhoon-telecom` | `T1014` | Tier 3 (Specialized) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s013) | T1068, T1014, T1040 · CVE-2023-20198 / CVE-2023-20273 | Overlap with #177 telecom-salt-typhoon — verify distinct angle or merge | `PENDING_REBUILD` |
 | **#014** | `talos-fortinet-coathanger-apt` | `CVE-2024-21762` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s014) | T1190, T1574.006, T1014 · CVE-2024-21762, CVE-2022-42475 | — | `PENDING_REBUILD` |
 | **#015** | `windows-clfs-ransomware-cve-2023-28252-nokoyawa` | `CVE-2023-28252` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s015) | T1068, T1134.001, T1486 · CVE-2023-28252 | — | `PENDING_REBUILD` |
-| **#016** | `xz-utils-cve-2024-3094-backdoor` | `CVE-2024-3094` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s016) | T1195.002, T1574.006, T1556 · CVE-2024-3094 | Evaluate moving to Category 5 (SUPPLY_CHAIN_CICD) during rebuild | `PENDING_REBUILD` |
+| **#016** | `xz-utils-cve-2024-3094-backdoor` | `CVE-2024-3094` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s016) | T1195.002, T1574.006, T1556 · CVE-2024-3094 | Rebuilt with independent Swiss Watchmaking Bridge, IFUNC Clutch Gearbox & Customs Vault 3D engine | `COMPLETED` |
 | **#017** | `dfir-bitsadmin-qmgr-persistence-bits-client` | `T1197` | Tier 3 (Specialized) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s017) | T1197 · MITRE-T1197 / BITS-EID-59-60 | — | `PENDING_REBUILD` |
 | **#018** | `dfir-linux-auditd-pam-sshd-authorized-keys-persistence` | `T1098.004` | Tier 3 (Specialized) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s018) | T1098.004, T1556.003, T1021.004 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#019** | `dfir-linux-systemd-generator-cron-udev-persistence` | `T1543.002` | Tier 3 (Specialized) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s019) | T1543.002 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
-| **#020** | `dfir-lsass-minidump-comsvcs-sysmon-eid10` | `T1134` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s020) | T1134, T1003.001 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
+| **#020** | `dfir-lsass-minidump-comsvcs-sysmon-eid10` | `T1134` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s020) | T1134, T1218.011, T1003.001 · RunAsPPL & Sysmon EID 10 | [`020-dfir-lsass-minidump-comsvcs-sysmon-eid10.md`](../screenplays/bespoke/020-dfir-lsass-minidump-comsvcs-sysmon-eid10.md) | `COMPLETED` |
 | **#021** | `dfir-ntfs-timestomp-mft-si-fn-mismatch-eid2` | `T1070.006` | Tier 3 (Specialized) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s021) | T1070.006 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#022** | `dfir-powershell-eid4104-4103-clm-downgrade-forensics` | `T1562.001` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s022) | T1562.001, T1059.001 · MITRE-T1059.001 / NIST-SP-800-86 | — | `PENDING_REBUILD` |
 | **#023** | `dfir-printspooler-spl-shd-spool-file-persistence` | `T1547.012` | Tier 3 (Specialized) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s023) | T1547.012 · MITRE-T1547.012 / NIST-SP-800-86 | — | `PENDING_REBUILD` |
@@ -162,15 +162,15 @@
 
 | Sidebar # | Scenario ID | Code | Priority Tier | Memory | Sources | MITRE / Primary CVE | Redesign Notes | Status |
 | ---: | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
-| **#031** | `ad-kerberoasting` | `T1558.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s031) | T1558.003, T1550.002, T1543.003 · CVE-2022-33679, CVE-2021-42287 / CVE-2021-42278 | — | `PENDING_REBUILD` |
+| **#031** | `ad-kerberoasting` | `T1558.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s031) | T1558.003, T1550.002, T1543.003 · CVE-2022-33679, CVE-2021-42287 / CVE-2021-42278 | — | `COMPLETED` |
 | **#032** | `ms-midnight-blizzard-oauth` | `T1098.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s032) | T1110.003, T1098.003, T1528 · MITRE-T1098.003 | — | `PENDING_REBUILD` |
 | **#033** | `ms-volt-typhoon-lotl` | `T1003.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s033) | T1047, T1003.003, T1090.001 · CVE-2022-42475 / SOHO-0DAY | — | `PENDING_REBUILD` |
 | **#034** | `nopac-samaccountname-cve-2021-42278-42287` | `CVE-2021-42287` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s034) | T1068, T1558.001, T1003.006 · CVE-2021-42287, CVE-2021-42278 | — | `PENDING_REBUILD` |
 | **#035** | `printnightmare-spooler-cve-2021-34527` | `CVE-2021-34527` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s035) | T1210, T1547.012, T1068 · CVE-2021-34527 | — | `PENDING_REBUILD` |
 | **#036** | `unit42-scattered-spider-cloud` | `T1078.004` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s036) | T1621, T1219, T1078.004 · MITRE-T1078.004 | — | `PENDING_REBUILD` |
-| **#037** | `zerologon-netlogon-cve-2020-1472` | `CVE-2020-1472` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s037) | T1210, T1098, T1003.006 · CVE-2020-1472 | — | `PENDING_REBUILD` |
+| **#037** | `zerologon-netlogon-cve-2020-1472` | `CVE-2020-1472` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s037) | T1210, T1098, T1003.006 · CVE-2020-1472 | — | `COMPLETED` |
 | **#038** | `dfir-adcs-esc1-petitpotam-certificate-enrollment-eid4886` | `T1649` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s038) | T1649 · MITRE-T1649 / NIST-SP-800-86 | — | `PENDING_REBUILD` |
-| **#039** | `dfir-dcsync-drsuapi-replication-eid4662` | `T1003.006` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s039) | T1003.006 · MITRE-T1003.006 / MS-DRSR-4662 | — | `PENDING_REBUILD` |
+| **#039** | `dfir-dcsync-drsuapi-replication-eid4662` | `T1003.006` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s039) | T1003.006 · MITRE-T1003.006 / MS-DRSR-4662 | — | `COMPLETED` |
 | **#040** | `dfir-dpapi-masterkey-lsass-browser-vault-forensics` | `T1555.004` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s040) | T1555.004, T1555.003 · MITRE-T1555.004 / NIST-SP-800-86 | — | `PENDING_REBUILD` |
 | **#041** | `dfir-golden-ticket-krbtgt-eid4768-4769-lifetime-anomaly` | `T1558.001` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s041) | T1558.001, T1550.003 · MITRE-T1558.001 / NIST-SP-800-86 | — | `PENDING_REBUILD` |
 | **#042** | `dfir-ntds-dit-vssadmin-esentutl-extraction` | `T1003.003` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s042) | T1003.003, T1003.002 · MITRE-T1003.003 / CISA-AA23-075A | — | `PENDING_REBUILD` |
@@ -183,8 +183,8 @@
 
 | Sidebar # | Scenario ID | Code | Priority Tier | Memory | Sources | MITRE / Primary CVE | Redesign Notes | Status |
 | ---: | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
-| **#047** | `log4shell-dfir` | `CVE-2021-44228` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s047) | T1190, T1203, T1105 · CVE-2021-44228, CVE-2021-45046 | — | `PENDING_REBUILD` |
-| **#048** | `dns-tunneling-exfil` | `T1071.004` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s048) | T1048.003, T1071.004 · CVE-2024-21887, CVE-2023-4966 | — | `PENDING_REBUILD` |
+| **#047** | `log4shell-dfir` | `CVE-2021-44228` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s047) | T1190, T1203, T1105 · CVE-2021-44228, CVE-2021-45046 | — | `COMPLETED` |
+| **#048** | `dns-tunneling-exfil` | `T1071.004` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s048) | T1048.003, T1071.004 · CVE-2024-21887, CVE-2023-4966 | — | `COMPLETED` |
 | **#049** | `apache-activemq-cve-2023-46604-openwire` | `CVE-2023-46604` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s049) | T1190, T1203, T1059.004 · CVE-2023-46604 | — | `PENDING_REBUILD` |
 | **#050** | `atlassian-confluence-cve-2023-22515-storm0062` | `CVE-2023-22515` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s050) | T1190, T1136.001, T1505.003 · CVE-2023-22515 | — | `PENDING_REBUILD` |
 | **#051** | `barracuda-esg-cve-2023-2868-unc4841` | `CVE-2023-2868` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s051) | T1190, T1505.003, T1114.002 · CVE-2023-2868 | — | `PENDING_REBUILD` |

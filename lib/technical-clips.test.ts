@@ -426,5 +426,323 @@ test('Scenarios #003 (LockBit) and #004 (3CX) satisfy cross-layer MITRE, telemet
   }
 });
 
+test('Scenario #016 (XZ Utils CVE-2024-3094) satisfies cross-layer MITRE, lineage, memory, clip, and orthogonal Excalidraw invariants', async () => {
+  const { getScenarioAttribution } = await import('./attack-sources-and-legal');
+  const sid = 'xz-utils-cve-2024-3094-backdoor';
+  const xz = ATTACK_SCENARIOS.find((s) => s.id === sid);
+  assert.ok(xz, `${sid} must be registered in ATTACK_SCENARIOS`);
+
+  const attribution = getScenarioAttribution(xz);
+  const attrIds = new Set(attribution.mitreTechniques.map((t) => t.id));
+  for (const stage of xz.stages) {
+    assert.equal(
+      attrIds.has(stage.mitreTechniqueId),
+      true,
+      `${sid} stage "${stage.title}" (${stage.mitreTechniqueId}) missing from attribution mitreTechniques`
+    );
+  }
+
+  assert.equal(xz.processTree[0]?.name, 'systemd');
+  assert.equal(xz.processTree[1]?.name, 'sshd');
+  assert.equal(
+    xz.processTree.some((p) => p.name === 'sh' || p.name === '/bin/sh'),
+    true,
+    'XZ Utils processTree must include pre-auth root shell spawn'
+  );
+  const sshdNode = xz.processTree.find((p) => p.name === 'sshd');
+  assert.ok(sshdNode?.memoryBlocks && sshdNode.memoryBlocks.length >= 3, 'XZ Utils sshd process must expose >= 3 ELF memory regions');
+  assert.equal(
+    sshdNode.memoryBlocks.some((m) => m.address === '0x55B2C4198048'),
+    true,
+    'XZ Utils must include hijacked .got.plt slot 0x55B2C4198048'
+  );
+
+  const xzClipDir = path.join(CLIPS_DIR, sid);
+  const xzClips = [
+    { key: 'step-1', file: 'XzStep1TestFixtureInjectClip.tsx', prefix: 'xz1' },
+    { key: 'step-2', file: 'XzStep2IfuncGotHijackClip.tsx', prefix: 'xz2' },
+    { key: 'step-3', file: 'XzStep3Ed448AuthBypassClip.tsx', prefix: 'xz3' },
+    { key: 'step-4', file: 'XzStep4LatencyForensicsClip.tsx', prefix: 'xz4' },
+    { key: 'memory-forensics', file: 'XzMemoryGotPltDiffClip.tsx', prefix: 'xzmem' },
+  ] as const;
+
+  assert.equal(hasTechnicalClip(sid, 'briefing'), false);
+  for (const clip of xzClips) {
+    assert.equal(hasTechnicalClip(sid, clip.key), true);
+    const src = fs.readFileSync(path.join(xzClipDir, clip.file), 'utf8');
+    assert.match(src, /<AnimeClipStage\b/);
+    assert.match(src, new RegExp(`<FilmBackdrop\\s+prefix="${clip.prefix}"\\s*/>`));
+    assert.doesNotMatch(src, /<g[^>]*className=[^>]*transform=\{?["'`]translate/);
+  }
+
+  for (const sectionKey of listTechnicalWhiteboardSections(sid)) {
+    const board = getTechnicalWhiteboard(sid, sectionKey);
+    assert.ok(board);
+    const boxes = new Map<string, { x: number; y: number; w: number; h: number }>();
+    for (const skel of board.skeletons) {
+      const s = skel as Record<string, unknown>;
+      if (
+        s.type === 'rectangle' &&
+        typeof s.id === 'string' &&
+        typeof s.x === 'number' &&
+        typeof s.y === 'number' &&
+        typeof s.width === 'number' &&
+        typeof s.height === 'number'
+      ) {
+        boxes.set(s.id, { x: s.x, y: s.y, w: s.width, h: s.height });
+      }
+    }
+    for (const skel of board.skeletons) {
+      const s = skel as Record<string, unknown>;
+      if (s.type !== 'arrow') continue;
+      const startId = (s.start as { id?: string } | undefined)?.id;
+      const endId = (s.end as { id?: string } | undefined)?.id;
+      if (!startId || !endId) continue;
+      const from = boxes.get(startId);
+      const to = boxes.get(endId);
+      assert.ok(from && to, `Arrow ${String(s.id)} in ${sid}/${sectionKey} references missing box`);
+      const sameRow = Math.abs(from.y - to.y) <= 24;
+      const sameCol = Math.abs(from.x + from.w / 2 - (to.x + to.w / 2)) <= 16;
+      assert.equal(
+        sameRow || sameCol,
+        true,
+        `Arrow ${String(s.id)} (${startId} -> ${endId}) in ${sid}/${sectionKey} is diagonal`
+      );
+    }
+  }
+});
+
+test('Scenario #020 (LSASS MiniDump via comsvcs.dll & Sysmon EID 10) satisfies cross-layer MITRE, lineage, memory, clip, and orthogonal Excalidraw invariants', async () => {
+  const { getScenarioAttribution } = await import('./attack-sources-and-legal');
+  const sid = 'dfir-lsass-minidump-comsvcs-sysmon-eid10';
+  const lsass = ATTACK_SCENARIOS.find((s) => s.id === sid);
+  assert.ok(lsass, `${sid} must be registered in ATTACK_SCENARIOS`);
+
+  const attribution = getScenarioAttribution(lsass);
+  const attrIds = new Set(attribution.mitreTechniques.map((t) => t.id));
+  for (const stage of lsass.stages) {
+    assert.equal(
+      attrIds.has(stage.mitreTechniqueId),
+      true,
+      `${sid} stage "${stage.title}" (${stage.mitreTechniqueId}) missing from attribution mitreTechniques`
+    );
+  }
+
+  assert.equal(lsass.processTree[0]?.name, 'services.exe');
+  assert.equal(lsass.processTree[1]?.name, 'lsass.exe');
+  assert.equal(lsass.processTree[1]?.pid, 684);
+  assert.equal(
+    lsass.processTree.some((p) => p.name === 'rundll32.exe' && p.pid === 5412),
+    true,
+    'LSASS processTree must include rundll32.exe (PID 5412)'
+  );
+  const lsassProc = lsass.processTree.find((p) => p.name === 'lsass.exe');
+  assert.ok(
+    lsassProc?.memoryBlocks && lsassProc.memoryBlocks.length >= 3,
+    'LSASS process must expose >= 3 forensic memory blocks'
+  );
+  assert.equal(
+    lsassProc.memoryBlocks.some((m) => m.address === '0x00007FF7A8100000'),
+    true,
+    'LSASS must include lsasrv.dll!LogonSessionList at 0x00007FF7A8100000'
+  );
+
+  const lsassClipDir = path.join(CLIPS_DIR, sid);
+  const lsassClips = [
+    { key: 'step-1', file: 'LsassStep1SeDebugClip.tsx', prefix: 'ls1' },
+    { key: 'step-2', file: 'LsassStep2ComsvcsOpenProcessClip.tsx', prefix: 'ls2' },
+    { key: 'step-3', file: 'LsassStep3MiniDumpFileClip.tsx', prefix: 'ls3' },
+    { key: 'step-4', file: 'LsassStep4SysmonCallTraceClip.tsx', prefix: 'ls4' },
+    { key: 'memory-forensics', file: 'LsassMemoryPplDiffClip.tsx', prefix: 'lsmem' },
+  ] as const;
+
+  assert.equal(hasTechnicalClip(sid, 'briefing'), false);
+  for (const clip of lsassClips) {
+    assert.equal(hasTechnicalClip(sid, clip.key), true);
+    const src = fs.readFileSync(path.join(lsassClipDir, clip.file), 'utf8');
+    assert.match(src, /<AnimeClipStage\b/);
+    assert.match(src, new RegExp(`<FilmBackdrop\\s+prefix="${clip.prefix}"\\s*/>`));
+    assert.doesNotMatch(src, /<g[^>]*className=[^>]*transform=\{?["'`]translate/);
+  }
+
+  for (const sectionKey of listTechnicalWhiteboardSections(sid)) {
+    const board = getTechnicalWhiteboard(sid, sectionKey);
+    assert.ok(board);
+    const boxes = new Map<string, { x: number; y: number; w: number; h: number }>();
+    for (const skel of board.skeletons) {
+      const s = skel as Record<string, unknown>;
+      if (
+        s.type === 'rectangle' &&
+        typeof s.id === 'string' &&
+        typeof s.x === 'number' &&
+        typeof s.y === 'number' &&
+        typeof s.width === 'number' &&
+        typeof s.height === 'number'
+      ) {
+        boxes.set(s.id, { x: s.x, y: s.y, w: s.width, h: s.height });
+      }
+    }
+    for (const skel of board.skeletons) {
+      const s = skel as Record<string, unknown>;
+      if (s.type !== 'arrow') continue;
+      const startId = (s.start as { id?: string } | undefined)?.id;
+      const endId = (s.end as { id?: string } | undefined)?.id;
+      if (!startId || !endId) continue;
+      const from = boxes.get(startId);
+      const to = boxes.get(endId);
+      assert.ok(from && to, `Arrow ${String(s.id)} in ${sid}/${sectionKey} references missing box`);
+      const sameRow = Math.abs(from.y - to.y) <= 24;
+      const sameCol = Math.abs(from.x + from.w / 2 - (to.x + to.w / 2)) <= 16;
+      assert.equal(
+        sameRow || sameCol,
+        true,
+        `Arrow ${String(s.id)} (${startId} -> ${endId}) in ${sid}/${sectionKey} is diagonal`
+      );
+    }
+  }
+});
+
+test('Batch #2 bespoke scenarios (#031, #037, #039, #047, #048) satisfy cross-layer MITRE, memory, clip, and orthogonal Excalidraw invariants', async () => {
+  const { getScenarioAttribution } = await import('./attack-sources-and-legal');
+  const batch2 = [
+    {
+      sid: 'ad-kerberoasting',
+      clips: [
+        { key: 'step-1', file: 'KerbStep1SpnEnumClip.tsx' },
+        { key: 'step-2', file: 'KerbStep2Rc4TgsClip.tsx' },
+        { key: 'step-3', file: 'KerbStep3HashcatCrackClip.tsx' },
+        { key: 'step-4', file: 'KerbStep4PthLateralClip.tsx' },
+        { key: 'memory-forensics', file: 'KerbMemoryRc4AesDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'zerologon-netlogon-cve-2020-1472',
+      clips: [
+        { key: 'step-1', file: 'ZlogStep1ZeroIvClip.tsx' },
+        { key: 'step-2', file: 'ZlogStep2Eid5805Clip.tsx' },
+        { key: 'step-3', file: 'ZlogStep3Eid4742Clip.tsx' },
+        { key: 'step-4', file: 'ZlogStep4SecureRpcClip.tsx' },
+        { key: 'memory-forensics', file: 'ZlogMemoryIvDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'dfir-dcsync-drsuapi-replication-eid4662',
+      clips: [
+        { key: 'step-1', file: 'DcsyncStep1AclClip.tsx' },
+        { key: 'step-2', file: 'DcsyncStep2DrsrClip.tsx' },
+        { key: 'step-3', file: 'DcsyncStep3Eid4662Clip.tsx' },
+        { key: 'step-4', file: 'DcsyncStep4KrbtgtClip.tsx' },
+        { key: 'memory-forensics', file: 'DcsyncMemoryAclDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'log4shell-dfir',
+      clips: [
+        { key: 'step-1', file: 'Log4jStep1IngressClip.tsx' },
+        { key: 'step-2', file: 'Log4jStep2LookupClip.tsx' },
+        { key: 'step-3', file: 'Log4jStep3EgressClip.tsx' },
+        { key: 'step-4', file: 'Log4jStep4AirlockClip.tsx' },
+        { key: 'memory-forensics', file: 'Log4jMemoryClassDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'dns-tunneling-exfil',
+      clips: [
+        { key: 'step-1', file: 'DnstunStep1ChunkClip.tsx' },
+        { key: 'step-2', file: 'DnstunStep2Sysmon22Clip.tsx' },
+        { key: 'step-3', file: 'DnstunStep3TxtBeaconClip.tsx' },
+        { key: 'step-4', file: 'DnstunStep4RpzClip.tsx' },
+        { key: 'memory-forensics', file: 'DnstunMemoryEntropyDiffClip.tsx' },
+      ],
+    },
+  ] as const;
+
+  for (const item of batch2) {
+    const scenario = ATTACK_SCENARIOS.find((s) => s.id === item.sid);
+    assert.ok(scenario, `${item.sid} must be registered in ATTACK_SCENARIOS`);
+
+    const attribution = getScenarioAttribution(scenario);
+    const attrIds = new Set(attribution.mitreTechniques.map((t) => t.id));
+    for (const stage of scenario.stages) {
+      assert.equal(
+        attrIds.has(stage.mitreTechniqueId),
+        true,
+        `${item.sid} stage "${stage.title}" (${stage.mitreTechniqueId}) missing from attribution mitreTechniques`
+      );
+    }
+
+    const totalMemBlocks = scenario.processTree.reduce(
+      (sum, p) => sum + (p.memoryBlocks?.length ?? 0),
+      0
+    );
+    assert.ok(
+      totalMemBlocks >= 3,
+      `${item.sid} must expose >= 3 forensic memory blocks`
+    );
+
+    assert.equal(hasTechnicalClip(item.sid, 'briefing'), false);
+    const clipDir = path.join(CLIPS_DIR, item.sid);
+    const prefixes = new Set<string>();
+    for (const clip of item.clips) {
+      assert.equal(hasTechnicalClip(item.sid, clip.key), true);
+      const src = fs.readFileSync(path.join(clipDir, clip.file), 'utf8');
+      assert.match(src, /<AnimeClipStage\b/);
+      const prefixMatch = src.match(/<FilmBackdrop\s+prefix="([^"]+)"\s*\/>/);
+      assert.ok(prefixMatch, `${clip.file} missing FilmBackdrop prefix`);
+      assert.equal(
+        prefixes.has(prefixMatch[1]),
+        false,
+        `Duplicate FilmBackdrop prefix ${prefixMatch[1]} in ${item.sid}`
+      );
+      prefixes.add(prefixMatch[1]);
+      assert.doesNotMatch(
+        src,
+        /<g[^>]*className=[^>]*transform=\{?["'`]translate/
+      );
+    }
+
+    for (const sectionKey of listTechnicalWhiteboardSections(item.sid)) {
+      const board = getTechnicalWhiteboard(item.sid, sectionKey);
+      assert.ok(board);
+      const boxes = new Map<string, { x: number; y: number; w: number; h: number }>();
+      for (const skel of board.skeletons) {
+        const s = skel as Record<string, unknown>;
+        if (
+          s.type === 'rectangle' &&
+          typeof s.id === 'string' &&
+          typeof s.x === 'number' &&
+          typeof s.y === 'number' &&
+          typeof s.width === 'number' &&
+          typeof s.height === 'number'
+        ) {
+          boxes.set(s.id, { x: s.x, y: s.y, w: s.width, h: s.height });
+        }
+      }
+      for (const skel of board.skeletons) {
+        const s = skel as Record<string, unknown>;
+        if (s.type !== 'arrow') continue;
+        const startId = (s.start as { id?: string } | undefined)?.id;
+        const endId = (s.end as { id?: string } | undefined)?.id;
+        if (!startId || !endId) continue;
+        const from = boxes.get(startId);
+        const to = boxes.get(endId);
+        assert.ok(
+          from && to,
+          `Arrow ${String(s.id)} in ${item.sid}/${sectionKey} references missing box`
+        );
+        const sameRow = Math.abs(from.y - to.y) <= 24;
+        const sameCol = Math.abs(from.x + from.w / 2 - (to.x + to.w / 2)) <= 16;
+        assert.equal(
+          sameRow || sameCol,
+          true,
+          `Arrow ${String(s.id)} (${startId} -> ${endId}) in ${item.sid}/${sectionKey} is diagonal`
+        );
+      }
+    }
+  }
+});
+
+
+
 
 

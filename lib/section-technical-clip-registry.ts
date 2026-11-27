@@ -38,6 +38,55 @@ const SCENARIO_TECHNICAL_CLIPS: Record<
     'step-4': true,
     'memory-forensics': true,
   },
+  'xz-utils-cve-2024-3094-backdoor': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'ad-kerberoasting': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'zerologon-netlogon-cve-2020-1472': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'dfir-dcsync-drsuapi-replication-eid4662': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'log4shell-dfir': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'dns-tunneling-exfil': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
 };
 
 export function hasTechnicalClip(

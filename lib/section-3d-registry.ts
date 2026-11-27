@@ -2,6 +2,13 @@ import type { StoryTechnicalMapping } from '@/modules/scenarios/contracts';
 import { AMSI_REFLECTIVE_DLL_SECTION_SCENES } from './amsi-section-3d-descriptors';
 import { LOCKBIT_SECTION_SCENES } from './lockbit-section-3d-descriptors';
 import { THREECX_SECTION_SCENES } from './threecx-section-3d-descriptors';
+import { XZ_UTILS_SECTION_SCENES } from './xz-section-3d-descriptors';
+import { LSASS_COMSVCS_SECTION_SCENES } from './lsass-section-3d-descriptors';
+import { KERBEROASTING_SECTION_SCENES } from './kerberoasting-section-3d-descriptors';
+import { ZEROLOGON_SECTION_SCENES } from './zerologon-section-3d-descriptors';
+import { DCSYNC_SECTION_SCENES } from './dcsync-section-3d-descriptors';
+import { LOG4SHELL_SECTION_SCENES } from './log4shell-section-3d-descriptors';
+import { DNS_TUNNEL_SECTION_SCENES } from './dns-tunnel-section-3d-descriptors';
 
 export type { StoryTechnicalMapping };
 
@@ -39,6 +46,48 @@ export type Anime3DSceneKind =
   | 'threecx-step3-icondrop'
   | 'threecx-step4-gopuram'
   | 'threecx-memory-diff'
+  | 'xz-watchmaker-briefing'
+  | 'xz-step1-fixture'
+  | 'xz-step2-ifunc'
+  | 'xz-step3-ed448'
+  | 'xz-step4-chronometer'
+  | 'xz-memory-gotdiff'
+  | 'lsass-vault-briefing'
+  | 'lsass-step1-sedebug'
+  | 'lsass-step2-comsvcs'
+  | 'lsass-step3-minidump'
+  | 'lsass-step4-sysmon10'
+  | 'lsass-memory-ppldiff'
+  | 'kerb-lobby-briefing'
+  | 'kerb-step1-spn'
+  | 'kerb-step2-tgs'
+  | 'kerb-step3-crack'
+  | 'kerb-step4-pth'
+  | 'kerb-memory-rc4diff'
+  | 'zlog-vault-briefing'
+  | 'zlog-step1-zeroiv'
+  | 'zlog-step2-eid5805'
+  | 'zlog-step3-eid4742'
+  | 'zlog-step4-securerpc'
+  | 'zlog-memory-ivdiff'
+  | 'dcsync-mint-briefing'
+  | 'dcsync-step1-acl'
+  | 'dcsync-step2-drsr'
+  | 'dcsync-step3-eid4662'
+  | 'dcsync-step4-krbtgt'
+  | 'dcsync-memory-acldiff'
+  | 'log4j-mailroom-briefing'
+  | 'log4j-step1-ingress'
+  | 'log4j-step2-lookup'
+  | 'log4j-step3-egress'
+  | 'log4j-step4-airlock'
+  | 'log4j-memory-classdiff'
+  | 'dnstun-lighthouse-briefing'
+  | 'dnstun-step1-chunk'
+  | 'dnstun-step2-sysmon22'
+  | 'dnstun-step3-txtbeacon'
+  | 'dnstun-step4-rpz'
+  | 'dnstun-memory-entropydiff'
   | (string & {});
 
 export type StandardCameraPresetId = 'DIRECTOR' | 'VIEW_A' | 'VIEW_B' | 'VIEW_C';
@@ -910,6 +959,13 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
   'amsi-reflective-dll': AMSI_REFLECTIVE_DLL_SECTION_SCENES,
   'ransomware-shadow-wipe': LOCKBIT_SECTION_SCENES,
   '3cx-desktopapp-supply-chain-lazarus': THREECX_SECTION_SCENES,
+  'xz-utils-cve-2024-3094-backdoor': XZ_UTILS_SECTION_SCENES,
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': LSASS_COMSVCS_SECTION_SCENES,
+  'ad-kerberoasting': KERBEROASTING_SECTION_SCENES,
+  'zerologon-netlogon-cve-2020-1472': ZEROLOGON_SECTION_SCENES,
+  'dfir-dcsync-drsuapi-replication-eid4662': DCSYNC_SECTION_SCENES,
+  'log4shell-dfir': LOG4SHELL_SECTION_SCENES,
+  'dns-tunneling-exfil': DNS_TUNNEL_SECTION_SCENES,
 };
 
 /**

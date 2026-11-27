@@ -43,6 +43,47 @@ export const BATCH_1_TO_4_ATTRIBUTIONS: Record<string, ScenarioAttributionProfil
     ],
     syntheticDataNotice: 'SSH client IP addresses and Ed448 test payloads are synthetic educational lab traces.',
   },
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': {
+    scenarioId: 'dfir-lsass-minidump-comsvcs-sysmon-eid10',
+    scenarioCode: 'T1003.001',
+    mitreTechniques: [
+      { id: 'T1134', name: 'Access Token Manipulation (SeDebugPrivilege)', tactic: 'Privilege Escalation', url: 'https://attack.mitre.org/techniques/T1134/' },
+      { id: 'T1218.011', name: 'System Binary Proxy Execution: Rundll32 (comsvcs.dll MiniDump / #24)', tactic: 'Defense Evasion', url: 'https://attack.mitre.org/techniques/T1218/011/' },
+      { id: 'T1003.001', name: 'OS Credential Dumping: LSASS Memory', tactic: 'Credential Access', url: 'https://attack.mitre.org/techniques/T1003/001/' },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 complementary sources: (1) Microsoft Sysinternals Sysmon Event ID 10 specifications define how SourceImage, TargetImage, GrantedAccess (0x1010 / 0x1FFFFF), and CallTrace (comsvcs.dll + dbgcore.dll) expose signed LOLBin reads against lsass.exe; (2) Microsoft Learn Windows Security documentation details MiniDumpWriteDump full-memory serialization and kernel-enforced LSA Protection (RunAsPPL) plus VBS Credential Guard; and (3) Splunk Security Research (SURGe) and the LOLBAS Project document comsvcs.dll ordinal #24 command-line evasion, MDMP file headers, and offline pypykatz credential extraction.',
+    primarySources: [
+      {
+        id: 'ms-sysinternals-sysmon-eid10',
+        organization: 'Microsoft Sysinternals',
+        title: 'Sysmon Event ID 10: ProcessAccess (GrantedAccess & CallTrace Schema)',
+        referenceCode: 'SYSMON-EID-10',
+        licenseOrTerms: 'Microsoft Documentation Reference',
+        url: 'https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-10-processaccess',
+        usageSummary: 'Defines kernel ObRegisterCallbacks ProcessAccess logging, access mask decoding (0x1010), and stack CallTrace fields.',
+      },
+      {
+        id: 'ms-learn-runasppl-minidump',
+        organization: 'Microsoft Learn (Windows Security & Win32)',
+        title: 'Configuring Additional LSA Protection (RunAsPPL) & MiniDumpWriteDump API',
+        referenceCode: 'MSDN-LSASS-PPL',
+        licenseOrTerms: 'Microsoft Documentation Reference',
+        url: 'https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection',
+        usageSummary: 'Documents RunAsPPL (PsProtectedSignerLsa-Light), Credential Guard (LsaIso.exe), and MiniDumpWriteDump behavior.',
+      },
+      {
+        id: 'splunk-surge-lolbas-comsvcs',
+        organization: 'Splunk Security Research (SURGe) & LOLBAS Project',
+        title: 'Detecting LSASS Credential Dumping via comsvcs.dll (MiniDump / Ordinal #24)',
+        referenceCode: 'SPLUNK-SURGE-COMSVCS',
+        licenseOrTerms: 'Public Security Detection Research',
+        url: 'https://lolbas-project.github.io/lolbas/Libraries/Comsvcs/',
+        usageSummary: 'Details rundll32.exe comsvcs.dll MiniDump / #24 tradecraft, MDMP artifacts, and multi-event SIEM correlation.',
+      },
+    ],
+    syntheticDataNotice: 'Workstation hostname WKS-ADM-07, account CORP\\adm_jchen, PIDs, and memory offsets are synthetic educational lab traces.',
+  },
   'cl0p-moveit-transfer-cve-2023-34362': {
     scenarioId: 'cl0p-moveit-transfer-cve-2023-34362',
     scenarioCode: 'CVE-2023-34362',
@@ -251,6 +292,7 @@ export const BATCH_1_TO_4_ATTRIBUTIONS: Record<string, ScenarioAttributionProfil
     scenarioId: 'zerologon-netlogon-cve-2020-1472',
     scenarioCode: 'CVE-2020-1472',
     mitreTechniques: [
+      { id: 'T1210', name: 'Exploitation of Remote Services (MS-NRPC Netlogon CVE-2020-1472)', tactic: 'Lateral Movement', url: 'https://attack.mitre.org/techniques/T1210/' },
       { id: 'T1068', name: 'Exploitation for Privilege Escalation (Zerologon CVE-2020-1472)', tactic: 'Privilege Escalation', url: 'https://attack.mitre.org/techniques/T1068/' },
       { id: 'T1098', name: 'Account Manipulation (NetrServerPasswordSet2 Empty DC Hash)', tactic: 'Persistence', url: 'https://attack.mitre.org/techniques/T1098/' },
       { id: 'T1003.006', name: 'OS Credential Dumping: DCSync', tactic: 'Credential Access', url: 'https://attack.mitre.org/techniques/T1003/006/' },
@@ -287,6 +329,46 @@ export const BATCH_1_TO_4_ATTRIBUTIONS: Record<string, ScenarioAttributionProfil
       },
     ],
     syntheticDataNotice: 'All Domain Controller IPs and Netlogon RPC packets are synthetic educational traces.',
+  },
+  'dfir-dcsync-drsuapi-replication-eid4662': {
+    scenarioId: 'dfir-dcsync-drsuapi-replication-eid4662',
+    scenarioCode: 'T1003.006',
+    mitreTechniques: [
+      { id: 'T1003.006', name: 'OS Credential Dumping: DCSync (MS-DRSR DRSUAPI)', tactic: 'Credential Access', url: 'https://attack.mitre.org/techniques/T1003/006/' },
+      { id: 'T1484.001', name: 'Domain or Tenant Policy Modification (Replication ACL Abuse)', tactic: 'Defense Evasion / Privilege Escalation', url: 'https://attack.mitre.org/techniques/T1484/001/' },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 complementary sources: (1) Microsoft Learn Windows Security Auditing Event ID 4662 documentation defines how Control Access (AccessMask 0x100) on domainDNS with GUIDs 1131f6aa-9c07-11d1-f79f-00c04fc2dcd2 (DS-Replication-Get-Changes) and 1131f6ad-9c07-11d1-f79f-00c04fc2dcd2 (DS-Replication-Get-Changes-All) exposes rogue non-DC replication; (2) CISA & NSA Active Directory compromise guidance details MS-DRSR IDL_DRSGetNCChanges (Opnum 3) network detection and double krbtgt password rotation (>= 10 hours apart); and (3) MITRE ATT&CK T1003.006 documents real-world APT29, FIN6, and ransomware DCSync tradecraft.',
+    primarySources: [
+      {
+        id: 'ms-audit-eid-4662-drsr',
+        organization: 'Microsoft Learn (Windows Security Auditing)',
+        title: 'Event ID 4662: An Operation Was Performed on an Object (Active Directory Replication Extended Rights)',
+        referenceCode: 'MS-AUDIT-EID-4662-DRSR',
+        licenseOrTerms: 'Microsoft Documentation (CC BY 4.0)',
+        url: 'https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4662',
+        usageSummary: 'Specifies AccessMask 0x100, DS-Replication-Get-Changes(-All) GUIDs, and SubjectLogonId correlation with EID 4624.',
+      },
+      {
+        id: 'cisa-ad-dcsync-guide',
+        organization: 'Cybersecurity and Infrastructure Security Agency (CISA) & NSA',
+        title: 'Detecting and Mitigating Active Directory Compromises (DCSync & Tier-0 ACL Hardening)',
+        referenceCode: 'CISA-AD-DCSYNC-GUIDE',
+        licenseOrTerms: 'U.S. Government Public Domain',
+        url: 'https://www.cisa.gov/news-events/cybersecurity-advisories',
+        usageSummary: 'Details domain-root replication ACL audits, non-DC MS-DRSR network monitoring, and double krbtgt reset procedures.',
+      },
+      {
+        id: 'mitre-attack-t1003-006',
+        organization: 'MITRE ATT&CK Enterprise Matrix',
+        title: 'T1003.006 — OS Credential Dumping: DCSync',
+        referenceCode: 'ATT&CK-T1003.006',
+        licenseOrTerms: 'Apache License 2.0 (MITRE)',
+        url: 'https://attack.mitre.org/techniques/T1003/006/',
+        usageSummary: 'Catalogs DRSUAPI IDL_DRSGetNCChanges abuse across APT and ransomware campaigns and authoritative mitigations.',
+      },
+    ],
+    syntheticDataNotice: 'Domain Controller CORP-DC01, service account svc_dir_sync, and workstation IP 10.20.14.88 are synthetic DFIR lab traces.',
   },
   'proxyshell-exchange-cve-2021-34473': {
     scenarioId: 'proxyshell-exchange-cve-2021-34473',
@@ -850,6 +932,38 @@ export const BATCH_1_TO_4_CURATED_INTEL: Record<
       { title: 'Red Hat Security Blog — Urgent Security Alert for CVE-2024-3094', uri: 'https://www.redhat.com/en/blog/urgent-security-alert-fedora-41-and-rawhide-users' },
     ],
   },
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': {
+    scenarioId: 'dfir-lsass-minidump-comsvcs-sysmon-eid10',
+    scenarioCode: 'T1003.001',
+    scenarioName: 'Microsoft Sysinternals & Splunk SURGe DFIR — LSASS MiniDump via comsvcs.dll & Sysmon EventID 10',
+    summary:
+      'Documented across Microsoft Sysinternals, Microsoft Learn, Splunk SURGe, and LOLBAS, Living-off-the-Land LSASS credential dumping abuses signed rundll32.exe and comsvcs.dll (MiniDump / ordinal #24) to acquire a 0x1010 handle on unprotected lsass.exe and write a 48.2 MB MDMP file for offline NTLM/Kerberos extraction.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft Sysinternals Sysmon Event ID 10 captures GrantedAccess=0x1010 and CallTrace through comsvcs.dll and dbgcore.dll; Microsoft Learn specifies RunAsPPL and VBS Credential Guard enforcement; and Splunk SURGe / LOLBAS catalog ordinal #24 evasion and MDMP file detection.',
+    cves: [
+      {
+        id: 'MITRE-T1003.001 / RunAsPPL',
+        cvss: '8.8 HIGH (Credential Exposure)',
+        status: 'Microsoft LSA Protection & Sysmon EID 10 Advisory',
+        description:
+          'Abuse of Microsoft-signed rundll32.exe + comsvcs.dll (MiniDump / ordinal #24) to dump unprotected lsass.exe memory (RunAsPPL = 0) via OpenProcess(0x1010).',
+      },
+    ],
+    actorGroups: [
+      { name: 'Volt Typhoon (Vanguard Panda / Bronze Silhouette)', aliases: 'PRC Living-off-the-Land Espionage Operator', targetSectors: 'Critical Infrastructure, Enterprise Active Directory Admin Hosts & Government Networks', notableCampaign: 'Relies heavily on native Windows LOLBins (rundll32 + comsvcs.dll, ntdsutil) to harvest credentials with zero custom malware on disk.' },
+      { name: 'LockBit & BlackCat (ALPHV) Ransomware Affiliates', aliases: 'Enterprise Human-Operated Ransomware Crews', targetSectors: 'Financial Services, Healthcare, Manufacturing & Tier-1 Windows Server Fleets', notableCampaign: 'Routine comsvcs.dll MiniDump / ordinal #24 LSASS dumping followed by offline pypykatz extraction to escalate to Domain Admin.' },
+    ],
+    realWorldAdvisories: [
+      'Microsoft Sysinternals: Sysmon Event ID 10 (ProcessAccess) GrantedAccess & CallTrace Detection Guide.',
+      'Microsoft Learn: Configuring Additional LSA Protection (RunAsPPL) & Windows Defender Credential Guard.',
+      'Splunk SURGe & LOLBAS: Detecting comsvcs.dll MiniDump & Ordinal #24 Credential Access.',
+    ],
+    groundedSources: [
+      { title: 'Microsoft Sysinternals — Sysmon Event ID 10 (ProcessAccess)', uri: 'https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-10-processaccess' },
+      { title: 'Microsoft Learn — Configuring Additional LSA Protection (RunAsPPL)', uri: 'https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection' },
+      { title: 'LOLBAS Project — comsvcs.dll MiniDump & Ordinal #24 Reference', uri: 'https://lolbas-project.github.io/lolbas/Libraries/Comsvcs/' },
+    ],
+  },
   'cl0p-moveit-transfer-cve-2023-34362': {
     scenarioId: 'cl0p-moveit-transfer-cve-2023-34362',
     scenarioCode: 'CVE-2023-34362',
@@ -1348,6 +1462,32 @@ export const BATCH_1_TO_4_CURATED_INTEL: Record<
       { title: 'Kaspersky Securelist — Nokoyawa & CVE-2023-28252 Zero-Day Discovery', uri: 'https://securelist.com/nokoyawa-ransomware-attacks-use-zero-day/109483/' },
       { title: 'Zscaler ThreatLabz — CVE-2023-28252 CLFS Technical Analysis', uri: 'https://www.zscaler.com/blogs/security-research/technical-analysis-windows-clfs-zero-day-vulnerability-cve-2023-28252' },
       { title: 'Microsoft MSRC — CVE-2023-28252 Security Update Guide', uri: 'https://msrc.microsoft.com/update-guide/vulnerability/CVE-2023-28252' },
+    ],
+  },
+  'dfir-dcsync-drsuapi-replication-eid4662': {
+    scenarioId: 'dfir-dcsync-drsuapi-replication-eid4662',
+    scenarioCode: 'T1003.006',
+    scenarioName: 'Microsoft, CISA & MITRE — Active Directory DCSync: Rogue MS-DRSR Replication & Security Event ID 4662 Forensics',
+    summary:
+      'Grounded in Microsoft Security Auditing Event ID 4662, CISA/NSA Active Directory guidance, and MITRE ATT&CK T1003.006, DCSync abuses domain-root replication extended rights (1131f6aa & 1131f6ad) over MS-DRSR IDL_DRSGetNCChanges (Opnum 3) to extract krbtgt and Tier-0 hashes remotely without executing code on the Domain Controller.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft Learn specifies EID 4662 (AccessMask 0x100) + EID 4624 SubjectLogonId correlation; CISA & NSA provide Tier-0 ACL cleanup and double krbtgt reset playbooks; and MITRE ATT&CK T1003.006 documents DRSUAPI network signatures and APT/ransomware attribution.',
+    cves: [
+      { id: 'T1003.006 (MS-DRSR)', cvss: 'CRITICAL AD DESIGN ABUSE', status: 'Active Directory Tier-0 Replication Abuse', description: 'Impersonating a peer Domain Controller via DRSUAPI IDL_DRSGetNCChanges to pull password hashes remotely without touching NTDS.dit.' },
+    ],
+    actorGroups: [
+      { name: 'APT29 (Midnight Blizzard / Cozy Bear) & APT32', aliases: 'State-Sponsored Active Directory Intrusion Operators', targetSectors: 'Government, Defense, Diplomatic, Enterprise Identity Infrastructure', notableCampaign: 'Leveraged rogue Active Directory replication permissions to harvest krbtgt keys and forge Golden Tickets for long-term persistence.' },
+      { name: 'FIN6, Wizard Spider (TrickBot/Conti) & Ransomware Affiliates', aliases: 'Enterprise Domain Takeover Operators', targetSectors: 'Financial Services, Healthcare, Retail, Critical Manufacturing', notableCampaign: 'Executed DCSync from compromised jump hosts to collect domain-wide NTLM hashes prior to enterprise-wide ransomware deployment.' },
+    ],
+    realWorldAdvisories: [
+      'Microsoft Learn: Security Auditing Event ID 4662 (DS-Replication-Get-Changes-All GUID 1131f6ad).',
+      'CISA & NSA: Detecting and Mitigating Active Directory Compromises & Double krbtgt Rotation.',
+      'MITRE ATT&CK T1003.006: OS Credential Dumping — DCSync.',
+    ],
+    groundedSources: [
+      { title: 'Microsoft Learn — Windows Security Event ID 4662 Specification', uri: 'https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4662' },
+      { title: 'MITRE ATT&CK — T1003.006 OS Credential Dumping: DCSync', uri: 'https://attack.mitre.org/techniques/T1003/006/' },
+      { title: 'CISA — Active Directory Security Advisories & Guidance', uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories' },
     ],
   },
 };

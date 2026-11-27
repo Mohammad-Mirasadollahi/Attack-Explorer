@@ -49,6 +49,34 @@ const BESPOKE_SECTION_SCENE_LOADERS: Record<
     import('./3cx-desktopapp-supply-chain-lazarus/three').then(
       (mod) => mod.buildBespokeThreeCxSectionScene as BespokeSectionSceneFactory
     ),
+  'xz-utils-cve-2024-3094-backdoor': () =>
+    import('./xz-utils-cve-2024-3094-backdoor/three').then(
+      (mod) => mod.buildBespokeXzSectionScene as BespokeSectionSceneFactory
+    ),
+  'dfir-lsass-minidump-comsvcs-sysmon-eid10': () =>
+    import('./dfir-lsass-minidump-comsvcs-sysmon-eid10/three').then(
+      (mod) => mod.buildBespokeLsassSectionScene as BespokeSectionSceneFactory
+    ),
+  'ad-kerberoasting': () =>
+    import('./ad-kerberoasting/three').then(
+      (mod) => mod.buildBespokeKerbSectionScene as BespokeSectionSceneFactory
+    ),
+  'zerologon-netlogon-cve-2020-1472': () =>
+    import('./zerologon-netlogon-cve-2020-1472/three').then(
+      (mod) => mod.buildBespokeZerologonSectionScene as BespokeSectionSceneFactory
+    ),
+  'dfir-dcsync-drsuapi-replication-eid4662': () =>
+    import('./dfir-dcsync-drsuapi-replication-eid4662/three').then(
+      (mod) => mod.buildBespokeDcsyncSectionScene as BespokeSectionSceneFactory
+    ),
+  'log4shell-dfir': () =>
+    import('./log4shell-dfir/three').then(
+      (mod) => mod.buildBespokeLog4shellSectionScene as BespokeSectionSceneFactory
+    ),
+  'dns-tunneling-exfil': () =>
+    import('./dns-tunneling-exfil/three').then(
+      (mod) => mod.buildBespokeDnsTunnelSectionScene as BespokeSectionSceneFactory
+    ),
 };
 
 export function loadBespokeSectionSceneFactory(

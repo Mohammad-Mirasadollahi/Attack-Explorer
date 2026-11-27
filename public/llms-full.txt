@@ -1,6 +1,6 @@
 # Attack Explorer — Full Scenario & MITRE ATT&CK Encyclopedia (llms-full.txt)
 
-> Comprehensive machine-readable index of all 4 live bespoke cyber attack scenarios, forensic telemetry traces, CVEs, and authoritative primary sources in Attack Explorer (https://www.attackexplorer.com).
+> Comprehensive machine-readable index of all 11 live bespoke cyber attack scenarios, forensic telemetry traces, CVEs, and authoritative primary sources in Attack Explorer (https://www.attackexplorer.com).
 
 ## Creator & E-E-A-T Attribution
 - **Creator:** Mohammad Mirasadollahi (@M_Mirasadollahi)
@@ -94,4 +94,148 @@
   - Mandiant — *3CX Software Supply Chain Compromise Initiated by a Prior Software Supply Chain Compromise (UNC4736 / X_TRADER)*: https://cloud.google.com/blog/topics/threat-intelligence/3cx-software-supply-chain-compromise
   - Kaspersky GReAT — *Gopuram Backdoor Deployed Through 3CX Supply Chain Attack*: https://securelist.com/gopuram-backdoor-deployed-through-3cx-supply-chain-attack/109344/
 
+---
 
+## 5. Andres Freund, Red Hat & Kaspersky — XZ Utils (liblzma) IFUNC sshd Supply Chain Backdoor
+- **Scenario ID:** `xz-utils-cve-2024-3094-backdoor`
+- **Code:** CVE-2024-3094
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/xz-utils-cve-2024-3094-backdoor
+- **Category:** Malware & Process Execution (`MALWARE`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1195.002 (Supply Chain Compromise: Compromise Software Supply Chain), T1574.006 (Hijack Execution Flow: Dynamic Linker Hijacking), T1556 (Modify Authentication Process)
+- **CVEs / Advisories:** CVE-2024-3094 (CVSS 10.0 CRITICAL)
+- **Executive Summary:** Maintainer persona Jia Tan embedded an obfuscated x86_64 object (`liblzma_la-crc64-fast.o`) inside binary unit-test fixture `tests/files/bad-3-corrupt_lzma2.xz` and shipped a release-tarball-only `m4/build-to-host.m4` script absent from upstream Git to compile the implant into `liblzma.so.5.6.1` during Debian/RPM packaging. When `/usr/sbin/sshd` starts on distro-patched Linux hosts, `libsystemd.so.0` transitively pulls `liblzma.so.5.6.1` into memory where GNU IFUNC resolver `crc64_resolve` (`0x7F9A21402000`) hooks `_dl_audit_preinit` and rewrites sshd `.got.plt` slot `0x55B2C4198048` (`RSA_public_decrypt`) from OpenSSL `libcrypto.so.3` (`0x7F9A20E14200`) to `liblzma.so.5.6.1` (`0x7F9A2143A110`) before Full RELRO locks the table read-only. Attacker-crafted RSA certificates carrying an `Ed448`-signed `ChaCha20` command trigger pre-auth root `system()` execution (`auditd SYSCALL 59`), until Andres Freund's `+508 ms` `perf record` / Valgrind discovery (`299 ms -> 807 ms`) stops CVE-2024-3094 prior to stable distro GA.
+- **Kill-Chain Stages (4):**
+  1. **[T1195.002] UPSTREAM TARBALL SUBVERSION & M4/BUILD-TO-HOST.M4 TEST-FIXTURE EXTRACTION**: Tarball-only `m4/build-to-host.m4` decodes `tests/files/bad-3-corrupt_lzma2.xz` into `liblzma_la-crc64-fast.o` during x86_64 `.deb`/`.rpm` packaging.
+  2. **[T1574.006] TRANSITIVE LIBSYSTEMD LINKAGE & GNU IFUNC PRE-RELRO GOT/PLT HIJACK**: `sshd -> libsystemd.so.0 -> liblzma.so.5.6.1` triggers `crc64_resolve` pre-main, rewriting `.got.plt` `0x55B2C4198048` (`RSA_public_decrypt`) before RELRO seals it read-only.
+  3. **[T1556] PRE-AUTH RSA_PUBLIC_DECRYPT INTERCEPTION & ED448 ROOT COMMAND EXECUTION**: Normal SSH keys forward cleanly to `libcrypto.so.3`, while attacker `Ed448`-verified `ChaCha20` commands execute `system()` as `uid=0` caught by `auditd SYSCALL 59`.
+  4. **[T1556] 500 MS CPU LATENCY ANOMALY (PERF) & FORENSIC SUPPLY-CHAIN DISCOVERY**: `+508 ms` SSH login delay (`299 ms -> 807 ms`) traced by `perf record` and Valgrind into `liblzma.so.5.6.1` leads to emergency downgrade to `xz-utils 5.4.5/5.4.6`.
+- **Primary Authoritative Sources (3):**
+  - Andres Freund (`oss-security`) — *Backdoor in upstream xz/liblzma leading to ssh server compromise (CVE-2024-3094)*: https://www.openwall.com/lists/oss-security/2024/03/29/4
+  - Kaspersky GReAT (`Securelist`) — *XZ Utils Backdoor (CVE-2024-3094) Technical Analysis*: https://securelist.com/xz-backdoor-story-part-1/112354/
+  - Red Hat & CISA — *Urgent Security Alert: CVE-2024-3094 (XZ Utils 5.6.0 / 5.6.1)*: https://www.redhat.com/en/blog/urgent-security-alert-fedora-41-and-rawhide-users
+
+---
+
+## 6. Microsoft Sysinternals & Splunk SURGe DFIR — LSASS MiniDump via comsvcs.dll & Sysmon EventID 10
+- **Scenario ID:** `dfir-lsass-minidump-comsvcs-sysmon-eid10`
+- **Code:** T1003.001
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/dfir-lsass-minidump-comsvcs-sysmon-eid10
+- **Category:** Malware & Process Execution (`MALWARE`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1134 (Access Token Manipulation / SeDebugPrivilege), T1218.011 (System Binary Proxy Execution: Rundll32), T1003.001 (OS Credential Dumping: LSASS Memory)
+- **Executive Summary:** On `WKS-ADM-07.corp.local` (`10.20.14.37`), an elevated session under `CORP\adm_jchen` holding `SeDebugPrivilege` (`Security EID 4672`) runs `tasklist /fi "imagename eq lsass.exe"` from `cmd.exe` (`PID 4920`) to resolve unprotected `lsass.exe` (`PID 684`, `RunAsPPL = 0`). Avoiding third-party tools, the operator launches signed `rundll32.exe` (`PID 5412`) with `C:\Windows\System32\comsvcs.dll, #24 684 C:\Windows\Temp\debug.dmp full`, acquiring `OpenProcess(0x1010)` (`PROCESS_VM_READ | PROCESS_QUERY_LIMITED_INFORMATION`) and serializing `lsasrv.dll!LogonSessionList` (`0x00007FF7A8100000`) and `msv1_0.dll`/`kerberos.dll` (`0x00007FFAD4200000`) via `dbgcore.dll!MiniDumpWriteDump(0x2)` into a `48.2 MB` `MDMP` (`4D 44 4D 50 93 A7`) file for offline `pypykatz` extraction. Defenders catch every variant via Sysmon `EID 10` (`GrantedAccess=0x1010`, `CallTrace` containing `comsvcs.dll` and `dbgcore.dll`), Sysmon `EID 11` + YARA, and prevent it outright with `RunAsPPL = 1` (`PsProtectedSignerLsa-Light`) and VBS Credential Guard (`LsaIso.exe`).
+- **Kill-Chain Stages (4):**
+  1. **[T1134] SEDEBUGPRIVILEGE ASSIGNMENT & LSASS.EXE PID 684 LOOKUP**: Elevated `CORP\adm_jchen` token (`Security EID 4672`) enumerates unprotected `lsass.exe` (`PID 684`, child of `services.exe` `PID 620`).
+  2. **[T1218.011] SIGNED RUNDLL32 PROXY & COMSVCS.DLL ORDINAL #24 OPENPROCESS(0x1010)**: `rundll32.exe` (`PID 5412`) invokes `comsvcs.dll!MiniDump` (ordinal `#24`) opening handle `0x1010` to `lsass.exe`, captured in `Sysmon EID 10` `CallTrace`.
+  3. **[T1003.001] DBGCORE.DLL MINIDUMPWRITEDUMP FULL-MEMORY SNAPSHOT (MDMP)**: `MiniDumpWriteDump(0x2)` dumps `48.2 MB` (`4D 44 4D 50 93 A7`) to `C:\Windows\Temp\debug.dmp` (`Sysmon EID 11`).
+  4. **[T1003.001] OFFLINE PYPYKATZ EXTRACTION RISK, SIEM CORRELATION & RUNASPPL HARDENING**: Triple SIEM correlation (`EID 1 + 10 + 11`) triggers containment, credential rotation, and `RunAsPPL = 1` + Credential Guard (`LsaIso.exe`) deployment.
+- **Primary Authoritative Sources (3):**
+  - Microsoft Sysinternals — *Sysmon Event ID 10: ProcessAccess (GrantedAccess & CallTrace)*: https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-10-processaccess
+  - Microsoft Learn — *Configuring Additional LSA Protection (RunAsPPL) & MiniDumpWriteDump API*: https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection
+  - Splunk SURGe & LOLBAS Project — *Detecting LSASS Credential Dumping via comsvcs.dll (MiniDump / Ordinal #24)*: https://lolbas-project.github.io/lolbas/Libraries/Comsvcs/
+
+---
+
+## 7. Active Directory Kerberoasting & Pass-the-Hash Lateral Movement
+- **Scenario ID:** `ad-kerberoasting`
+- **Code:** T1558.003
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/ad-kerberoasting
+- **Category:** Active Directory & Identity (`ACTIVE_DIRECTORY`)
+- **Severity:** HIGH
+- **MITRE ATT&CK Techniques:** T1558.003 (Kerberoasting), T1550.002 (Pass the Hash), T1543.003 (Windows Service)
+- **CVEs / Advisories:** CVE-2022-33679, CVE-2021-42287 / CVE-2021-42278
+- **Executive Summary:** Standard domain user `CORP\j.miller` on `WKS-OPS-12` (`10.20.14.44`) queries LDAP TCP/389 on `CORP-DC01` for user objects with a `servicePrincipalName` (`MSSQLSvc/FIN-SQL01.corp.local:1433` -> `svc_sql_prod`), requests a Kerberos TGS service ticket advertising legacy RC4-HMAC (`TicketEncryptionType 0x17`, logged in Security `EID 4769`), cracks `$krb5tgs$23$` offline via Hashcat `-m 13100` with zero account lockouts, and pivots laterally into `FIN-SQL01` via Pass-the-Hash (`EID 4624` LogonType 3 NTLM) + remote service installation (`EID 7045`). Defenders catch `EID 4769 (0x17)` for non-`$` service accounts and harden via AES-256 (`0x12`) + 120-char auto-rotated gMSAs.
+- **Kill-Chain Stages (4):**
+  1. **[T1558.003] ACTIVE DIRECTORY LDAP SPN DISCOVERY BY STANDARD DOMAIN USER**: Unprivileged LDAP search returns `svc_sql_prod` (`MSSQLSvc/FIN-SQL01.corp.local:1433`).
+  2. **[T1558.003] KERBEROS TGS SERVICE TICKET REQUEST WITH RC4-HMAC DOWNGRADE (0x17)**: `CORP-DC01` seals the TGS ticket with `svc_sql_prod` NTLM hash and logs Security `EID 4769` (`TicketEncryptionType 0x17`).
+  3. **[T1558.003] OFFLINE GPU CRACKING VIA HASHCAT MODE 13100**: External GPU rig recovers `svc_sql_prod` credentials with zero Active Directory failed-logon (`EID 4625`) alerts.
+  4. **[T1550.002] PASS-THE-HASH LATERAL MOVEMENT TO FIN-SQL01 & AES-256 GMSA DEFENSE**: NTLM LogonType 3 (`EID 4624`) + `SqlHealthDiag` service (`EID 7045`) on `FIN-SQL01`, remediated with AES-256 (`0x12`) + gMSAs.
+- **Primary Authoritative Sources (3):**
+  - MITRE ATT&CK — *T1558.003 Steal or Forge Kerberos Tickets: Kerberoasting*: https://attack.mitre.org/techniques/T1558/003/
+  - Microsoft Security Auditing — *Event ID 4769: A Kerberos service ticket was requested*: https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4769
+  - CISA & NSA — *Detecting and Mitigating Active Directory Compromises*: https://www.cisa.gov/news-events/cybersecurity-advisories
+
+---
+
+## 8. Zerologon — Netlogon AES-CFB8 Zero-IV Authentication Bypass & DC Machine Account Reset
+- **Scenario ID:** `zerologon-netlogon-cve-2020-1472`
+- **Code:** CVE-2020-1472
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/zerologon-netlogon-cve-2020-1472
+- **Category:** Active Directory & Identity (`ACTIVE_DIRECTORY`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1210 (Exploitation of Remote Services), T1098 (Account Manipulation), T1003.006 (DCSync)
+- **CVEs / Advisories:** CVE-2020-1472 (CVSS 10.0 CRITICAL), CISA ED 20-04
+- **Executive Summary:** An unauthenticated host (`10.20.40.92`) reaches `CORP-DC01` over MS-NRPC (`NetrServerReqChallenge` + `NetrServerAuthenticate3` with `NegotiateFlags = 0x212FFFFF`, disabling Secure RPC) and sends ~256 all-zero 8-byte challenges exploiting Netlogon's `ComputeNetlogonCredential` AES-CFB8 flaw with a hardcoded 16-byte all-zero IV (`1/256` collision probability). Once authenticated as `CORP-DC01$`, the attacker calls `NetrServerPasswordSet2` with an empty 516-byte buffer to blank the Domain Controller machine password (`EID 4742`, Netlogon `EID 5823/5827`) and immediately executes DCSync (`EID 4662`), stopped permanently by Microsoft KB4557222 `FullSecureChannelProtection = 1`.
+- **Kill-Chain Stages (4):**
+  1. **[T1210] UNAUTHENTICATED MS-NRPC PROBING WITH ALL-ZERO CHALLENGES**: ~256 rapid `NetrServerReqChallenge` / `NetrServerAuthenticate3` calls without Secure RPC (`0x212FFFFF`).
+  2. **[T1210] AES-CFB8 ZERO-IV COLLISION & MACHINE IDENTITY IMPERSONATION**: 1-in-256 all-zero ciphertext collision grants `CORP-DC01$` Netlogon session authentication.
+  3. **[T1098] NETRSERVERPASSWORDSET2 EMPTY DC MACHINE PASSWORD RESET**: `CORP-DC01$` machine hash reset to blank (`Security EID 4742`, Netlogon `EID 5823/5827`).
+  4. **[T1003.006] IMMEDIATE DCSYNC EXTRACTION & KB4557222 SECURE RPC HARDENING**: Empty machine credential abused for `IDL_DRSGetNCChanges` (`EID 4662`), remediated via `FullSecureChannelProtection = 1`.
+- **Primary Authoritative Sources (3):**
+  - Secura BV (Tom Tervoort) — *Zerologon: Unauthenticated Domain Controller Compromise (CVE-2020-1472)*: https://www.secura.com/blog/zero-logon
+  - Microsoft MSRC & Support — *CVE-2020-1472 Netlogon Elevation of Privilege Vulnerability (KB4557222)*: https://support.microsoft.com/en-us/topic/how-to-manage-the-changes-in-netlogon-secure-channel-connections-associated-with-cve-2020-1472-f7e8cc17-0309-1d6a-304e-5ba73cd1a11e
+  - CISA Emergency Directive 20-04 — *Mitigate Netlogon Elevation of Privilege Vulnerability*: https://www.cisa.gov/news-events/directives/ed-20-04-mitigate-netlogon-elevation-privilege-vulnerability-august-2020-patch-tuesday
+
+---
+
+## 9. Active Directory DCSync — Rogue MS-DRSR DRSUAPI Replication & Event ID 4662
+- **Scenario ID:** `dfir-dcsync-drsuapi-replication-eid4662`
+- **Code:** T1003.006
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/dfir-dcsync-drsuapi-replication-eid4662
+- **Category:** Active Directory & Identity (`ACTIVE_DIRECTORY`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1003.006 (OS Credential Dumping: DCSync), T1078.002 (Domain Accounts)
+- **CVEs / Advisories:** MITRE T1003.006 / MS-DRSR Directory Replication Service Protocol
+- **Executive Summary:** Operating from non-Domain-Controller workstation `WKS-FIN-09` (`10.20.40.118`), a compromised identity holding delegated Active Directory replication ACEs (`DS-Replication-Get-Changes` `1131f6aa-9c07-11d1-f79f-00c04fc2dcd2` and `DS-Replication-Get-Changes-All` `1131f6ad-9c07-11d1-f79f-00c04fc2dcd2`) binds to `CORP-DC01` over MS-DRSR (`drsuapi`, `IDL_DRSBind` -> `IDL_DRSGetNCChanges` Opnum 3) and replicates `krbtgt` and `Administrator` password hashes straight out of `NTDS.dit` without touching `lsass.exe` on the DC. Defenders detect DCSync via Domain Controller Security `EID 4662` matching the replication GUIDs from non-DC computer accounts and Zeek DCE/RPC `drsuapi` monitoring.
+- **Kill-Chain Stages (4):**
+  1. **[T1078.002] DELEGATED REPLICATION ACL DISCOVERY ON DOMAIN ROOT**: Enumeration reveals `DS-Replication-Get-Changes` (`1131f6aa-...`) and `Get-Changes-All` (`1131f6ad-...`) on a non-DC account.
+  2. **[T1003.006] ROGUE MS-DRSR IDL_DRSBIND FROM NON-DC WORKSTATION**: Workstation `10.20.40.118` opens an RPC `drsuapi` replication channel against `CORP-DC01`.
+  3. **[T1003.006] IDL_DRSGETNCCHANGES (OPNUM 3) KRBTGT HASH EXTRACTION**: Directory Replication Service streams `krbtgt` and `Administrator` hashes while emitting `EID 4662` with both replication GUIDs.
+  4. **[T1003.006] EID 4662 CORRELATION, ACL REVOCATION & KRBTGT DOUBLE-RESET**: SIEM correlates non-DC `EID 4662` + Zeek `drsuapi`, revokes rogue ACLs, and executes double `krbtgt` password reset.
+- **Primary Authoritative Sources (3):**
+  - MITRE ATT&CK — *T1003.006 OS Credential Dumping: DCSync*: https://attack.mitre.org/techniques/T1003/006/
+  - Microsoft Open Specifications — *MS-DRSR Directory Replication Service (DRS) Remote Protocol (IDL_DRSGetNCChanges)*: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-drsr/f977faaa-673e-4f66-b9bf-48c640241d47
+  - Microsoft Security Auditing — *Event ID 4662: An operation was performed on an object*: https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4662
+
+---
+
+## 10. Apache Log4Shell — JNDI Lookup Injection, Rogue LDAP Class Loading & RCE
+- **Scenario ID:** `log4shell-dfir`
+- **Code:** CVE-2021-44228
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/log4shell-dfir
+- **Category:** Network & C2 Exfiltration (`NETWORK_WEB`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1190 (Exploit Public-Facing Application), T1203 (Exploitation for Client Execution), T1105 (Ingress Tool Transfer)
+- **CVEs / Advisories:** CVE-2021-44228 (CVSS 10.0 CRITICAL), CVE-2021-45046
+- **Executive Summary:** An external HTTP request carrying a JNDI lookup expression inside the `User-Agent` header reaches `APP-WEB-01` running Apache `log4j-core 2.14.1`. When Log4j formats the untrusted header, `JndiLookup` evaluates the expression and forces the Java server to connect outbound over LDAP TCP/1389 to rogue directory `198.51.100.77`, retrieve a remote Java class reference (`javaCodeBase` / `javaFactory`), and spawn `/bin/sh` child processes under `java.exe` (`Sysmon EID 1/3`, Suricata JNDI signature). Defenders patch to Log4j `2.17.1+`, enforce outbound LDAP/RMI egress blocks, and hunt `java` spawning shell interpreters.
+- **Kill-Chain Stages (4):**
+  1. **[T1190] UNTRUSTED HTTP HEADER CONTAINING JNDI LOOKUP EXPRESSION**: Web request injects JNDI string into `User-Agent`, reaching Log4j `2.14.1` logger on `APP-WEB-01`.
+  2. **[T1190] OUTBOUND JVM LDAP TCP/1389 LOOKUP TO ROGUE DIRECTORY**: `JndiManager` resolves the expression by connecting outbound to `198.51.100.77:1389` (`Sysmon EID 3`, Suricata alert).
+  3. **[T1105] REMOTE CLASS REFERENCE FETCH & IN-JVM CLASS INITIALIZATION**: Rogue LDAP returns a `javaCodeBase` reference prompting class retrieval and execution inside the JVM (`java.exe`).
+  4. **[T1203] JAVA CHILD SHELL EXECUTION, SIEM CORRELATION & LOG4J 2.17.1+ PATCH**: `java` spawns `/bin/sh` (`Sysmon EID 1` / `auditd`), contained via Log4j `2.17.1+` upgrade and egress LDAP/RMI blocks.
+- **Primary Authoritative Sources (3):**
+  - Apache Logging Services — *Apache Log4j Security Vulnerabilities (CVE-2021-44228 / CVE-2021-45046)*: https://logging.apache.org/log4j/2.x/security.html
+  - CISA Advisory — *Apache Log4j Vulnerability Guidance (CVE-2021-44228)*: https://www.cisa.gov/news-events/news/apache-log4j-vulnerability-guidance
+  - MITRE ATT&CK — *T1190 Exploit Public-Facing Application & T1105 Ingress Tool Transfer*: https://attack.mitre.org/techniques/T1190/
+
+---
+
+## 11. DNS Tunneling Data Exfiltration & Covert TXT/A C2 Channel
+- **Scenario ID:** `dns-tunneling-exfil`
+- **Code:** T1071.004
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/dns-tunneling-exfil
+- **Category:** Network & C2 Exfiltration (`NETWORK_WEB`)
+- **Severity:** HIGH
+- **MITRE ATT&CK Techniques:** T1071.004 (Application Layer Protocol: DNS), T1048.003 (Exfiltration Over Alternative Protocol)
+- **CVEs / Advisories:** MITRE T1071.004 / T1048.003, SANS DNS Tunneling DFIR
+- **Executive Summary:** Compromised workstation `WKS-DEV-19` (`10.20.14.55`) bypasses strict HTTP/HTTPS egress proxies by encoding `finance_q4.csv` into high-entropy hex/Base32 subdomain labels (`*.c2.exfil-lab.example`) sent over `UDP/53` through corporate recursive resolver `CORP-DNS01` (`Sysmon EID 22`, DNS Server Analytic `EID 256`). The attacker's authoritative nameserver reassembles each exfiltrated chunk and answers with base64-encoded C2 tasking inside `TXT` records. Defenders identify the covert channel via Shannon label entropy (> 3.8), extreme unique-subdomain-per-apex ratios, and DNS Response Policy Zone (RPZ) sinkholing.
+- **Kill-Chain Stages (4):**
+  1. **[T1048.003] PAYLOAD CHUNKING & HIGH-ENTROPY HEX/BASE32 LABEL ENCODING**: Implant slices `finance_q4.csv` into <=63-byte DNS labels with Shannon entropy > 3.8 under `c2.exfil-lab.example`.
+  2. **[T1071.004] RECURSIVE RESOLVER RELAY & SYSMON EID 22 BURST**: `CORP-DNS01` forwards hundreds of unique uncached `UDP/53` lookups, logging `Sysmon EID 22` and DNS `EID 256`.
+  3. **[T1071.004] AUTHORITATIVE NAMESERVER REASSEMBLY & TXT RECORD C2 REPLY**: Rogue nameserver reconstructs stolen rows and returns Base64 tasking inside DNS `TXT` responses.
+  4. **[T1071.004] SHANNON ENTROPY ANALYTICS & DNS RPZ SINKHOLE CONTAINMENT**: SIEM flags anomalous unique-label volume and `TXT` response sizes, blocking `c2.exfil-lab.example` via RPZ sinkhole.
+- **Primary Authoritative Sources (3):**
+  - MITRE ATT&CK — *T1071.004 Application Layer Protocol: DNS & T1048.003 Exfiltration Over Alternative Protocol*: https://attack.mitre.org/techniques/T1071/004/
+  - SANS Institute — *Detecting DNS Tunneling Through Entropy and Query Analytics*: https://www.sans.org/white-papers/34152/
+  - Microsoft Sysinternals — *Sysmon Event ID 22: DNSEvent (DNS Query)*: https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-22-dnsevent-dns-query
