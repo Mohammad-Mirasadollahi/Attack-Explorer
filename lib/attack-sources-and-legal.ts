@@ -1546,6 +1546,378 @@ export const SCENARIO_ATTRIBUTION_MAP: Record<
   },
   ...BATCH_1_TO_4_ATTRIBUTIONS,
   ...VULNCHECK_CWP_AND_DFIR_ATTRIBUTIONS,
+  'aws-imdsv1-ssrf-capitalone-style': {
+    scenarioId: 'aws-imdsv1-ssrf-capitalone-style',
+    scenarioCode: 'T1552.005',
+    mitreTechniques: [
+      {
+        id: 'T1190',
+        name: 'Exploit Public-Facing Application (EC2 Reverse-Proxy SSRF)',
+        tactic: 'Initial Access',
+        url: 'https://attack.mitre.org/techniques/T1190/',
+      },
+      {
+        id: 'T1552.005',
+        name: 'Unsecured Credentials: Cloud Instance Metadata API (IMDSv1)',
+        tactic: 'Credential Access',
+        url: 'https://attack.mitre.org/techniques/T1552/005/',
+      },
+      {
+        id: 'T1530',
+        name: 'Data from Cloud Storage Object (S3 Bulk Exfiltration)',
+        tactic: 'Collection',
+        url: 'https://attack.mitre.org/techniques/T1530/',
+      },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 authoritative cloud security sources: (1) AWS EC2 Security Documentation detailing how unauthenticated IMDSv1 GET requests to link-local 169.254.169.254 leak temporary STS IAM role credentials via reverse-proxy SSRF and how IMDSv2 session tokens with PUT hop-limit=1 eliminate the vector; (2) AWS GuardDuty and CloudTrail forensic guidance defining UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS correlation across ListBuckets and GetObject bursts; and (3) Palo Alto Unit 42 and MITRE ATT&CK T1552.005 cloud credential exfiltration research.',
+    primarySources: [
+      {
+        id: 'aws-imdsv2-ec2-guide',
+        organization: 'Amazon Web Services (AWS Documentation)',
+        title: 'Use IMDSv2 — Configure Instance Metadata Service v2 and Transition Off IMDSv1',
+        referenceCode: 'AWS-EC2-IMDSV2',
+        licenseOrTerms: 'AWS Public Technical Documentation',
+        url: 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html',
+        usageSummary:
+          'Defines the 169.254.169.254 IMDSv1 GET vs. IMDSv2 PUT token (X-aws-ec2-metadata-token) and HttpPutResponseHopLimit=1 defense.',
+      },
+      {
+        id: 'aws-guardduty-credential-exfil',
+        organization: 'AWS Security & GuardDuty Research',
+        title: 'GuardDuty Finding: UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS',
+        referenceCode: 'AWS-GD-IMDS-EXFIL',
+        licenseOrTerms: 'AWS Public Technical Documentation',
+        url: 'https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-types-iam.html',
+        usageSummary:
+          'Documents CloudTrail correlation when EC2 instance profile ASIA* temporary credentials are used from external non-AWS IP addresses.',
+      },
+      {
+        id: 'mitre-t1552-005-cloud-metadata',
+        organization: 'The MITRE Corporation & Palo Alto Unit 42',
+        title: 'MITRE ATT&CK T1552.005: Unsecured Credentials — Cloud Instance Metadata API',
+        referenceCode: 'ATT&CK-T1552.005',
+        licenseOrTerms: 'MITRE ATT&CK Terms of Use',
+        url: 'https://attack.mitre.org/techniques/T1552/005/',
+        usageSummary:
+          'Catalogs SSRF-to-IMDS credential theft, over-privileged IAM roles, and S3 bucket enumeration and synchronization telemetry.',
+      },
+    ],
+    syntheticDataNotice:
+      'EC2 instance IDs, STS ASIA* key prefixes, S3 bucket names, and CloudTrail event IDs are synthetic educational artifacts.',
+  },
+  'solarwinds-sunburst-orion-supply-chain': {
+    scenarioId: 'solarwinds-sunburst-orion-supply-chain',
+    scenarioCode: 'T1195.002',
+    mitreTechniques: [
+      {
+        id: 'T1195.002',
+        name: 'Supply Chain Compromise: Compromise Software Supply Chain (SUNSPOT / SUNBURST)',
+        tactic: 'Initial Access',
+        url: 'https://attack.mitre.org/techniques/T1195/002/',
+      },
+      {
+        id: 'T1553.002',
+        name: 'Subvert Trust Controls: Code Signing (Trojanized Signed Orion DLL)',
+        tactic: 'Defense Evasion',
+        url: 'https://attack.mitre.org/techniques/T1553/002/',
+      },
+      {
+        id: 'T1568.002',
+        name: 'Dynamic Resolution: Domain Generation Algorithms (avsvmcloud[.]com)',
+        tactic: 'Command and Control',
+        url: 'https://attack.mitre.org/techniques/T1568/002/',
+      },
+      {
+        id: 'T1552.004',
+        name: 'Unsecured Credentials: Private Keys (AD FS Token-Signing Cert / Golden SAML)',
+        tactic: 'Credential Access',
+        url: 'https://attack.mitre.org/techniques/T1552/004/',
+      },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 foundational incident-response publications: (1) CrowdStrike Intelligence reverse engineering of SUNSPOT showing how the build-server implant monitored MsBuild.exe and swapped InventoryManager.cs before official Authenticode signing; (2) Mandiant/FireEye disclosure of the SUNBURST backdoor inside SolarWinds.Orion.Core.BusinessLayer.dll, its 12-to-14-day dormancy, and avsvmcloud[.]com DNS C2; and (3) CISA Emergency Directive 21-01 / Advisory AA20-352A and Microsoft Threat Intelligence detailing post-compromise TEARDROP deployment and AD FS Golden SAML cloud federation abuse.',
+    primarySources: [
+      {
+        id: 'crowdstrike-sunspot-build-hijack',
+        organization: 'CrowdStrike Intelligence',
+        title: 'SUNSPOT: An Implant in the Build Process (SolarWinds Orion Supply-Chain Analysis)',
+        referenceCode: 'CS-SUNSPOT-2021',
+        licenseOrTerms: 'CrowdStrike Public Threat Research',
+        url: 'https://www.crowdstrike.com/blog/sunspot-malware-technical-analysis/',
+        usageSummary:
+          'Documents the MsBuild.exe watcher, InventoryManager.cs source-swap lock mechanism, and pre-signing injection into SolarWinds.Orion.Core.BusinessLayer.dll.',
+      },
+      {
+        id: 'mandiant-sunburst-orion',
+        organization: 'Mandiant (Google Cloud Security)',
+        title: 'Highly Evasive Attacker Leverages SolarWinds Supply Chain to Compromise Multiple Global Victims With SUNBURST Backdoor',
+        referenceCode: 'MANDIANT-SUNBURST-2020',
+        licenseOrTerms: 'Mandiant Public Threat Research',
+        url: 'https://cloud.google.com/blog/topics/threat-intelligence/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor/',
+        usageSummary:
+          'Dissects the trojanized OrionImprovementBusinessLayer class, 12–14 day dormancy check, blocklist checks, and avsvmcloud[.]com DNS DGA encoding.',
+      },
+      {
+        id: 'cisa-aa20-352a-solarwinds',
+        organization: 'CISA, FBI & Microsoft Threat Intelligence',
+        title: 'Alert AA20-352A: Advanced Persistent Threat Compromise of Government Agencies, Critical Infrastructure, and Private Sector Organizations',
+        referenceCode: 'CISA-AA20-352A',
+        licenseOrTerms: 'U.S. Government Public Domain',
+        url: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa20-352a',
+        usageSummary:
+          'Covers TEARDROP memory loader staging, AD FS token-signing certificate theft, Golden SAML forgery, and enterprise hunting guidance.',
+      },
+    ],
+    syntheticDataNotice:
+      'Build server hostnames, synthetic DNS DGA subdomain labels, and certificate thumbprints are simulated educational artifacts.',
+  },
+  'aukill-edr-killer-procxp152-byovd': {
+    scenarioId: 'aukill-edr-killer-procxp152-byovd',
+    scenarioCode: 'T1543.003',
+    mitreTechniques: [
+      {
+        id: 'T1543.003',
+        name: 'Create or Modify System Process: Windows Service (Signed Driver Registration)',
+        tactic: 'Persistence / Privilege Escalation',
+        url: 'https://attack.mitre.org/techniques/T1543/003/',
+      },
+      {
+        id: 'T1068',
+        name: 'Exploitation for Privilege Escalation (BYOVD Ring 0 IOCTL Abuse)',
+        tactic: 'Privilege Escalation',
+        url: 'https://attack.mitre.org/techniques/T1068/',
+      },
+      {
+        id: 'T1562.001',
+        name: 'Impair Defenses: Disable or Modify Tools (PPL EDR Sensor Termination)',
+        tactic: 'Defense Evasion',
+        url: 'https://attack.mitre.org/techniques/T1562/001/',
+      },
+      {
+        id: 'T1486',
+        name: 'Data Encrypted for Impact (Post-BYOVD Uncontested Ransomware Launch)',
+        tactic: 'Impact',
+        url: 'https://attack.mitre.org/techniques/T1486/',
+      },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 authoritative kernel-security and DFIR sources: (1) Sophos X-Ops technical analysis of the AuKill BYOVD EDR killer detailing its abuse of outdated Microsoft-signed Process Explorer driver PROCEXP152.sys, IOCTL 0x8335003C/0x83350004 handle escalation, and continuous process-termination loops against Protected Process Light (PPL) sensors prior to Medusa Locker and LockBit deployment; (2) LOLDrivers open catalog documenting PROCEXP152.sys hashes and Sigma rules; and (3) Microsoft Learn documentation on Hypervisor-Protected Code Integrity (HVCI) and the Microsoft Vulnerable Driver Blocklist.',
+    primarySources: [
+      {
+        id: 'sophos-aukill-byovd',
+        organization: 'Sophos X-Ops',
+        title: 'AuKill: EDR Killer Uses Outdated Process Explorer Driver to Disable Security Tools Before Ransomware',
+        referenceCode: 'SOPHOS-AUKILL-2023',
+        licenseOrTerms: 'Sophos Public Threat Research',
+        url: 'https://news.sophos.com/en-us/2023/04/19/aukill-edr-killer-malware-abuses-process-explorer-driver/',
+        usageSummary:
+          'Documents the exact AuKill execution flow: dropping PROCEXP152.sys, SCM service creation, IOCTL handle acquisition across PPL boundaries, and continuous EDR kill loop.',
+      },
+      {
+        id: 'loldrivers-procexp152',
+        organization: 'LOLDrivers Project & Community DFIR',
+        title: 'LOLDrivers Entry: PROCEXP152.sys — Vulnerable Signed Sysinternals Process Explorer Driver',
+        referenceCode: 'LOLDRIVERS-PROCEXP152',
+        licenseOrTerms: 'Apache 2.0 / Public Security Catalog',
+        url: 'https://www.loldrivers.io/',
+        usageSummary:
+          'Catalogs authentic hashes, Authenticode signer metadata, and Sysmon Event ID 6 / Windows Event ID 7045 Sigma detection rules.',
+      },
+      {
+        id: 'microsoft-vulnerable-driver-blocklist',
+        organization: 'Microsoft Learn Security Documentation',
+        title: 'Microsoft Recommended Driver Block Rules & Memory Integrity (HVCI)',
+        referenceCode: 'MS-HVCI-BLOCKLIST',
+        licenseOrTerms: 'Microsoft Public Documentation',
+        url: 'https://learn.microsoft.com/en-us/windows/security/application-security/application-control/app-control-for-business/design/microsoft-recommended-driver-block-rules',
+        usageSummary:
+          'Specifies how HVCI and WDAC driver blocklists block vulnerable signed Ring 0 drivers at kernel load time before DeviceIoControl can execute.',
+      },
+    ],
+    syntheticDataNotice:
+      'Endpoint hostnames, process PIDs, service names, and driver load addresses are synthetic simulation identifiers.',
+  },
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': {
+    scenarioId: 'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626',
+    scenarioCode: 'CVE-2024-21626',
+    mitreTechniques: [
+      {
+        id: 'T1611',
+        name: 'Escape to Host (runc Leaked Host File Descriptor Container Breakout)',
+        tactic: 'Privilege Escalation',
+        url: 'https://attack.mitre.org/techniques/T1611/',
+      },
+      {
+        id: 'T1552.001',
+        name: 'Unsecured Credentials: Credentials In Files (Host /etc/shadow Traversal)',
+        tactic: 'Credential Access',
+        url: 'https://attack.mitre.org/techniques/T1552/001/',
+      },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 primary container-security advisories: (1) OpenContainers runc Security Advisory GHSA-xr7r-f8xq-vfvv explaining the internal /sys/fs/cgroup file descriptor leak in runc init (< 1.1.12) that survives execve without O_CLOEXEC and breaks mount-namespace isolation via WORKDIR /proc/self/fd/7 or runc exec --cwd; (2) Snyk Security Labs "Leaky Vessels" root-cause analysis demonstrating deterministic host filesystem traversal to /etc/shadow and /etc/cron.d; and (3) CISA KEV and Falco/auditd container runtime detection engineering.',
+    primarySources: [
+      {
+        id: 'opencontainers-runc-ghsa-xr7r',
+        organization: 'OpenContainers / runc Maintainers',
+        title: 'GHSA-xr7r-f8xq-vfvv: runc Container Breakout Through process.cwd Config and Leaked FDs (CVE-2024-21626)',
+        referenceCode: 'GHSA-XR7R-F8XQ-VFVV',
+        licenseOrTerms: 'Apache 2.0 / OpenContainers Advisory',
+        url: 'https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv',
+        usageSummary:
+          'Authoritative root-cause disclosure of the leaked /sys/fs/cgroup file descriptor, WORKDIR /proc/self/fd/N breakout, and runc 1.1.12 O_CLOEXEC + verifyCwd fix.',
+      },
+      {
+        id: 'snyk-leaky-vessels-2024',
+        organization: 'Snyk Security Labs',
+        title: 'Leaky Vessels: Container Escape Vulnerabilities in runc and BuildKit (CVE-2024-21626)',
+        referenceCode: 'SNYK-LEAKY-VESSELS',
+        licenseOrTerms: 'Snyk Public Vulnerability Research',
+        url: 'https://snyk.io/blog/cve-2024-21626-runc-process-cwd-container-breakout/',
+        usageSummary:
+          'Provides step-by-step analysis of OCI image WORKDIR and runc exec --cwd exploitation alongside container runtime detection patterns.',
+      },
+      {
+        id: 'nvd-cisa-cve-2024-21626',
+        organization: 'NIST NVD & CISA KEV',
+        title: 'CVE-2024-21626: runc Internal File Descriptor Leak Leading to Host Filesystem Access',
+        referenceCode: 'CVE-2024-21626',
+        licenseOrTerms: 'U.S. Government Public Domain',
+        url: 'https://nvd.nist.gov/vuln/detail/CVE-2024-21626',
+        usageSummary:
+          'CVSS 8.6 High scoring, affected runc versions (1.0.0-rc93 through 1.1.11), and remediation verification criteria.',
+      },
+    ],
+    syntheticDataNotice:
+      'Kubernetes node hostnames, container IDs, numeric file descriptors, and auditd syscall records are synthetic educational artifacts.',
+  },
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': {
+    scenarioId: 'ai-rag-indirect-prompt-injection-mcp-tool-audit',
+    scenarioCode: 'OWASP-LLM01',
+    mitreTechniques: [
+      {
+        id: 'T1190',
+        name: 'Exploit Public-Facing Application (Indirect Prompt Injection via RAG Document)',
+        tactic: 'Initial Access',
+        url: 'https://attack.mitre.org/techniques/T1190/',
+      },
+      {
+        id: 'T1059',
+        name: 'Command and Scripting Interpreter (Unauthorized MCP Tool Execution)',
+        tactic: 'Execution',
+        url: 'https://attack.mitre.org/techniques/T1059/',
+      },
+      {
+        id: 'T1041',
+        name: 'Exfiltration Over C2 Channel (Agent Tool Outbound Webhook Exfiltration)',
+        tactic: 'Exfiltration',
+        url: 'https://attack.mitre.org/techniques/T1041/',
+      },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 foundational AI security frameworks: (1) OWASP Top 10 for LLM Applications 2025 (LLM01: Prompt Injection & LLM06: Excessive Agency) explaining how untrusted retrieved chunks hijack model planning when concatenated directly into privileged system prompts; (2) MITRE ATLAS AML.T0051.001 (Indirect Prompt Injection) and NIST AI 100-2 adversarial ML taxonomy detailing RAG vector-store poisoning and agent tool-call abuse; and (3) Model Context Protocol (MCP) security specification recommending least-privilege tool scoping, human-in-the-loop approval gates, and structured tool-call audit logging.',
+    primarySources: [
+      {
+        id: 'owasp-llm01-2025',
+        organization: 'OWASP GenAI Security Project',
+        title: 'OWASP Top 10 for Large Language Model Applications 2025 — LLM01 Prompt Injection & LLM06 Excessive Agency',
+        referenceCode: 'OWASP-LLM01-2025',
+        licenseOrTerms: 'CC BY-SA 4.0',
+        url: 'https://genai.owasp.org/llmrisk/llm01-prompt-injection/',
+        usageSummary:
+          'Defines indirect prompt injection through external documents, RAG retrieval contamination, and excessive agent tool permissions.',
+      },
+      {
+        id: 'mitre-atlas-aml-t0051',
+        organization: 'The MITRE Corporation (ATLAS)',
+        title: 'MITRE ATLAS AML.T0051.001: LLM Prompt Injection — Indirect',
+        referenceCode: 'ATLAS-AML.T0051.001',
+        licenseOrTerms: 'Apache 2.0 / MITRE ATLAS',
+        url: 'https://atlas.mitre.org/techniques/AML.T0051.001',
+        usageSummary:
+          'Maps adversary indirect prompt injection inside knowledge-base corpora to unauthorized autonomous tool invocations and data exfiltration.',
+      },
+      {
+        id: 'nist-ai-100-2-adversarial',
+        organization: 'NIST (National Institute of Standards and Technology)',
+        title: 'NIST AI 100-2 E2025: Adversarial Machine Learning — A Taxonomy and Terminology of Attacks and Mitigations',
+        referenceCode: 'NIST-AI-100-2',
+        licenseOrTerms: 'U.S. Government Public Domain',
+        url: 'https://csrc.nist.gov/pubs/ai/100/2/e2025/final',
+        usageSummary:
+          'Provides architectural defenses including instruction-data separation, strict tool schema validation, egress allowlisting, and human approval checkpoints.',
+      },
+    ],
+    syntheticDataNotice:
+      'Vector store IDs, MCP server tool names, webhook endpoints, and RAG document chunks are synthetic simulation artifacts.',
+  },
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': {
+    scenarioId: 'wannacry-eternalblue-smb-worm-cve-2017-0144',
+    scenarioCode: 'CVE-2017-0144',
+    mitreTechniques: [
+      {
+        id: 'T1210',
+        name: 'Exploitation of Remote Services (EternalBlue MS17-010 SMBv1 & DoublePulsar)',
+        tactic: 'Lateral Movement',
+        url: 'https://attack.mitre.org/techniques/T1210/',
+      },
+      {
+        id: 'T1497.001',
+        name: 'Virtualization/Sandbox Evasion: System Checks (Hardcoded HTTP Kill-Switch Domain)',
+        tactic: 'Defense Evasion / Discovery',
+        url: 'https://attack.mitre.org/techniques/T1497/001/',
+      },
+      {
+        id: 'T1486',
+        name: 'Data Encrypted for Impact (tasksche.exe AES-128 + RSA-2048 .WNCRY Encryption)',
+        tactic: 'Impact',
+        url: 'https://attack.mitre.org/techniques/T1486/',
+      },
+      {
+        id: 'T1490',
+        name: 'Inhibit System Recovery (vssadmin Shadow Copy Wipe, wbadmin & bcdedit)',
+        tactic: 'Impact',
+        url: 'https://attack.mitre.org/techniques/T1490/',
+      },
+    ],
+    multiSourceSynthesis:
+      'Synthesizes 3 foundational advisories on the May 2017 WannaCry outbreak: (1) Microsoft Security Bulletin MS17-010 documenting the CVE-2017-0144 SMBv1 kernel pool overflow in srv.sys (SrvOs2FeaListSizeToNt 32-bit-to-16-bit truncation) and emergency Windows XP/Server 2003 out-of-band patches; (2) US-CERT / CISA Alert TA17-132A detailing mssecsvc.exe propagation over TCP/445, DoublePulsar Ring 0 backdoor injection, tasksche.exe AES-128/RSA-2048 .WNCRY encryption, and vssadmin/bcdedit shadow-copy removal; and (3) UK National Cyber Security Centre (NCSC) & MalwareTech (Marcus Hutchins) technical disclosures documenting the hardcoded WinINet kill-switch domain sinkhole that halted worldwide worm propagation.',
+    primarySources: [
+      {
+        id: 'msrc-ms17-010-cve-2017-0144',
+        organization: 'Microsoft Security Response Center (MSRC)',
+        title: 'Microsoft Security Bulletin MS17-010 — Critical: Security Update for Microsoft Windows SMB Server (CVE-2017-0144, CVE-2017-0145)',
+        referenceCode: 'MS17-010',
+        licenseOrTerms: 'Microsoft Public Security Advisory',
+        url: 'https://learn.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010',
+        usageSummary:
+          'Authoritative technical specification of the SMBv1 srv.sys remote code execution flaw (EternalBlue), affected Windows releases, and SMBv1 disablement guidance.',
+      },
+      {
+        id: 'cisa-ta17-132a-wannacry',
+        organization: 'CISA / US-CERT',
+        title: 'Alert (TA17-132A): Indicators Associated With WannaCry Ransomware',
+        referenceCode: 'CISA-TA17-132A',
+        licenseOrTerms: 'U.S. Government Public Domain',
+        url: 'https://www.cisa.gov/news-events/alerts/2017/05/12/indicators-associated-wannacry-ransomware',
+        usageSummary:
+          'Documents WannaCry mssecsvc.exe / tasksche.exe execution chain, hardcoded kill-switch domain indicators, .WNCRY encryption, and TCP/445 worm mitigation.',
+      },
+      {
+        id: 'mitre-s0366-wannacry-ncsc',
+        organization: 'The MITRE Corporation & NCSC-UK',
+        title: 'MITRE ATT&CK Software S0366 (WannaCry) & NCSC-UK NHS Outbreak Lessons Learned',
+        referenceCode: 'ATT&CK-S0366',
+        licenseOrTerms: 'MITRE ATT&CK Terms of Use',
+        url: 'https://attack.mitre.org/software/S0366/',
+        usageSummary:
+          'Maps WannaCry TTPs across EternalBlue lateral movement (T1210), kill-switch sandbox check (T1497.001), hybrid encryption (T1486), and recovery inhibition (T1490).',
+      },
+    ],
+    syntheticDataNotice:
+      'Hospital workstation hostnames, RFC 1918 VLAN addresses, kernel pool base addresses, and Sysmon/Suricata event timestamps are synthetic educational artifacts modeled on documented MS17-010 behavior.',
+  },
 };
 
 export function getScenarioAttribution(

@@ -77,6 +77,30 @@ const BESPOKE_SECTION_SCENE_LOADERS: Record<
     import('./dns-tunneling-exfil/three').then(
       (mod) => mod.buildBespokeDnsTunnelSectionScene as BespokeSectionSceneFactory
     ),
+  'aws-imdsv1-ssrf-capitalone-style': () =>
+    import('./aws-imdsv1-ssrf-capitalone-style/three').then(
+      (mod) => mod.buildBespokeImdsSectionScene as BespokeSectionSceneFactory
+    ),
+  'solarwinds-sunburst-orion-supply-chain': () =>
+    import('./solarwinds-sunburst-orion-supply-chain/three').then(
+      (mod) => mod.buildBespokeSunburstSectionScene as BespokeSectionSceneFactory
+    ),
+  'aukill-edr-killer-procxp152-byovd': () =>
+    import('./aukill-edr-killer-procxp152-byovd/three').then(
+      (mod) => mod.buildBespokeAukillSectionScene as BespokeSectionSceneFactory
+    ),
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': () =>
+    import('./runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/three').then(
+      (mod) => mod.buildBespokeRuncSectionScene as BespokeSectionSceneFactory
+    ),
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': () =>
+    import('./ai-rag-indirect-prompt-injection-mcp-tool-audit/three').then(
+      (mod) => mod.buildBespokeRagMcpSectionScene as BespokeSectionSceneFactory
+    ),
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': () =>
+    import('./wannacry-eternalblue-smb-worm-cve-2017-0144/three').then(
+      (mod) => mod.buildBespokeWannacrySectionScene as BespokeSectionSceneFactory
+    ),
 };
 
 export function loadBespokeSectionSceneFactory(

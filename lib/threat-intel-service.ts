@@ -1578,6 +1578,331 @@ const CURATED_THREAT_INTEL: Record<
   },
   ...BATCH_1_TO_4_CURATED_INTEL,
   ...VULNCHECK_CWP_AND_DFIR_CURATED_INTEL,
+  'aws-imdsv1-ssrf-capitalone-style': {
+    scenarioId: 'aws-imdsv1-ssrf-capitalone-style',
+    scenarioCode: 'T1552.005',
+    scenarioName: 'AWS EC2 IMDSv1 SSRF Credential Theft & S3 Bucket Exfiltration',
+    summary:
+      'An external attacker exploits a misconfigured EC2 reverse proxy (WAF/proxy tier) via unvalidated SSRF to query the link-local Instance Metadata Service v1 endpoint (169.254.169.254/latest/meta-data/iam/security-credentials/WAF-Role) with a single unauthenticated GET request, harvests temporary STS ASIA* credentials, and runs bulk aws s3 sync exfiltration from an external IP until detected by GuardDuty InstanceCredentialExfiltration.OutsideAWS and remediated via IMDSv2 session tokens.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: AWS EC2 documentation details why IMDSv1 accepts stateless GET requests over reverse proxies while IMDSv2 enforces PUT session tokens with TTL and HttpPutResponseHopLimit=1; AWS GuardDuty & CloudTrail document external STS replay telemetry; and Palo Alto Unit 42 & MITRE T1552.005 catalog least-privilege IAM role scoping.',
+    cves: [
+      {
+        id: 'MITRE-T1552.005',
+        cvss: '9.1 CRITICAL',
+        status: 'Cloud Architecture Misconfiguration · IMDSv1',
+        description:
+          'Unauthenticated SSRF access to AWS EC2 IMDSv1 link-local metadata endpoint leaking temporary IAM role STS credentials.',
+      },
+    ],
+    actorGroups: [
+      {
+        name: 'Cloud-Native SSRF & Credential Exfiltration Clusters',
+        aliases: 'Capital One-Style Proxy SSRF Intrusion Pattern',
+        targetSectors: 'Financial Services, SaaS Platforms, E-Commerce, Healthcare Cloud',
+        notableCampaign:
+          'Chained misconfigured WAF reverse proxies with IMDSv1 metadata queries to exfiltrate hundreds of S3 buckets using stolen IAM role tokens.',
+      },
+      {
+        name: 'TeamTNT & Cloud Cryptojacking / Extortion Actors',
+        aliases: 'Automated IMDS Harvesters',
+        targetSectors: 'Multi-Cloud Enterprise Workloads',
+        notableCampaign:
+          'Automated scanning of internet-facing proxies and containers for 169.254.169.254 IMDSv1 credential exposure.',
+      },
+    ],
+    realWorldAdvisories: [
+      'AWS EC2 User Guide: Configure the Instance Metadata Service (IMDSv2 HttpTokens=required & HopLimit=1).',
+      'AWS GuardDuty: UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS Detection Reference.',
+      'MITRE ATT&CK T1552.005 & Palo Alto Unit 42: Cloud Instance Metadata API Abuse and S3 Exfiltration.',
+    ],
+    groundedSources: [
+      {
+        title: 'AWS Documentation — Use IMDSv2 on Amazon EC2 Instances',
+        uri: 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html',
+      },
+      {
+        title: 'AWS GuardDuty — IAM InstanceCredentialExfiltration Finding Types',
+        uri: 'https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-types-iam.html',
+      },
+      {
+        title: 'MITRE ATT&CK — T1552.005 Cloud Instance Metadata API',
+        uri: 'https://attack.mitre.org/techniques/T1552/005/',
+      },
+    ],
+  },
+  'solarwinds-sunburst-orion-supply-chain': {
+    scenarioId: 'solarwinds-sunburst-orion-supply-chain',
+    scenarioCode: 'T1195.002',
+    scenarioName: 'SolarWinds SUNSPOT Build Hijack & SUNBURST Orion Supply-Chain Backdoor',
+    summary:
+      'APT29 (Midnight Blizzard / UNC2452) planted the SUNSPOT implant on the SolarWinds Orion build server to monitor MsBuild.exe and silently swap InventoryManager.cs during compilation, embedding the SUNBURST backdoor inside legitimately Authenticode-signed SolarWinds.Orion.Core.BusinessLayer.dll updates shipped to ~18,000 organizations, followed by 12–14 day dormancy, avsvmcloud[.]com DNS DGA C2, TEARDROP memory loading, and AD FS Golden SAML federation takeover.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: CrowdStrike reverse-engineered the SUNSPOT build-pipeline MsBuild.exe source-swap mechanism; Mandiant disclosed SUNBURST dormancy, blocklists, and DNS DGA telemetry; and CISA AA20-352A & Microsoft documented TEARDROP and Golden SAML cloud persistence.',
+    cves: [
+      {
+        id: 'MITRE-T1195.002',
+        cvss: '9.8 CRITICAL',
+        status: 'CISA Emergency Directive 21-01 · Supply Chain',
+        description:
+          'Pre-signing build-pipeline compromise injecting SUNBURST into SolarWinds Orion Platform 2019.4 HF 5 through 2020.2.1.',
+      },
+    ],
+    actorGroups: [
+      {
+        name: 'APT29 (Midnight Blizzard / UNC2452 / NOBELIUM)',
+        aliases: 'Cozy Bear, SolarStorm, Dark Halo',
+        targetSectors: 'Government Agencies, Cybersecurity Vendors, Telecommunications, Enterprise IT',
+        notableCampaign:
+          'Executed the 2020 SolarWinds Orion supply-chain compromise using SUNSPOT, SUNBURST, TEARDROP, and Golden SAML against Microsoft 365 tenants.',
+      },
+      {
+        name: 'Build-Pipeline & Code-Signing Espionage Clusters',
+        aliases: 'CI/CD Pre-Signing Supply-Chain Operators',
+        targetSectors: 'Enterprise Software Vendors, Network Monitoring & DevOps Platforms',
+        notableCampaign:
+          'Target automated build servers and Authenticode signing infrastructure to distribute trojanized updates inside trusted customer channels.',
+      },
+    ],
+    realWorldAdvisories: [
+      'CrowdStrike Intelligence: SUNSPOT — An Implant in the Build Process.',
+      'Mandiant: Highly Evasive Attacker Leverages SolarWinds Supply Chain With SUNBURST Backdoor.',
+      'CISA Alert AA20-352A & Emergency Directive 21-01: Mitigate SolarWinds Orion Code Compromise.',
+    ],
+    groundedSources: [
+      {
+        title: 'CrowdStrike — SUNSPOT Build-Process Implant Technical Analysis',
+        uri: 'https://www.crowdstrike.com/blog/sunspot-malware-technical-analysis/',
+      },
+      {
+        title: 'Mandiant — SolarWinds SUNBURST Backdoor Technical Disclosure',
+        uri: 'https://cloud.google.com/blog/topics/threat-intelligence/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor/',
+      },
+      {
+        title: 'CISA Advisory AA20-352A — SolarWinds Orion Supply-Chain Compromise',
+        uri: 'https://www.cisa.gov/news-events/cybersecurity-advisories/aa20-352a',
+      },
+    ],
+  },
+  'aukill-edr-killer-procxp152-byovd': {
+    scenarioId: 'aukill-edr-killer-procxp152-byovd',
+    scenarioCode: 'T1543.003',
+    scenarioName: 'AuKill BYOVD EDR Killer Abusing Signed Sysinternals PROCEXP152.sys',
+    summary:
+      'Documented by Sophos X-Ops and tracked in LOLDrivers, the AuKill Bring-Your-Own-Vulnerable-Driver (BYOVD) tool drops an outdated Microsoft-signed Sysinternals Process Explorer driver (PROCEXP152.sys), registers it via SCM (Event ID 7045 / Sysmon EID 6), and sends DeviceIoControl IOCTLs (0x8335003C / 0x83350004) to obtain Ring 0 PROCESS_ALL_ACCESS handles across Protected Process Light (PPL) boundaries, continuously terminating EDR/AV processes prior to ransomware encryption.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Sophos X-Ops dissected AuKill’s PROCEXP152.sys IOCTL handle-opening and EDR kill loop in live Medusa Locker and LockBit intrusions; LOLDrivers provides verified hashes and Sysmon EID 6 Sigma detections; and Microsoft details HVCI + Vulnerable Driver Blocklist prevention.',
+    cves: [
+      {
+        id: 'MITRE-T1543.003',
+        cvss: '8.8 HIGH',
+        status: 'LOLDrivers Verified · Active Ransomware BYOVD',
+        description:
+          'Abuse of legitimate Microsoft-signed outdated PROCEXP152.sys kernel driver to bypass PPL protections and terminate EDR processes.',
+      },
+    ],
+    actorGroups: [
+      {
+        name: 'Medusa Locker & LockBit Ransomware Affiliates',
+        aliases: 'AuKill / Backstab BYOVD Operators',
+        targetSectors: 'Healthcare, Manufacturing, Financial Services, Critical Infrastructure',
+        notableCampaign:
+          'Deployed AuKill during pre-encryption staging to blind Windows Defender, CrowdStrike, and Sophos PPL agents without triggering tamper alerts.',
+      },
+      {
+        name: 'BlackCat (ALPHV) & RansomHub BYOVD Crews',
+        aliases: 'EDRKillShifter / LOLDrivers Weaponization Clusters',
+        targetSectors: 'Enterprise Windows Fleets, Managed Service Providers, Financial Sector',
+        notableCampaign:
+          'Weaponized outdated signed utility drivers from the LOLDrivers ecosystem to open Ring 0 handles and terminate EDR services prior to extortion.',
+      },
+    ],
+    realWorldAdvisories: [
+      'Sophos X-Ops: AuKill EDR Killer Abuses Process Explorer Driver Before Ransomware.',
+      'LOLDrivers Project: PROCEXP152.sys Vulnerable Signed Driver Catalog & Sigma Rules.',
+      'Microsoft Learn: Recommended Driver Block Rules and HVCI Memory Integrity.',
+    ],
+    groundedSources: [
+      {
+        title: 'Sophos X-Ops — AuKill EDR Killer Technical Analysis',
+        uri: 'https://news.sophos.com/en-us/2023/04/19/aukill-edr-killer-malware-abuses-process-explorer-driver/',
+      },
+      {
+        title: 'LOLDrivers — Vulnerable Signed Windows Drivers Catalog',
+        uri: 'https://www.loldrivers.io/',
+      },
+      {
+        title: 'Microsoft Learn — Microsoft Recommended Driver Block Rules',
+        uri: 'https://learn.microsoft.com/en-us/windows/security/application-security/application-control/app-control-for-business/design/microsoft-recommended-driver-block-rules',
+      },
+    ],
+  },
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': {
+    scenarioId: 'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626',
+    scenarioCode: 'CVE-2024-21626',
+    scenarioName: 'runc Leaky Vessels Container Escape via Leaked Host File Descriptor (CVE-2024-21626)',
+    summary:
+      'Disclosed by Snyk Security Labs and OpenContainers ("Leaky Vessels"), CVE-2024-21626 arises in runc < 1.1.12 when an internal /sys/fs/cgroup host file descriptor opened during container initialization lacks O_CLOEXEC and leaks into the container process. By configuring an OCI image WORKDIR /proc/self/fd/7 or running runc exec --cwd /proc/self/fd/7, an attacker lands their working directory on the host mount namespace, traverses ../../../../etc/shadow, and achieves full host root escape.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: OpenContainers GHSA-xr7r-f8xq-vfvv documents the leaked cgroup fd root cause and runc 1.1.12 O_CLOEXEC + post-chdir validation patch; Snyk Security Labs details the Dockerfile WORKDIR and runc exec breakout paths; and NVD/CISA provide CVSS 8.6 risk scoring and Linux auditd/Falco runtime detections.',
+    cves: [
+      {
+        id: 'CVE-2024-21626',
+        cvss: '8.6 HIGH',
+        status: 'CISA KEV · Leaky Vessels Container Breakout',
+        description:
+          'Internal /sys/fs/cgroup file descriptor leak in runc 1.0.0-rc93 through 1.1.11 permitting container escape via process.cwd /proc/self/fd/N.',
+      },
+    ],
+    actorGroups: [
+      {
+        name: 'Cloud-Native Container Escape & Supply-Chain Image Actors',
+        aliases: 'Malicious OCI Image & Multi-Tenant K8s Breakout Operators',
+        targetSectors: 'Kubernetes SaaS Providers, CI/CD Runner Fleets, Cloud Hosting',
+        notableCampaign:
+          'Crafted malicious container images with WORKDIR /proc/self/fd/7..9 to break out of unpatched Docker and Kubernetes worker nodes.',
+      },
+      {
+        name: 'Kinsing & Cloud Cryptojacking Runtime Exploiters',
+        aliases: 'Opportunistic Container Breakout Clusters',
+        targetSectors: 'Cloud Container Workloads, BuildKit Pipelines, Managed Kubernetes',
+        notableCampaign:
+          'Exploited unpatched runc and container runtime flaws to harvest host node credentials, cloud metadata tokens, and SSH keys.',
+      },
+    ],
+    realWorldAdvisories: [
+      'OpenContainers Security Advisory GHSA-xr7r-f8xq-vfvv: runc process.cwd & Leaked FDs Breakout (CVE-2024-21626).',
+      'Snyk Security Labs: Leaky Vessels — Container Escape Vulnerabilities in runc and BuildKit.',
+      'NIST NVD & CISA KEV: CVE-2024-21626 runc Host Filesystem Access.',
+    ],
+    groundedSources: [
+      {
+        title: 'OpenContainers — GHSA-xr7r-f8xq-vfvv runc CVE-2024-21626 Advisory',
+        uri: 'https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv',
+      },
+      {
+        title: 'Snyk Security Labs — Leaky Vessels CVE-2024-21626 Analysis',
+        uri: 'https://snyk.io/blog/cve-2024-21626-runc-process-cwd-container-breakout/',
+      },
+      {
+        title: 'NIST NVD — CVE-2024-21626 Detail',
+        uri: 'https://nvd.nist.gov/vuln/detail/CVE-2024-21626',
+      },
+    ],
+  },
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': {
+    scenarioId: 'ai-rag-indirect-prompt-injection-mcp-tool-audit',
+    scenarioCode: 'OWASP-LLM01',
+    scenarioName: 'AI RAG Indirect Prompt Injection & MCP Tool Exfiltration Audit',
+    summary:
+      'Mapped to OWASP LLM01:2025, MITRE ATLAS AML.T0051.001, and NIST AI 100-2, an attacker embeds hidden adversarial instructions inside an untrusted document ingested into an enterprise RAG vector store. When a legitimate employee asks the AI assistant to summarize vendor records, the poisoned chunk is retrieved into the LLM context window alongside system instructions, hijacking the agent into invoking privileged Model Context Protocol (MCP) tools (read_internal_secrets + send_external_webhook) to exfiltrate sensitive data unless blocked by structured instruction-data separation and human-in-the-loop MCP policy gates.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: OWASP LLM01:2025 and LLM06 define indirect prompt injection and excessive agent agency; MITRE ATLAS AML.T0051.001 formalizes RAG retrieval poisoning into autonomous tool execution; and NIST AI 100-2 specifies architectural guardrails including untrusted-data framing, least-privilege MCP schemas, and egress DLP auditing.',
+    cves: [
+      {
+        id: 'OWASP-LLM01-2025',
+        cvss: '9.0 CRITICAL',
+        status: 'AI Agent & MCP Architecture Vulnerability Class',
+        description:
+          'Indirect prompt injection via RAG vector retrieval causing confused-deputy execution of privileged MCP tools and outbound data exfiltration.',
+      },
+    ],
+    actorGroups: [
+      {
+        name: 'Adversarial AI Red Teams & Enterprise Agent Exploiters',
+        aliases: 'RAG Poisoning & Confused-Deputy MCP Operators',
+        targetSectors: 'Enterprise SaaS Copilots, Legal/Finance Knowledge Bases, DevOps AI Agents',
+        notableCampaign:
+          'Demonstrated zero-click data exfiltration across RAG-connected enterprise assistants by planting invisible directive text inside shared PDFs, tickets, and wiki pages.',
+      },
+      {
+        name: 'Automated Supply-Chain Document Poisoning Clusters',
+        aliases: 'Indirect Prompt Injection & Tool-Abuse Actors',
+        targetSectors: 'Customer Support Automation, Procurement Portals, AI Engineering Workflows',
+        notableCampaign:
+          'Injected adversarial directives into external vendor documents and issue trackers to hijack over-scoped agentic tool connectors.',
+      },
+    ],
+    realWorldAdvisories: [
+      'OWASP GenAI Security Project: Top 10 for LLM Applications 2025 (LLM01 Prompt Injection & LLM06 Excessive Agency).',
+      'MITRE ATLAS: AML.T0051.001 Indirect LLM Prompt Injection Technique.',
+      'NIST AI 100-2 E2025: Adversarial Machine Learning Taxonomy and Mitigations.',
+    ],
+    groundedSources: [
+      {
+        title: 'OWASP — LLM01:2025 Prompt Injection',
+        uri: 'https://genai.owasp.org/llmrisk/llm01-prompt-injection/',
+      },
+      {
+        title: 'MITRE ATLAS — AML.T0051.001 Indirect Prompt Injection',
+        uri: 'https://atlas.mitre.org/techniques/AML.T0051.001',
+      },
+      {
+        title: 'NIST AI 100-2 E2025 — Adversarial Machine Learning',
+        uri: 'https://csrc.nist.gov/pubs/ai/100/2/e2025/final',
+      },
+    ],
+  },
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': {
+    scenarioId: 'wannacry-eternalblue-smb-worm-cve-2017-0144',
+    scenarioCode: 'CVE-2017-0144',
+    scenarioName: 'WannaCry Ransomware Worm — EternalBlue MS17-010 SMBv1 Exploit & Kill-Switch Sinkhole',
+    summary:
+      'Combining the leaked EternalBlue SMBv1 kernel pool overflow (CVE-2017-0144 / MS17-010) and DoublePulsar Ring 0 backdoor with a self-propagating ransomware dropper (mssecsvc.exe + tasksche.exe), WannaCry infected over 200,000 unpatched Windows systems across 150 countries in May 2017—including UK NHS hospitals, logistics fleets, and telecom networks—before researcher Marcus Hutchins registered the hardcoded WinINet kill-switch domain to return HTTP 200 OK and halt new detonations.',
+    multiSourceSynthesis:
+      'Cross-vendor synthesis: Microsoft MS17-010 defines the srv.sys SrvOs2FeaListSizeToNt 32-bit-to-16-bit truncation kernel overflow; CISA/US-CERT Alert TA17-132A catalogs the mssecsvc.exe worm scanner, tasksche.exe AES-128/RSA-2048 .WNCRY locker, and vssadmin/bcdedit shadow wipe; and NCSC-UK / MITRE S0366 document the sinkhole kill-switch mechanism and network segmentation lessons.',
+    cves: [
+      {
+        id: 'CVE-2017-0144',
+        cvss: '9.8 CRITICAL',
+        status: 'CISA KEV · MS17-010 EternalBlue SMBv1 RCE',
+        description:
+          'Windows SMBv1 server (srv.sys) non-paged kernel pool overflow in SrvOs2FeaListSizeToNt allowing unauthenticated Ring 0 remote code execution over TCP/445.',
+      },
+      {
+        id: 'CVE-2017-0145',
+        cvss: '8.1 HIGH',
+        status: 'MS17-010 Companion SMBv1 RCE',
+        description:
+          'Secondary SMBv1 transaction handling vulnerability patched in MS17-010 and exploited in parallel by EternalBlue/DoublePulsar toolchains.',
+      },
+    ],
+    actorGroups: [
+      {
+        name: 'Lazarus Group (Hidden Cobra / APT38)',
+        aliases: 'Zinc, Diamond Sleet, Guardians of Peace, Bureau 121',
+        targetSectors: 'Healthcare (NHS), Telecommunications, Logistics, Manufacturing, Government',
+        notableCampaign:
+          'Attributed by the US, UK, and international intelligence partners for deploying WannaCry 2.0 using EternalBlue (MS17-010) and DoublePulsar across 150+ countries in May 2017.',
+      },
+      {
+        name: 'Post-Outbreak EternalBlue & DoublePulsar Opportunistic Worm Operators',
+        aliases: 'NotPetya / TrickBot / Smominru SMBv1 Exploiters',
+        targetSectors: 'Legacy Healthcare Devices, Industrial Control Networks, Unpatched Enterprise VLANs',
+        notableCampaign:
+          'Reused leaked EternalBlue/DoublePulsar modules and modified WannaCry variants against flat internal subnets where SMBv1 remained enabled.',
+      },
+    ],
+    realWorldAdvisories: [
+      'Microsoft Security Bulletin MS17-010: Critical Security Update for Microsoft Windows SMB Server (CVE-2017-0144).',
+      'US-CERT / CISA Alert TA17-132A: Indicators Associated With WannaCry Ransomware.',
+      'MITRE ATT&CK Software S0366 (WannaCry) & UK National Audit Office / NCSC NHS Cyber Attack Investigation.',
+    ],
+    groundedSources: [
+      {
+        title: 'Microsoft Security Bulletin MS17-010 — Windows SMB Server (CVE-2017-0144)',
+        uri: 'https://learn.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010',
+      },
+      {
+        title: 'CISA Alert TA17-132A — Indicators Associated With WannaCry Ransomware',
+        uri: 'https://www.cisa.gov/news-events/alerts/2017/05/12/indicators-associated-wannacry-ransomware',
+      },
+      {
+        title: 'MITRE ATT&CK S0366 — WannaCry Software Profile',
+        uri: 'https://attack.mitre.org/software/S0366/',
+      },
+    ],
+  },
 };
 
 export function getCuratedThreatIntel(

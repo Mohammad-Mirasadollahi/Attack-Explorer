@@ -17,6 +17,12 @@ import { ZEROLOGON_TECHNICAL_BOARDS } from '@/modules/scenarios/zerologon-netlog
 import { DCSYNC_TECHNICAL_BOARDS } from '@/modules/scenarios/dfir-dcsync-drsuapi-replication-eid4662/excalidraw';
 import { LOG4SHELL_TECHNICAL_BOARDS } from '@/modules/scenarios/log4shell-dfir/excalidraw';
 import { DNS_TUNNEL_TECHNICAL_BOARDS } from '@/modules/scenarios/dns-tunneling-exfil/excalidraw';
+import { IMDS_TECHNICAL_BOARDS } from '@/modules/scenarios/aws-imdsv1-ssrf-capitalone-style/excalidraw';
+import { SUNBURST_TECHNICAL_BOARDS } from '@/modules/scenarios/solarwinds-sunburst-orion-supply-chain/excalidraw';
+import { AUKILL_TECHNICAL_BOARDS } from '@/modules/scenarios/aukill-edr-killer-procxp152-byovd/excalidraw';
+import { RUNC_TECHNICAL_BOARDS } from '@/modules/scenarios/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/excalidraw';
+import { RAGMCP_TECHNICAL_BOARDS } from '@/modules/scenarios/ai-rag-indirect-prompt-injection-mcp-tool-audit/excalidraw';
+import { WANNACRY_TECHNICAL_BOARDS } from '@/modules/scenarios/wannacry-eternalblue-smb-worm-cve-2017-0144/excalidraw';
 
 export type {
   BoardTooltip,
@@ -41,6 +47,12 @@ const SCENARIO_TECHNICAL_BOARDS: Record<
   'dfir-dcsync-drsuapi-replication-eid4662': DCSYNC_TECHNICAL_BOARDS,
   'log4shell-dfir': LOG4SHELL_TECHNICAL_BOARDS,
   'dns-tunneling-exfil': DNS_TUNNEL_TECHNICAL_BOARDS,
+  'aws-imdsv1-ssrf-capitalone-style': IMDS_TECHNICAL_BOARDS,
+  'solarwinds-sunburst-orion-supply-chain': SUNBURST_TECHNICAL_BOARDS,
+  'aukill-edr-killer-procxp152-byovd': AUKILL_TECHNICAL_BOARDS,
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': RUNC_TECHNICAL_BOARDS,
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': RAGMCP_TECHNICAL_BOARDS,
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': WANNACRY_TECHNICAL_BOARDS,
 };
 
 export function hasTechnicalWhiteboard(

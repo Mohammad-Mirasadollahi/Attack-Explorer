@@ -87,6 +87,48 @@ const SCENARIO_TECHNICAL_CLIPS: Record<
     'step-4': true,
     'memory-forensics': true,
   },
+  'aws-imdsv1-ssrf-capitalone-style': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'solarwinds-sunburst-orion-supply-chain': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'aukill-edr-killer-procxp152-byovd': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': {
+    'step-1': true,
+    'step-2': true,
+    'step-3': true,
+    'step-4': true,
+    'memory-forensics': true,
+  },
 };
 
 export function hasTechnicalClip(

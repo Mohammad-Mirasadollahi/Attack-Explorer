@@ -406,7 +406,7 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
     assert.ok(totalSections >= 7, `Expected >= 7 bespoke 3D sections, got ${totalSections}`);
   });
 
-  it('MOD-18 Anti-Slicing Guard: all 10 non-hollowing scenarios ship dedicated standalone step & memory 3D modules without Overview slicing', () => {
+  it('MOD-18 Anti-Slicing Guard: all 16 non-hollowing scenarios ship dedicated standalone step & memory 3D modules without Overview slicing', () => {
     const repoRoot = process.cwd();
     const overviewSlicingImportRegex = /from\s+['"]\.\/scene-builders['"]/;
     let auditedStandaloneFiles = 0;
@@ -454,8 +454,8 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
 
     assert.equal(
       auditedStandaloneFiles,
-      49,
-      `Expected 49 MOD-18 standalone step/memory scene files across 10 scenarios, audited ${auditedStandaloneFiles}`
+      79,
+      `Expected 79 MOD-18 standalone step/memory scene files across 16 scenarios, audited ${auditedStandaloneFiles}`
     );
   });
 });

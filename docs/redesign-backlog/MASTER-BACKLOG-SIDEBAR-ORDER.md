@@ -14,8 +14,8 @@
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
 │  • Total Catalog Scenarios Tracked : 188  (13 Sidebar Categories)                        │
 │  • Golden Benchmark Live (Untouched): 1    (#001 process-hollowing)                      │
-│  • Bespoke Studio Rebuilds Completed: 10   (#002, #003, #004, #016, #020, #031, #037, #039, #047, #048) │
-│  • Pending Clean-Slate Rebuild      : 177  (remaining queue in strict Sidebar order)     │
+│  • Bespoke Studio Rebuilds Completed: 15   (#002, #003, #004, #016, #020, #031, #037, #039, #047, #048, #078, #114, #124, #167, #186) │
+│  • Pending Clean-Slate Rebuild      : 172  (remaining queue in strict Sidebar order)     │
 │  • Priority Tier Breakdown          : Tier 1: 55  | Tier 2: 107 | Tier 3: 26           │
 │  • Preserved Primary Source URLs    : 564  authoritative links archived safely           │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
@@ -87,7 +87,7 @@
 | **#066** | `NETWORK_WEB` | `unit42-panos-midnight-eclipse` | Unit 42 — Operation MidnightEclipse: PAN-OS GlobalProtect RCE & UPSTYLE Backdoor | `PENDING_REBUILD` |
 | **#067** | `NETWORK_WEB` | `unit42-star-blizzard-evilginx-aitm` | Microsoft, Unit 42 & CISA — Star Blizzard / Storm-0539: Evilginx AiTM Cookie Theft | `PENDING_REBUILD` |
 | **#077** | `CLOUD_SAAS` | `aws-cognito-iam-passrole-privesc` | Rhino Security Labs, Datadog & AWS — IAM PassRole + Lambda CreateFunction Privilege Escalation & CloudTrail StopLogging | `PENDING_REBUILD` |
-| **#078** | `CLOUD_SAAS` | `aws-imdsv1-ssrf-capitalone-style` | AWS Security, Unit 42 & MITRE — EC2 Reverse-Proxy SSRF to IMDSv1 (169.254.169.254) IAM Role & S3 Exfiltration | `PENDING_REBUILD` |
+| **#078** | `CLOUD_SAAS` | `aws-imdsv1-ssrf-capitalone-style` | AWS Security, Unit 42 & MITRE — EC2 Reverse-Proxy SSRF to IMDSv1 (169.254.169.254) IAM Role & S3 Exfiltration | `COMPLETED` |
 | **#082** | `CLOUD_SAAS` | `microsoft-storm-0558-msa-signing-key` | Microsoft Threat Intel, Wiz & CISA — Storm-0558: Acquired MSA Consumer Signing Key & Forged OWA/Exchange Online Tokens | `PENDING_REBUILD` |
 | **#083** | `CLOUD_SAAS` | `okta-har-file-session-token-hijack` | Okta Security, Cloudflare & BeyondTrust — Support Case .har File sid Session Token Theft & Admin API Token Minting | `PENDING_REBUILD` |
 | **#084** | `CLOUD_SAAS` | `snowflake-unc5537-saas-extortion` | Mandiant & Snowflake — UNC5537 Campaign: Infostealer Credential Replay & FROSTBITE (Rapeflake) Exfiltration | `PENDING_REBUILD` |
@@ -95,10 +95,10 @@
 | **#104** | `SUPPLY_CHAIN_CICD` | `github-actions-tj-actions-changed-files-cve-2025-30066` | GitHub Actions tj-actions/changed-files Runner Memory Dump (CVE-2025-30066) | `PENDING_REBUILD` |
 | **#106** | `SUPPLY_CHAIN_CICD` | `kaseya-vsa-revil-cve-2021-30116` | Kaseya VSA MSP Zero-Day & REvil MsMpEng.exe Side-Loading (CVE-2021-30116) | `PENDING_REBUILD` |
 | **#110** | `SUPPLY_CHAIN_CICD` | `polyfill-io-cdn-domain-supply-chain` | cdn.polyfill.io CDN Domain Takeover & Conditional JS Injection (CVE-2024-38526) | `PENDING_REBUILD` |
-| **#114** | `SUPPLY_CHAIN_CICD` | `solarwinds-sunburst-orion-supply-chain` | SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29) | `PENDING_REBUILD` |
+| **#114** | `SUPPLY_CHAIN_CICD` | `solarwinds-sunburst-orion-supply-chain` | SolarWinds SUNSPOT Build Hijack & SUNBURST Backdoor (APT29) | `COMPLETED` |
 | **#116** | `ZERO_DAY_APPLIANCES` | `check-point-vpn-cve-2024-24919-info-leak` | Check Point Security Gateway /clients/MyCRL Path Traversal & AD Compromise (CVE-2024-24919) | `PENDING_REBUILD` |
 | **#117** | `ZERO_DAY_APPLIANCES` | `fortimanager-fgd-jump-cve-2024-47575` | FortiManager fgfmsd Unauthenticated API RCE ("FortiJump" CVE-2024-47575 / UNC5820) | `PENDING_REBUILD` |
-| **#124** | `KERNEL_FIRMWARE_BYOVD` | `aukill-edr-killer-procxp152-byovd` | AuKill EDR Killer Abusing Signed Sysinternals PROCEXP152.SYS (BYOVD) | `PENDING_REBUILD` |
+| **#124** | `KERNEL_FIRMWARE_BYOVD` | `aukill-edr-killer-procxp152-byovd` | AuKill EDR Killer Abusing Signed Sysinternals PROCEXP152.SYS (BYOVD) | `COMPLETED` |
 | **#125** | `KERNEL_FIRMWARE_BYOVD` | `blacklotus-uefi-bootkit-cve-2022-21894` | BlackLotus UEFI Bootkit Baton Drop Secure Boot Bypass (CVE-2022-21894) | `PENDING_REBUILD` |
 | **#133** | `KERNEL_FIRMWARE_BYOVD` | `linux-bpfdoor-ebpf-socket-filter-apt` | BPFDoor Passive Linux Rootkit & Classic BPF Magic Packet Filter (Red Menshen) | `PENDING_REBUILD` |
 | **#136** | `RANSOMWARE_EXTORTION` | `akira-ransomware-cisco-anyconnect-esxi` | Akira Ransomware Cisco ASA VPN Breach & ESXi Hypervisor Encryption (AA24-109A) | `PENDING_REBUILD` |
@@ -107,7 +107,7 @@
 | **#152** | `RANSOMWARE_EXTORTION` | `ransomhub-edrkiller-tdsskiller-golocks` | CISA AA24-242A, Symantec & Mandiant — RansomHub Ransomware: Kaspersky TDSSKiller / EDRKillShifter BYOVD, Safe-Mode Boot & Curve25519 Encryption | `PENDING_REBUILD` |
 | **#160** | `CONTAINERS_KUBERNETES` | `docker-var-run-docker-sock-mounted-socket-breakout-audit` | Docker Security, CNCF Falco & MITRE — Container Mounted /var/run/docker.sock Unix Socket Escalation Audit | `PENDING_REBUILD` |
 | **#164** | `CONTAINERS_KUBERNETES` | `k8s-ingress-nginx-admission-webhook-audit-cve-2025-1974` | Kubernetes Official Advisory, Wiz & CISA KEV — Ingress-NGINX Admission Controller Configuration Validation Audit (CVE-2025-1974) | `PENDING_REBUILD` |
-| **#167** | `CONTAINERS_KUBERNETES` | `runc-leaky-vessels-cwd-fd-escape-cve-2024-21626` | OpenContainers Security Advisory, Snyk & CISA KEV — runc File Descriptor Leak & Host Filesystem Breakout Analysis (CVE-2024-21626) | `PENDING_REBUILD` |
+| **#167** | `CONTAINERS_KUBERNETES` | `runc-leaky-vessels-cwd-fd-escape-cve-2024-21626` | OpenContainers Security Advisory, Snyk & CISA KEV — runc File Descriptor Leak & Host Filesystem Breakout Analysis (CVE-2024-21626) | `COMPLETED` |
 | **#169** | `ICS_OT_SCADA` | `ics-industroyer2-iec-60870-5-104-substation-telemetry` | CERT-UA #4435, ESET & CISA ICS — Industroyer2 IEC 60870-5-104 Substation Telecontrol & Protection Relay Forensics | `PENDING_REBUILD` |
 | **#171** | `ICS_OT_SCADA` | `ics-stuxnet-step7-s7comm-plc-ob1-ob35-block-injection-audit` | CISA ICS-ALERT-10-196-01, Symantec Dossier & MITRE ICS — SIMATIC STEP 7 s7otbxdx.dll Interception & S7comm PLC Logic Audit | `PENDING_REBUILD` |
 | **#172** | `ICS_OT_SCADA` | `ics-trisis-triton-schneider-triconex-sis-telemetry` | CISA ICS-ALERT-17-356-01, Mandiant & Dragos — TRISIS / TRITON Safety Instrumented System (SIS) TriStation Protocol Forensics | `PENDING_REBUILD` |
@@ -115,7 +115,7 @@
 | **#177** | `MOBILE_TELECOM_SPYWARE` | `telecom-salt-typhoon-diameter-5g-http2-sbi-core-network-audit` | CISA/NSA/FBI Telecom Guidance, GSMA FS.31 & ENISA 5G — 5G Core Service-Based Interface (SBI) NRF/UDM & Diameter Roaming Audit | `PENDING_REBUILD` |
 | **#180** | `DATABASE_DATA_PLATFORMS` | `db-postgresql-psql-utf8-escaping-copy-program-cve-2025-1094` | PostgreSQL Security Team, Rapid7 & CISA KEV — PostgreSQL UTF-8 Quote Escaping & COPY FROM PROGRAM Forensics (CVE-2025-1094) | `PENDING_REBUILD` |
 | **#181** | `DATABASE_DATA_PLATFORMS` | `db-redis-lua-sandbox-debian-liblua-cve-2022-0543` | Debian DSA-5081, NIST NVD & CISA KEV — Redis Lua Sandbox package.loadlib Escape & ReplicaOf Forensics (CVE-2022-0543) | `PENDING_REBUILD` |
-| **#186** | `AI_LLM_MLOPS_SECURITY` | `ai-rag-indirect-prompt-injection-mcp-tool-audit` | OWASP LLM01:2025, NIST AI 100-2 & MITRE ATLAS AML.T0051 — Indirect Prompt Injection via RAG Vector Retrieval & Agent/MCP Tool Audit | `PENDING_REBUILD` |
+| **#186** | `AI_LLM_MLOPS_SECURITY` | `ai-rag-indirect-prompt-injection-mcp-tool-audit` | OWASP LLM01:2025, NIST AI 100-2 & MITRE ATLAS AML.T0051 — Indirect Prompt Injection via RAG Vector Retrieval & Agent/MCP Tool Audit | `COMPLETED` |
 | **#187** | `AI_LLM_MLOPS_SECURITY` | `ai-shadowray-ray-jobs-api-gpu-cluster-cve-2023-48022` | Oligo ShadowRay Research, NIST NVD & MITRE ATLAS AML.T0018 — Ray AI Framework Unauthenticated Jobs API & GPU Cluster Forensics (CVE-2023-48022) | `PENDING_REBUILD` |
 | **#188** | `AI_LLM_MLOPS_SECURITY` | `jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr` | Jeffrey Appel & Microsoft Threat Intel — ARTEX Multi-Agent LLM Framework: Machine-Speed Kill-Chain Compression, Storm-0940 Spray & Defender XDR Disruption | `PENDING_REBUILD` |
 
@@ -219,7 +219,7 @@
 | Sidebar # | Scenario ID | Code | Priority Tier | Memory | Sources | MITRE / Primary CVE | Redesign Notes | Status |
 | ---: | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
 | **#077** | `aws-cognito-iam-passrole-privesc` | `T1098.001` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s077) | T1098.001, T1098.003, T1562.008 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
-| **#078** | `aws-imdsv1-ssrf-capitalone-style` | `T1552.005` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s078) | T1190, T1552.005, T1530 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
+| **#078** | `aws-imdsv1-ssrf-capitalone-style` | `T1552.005` | Tier 1 (Flagship) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s078) | T1190, T1552.005, T1530 · CVE-2023-36884, CVE-2024-21412 | — | `COMPLETED` |
 | **#079** | `azure-ad-connect-pass-the-certificate` | `T1556.007` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s079) | T1003, T1552.001, T1556.007 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#080** | `gcp-service-account-hmac-key-pivot` | `T1098.001` | Tier 2 (High-Impact) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s080) | T1087.004, T1098.001, T1530 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#081** | `k8s-runc-cve-2024-21626-leaky-vessels` | `CVE-2024-21626` | Tier 3 (Specialized) | Yes | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s081) | T1611, T1068 · CVE-2023-36884, CVE-2024-21412 | Overlap with #167 runc-leaky-vessels — consolidate into one flagship K8s/runc episode | `PENDING_REBUILD` |
@@ -260,7 +260,7 @@
 | **#111** | `pypi-pytorch-torchtriton-dependency-confusion-supply-chain` | `T1195.001` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s111) | T1195.001, T1059.006, T1048.003 · PYSEC-2022-43015 (PyTorch torchtriton) | — | `PENDING_REBUILD` |
 | **#112** | `pypi-ultralytics-github-pwnrequest` | `T1195.002` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s112) | T1195.002, T1195.001, T1496 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#113** | `rspack-solana-web3js-npm-supply-chain-2024` | `T1195.002` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s113) | T1195.002, T1552.004, T1041 · GHSA-9394-396v-8p6r (@solana/web3.js & @rspack/core) | — | `PENDING_REBUILD` |
-| **#114** | `solarwinds-sunburst-orion-supply-chain` | `T1195.002` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s114) | T1195.002, T1568.002, T1552.004 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
+| **#114** | `solarwinds-sunburst-orion-supply-chain` | `T1195.002` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s114) | T1195.002, T1568.002, T1552.004 · CVE-2023-36884, CVE-2024-21412 | — | `COMPLETED` |
 
 ### Category 6 — Zero-Day Appliances (`ZERO_DAY_APPLIANCES` · 9 Scenarios)
 
@@ -280,7 +280,7 @@
 
 | Sidebar # | Scenario ID | Code | Priority Tier | Memory | Sources | MITRE / Primary CVE | Redesign Notes | Status |
 | ---: | :--- | :--- | :--- | :---: | :---: | :--- | :--- | :--- |
-| **#124** | `aukill-edr-killer-procxp152-byovd` | `T1543.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s124) | T1543.003, T1562.001, T1486 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
+| **#124** | `aukill-edr-killer-procxp152-byovd` | `T1543.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s124) | T1543.003, T1562.001, T1486 · CVE-2023-36884, CVE-2024-21412 | — | `COMPLETED` |
 | **#125** | `blacklotus-uefi-bootkit-cve-2022-21894` | `T1542.003` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s125) | T1542.003, T1562.001, T1068 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#126** | `crowdstrike-poortry-burntcigar-byovd` | `T1553.002` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s126) | T1553.002, T1562.001, T1003.001 · CVE-2023-36884, CVE-2024-21412 | — | `PENDING_REBUILD` |
 | **#127** | `dfir-linux-ebpf-bpfdoor-raw-socket-magic-packet-forensics` | `T1036.004` | Tier 3 (Specialized) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s127) | T1036.004, T1205.002 · MITRE-T1205.002 / NIST-SP-800-86 | DFIR companion to #133 linux-bpfdoor-ebpf-socket-filter-apt | `PENDING_REBUILD` |
@@ -333,7 +333,7 @@
 | **#164** | `k8s-ingress-nginx-admission-webhook-audit-cve-2025-1974` | `T1190` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s164) | T1190, T1609, T1552.007 · CVE-2025-1974 (IngressNightmare) | — | `PENDING_REBUILD` |
 | **#165** | `k8s-kubelet-anonymous-api-etcd-snapshot-forensics` | `T1613` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s165) | T1613, T1609, T1552.007 · MITRE-T1609 / K8S-10250-ETCD | — | `PENDING_REBUILD` |
 | **#166** | `k8s-mutating-admission-webhook-sidecar-injection-audit` | `T1546` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s166) | T1546, T1552.007, T1610 · MITRE-T1546 / K8S-MUTATING-WEBHOOK | — | `PENDING_REBUILD` |
-| **#167** | `runc-leaky-vessels-cwd-fd-escape-cve-2024-21626` | `T1611` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s167) | T1611, T1552.001 · CVE-2024-21626 (Leaky Vessels) | Overlap with #081 k8s-runc-cve-2024-21626-leaky-vessels — keep canonical here | `PENDING_REBUILD` |
+| **#167** | `runc-leaky-vessels-cwd-fd-escape-cve-2024-21626` | `T1611` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s167) | T1611, T1552.001 · CVE-2024-21626 (Leaky Vessels) | Overlap with #081 k8s-runc-cve-2024-21626-leaky-vessels — keep canonical here | `COMPLETED` |
 
 ### Category 10 — ICS, OT & Industrial SCADA (`ICS_OT_SCADA` · 5 Scenarios)
 
@@ -372,7 +372,7 @@
 | **#183** | `ai-mlflow-unauthenticated-tracking-server-artifact-lfi-cve-2024-2928` | `T1190` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s183) | T1190, T1005, T1552.001 · CVE-2024-2928 | — | `PENDING_REBUILD` |
 | **#184** | `ai-ollama-vllm-inference-server-model-poisoning-ssrf-audit` | `T1518` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s184) | T1518, T1608.001, T1565.001 · OWASP-LLM04-2025 / MITRE-ATLAS-AML.T0020 | — | `PENDING_REBUILD` |
 | **#185** | `ai-pytorch-pickle-torch-load-supply-chain-forensics` | `T1195.002` | Tier 2 (High-Impact) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s185) | T1195.002, T1203, T1027 · MITRE-ATLAS-AML.T0010 (PyTorch Pickle RCE) | — | `PENDING_REBUILD` |
-| **#186** | `ai-rag-indirect-prompt-injection-mcp-tool-audit` | `T1190` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s186) | T1190, T1059, T1041 · OWASP-LLM01 / MITRE-ATLAS-AML.T0051 | — | `PENDING_REBUILD` |
+| **#186** | `ai-rag-indirect-prompt-injection-mcp-tool-audit` | `T1190` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s186) | T1190, T1059, T1041 · OWASP-LLM01 / MITRE-ATLAS-AML.T0051 | — | `COMPLETED` |
 | **#187** | `ai-shadowray-ray-jobs-api-gpu-cluster-cve-2023-48022` | `T1046` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s187) | T1046, T1059.004, T1552.001 · CVE-2023-48022 (ShadowRay) | — | `PENDING_REBUILD` |
 | **#188** | `jeffreyappel-artex-llm-multi-agent-machine-speed-defender-xdr` | `T1595.002` | Tier 1 (Flagship) | No | [3 refs](./PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md#s188) | T1595.002, T1505.003, T1552.004 · ARTEX-LLM-AGENT / STORM-0940 | — | `PENDING_REBUILD` |
 

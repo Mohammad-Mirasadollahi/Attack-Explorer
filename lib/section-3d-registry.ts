@@ -9,6 +9,12 @@ import { ZEROLOGON_SECTION_SCENES } from './zerologon-section-3d-descriptors';
 import { DCSYNC_SECTION_SCENES } from './dcsync-section-3d-descriptors';
 import { LOG4SHELL_SECTION_SCENES } from './log4shell-section-3d-descriptors';
 import { DNS_TUNNEL_SECTION_SCENES } from './dns-tunnel-section-3d-descriptors';
+import { IMDS_SECTION_SCENES } from './imds-section-3d-descriptors';
+import { SUNBURST_SECTION_SCENES } from './sunburst-section-3d-descriptors';
+import { AUKILL_SECTION_SCENES } from './aukill-section-3d-descriptors';
+import { RUNC_SECTION_SCENES } from './runc-section-3d-descriptors';
+import { RAGMCP_SECTION_SCENES } from './ragmcp-section-3d-descriptors';
+import { WANNACRY_SECTION_SCENES } from './wannacry-section-3d-descriptors';
 
 export type { StoryTechnicalMapping };
 
@@ -88,6 +94,42 @@ export type Anime3DSceneKind =
   | 'dnstun-step3-txtbeacon'
   | 'dnstun-step4-rpz'
   | 'dnstun-memory-entropydiff'
+  | 'imds-concierge-briefing'
+  | 'imds-step1-ssrf'
+  | 'imds-step2-creds'
+  | 'imds-step3-s3sync'
+  | 'imds-step4-imdsv2'
+  | 'imds-memory-tokendiff'
+  | 'sunburst-foundry-briefing'
+  | 'sunburst-step1-sunspot'
+  | 'sunburst-step2-sign'
+  | 'sunburst-step3-dga'
+  | 'sunburst-step4-goldensaml'
+  | 'sunburst-memory-ildiff'
+  | 'aukill-reactor-briefing'
+  | 'aukill-step1-drop'
+  | 'aukill-step2-ioctl'
+  | 'aukill-step3-killloop'
+  | 'aukill-step4-hvci'
+  | 'aukill-memory-ringdiff'
+  | 'runc-drydock-briefing'
+  | 'runc-step1-fdleak'
+  | 'runc-step2-workdir'
+  | 'runc-step3-hostroot'
+  | 'runc-step4-patch'
+  | 'runc-memory-fddiff'
+  | 'ragmcp-library-briefing'
+  | 'ragmcp-step1-poison'
+  | 'ragmcp-step2-retrieve'
+  | 'ragmcp-step3-mcptool'
+  | 'ragmcp-step4-guardrail'
+  | 'ragmcp-memory-ctxdiff'
+  | 'wcry-hospital-briefing'
+  | 'wcry-step1-eternalblue'
+  | 'wcry-step2-killswitch'
+  | 'wcry-step3-encrypt'
+  | 'wcry-step4-sinkhole'
+  | 'wcry-memory-pooldiff'
   | (string & {});
 
 export type StandardCameraPresetId = 'DIRECTOR' | 'VIEW_A' | 'VIEW_B' | 'VIEW_C';
@@ -966,6 +1008,12 @@ const SCENARIO_SECTION_3D_REGISTRY: Record<
   'dfir-dcsync-drsuapi-replication-eid4662': DCSYNC_SECTION_SCENES,
   'log4shell-dfir': LOG4SHELL_SECTION_SCENES,
   'dns-tunneling-exfil': DNS_TUNNEL_SECTION_SCENES,
+  'aws-imdsv1-ssrf-capitalone-style': IMDS_SECTION_SCENES,
+  'solarwinds-sunburst-orion-supply-chain': SUNBURST_SECTION_SCENES,
+  'aukill-edr-killer-procxp152-byovd': AUKILL_SECTION_SCENES,
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': RUNC_SECTION_SCENES,
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': RAGMCP_SECTION_SCENES,
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': WANNACRY_SECTION_SCENES,
 };
 
 /**

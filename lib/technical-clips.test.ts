@@ -742,7 +742,239 @@ test('Batch #2 bespoke scenarios (#031, #037, #039, #047, #048) satisfy cross-la
   }
 });
 
+test('Batch #3 bespoke scenarios (#078, #114, #124, #167, #186) satisfy cross-layer MITRE, memory, clip, and orthogonal Excalidraw invariants', async () => {
+  const { getScenarioAttribution } = await import('./attack-sources-and-legal');
+  const batch3 = [
+    {
+      sid: 'aws-imdsv1-ssrf-capitalone-style',
+      clips: [
+        { key: 'step-1', file: 'ImdsStep1SsrfClip.tsx' },
+        { key: 'step-2', file: 'ImdsStep2CredsClip.tsx' },
+        { key: 'step-3', file: 'ImdsStep3S3SyncClip.tsx' },
+        { key: 'step-4', file: 'ImdsStep4Imdsv2Clip.tsx' },
+        { key: 'memory-forensics', file: 'ImdsMemoryTokenDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'solarwinds-sunburst-orion-supply-chain',
+      clips: [
+        { key: 'step-1', file: 'SunburstStep1SunspotClip.tsx' },
+        { key: 'step-2', file: 'SunburstStep2SignClip.tsx' },
+        { key: 'step-3', file: 'SunburstStep3DgaClip.tsx' },
+        { key: 'step-4', file: 'SunburstStep4GoldenSamlClip.tsx' },
+        { key: 'memory-forensics', file: 'SunburstMemoryIlDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'aukill-edr-killer-procxp152-byovd',
+      clips: [
+        { key: 'step-1', file: 'AukillStep1DropClip.tsx' },
+        { key: 'step-2', file: 'AukillStep2IoctlClip.tsx' },
+        { key: 'step-3', file: 'AukillStep3KillLoopClip.tsx' },
+        { key: 'step-4', file: 'AukillStep4HvciClip.tsx' },
+        { key: 'memory-forensics', file: 'AukillMemoryRingDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626',
+      clips: [
+        { key: 'step-1', file: 'RuncStep1FdLeakClip.tsx' },
+        { key: 'step-2', file: 'RuncStep2WorkdirClip.tsx' },
+        { key: 'step-3', file: 'RuncStep3HostRootClip.tsx' },
+        { key: 'step-4', file: 'RuncStep4PatchClip.tsx' },
+        { key: 'memory-forensics', file: 'RuncMemoryFdDiffClip.tsx' },
+      ],
+    },
+    {
+      sid: 'ai-rag-indirect-prompt-injection-mcp-tool-audit',
+      clips: [
+        { key: 'step-1', file: 'RagMcpStep1PoisonClip.tsx' },
+        { key: 'step-2', file: 'RagMcpStep2RetrieveClip.tsx' },
+        { key: 'step-3', file: 'RagMcpStep3ToolExfilClip.tsx' },
+        { key: 'step-4', file: 'RagMcpStep4GuardrailClip.tsx' },
+        { key: 'memory-forensics', file: 'RagMcpMemoryCtxDiffClip.tsx' },
+      ],
+    },
+  ] as const;
 
+  for (const item of batch3) {
+    const scenario = ATTACK_SCENARIOS.find((s) => s.id === item.sid);
+    assert.ok(scenario, `${item.sid} must be registered in ATTACK_SCENARIOS`);
 
+    const attribution = getScenarioAttribution(scenario);
+    const attrIds = new Set(attribution.mitreTechniques.map((t) => t.id));
+    for (const stage of scenario.stages) {
+      assert.equal(
+        attrIds.has(stage.mitreTechniqueId),
+        true,
+        `${item.sid} stage "${stage.title}" (${stage.mitreTechniqueId}) missing from attribution mitreTechniques`
+      );
+    }
 
+    const totalMemBlocks = scenario.processTree.reduce(
+      (sum, p) => sum + (p.memoryBlocks?.length ?? 0),
+      0
+    );
+    assert.ok(
+      totalMemBlocks >= 3,
+      `${item.sid} must expose >= 3 forensic memory blocks`
+    );
 
+    assert.equal(hasTechnicalClip(item.sid, 'briefing'), false);
+    const clipDir = path.join(CLIPS_DIR, item.sid);
+    const prefixes = new Set<string>();
+    for (const clip of item.clips) {
+      assert.equal(hasTechnicalClip(item.sid, clip.key), true);
+      const src = fs.readFileSync(path.join(clipDir, clip.file), 'utf8');
+      assert.match(src, /<AnimeClipStage\b/);
+      const prefixMatch = src.match(/<FilmBackdrop\s+prefix="([^"]+)"\s*\/>/);
+      assert.ok(prefixMatch, `${clip.file} missing FilmBackdrop prefix`);
+      assert.equal(
+        prefixes.has(prefixMatch[1]),
+        false,
+        `Duplicate FilmBackdrop prefix ${prefixMatch[1]} in ${item.sid}`
+      );
+      prefixes.add(prefixMatch[1]);
+      assert.doesNotMatch(
+        src,
+        /<g[^>]*className=[^>]*transform=\{?["'`]translate/
+      );
+    }
+
+    for (const sectionKey of listTechnicalWhiteboardSections(item.sid)) {
+      const board = getTechnicalWhiteboard(item.sid, sectionKey);
+      assert.ok(board);
+      const boxes = new Map<string, { x: number; y: number; w: number; h: number }>();
+      for (const skel of board.skeletons) {
+        const s = skel as Record<string, unknown>;
+        if (
+          s.type === 'rectangle' &&
+          typeof s.id === 'string' &&
+          typeof s.x === 'number' &&
+          typeof s.y === 'number' &&
+          typeof s.width === 'number' &&
+          typeof s.height === 'number'
+        ) {
+          boxes.set(s.id, { x: s.x, y: s.y, w: s.width, h: s.height });
+        }
+      }
+      for (const skel of board.skeletons) {
+        const s = skel as Record<string, unknown>;
+        if (s.type !== 'arrow') continue;
+        const startId = (s.start as { id?: string } | undefined)?.id;
+        const endId = (s.end as { id?: string } | undefined)?.id;
+        if (!startId || !endId) continue;
+        const from = boxes.get(startId);
+        const to = boxes.get(endId);
+        assert.ok(
+          from && to,
+          `Arrow ${String(s.id)} in ${item.sid}/${sectionKey} references missing box`
+        );
+        const sameRow = Math.abs(from.y - to.y) <= 24;
+        const sameCol = Math.abs(from.x + from.w / 2 - (to.x + to.w / 2)) <= 16;
+        assert.equal(
+          sameRow || sameCol,
+          true,
+          `Arrow ${String(s.id)} (${startId} -> ${endId}) in ${item.sid}/${sectionKey} is diagonal`
+        );
+      }
+    }
+  }
+});
+
+test('Scenario #155 (WannaCry EternalBlue SMBv1 Worm CVE-2017-0144) satisfies cross-layer MITRE, memory, clip, and orthogonal Excalidraw invariants', async () => {
+  const { getScenarioAttribution } = await import('./attack-sources-and-legal');
+  const sid = 'wannacry-eternalblue-smb-worm-cve-2017-0144';
+  const scenario = ATTACK_SCENARIOS.find((s) => s.id === sid);
+  assert.ok(scenario, `${sid} must be registered in ATTACK_SCENARIOS`);
+
+  const attribution = getScenarioAttribution(scenario);
+  const attrIds = new Set(attribution.mitreTechniques.map((t) => t.id));
+  for (const stage of scenario.stages) {
+    assert.equal(
+      attrIds.has(stage.mitreTechniqueId),
+      true,
+      `${sid} stage "${stage.title}" (${stage.mitreTechniqueId}) missing from attribution mitreTechniques`
+    );
+  }
+
+  const totalMemBlocks = scenario.processTree.reduce(
+    (sum, p) => sum + (p.memoryBlocks?.length ?? 0),
+    0
+  );
+  assert.ok(
+    totalMemBlocks >= 3,
+    `${sid} must expose >= 3 forensic memory blocks`
+  );
+
+  assert.equal(hasTechnicalClip(sid, 'briefing'), false);
+  const wcryClips = [
+    { key: 'step-1', file: 'WcryStep1EternalBlueClip.tsx', prefix: 'wcry1' },
+    { key: 'step-2', file: 'WcryStep2KillSwitchClip.tsx', prefix: 'wcry2' },
+    { key: 'step-3', file: 'WcryStep3EncryptClip.tsx', prefix: 'wcry3' },
+    { key: 'step-4', file: 'WcryStep4SinkholeClip.tsx', prefix: 'wcry4' },
+    { key: 'memory-forensics', file: 'WcryMemoryPoolDiffClip.tsx', prefix: 'wcrym' },
+  ] as const;
+
+  const clipDir = path.join(CLIPS_DIR, sid);
+  const prefixes = new Set<string>();
+  for (const clip of wcryClips) {
+    assert.equal(hasTechnicalClip(sid, clip.key), true);
+    const src = fs.readFileSync(path.join(clipDir, clip.file), 'utf8');
+    assert.match(src, /<AnimeClipStage\b/);
+    assert.match(
+      src,
+      new RegExp(`<FilmBackdrop\\s+prefix="${clip.prefix}"\\s*/>`),
+      `${clip.file} must use FilmBackdrop prefix="${clip.prefix}"`
+    );
+    assert.equal(
+      prefixes.has(clip.prefix),
+      false,
+      `Duplicate FilmBackdrop prefix ${clip.prefix} in ${sid}`
+    );
+    prefixes.add(clip.prefix);
+    assert.doesNotMatch(
+      src,
+      /<g[^>]*className=[^>]*transform=\{?["'`]translate/
+    );
+  }
+
+  for (const sectionKey of listTechnicalWhiteboardSections(sid)) {
+    const board = getTechnicalWhiteboard(sid, sectionKey);
+    assert.ok(board);
+    const boxes = new Map<string, { x: number; y: number; w: number; h: number }>();
+    for (const skel of board.skeletons) {
+      const s = skel as Record<string, unknown>;
+      if (
+        s.type === 'rectangle' &&
+        typeof s.id === 'string' &&
+        typeof s.x === 'number' &&
+        typeof s.y === 'number' &&
+        typeof s.width === 'number' &&
+        typeof s.height === 'number'
+      ) {
+        boxes.set(s.id, { x: s.x, y: s.y, w: s.width, h: s.height });
+      }
+    }
+    for (const skel of board.skeletons) {
+      const s = skel as Record<string, unknown>;
+      if (s.type !== 'arrow') continue;
+      const startId = (s.start as { id?: string } | undefined)?.id;
+      const endId = (s.end as { id?: string } | undefined)?.id;
+      if (!startId || !endId) continue;
+      const from = boxes.get(startId);
+      const to = boxes.get(endId);
+      assert.ok(
+        from && to,
+        `Arrow ${String(s.id)} in ${sid}/${sectionKey} references missing box`
+      );
+      const sameRow = Math.abs(from.y - to.y) <= 24;
+      const sameCol = Math.abs(from.x + from.w / 2 - (to.x + to.w / 2)) <= 16;
+      assert.equal(
+        sameRow || sameCol,
+        true,
+        `Arrow ${String(s.id)} (${startId} -> ${endId}) in ${sid}/${sectionKey} is diagonal`
+      );
+    }
+  }
+});

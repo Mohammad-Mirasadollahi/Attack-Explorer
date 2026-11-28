@@ -1,6 +1,6 @@
 # Attack Explorer — Full Scenario & MITRE ATT&CK Encyclopedia (llms-full.txt)
 
-> Comprehensive machine-readable index of all 11 live bespoke cyber attack scenarios, forensic telemetry traces, CVEs, and authoritative primary sources in Attack Explorer (https://www.attackexplorer.com).
+> Comprehensive machine-readable index of all 17 live bespoke cyber attack scenarios, forensic telemetry traces, CVEs, and authoritative primary sources in Attack Explorer (https://www.attackexplorer.com).
 
 ## Creator & E-E-A-T Attribution
 - **Creator:** Mohammad Mirasadollahi (@M_Mirasadollahi)
@@ -239,3 +239,131 @@
   - MITRE ATT&CK — *T1071.004 Application Layer Protocol: DNS & T1048.003 Exfiltration Over Alternative Protocol*: https://attack.mitre.org/techniques/T1071/004/
   - SANS Institute — *Detecting DNS Tunneling Through Entropy and Query Analytics*: https://www.sans.org/white-papers/34152/
   - Microsoft Sysinternals — *Sysmon Event ID 22: DNSEvent (DNS Query)*: https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon#event-id-22-dnsevent-dns-query
+
+---
+
+## 12. AWS EC2 IMDSv1 SSRF Credential Theft & S3 Exfiltration
+- **Scenario ID:** `aws-imdsv1-ssrf-capitalone-style`
+- **Code:** T1552.005
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/aws-imdsv1-ssrf-capitalone-style
+- **Category:** Cloud & SaaS (`CLOUD_SAAS`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1190 (Exploit Public-Facing Application), T1552.005 (Unsecured Credentials: Cloud Instance Metadata API), T1530 (Data from Cloud Storage Object)
+- **CVEs / Advisories:** AWS EC2 IMDSv2 Security Guidance, AWS GuardDuty InstanceCredentialExfiltration.OutsideAWS
+- **Executive Summary:** External attacker exploits a misconfigured EC2 reverse proxy (`10.0.12.44`) via unvalidated SSRF to query link-local `169.254.169.254/latest/meta-data/iam/security-credentials/WAF-Role` over IMDSv1, harvests temporary STS `ASIA*` credentials, runs bulk `aws s3 sync` from an external IP (`CloudTrail ListBuckets`/`GetObject`, `GuardDuty UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS`), and contrasts unauthenticated IMDSv1 against IMDSv2 session tokens (`HttpTokens=required`, `HttpPutResponseHopLimit=1`).
+- **Kill-Chain Stages (4):**
+  1. **[T1190] MISCONFIGURED REVERSE-PROXY SSRF TO LINK-LOCAL METADATA**: External crafted request forces the EC2 WAF reverse proxy to relay a plain HTTP GET to `169.254.169.254`.
+  2. **[T1552.005] IMDSV1 ROLE QUERY & TEMPORARY STS KEY THEFT**: IMDSv1 returns `WAF-Role` `AccessKeyId (ASIA*)`, `SecretAccessKey`, and `Token` without requiring a PUT session token.
+  3. **[T1530] EXTERNAL S3 BUCKET ENUMERATION & BULK EXFILTRATION**: Attacker exports stolen STS keys externally and runs `aws s3 sync`, generating CloudTrail `ListBuckets`/`GetObject` bursts and GuardDuty `InstanceCredentialExfiltration.OutsideAWS`.
+  4. **[T1552.005] IMDSV2 SESSION TOKEN ENFORCEMENT & LEAST-PRIVILEGE HARDENING**: Enforcing `HttpTokens=required` and `HttpPutResponseHopLimit=1` blocks SSRF relay while scoped IAM policies prevent cross-bucket S3 sync.
+- **Primary Authoritative Sources (3):**
+  - Amazon Web Services — *Use IMDSv2 on Amazon EC2 Instances*: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+  - AWS GuardDuty — *UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS*: https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-types-iam.html
+  - MITRE ATT&CK — *T1552.005 Cloud Instance Metadata API*: https://attack.mitre.org/techniques/T1552/005/
+
+---
+
+## 13. SolarWinds SUNSPOT Build Hijack & SUNBURST Supply-Chain Backdoor
+- **Scenario ID:** `solarwinds-sunburst-orion-supply-chain`
+- **Code:** T1195.002
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/solarwinds-sunburst-orion-supply-chain
+- **Category:** Supply Chain & CI/CD (`SUPPLY_CHAIN_CICD`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1195.002 (Compromise Software Supply Chain), T1553.002 (Code Signing), T1568.002 (Domain Generation Algorithms), T1552.004 (Private Keys: AD FS Golden SAML)
+- **CVEs / Advisories:** CISA Emergency Directive 21-01 / Advisory AA20-352A, CrowdStrike SUNSPOT, Mandiant SUNBURST
+- **Executive Summary:** `SUNSPOT` watches `MsBuild.exe` on the SolarWinds Orion build server to silently swap `InventoryManager.cs` before legitimate Authenticode signing of `SolarWinds.Orion.Core.BusinessLayer.dll`, ships the trojanized update to thousands of enterprises, sleeps 12–14 days before issuing DGA DNS queries to `*.appsync-api.*.avsvmcloud[.]com`, and pivots via TEARDROP memory loading and AD FS token-signing certificate theft (`Golden SAML`).
+- **Kill-Chain Stages (4):**
+  1. **[T1195.002] SUNSPOT BUILD-SERVER WATCHER & INVENTORYMANAGER.CS SWAP**: `SUNSPOT` intercepts `MsBuild.exe` compiling `Orion.Core.BusinessLayer` and injects `OrionImprovementBusinessLayer` source code pre-build.
+  2. **[T1553.002] LEGITIMATE AUTHENTICODE SIGNING & TROJANIZED UPDATE DISTRIBUTION**: Build pipeline signs the backdoored DLL with SolarWinds' authentic certificate and publishes it to customer update portals.
+  3. **[T1568.002] 12-TO-14-DAY DORMANCY & AVSVMCLOUD DGA DNS BEACONING**: Implant checks uptime/security-tool blocklists, encodes victim domain identity into `avsvmcloud[.]com` CNAME queries, and awaits activation.
+  4. **[T1552.004] TEARDROP STAGING, AD FS GOLDEN SAML & REPRODUCIBLE BUILD AUDIT**: Operators stage TEARDROP in memory, export the AD FS token-signing key for Golden SAML cloud access, and are countered via reproducible builds and DNS/AD FS telemetry.
+- **Primary Authoritative Sources (3):**
+  - CrowdStrike Intelligence — *SUNSPOT: An Implant in the Build Process*: https://www.crowdstrike.com/blog/sunspot-malware-technical-analysis/
+  - Mandiant — *SolarWinds SUNBURST Backdoor Technical Analysis*: https://cloud.google.com/blog/topics/threat-intelligence/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor/
+  - CISA — *Alert AA20-352A SolarWinds Orion Compromise*: https://www.cisa.gov/news-events/cybersecurity-advisories/aa20-352a
+
+---
+
+## 14. AuKill BYOVD EDR Killer via Signed Process Explorer Driver
+- **Scenario ID:** `aukill-edr-killer-procxp152-byovd`
+- **Code:** T1543.003
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/aukill-edr-killer-procxp152-byovd
+- **Category:** Kernel, Firmware & BYOVD (`KERNEL_FIRMWARE_BYOVD`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1543.003 (Windows Service), T1068 (Exploitation for Privilege Escalation), T1562.001 (Disable or Modify Tools), T1486 (Data Encrypted for Impact)
+- **CVEs / Advisories:** Sophos X-Ops AuKill BYOVD Analysis, LOLDrivers PROCEXP152.sys, Microsoft Vulnerable Driver Blocklist
+- **Executive Summary:** Ransomware operators drop an outdated Microsoft-signed Sysinternals Process Explorer driver (`PROCEXP152.sys`), register it via Service Control Manager (`Event ID 7045` / `Sysmon EID 6`), send `DeviceIoControl` IOCTLs (`0x8335003C` / `0x83350004`) to open Ring 0 `PROCESS_ALL_ACCESS` handles across Protected Process Light (PPL) boundaries, terminate EDR sensors in a continuous loop before encryption, and are blocked by Windows HVCI and Microsoft Vulnerable Driver Blocklist rules.
+- **Kill-Chain Stages (4):**
+  1. **[T1543.003] SIGNED PROCEXP152.SYS DROP & SCM KERNEL SERVICE LOAD**: Operator writes `PROCEXP152.sys` and loads it into Ring 0, emitting Windows `Event ID 7045` and `Sysmon EID 6`.
+  2. **[T1068] DEVICEIOCONTROL RING 0 HANDLE ESCALATION ACROSS PPL**: AuKill opens `\\.\PROCEXP152` and invokes IOCTL `0x8335003C` to acquire `PROCESS_ALL_ACCESS` handles to PPL-protected EDR processes.
+  3. **[T1562.001] CONTINUOUS EDR TERMINATION LOOP**: User-mode loop kills `MsMpEng.exe` and `CSFalconService.exe` repeatedly via kernel-granted handles so services cannot respawn.
+  4. **[T1486] UNCONTESTED RANSOMWARE LAUNCH VS. HVCI & DRIVER BLOCKLIST**: With EDR blinded, ransomware stages freely unless HVCI and Microsoft Recommended Driver Block Rules deny `PROCEXP152.sys` at load time.
+- **Primary Authoritative Sources (3):**
+  - Sophos X-Ops — *AuKill EDR Killer Abuses Process Explorer Driver*: https://news.sophos.com/en-us/2023/04/19/aukill-edr-killer-malware-abuses-process-explorer-driver/
+  - LOLDrivers Project — *Vulnerable Signed Drivers Catalog*: https://www.loldrivers.io/
+  - Microsoft Learn — *Microsoft Recommended Driver Block Rules & HVCI*: https://learn.microsoft.com/en-us/windows/security/application-security/application-control/app-control-for-business/design/microsoft-recommended-driver-block-rules
+
+---
+
+## 15. runc Leaky Vessels Container Escape via Leaked Host File Descriptor (CVE-2024-21626)
+- **Scenario ID:** `runc-leaky-vessels-cwd-fd-escape-cve-2024-21626`
+- **Code:** CVE-2024-21626
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626
+- **Category:** Containers, Kubernetes & Mesh (`CONTAINERS_KUBERNETES`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1611 (Escape to Host), T1552.001 (Credentials In Files)
+- **CVEs / Advisories:** CVE-2024-21626 (CVSS 8.6 HIGH, CISA KEV), GHSA-xr7r-f8xq-vfvv, Snyk Leaky Vessels
+- **Executive Summary:** In `runc < 1.1.12`, an internal `/sys/fs/cgroup` host file descriptor opened during container initialization lacks `O_CLOEXEC` and leaks into the container process. Configuring an OCI image `WORKDIR /proc/self/fd/7` or running `runc exec --cwd /proc/self/fd/7` places the process working directory outside the container rootfs on the host mount namespace, enabling `../../../../etc/shadow` credential reads and host root escape until patched in `runc 1.1.12+` and monitored via `auditd` and Falco.
+- **Kill-Chain Stages (4):**
+  1. **[T1611] UNCLOSED HOST CGROUP FILE DESCRIPTOR IN RUNC INIT**: `runc init` opens host `/sys/fs/cgroup` without `O_CLOEXEC`, leaving file descriptor `7` live across container spawn.
+  2. **[T1611] WORKDIR /PROC/SELF/FD/7 ESCAPES MOUNT NAMESPACE**: Malicious OCI `WORKDIR` or `runc exec --cwd` resolves `/proc/self/fd/7` to the host cgroup directory outside the container rootfs.
+  3. **[T1552.001] RELATIVE HOST FILESYSTEM TRAVERSAL & /ETC/SHADOW READ**: Container process traverses `../../../../etc/shadow` and writes host cron/SSH persistence across the host filesystem.
+  4. **[T1611] RUNC 1.1.12 O_CLOEXEC PATCH & FALCO / AUDITD RUNTIME DETECTION**: Patched `runc` enforces `O_CLOEXEC` and post-`chdir` rootfs verification while Falco alerts on `/proc/self/fd` `cwd` anomalies.
+- **Primary Authoritative Sources (3):**
+  - OpenContainers — *GHSA-xr7r-f8xq-vfvv runc CVE-2024-21626 Advisory*: https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv
+  - Snyk Security Labs — *Leaky Vessels CVE-2024-21626 Technical Analysis*: https://snyk.io/blog/cve-2024-21626-runc-process-cwd-container-breakout/
+  - NIST NVD — *CVE-2024-21626 Detail*: https://nvd.nist.gov/vuln/detail/CVE-2024-21626
+
+---
+
+## 16. AI RAG Indirect Prompt Injection & MCP Tool Exfiltration Audit
+- **Scenario ID:** `ai-rag-indirect-prompt-injection-mcp-tool-audit`
+- **Code:** OWASP-LLM01
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/ai-rag-indirect-prompt-injection-mcp-tool-audit
+- **Category:** AI, LLM Agents & MLOps Security (`AI_LLM_MLOPS_SECURITY`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1190 (Exploit Public-Facing Application), T1059 (Command and Scripting Interpreter), T1041 (Exfiltration Over C2 Channel)
+- **CVEs / Advisories:** OWASP LLM01:2025 & LLM06, MITRE ATLAS AML.T0051.001, NIST AI 100-2 E2025
+- **Executive Summary:** An adversary plants hidden directive instructions inside an untrusted vendor document indexed in an enterprise RAG vector store. When an employee asks the AI assistant to summarize vendor records, the poisoned chunk is concatenated directly into the LLM prompt context window, tricking the model into calling privileged Model Context Protocol (MCP) tools (`read_internal_secrets` + `send_external_webhook`) to exfiltrate confidential enterprise records until contained by structured instruction-data separation, least-privilege MCP schemas, and human-in-the-loop approval gates.
+- **Kill-Chain Stages (4):**
+  1. **[T1190] POISONED UNTRUSTED DOCUMENT INGESTED INTO RAG VECTOR STORE**: Hidden adversarial directive text is embedded inside a routine external document and indexed alongside clean enterprise records.
+  2. **[T1059] SEMANTIC RETRIEVAL & PRIVILEGED PROMPT CONTEXT CONCATENATION**: Employee query triggers top-k vector retrieval, concatenating untrusted chunk directives directly alongside trusted system instructions.
+  3. **[T1041] CONFUSED-DEPUTY MCP TOOL INVOCATION & WEBHOOK EXFILTRATION**: Hijacked agent invokes `read_internal_secrets` and `send_external_webhook`, streaming sensitive enterprise records externally while logging MCP tool audit telemetry.
+  4. **[T1059] INSTRUCTION-DATA SEPARATION, LEAST-PRIVILEGE MCP & HUMAN APPROVAL GATES**: Guarded pipeline isolates retrieved data blocks, enforces strict egress allowlists, and requires explicit human approval for high-impact MCP tool calls.
+- **Primary Authoritative Sources (3):**
+  - OWASP GenAI Security Project — *LLM01:2025 Prompt Injection*: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - MITRE ATLAS — *AML.T0051.001 Indirect LLM Prompt Injection*: https://atlas.mitre.org/techniques/AML.T0051.001
+  - NIST — *NIST AI 100-2 E2025 Adversarial Machine Learning*: https://csrc.nist.gov/pubs/ai/100/2/e2025/final
+
+---
+
+## 17. WannaCry Ransomware Worm — EternalBlue MS17-010 SMBv1 Exploit, Kill-Switch & .WNCRY Encryption
+- **Scenario ID:** `wannacry-eternalblue-smb-worm-cve-2017-0144`
+- **Code:** CVE-2017-0144
+- **Canonical URL:** https://www.attackexplorer.com/scenarios/wannacry-eternalblue-smb-worm-cve-2017-0144
+- **Category:** Ransomware & Extortion (`RANSOMWARE_EXTORTION`)
+- **Severity:** CRITICAL
+- **MITRE ATT&CK Techniques:** T1210 (Exploitation of Remote Services), T1497.001 (Virtualization/Sandbox Evasion: System Checks), T1486 (Data Encrypted for Impact), T1490 (Inhibit System Recovery)
+- **CVEs / Advisories:** CVE-2017-0144 (CVSS 9.8 CRITICAL, MS17-010), CVE-2017-0145, CISA Alert TA17-132A
+- **Executive Summary:** On unpatched Windows hosts exposing legacy SMBv1 (`TCP/445`), an infected peer delivers EternalBlue (`CVE-2017-0144` / `MS17-010`), exploiting a 32-bit-to-16-bit FEA length truncation inside `srv.sys!SrvOs2FeaListSizeToNt` to overflow the non-paged kernel pool (`0xFFFFFA8004C21000`), corrupt adjacent `SRVNET_BUFFER_HDR` pointers, implant the DoublePulsar Ring 0 backdoor (`Multiplex ID 0x0052`), and execute `mssecsvc.exe` (`PID 3412`) without credentials. Before detonating, `mssecsvc.exe` performs an unauthenticated WinINet HTTP check against hardcoded unregistered domain `iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com`; receiving `NXDOMAIN`, it installs service `mssecsvc2.0`, unpacks `tasksche.exe` (`WNcRY@2ol7`), encrypts 176 extensions with unique per-file `AES-128-CBC` keys wrapped in `RSA-2048` (`WANACRY!` / `.WNCRY`), wipes Volume Shadow Copies (`vssadmin` / `wbadmin` / `bcdedit`), and sprays 128 scanner threads across `/24` LANs and random WAN IPs until Marcus Hutchins registers the kill-switch sinkhole (`HTTP 200 OK` -> `ExitProcess(0)`) and defenders apply `MS17-010` and disable SMBv1.
+- **Kill-Chain Stages (4):**
+  1. **[T1210] ETERNALBLUE SMBV1 KERNEL POOL OVERFLOW & DOUBLEPULSAR RING 0 IMPLANT**: Crafted SMBv1 `Trans2` FEA packets trigger `srv.sys!SrvOs2FeaListSizeToNt` non-paged pool overflow over TCP/445, corrupting `SRVNET_BUFFER_HDR` and installing DoublePulsar (`0x0052`) to inject `mssecsvc.exe`.
+  2. **[T1497.001] HARDCODED WININET KILL-SWITCH DOMAIN PROBE (NXDOMAIN GATE)**: `mssecsvc.exe` calls `InternetOpenUrlA` on `http://iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea.com`; `NXDOMAIN` confirms a live network and authorizes service install (`mssecsvc2.0`, `EID 7045`).
+  3. **[T1486] TASKSCHE.EXE HYBRID AES-128 + RSA-2048 .WNCRY ENCRYPTION & SHADOW WIPE**: `tasksche.exe` unpacks resource archive `WNcRY@2ol7`, encrypts 176 file extensions with `WANACRY!` headers (`.WNCRY`), drops `@WanaDecryptor@.exe`, and wipes shadow copies (`vssadmin` / `wbadmin` / `bcdedit`).
+  4. **[T1490] 128-THREAD TCP/445 WORM PROPAGATION, KILL-SWITCH SINKHOLE & MS17-010 PATCH**: Parallel LAN/WAN EternalBlue scanning is halted globally when sinkhole registration returns `HTTP 200 OK` (`ExitProcess(0)`), reinforced permanently by `MS17-010`, SMBv1 disablement, and VLAN TCP/445 segmentation.
+- **Primary Authoritative Sources (3):**
+  - Microsoft Security Response Center — *Microsoft Security Bulletin MS17-010 (CVE-2017-0144)*: https://learn.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010
+  - CISA / US-CERT — *Alert TA17-132A: Indicators Associated With WannaCry Ransomware*: https://www.cisa.gov/news-events/alerts/2017/05/12/indicators-associated-wannacry-ransomware
+  - MITRE ATT&CK — *Software S0366: WannaCry*: https://attack.mitre.org/software/S0366/
+
+

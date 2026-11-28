@@ -2,26 +2,38 @@
 import type { AttackScenario } from './types';
 import { scenario as s_3cx_desktopapp_supply_chain_lazarus } from './3cx-desktopapp-supply-chain-lazarus';
 import { scenario as s_ad_kerberoasting } from './ad-kerberoasting';
+import { scenario as s_ai_rag_indirect_prompt_injection_mcp_tool_audit } from './ai-rag-indirect-prompt-injection-mcp-tool-audit';
 import { scenario as s_amsi_reflective_dll } from './amsi-reflective-dll';
+import { scenario as s_aukill_edr_killer_procxp152_byovd } from './aukill-edr-killer-procxp152-byovd';
+import { scenario as s_aws_imdsv1_ssrf_capitalone_style } from './aws-imdsv1-ssrf-capitalone-style';
 import { scenario as s_dfir_dcsync_drsuapi_replication_eid4662 } from './dfir-dcsync-drsuapi-replication-eid4662';
 import { scenario as s_dfir_lsass_minidump_comsvcs_sysmon_eid10 } from './dfir-lsass-minidump-comsvcs-sysmon-eid10';
 import { scenario as s_dns_tunneling_exfil } from './dns-tunneling-exfil';
 import { scenario as s_log4shell_dfir } from './log4shell-dfir';
 import { scenario as s_process_hollowing } from './process-hollowing';
 import { scenario as s_ransomware_shadow_wipe } from './ransomware-shadow-wipe';
+import { scenario as s_runc_leaky_vessels_cwd_fd_escape_cve_2024_21626 } from './runc-leaky-vessels-cwd-fd-escape-cve-2024-21626';
+import { scenario as s_solarwinds_sunburst_orion_supply_chain } from './solarwinds-sunburst-orion-supply-chain';
+import { scenario as s_wannacry_eternalblue_smb_worm_cve_2017_0144 } from './wannacry-eternalblue-smb-worm-cve-2017-0144';
 import { scenario as s_xz_utils_cve_2024_3094_backdoor } from './xz-utils-cve-2024-3094-backdoor';
 import { scenario as s_zerologon_netlogon_cve_2020_1472 } from './zerologon-netlogon-cve-2020-1472';
 
 export const CANONICAL_ATTACK_SCENARIOS: AttackScenario[] = [
   s_3cx_desktopapp_supply_chain_lazarus,
   s_ad_kerberoasting,
+  s_ai_rag_indirect_prompt_injection_mcp_tool_audit,
   s_amsi_reflective_dll,
+  s_aukill_edr_killer_procxp152_byovd,
+  s_aws_imdsv1_ssrf_capitalone_style,
   s_dfir_dcsync_drsuapi_replication_eid4662,
   s_dfir_lsass_minidump_comsvcs_sysmon_eid10,
   s_dns_tunneling_exfil,
   s_log4shell_dfir,
   s_process_hollowing,
   s_ransomware_shadow_wipe,
+  s_runc_leaky_vessels_cwd_fd_escape_cve_2024_21626,
+  s_solarwinds_sunburst_orion_supply_chain,
+  s_wannacry_eternalblue_smb_worm_cve_2017_0144,
   s_xz_utils_cve_2024_3094_backdoor,
   s_zerologon_netlogon_cve_2020_1472,
 ];

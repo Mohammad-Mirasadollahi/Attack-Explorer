@@ -403,6 +403,234 @@ const DNSTUN_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>>
   ),
 };
 
+const IMDS_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/aws-imdsv1-ssrf-capitalone-style/ImdsStep1SsrfClip').then(
+        (m) => m.ImdsStep1SsrfClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/aws-imdsv1-ssrf-capitalone-style/ImdsStep2CredsClip').then(
+        (m) => m.ImdsStep2CredsClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/aws-imdsv1-ssrf-capitalone-style/ImdsStep3S3SyncClip').then(
+        (m) => m.ImdsStep3S3SyncClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/aws-imdsv1-ssrf-capitalone-style/ImdsStep4Imdsv2Clip').then(
+        (m) => m.ImdsStep4Imdsv2Clip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/aws-imdsv1-ssrf-capitalone-style/ImdsMemoryTokenDiffClip').then(
+        (m) => m.ImdsMemoryTokenDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const SUNBURST_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/solarwinds-sunburst-orion-supply-chain/SunburstStep1SunspotClip').then(
+        (m) => m.SunburstStep1SunspotClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/solarwinds-sunburst-orion-supply-chain/SunburstStep2SignClip').then(
+        (m) => m.SunburstStep2SignClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/solarwinds-sunburst-orion-supply-chain/SunburstStep3DgaClip').then(
+        (m) => m.SunburstStep3DgaClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/solarwinds-sunburst-orion-supply-chain/SunburstStep4GoldenSamlClip').then(
+        (m) => m.SunburstStep4GoldenSamlClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/solarwinds-sunburst-orion-supply-chain/SunburstMemoryIlDiffClip').then(
+        (m) => m.SunburstMemoryIlDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const AUKILL_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/aukill-edr-killer-procxp152-byovd/AukillStep1DropClip').then(
+        (m) => m.AukillStep1DropClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/aukill-edr-killer-procxp152-byovd/AukillStep2IoctlClip').then(
+        (m) => m.AukillStep2IoctlClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/aukill-edr-killer-procxp152-byovd/AukillStep3KillLoopClip').then(
+        (m) => m.AukillStep3KillLoopClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/aukill-edr-killer-procxp152-byovd/AukillStep4HvciClip').then(
+        (m) => m.AukillStep4HvciClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/aukill-edr-killer-procxp152-byovd/AukillMemoryRingDiffClip').then(
+        (m) => m.AukillMemoryRingDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const RUNC_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/RuncStep1FdLeakClip').then(
+        (m) => m.RuncStep1FdLeakClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/RuncStep2WorkdirClip').then(
+        (m) => m.RuncStep2WorkdirClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/RuncStep3HostRootClip').then(
+        (m) => m.RuncStep3HostRootClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/RuncStep4PatchClip').then(
+        (m) => m.RuncStep4PatchClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/runc-leaky-vessels-cwd-fd-escape-cve-2024-21626/RuncMemoryFdDiffClip').then(
+        (m) => m.RuncMemoryFdDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const RAGMCP_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/ai-rag-indirect-prompt-injection-mcp-tool-audit/RagMcpStep1PoisonClip').then(
+        (m) => m.RagMcpStep1PoisonClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/ai-rag-indirect-prompt-injection-mcp-tool-audit/RagMcpStep2RetrieveClip').then(
+        (m) => m.RagMcpStep2RetrieveClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/ai-rag-indirect-prompt-injection-mcp-tool-audit/RagMcpStep3ToolExfilClip').then(
+        (m) => m.RagMcpStep3ToolExfilClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/ai-rag-indirect-prompt-injection-mcp-tool-audit/RagMcpStep4GuardrailClip').then(
+        (m) => m.RagMcpStep4GuardrailClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/ai-rag-indirect-prompt-injection-mcp-tool-audit/RagMcpMemoryCtxDiffClip').then(
+        (m) => m.RagMcpMemoryCtxDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
+const WCRY_CLIP_BY_SECTION: Partial<Record<Section3DKey, React.ComponentType>> = {
+  'step-1': dynamic(
+    () =>
+      import('./clips/wannacry-eternalblue-smb-worm-cve-2017-0144/WcryStep1EternalBlueClip').then(
+        (m) => m.WcryStep1EternalBlueClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-2': dynamic(
+    () =>
+      import('./clips/wannacry-eternalblue-smb-worm-cve-2017-0144/WcryStep2KillSwitchClip').then(
+        (m) => m.WcryStep2KillSwitchClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-3': dynamic(
+    () =>
+      import('./clips/wannacry-eternalblue-smb-worm-cve-2017-0144/WcryStep3EncryptClip').then(
+        (m) => m.WcryStep3EncryptClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'step-4': dynamic(
+    () =>
+      import('./clips/wannacry-eternalblue-smb-worm-cve-2017-0144/WcryStep4SinkholeClip').then(
+        (m) => m.WcryStep4SinkholeClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+  'memory-forensics': dynamic(
+    () =>
+      import('./clips/wannacry-eternalblue-smb-worm-cve-2017-0144/WcryMemoryPoolDiffClip').then(
+        (m) => m.WcryMemoryPoolDiffClip
+      ),
+    { ssr: false, loading: () => <ClipLoading /> }
+  ),
+};
+
 const SCENARIO_TECHNICAL_CLIPS_BY_ID: Record<
   string,
   Partial<Record<Section3DKey, React.ComponentType>>
@@ -418,6 +646,12 @@ const SCENARIO_TECHNICAL_CLIPS_BY_ID: Record<
   'dfir-dcsync-drsuapi-replication-eid4662': DCSYNC_CLIP_BY_SECTION,
   'log4shell-dfir': LOG4J_CLIP_BY_SECTION,
   'dns-tunneling-exfil': DNSTUN_CLIP_BY_SECTION,
+  'aws-imdsv1-ssrf-capitalone-style': IMDS_CLIP_BY_SECTION,
+  'solarwinds-sunburst-orion-supply-chain': SUNBURST_CLIP_BY_SECTION,
+  'aukill-edr-killer-procxp152-byovd': AUKILL_CLIP_BY_SECTION,
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': RUNC_CLIP_BY_SECTION,
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': RAGMCP_CLIP_BY_SECTION,
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': WCRY_CLIP_BY_SECTION,
 };
 
 export interface TechnicalClipEmbedProps {

@@ -2,26 +2,38 @@
 import type { RawScenarioStepGuideData } from '@/modules/scenarios/contracts';
 import { stepGuide as g_3cx_desktopapp_supply_chain_lazarus } from './3cx-desktopapp-supply-chain-lazarus';
 import { stepGuide as g_ad_kerberoasting } from './ad-kerberoasting';
+import { stepGuide as g_ai_rag_indirect_prompt_injection_mcp_tool_audit } from './ai-rag-indirect-prompt-injection-mcp-tool-audit';
 import { stepGuide as g_amsi_reflective_dll } from './amsi-reflective-dll';
+import { stepGuide as g_aukill_edr_killer_procxp152_byovd } from './aukill-edr-killer-procxp152-byovd';
+import { stepGuide as g_aws_imdsv1_ssrf_capitalone_style } from './aws-imdsv1-ssrf-capitalone-style';
 import { stepGuide as g_dfir_dcsync_drsuapi_replication_eid4662 } from './dfir-dcsync-drsuapi-replication-eid4662';
 import { stepGuide as g_dfir_lsass_minidump_comsvcs_sysmon_eid10 } from './dfir-lsass-minidump-comsvcs-sysmon-eid10';
 import { stepGuide as g_dns_tunneling_exfil } from './dns-tunneling-exfil';
 import { stepGuide as g_log4shell_dfir } from './log4shell-dfir';
 import { stepGuide as g_process_hollowing } from './process-hollowing';
 import { stepGuide as g_ransomware_shadow_wipe } from './ransomware-shadow-wipe';
+import { stepGuide as g_runc_leaky_vessels_cwd_fd_escape_cve_2024_21626 } from './runc-leaky-vessels-cwd-fd-escape-cve-2024-21626';
+import { stepGuide as g_solarwinds_sunburst_orion_supply_chain } from './solarwinds-sunburst-orion-supply-chain';
+import { stepGuide as g_wannacry_eternalblue_smb_worm_cve_2017_0144 } from './wannacry-eternalblue-smb-worm-cve-2017-0144';
 import { stepGuide as g_xz_utils_cve_2024_3094_backdoor } from './xz-utils-cve-2024-3094-backdoor';
 import { stepGuide as g_zerologon_netlogon_cve_2020_1472 } from './zerologon-netlogon-cve-2020-1472';
 
 export const STATIC_SCENARIO_STEP_GUIDES: Record<string, RawScenarioStepGuideData> = {
   '3cx-desktopapp-supply-chain-lazarus': g_3cx_desktopapp_supply_chain_lazarus,
   'ad-kerberoasting': g_ad_kerberoasting,
+  'ai-rag-indirect-prompt-injection-mcp-tool-audit': g_ai_rag_indirect_prompt_injection_mcp_tool_audit,
   'amsi-reflective-dll': g_amsi_reflective_dll,
+  'aukill-edr-killer-procxp152-byovd': g_aukill_edr_killer_procxp152_byovd,
+  'aws-imdsv1-ssrf-capitalone-style': g_aws_imdsv1_ssrf_capitalone_style,
   'dfir-dcsync-drsuapi-replication-eid4662': g_dfir_dcsync_drsuapi_replication_eid4662,
   'dfir-lsass-minidump-comsvcs-sysmon-eid10': g_dfir_lsass_minidump_comsvcs_sysmon_eid10,
   'dns-tunneling-exfil': g_dns_tunneling_exfil,
   'log4shell-dfir': g_log4shell_dfir,
   'process-hollowing': g_process_hollowing,
   'ransomware-shadow-wipe': g_ransomware_shadow_wipe,
+  'runc-leaky-vessels-cwd-fd-escape-cve-2024-21626': g_runc_leaky_vessels_cwd_fd_escape_cve_2024_21626,
+  'solarwinds-sunburst-orion-supply-chain': g_solarwinds_sunburst_orion_supply_chain,
+  'wannacry-eternalblue-smb-worm-cve-2017-0144': g_wannacry_eternalblue_smb_worm_cve_2017_0144,
   'xz-utils-cve-2024-3094-backdoor': g_xz_utils_cve_2024_3094_backdoor,
   'zerologon-netlogon-cve-2020-1472': g_zerologon_netlogon_cve_2020_1472,
 };
