@@ -38,7 +38,7 @@
 
 ## 2. Cinematic Inspiration & Visual Language
 
-- **Film / Tone Reference**: *Ghost in the Shell* precision mechanical dissection meets *Ocean's Eleven* customs-vault sabotage — rendered in crisp cel-shaded Japanese anime studio style (`MOD-09`) matching `process-hollowing`.
+- **Tone & Visual Direction**: Precision mechanical cutaway dissection meets high-stakes customs-vault sabotage (`MOD-09`).
 - **Bespoke Real-World Universe**: **The Automated X-Ray Inspection Chamber & Zero-Floor Levitation Workshop** (all inside one glass-walled high-precision workshop room representing `powershell.exe`'s own user-mode address space, with an elevated **Watchtower Security Booth** above representing Windows Defender and a sealed **Warehouse Loading Scale** on the right representing the NTFS Disk).
 - **Lighting Mood & Palette**:
   - **Sky & Ambient**: Crisp daytime studio workshop sky through clerestory glass windows (`#DCEBFA` -> `#93C5FD`), warm sunlit concrete/oak floor (`#E8DFD1`), slate-blue industrial X-Ray tunnel (`#1E3A5F`), and warm brass workshop tooling (`#D97706`).

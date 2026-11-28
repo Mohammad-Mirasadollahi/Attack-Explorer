@@ -3,7 +3,7 @@
 Every published attack episode lives here as a **self-contained, 100% bespoke package** authored one-by-one in exact Sidebar order under [`/docs/standards/17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md`](../../docs/standards/17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md) (`MOD-17`) and tracked in [`/docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md`](../../docs/redesign-backlog/MASTER-BACKLOG-SIDEBAR-ORDER.md).
 
 - **Golden Benchmark (`#001`)**: `modules/scenarios/process-hollowing/` — preserved untouched as the permanent craft baseline.
-- **Shared Playback Shell Only**: Reusable player HUD, camera controls, WebGL lifecycle/disposal, toon material helpers, and dynamic lazy loading live in `components/three/`, `components/technical-clip/`, and `components/excalidraw/`. Shared shells never inject generic characters, props, or story beats.
+- **Shared Playback Shell Only**: Reusable player HUD, camera controls, WebGL lifecycle/disposal, optional material helpers, and dynamic lazy loading live in `components/three/`, `components/technical-clip/`, and `components/excalidraw/`. Shared shells never inject generic characters, props, story beats, or a fixed visual style/template.
 
 ```
 modules/scenarios/<scenario-id>/

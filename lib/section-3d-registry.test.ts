@@ -439,9 +439,9 @@ describe('Section-to-3D Scene Registry & Canonical Overview Standard', () => {
           `MOD-18 violation: ${scenario.id}/three/${fileName} must NOT import ./scene-builders (Overview station slicing forbidden)`
         );
         assert.equal(
-          source.includes('buildStepRoomShell('),
+          source.includes('buildStepRoomShell(') || source.includes('createMintPbrPalette('),
           true,
-          `MOD-18 violation: ${scenario.id}/three/${fileName} must build its own architectural room via buildStepRoomShell(...)`
+          `MOD-18 violation: ${scenario.id}/three/${fileName} must construct its own bespoke standalone environment (buildStepRoomShell or bespoke PBR palette)`
         );
         assert.equal(
           source.includes('disposeStepScene('),

@@ -39,7 +39,7 @@
 
 ## 2. Cinematic Inspiration & Visual Language
 
-- **Film / Tone Reference**: *Severance* / *Ex Machina* sterile white-glass high-precision assembly cleanroom meets Cold-War microdot espionage (*Tinker Tailor Soldier Spy*) — rendered in crisp cel-shaded Japanese anime studio style (`MOD-09`).
+- **Tone & Visual Direction**: Sterile white-glass high-precision assembly cleanroom meets microdot espionage (`MOD-09`).
 - **Bespoke Real-World Universe (100% Independent Engine)**: **The Cleanroom Telecommunications Assembly Line, Gold Hologram Signing Press & Public Icon Gallery Wall** — a gleaming three-station cleanroom + customer office stage:
   - **Left Station (Upstream Supply-Chain Cleanroom Conveyor)**: A sleek matte-white **Desktop Business Phone Console (`3CXDesktopApp.exe`)** travels open-topped down a brushed-aluminum cleanroom belt. Before it reaches the official seal press, a dark covert **Articulated Sabotage Robotic Arm** emerging from an upstream supplier vent (`X_TRADER` cascading breach) swaps in two rigged components: a brass-and-crimson **Trojanized Audio-Codec Gear (`ffmpeg.dll`)** and a frosted **Graphics Prism Lens (`d3dcompiler_47.dll`)** hiding a glowing amber **`0xFEEDFACE` Wax-Sealed Cipher Capsule** inside its base!
   - **Center Station (Official Gold Hologram Signing Press & Quality Gate)**: An imposing brass-and-emerald **Certified Hologram Press** (`3CX Ltd. Authenticode Signature`) descends onto the closed phone box and embosses a **100% Genuine Glowing Gold/Emerald Authenticity Seal** right onto the chassis. A cleanroom **Quality Inspector** scans the genuine seal with a green laser wand and waves the phone straight through to the customer desk!

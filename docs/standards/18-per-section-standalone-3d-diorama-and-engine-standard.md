@@ -41,19 +41,19 @@ While **`MOD-16`** and **`MOD-17`** eliminated cross-scenario factory templates 
 
 ---
 
-## 2. The Core Law — Per-Section Standalone 3D World & Engine Mandate
+## 2. The Core Law — Per-Section Standalone Realistic 3D Animation (No Slicing, No Fixed Template)
 
-> **Supreme Per-Section Rule (`MOD-18`)**: Just as every **attack scenario** has its own bespoke screenplay and custom 3D engine (`MOD-17`), **EVERY SECTION within a scenario** (`briefing`, `step-1`, `step-2`, …, `step-N`, and `memory-forensics` when grounded) MUST have its own **standalone 3D micro-screenplay, dedicated room/stage environment, exclusive step-specific articulated mechanisms, and independent deterministic choreography engine**.
+> **Supreme Per-Section Rule (`MOD-18`)**: Just as every **attack scenario** has its own bespoke 3D world (`MOD-17`), **EVERY SECTION within a scenario** (`briefing`, `step-1`, `step-2`, …, `step-N`, and `memory-forensics` when grounded) MUST have its own **standalone 3D animation crafted in the most natural, lifelike, and realistic form possible (`MOD-09`)**—never a lazy cropped slice of the Overview backdrop and never cartoonish/boxy shortcuts. **At the same time, there is NO fixed structural template**: duration, phase count, camera angles, and spatial form stay completely tailored to whatever teaches that step clearest.
 
 ### 2.1 Allowed Continuity vs. Strictly Forbidden Slicing
 
 | Design Pattern | Allowed? | Exact Rule & Example |
 | :--- | :--- | :--- |
-| **Recurring Hero Actor / Vessel Continuity** | **YES (Encouraged)** | A single recurring hero actor or artifact may carry visual continuity across steps *provided it enters a brand-new, step-exclusive physical setting with brand-new articulated mechanisms* (e.g., in `process-hollowing`, the Armored Bank Truck moves from a Dispatch Garage with Master Keys in Step 1 → an X-Ray Unloading Ramp in Step 2 → a Secret Bay Boarding Ramp in Step 3 → a Runway with Holographic Cab Steering/GPS in Step 4 → a Highway Gate + C2 Warehouse + Radar Dish in Step 5). |
+| **Recurring Hero Actor / Vessel Continuity** | **YES (Encouraged)** | A single recurring hero actor or artifact may carry visual continuity across steps *provided it enters a brand-new, step-exclusive physical setting with step-specific mechanisms* (e.g., in `process-hollowing`, the Armored Bank Truck moves from a Dispatch Garage in Step 1 → an X-Ray Unloading Ramp in Step 2 → a Secret Bay Boarding Ramp in Step 3 → a Runway with Cab Steering/GPS in Step 4 → a Highway Gate + C2 Warehouse in Step 5). |
 | **Cropping an Overview Station (`buildStationX()`)** | **FORBIDDEN** | Never assemble a Step scene by calling `buildOverviewBackdrop()` + 1 or 2 `buildStationX()` helpers from Overview at `scale.setScalar(1.2)`. |
-| **Static/Oscillating Single-Loop `update()`** | **FORBIDDEN** | Every Step's `update(timeSec, phaseIndex, isDark, cutawayMode)` MUST drive a genuine **3-phase deterministic state machine** matching its `descriptor.phases[]` timestamps (`Phase 1` → `Phase 2` → `Phase 3`), with working `Cutaway` (`AUTO` / `OPEN` / `SEALED`) response. |
-| **Cloned Overview Stations for Memory Forensics** | **FORBIDDEN** | `memory-forensics` MUST be a dedicated **Forensic Inspection / X-Ray Comparison Lab** (clean baseline artifact vs. live compromised memory artifact + active inspection instrument + forensic mismatch readout), never two Overview stations duplicated left and right with a flat plane between them. |
-| **Title-Only Backdrop Swaps** | **FORBIDDEN** | Changing only the wall sign string on the shared Overview backdrop does NOT make a Step environment standalone. Each Step must have its own **spatial floor/architecture, lighting mood/accent, and stage layout** matching that specific step's real-world location (e.g., server rack room vs. security operations booth vs. offline GPU workshop vs. customs checkpoint). |
+| **Static/Oscillating Single-Loop `update()`** | **FORBIDDEN** | Every Step's `update()` should drive a real cause-and-effect progression synchronized to its timeline (using however many phases or beats naturally fit that step—no fixed phase count) rather than a trivial `Math.sin(t)` idle wobble. |
+| **Cloned Overview Stations for Memory Forensics** | **FORBIDDEN** | `memory-forensics` MUST be a dedicated comparison/inspection scene contrasting baseline vs. compromised state, never two Overview stations duplicated left and right with a flat plane between them. |
+| **Title-Only Backdrop Swaps** | **FORBIDDEN** | Changing only a wall sign on the shared Overview backdrop does NOT make a Step standalone. Each Step is free to choose its own spatial setting, visual style, lighting mood, and composition matching that step's exact mechanism. |
 
 ---
 
@@ -84,41 +84,22 @@ To prevent step scenes from collapsing into shallow wrappers inside a single sma
     └── memory-diff-scene.ts      # (If memory-forensics is grounded) Dedicated side-by-side forensic lab
 ```
 
-### Mandatory Per-Section Minimum Engineering Spec
+### Practical Engineering Guidelines (Open-Ended Design)
 
-Every standalone section builder (`step-1-scene.ts` .. `step-N-scene.ts` and `memory-diff-scene.ts`) MUST satisfy **all six** quantitative contracts:
+Every standalone section builder (`step-1-scene.ts` .. `step-N-scene.ts` and `memory-diff-scene.ts`) has **complete freedom in visual style, duration, phase count, prop count, and camera layout**, while following these clean engineering fundamentals:
 
-1. **Dedicated Stage Architecture**: Own floor/platform geometry, architectural framing (rear-mounted at `z <= -2.2` per `MOD-09`), and step-appropriate environmental palette—distinct from the Overview wide room.
-2. **Minimum Exclusive Hero Props (`>= 2`)**: At least **two articulated mechanical props/assemblies** built specifically for that step's exact technical action (never appearing in the Overview wide shot).
-3. **Pure Deterministic 3-Phase Engine**: Backed by a dedicated exported function in `choreography.ts` (`evaluate<Id>Step<K>Choreography`) whose transitions align 1-to-1 with the `startSec..endSec` intervals of `descriptor.phases[0..2]`.
-4. **Functional Cutaway Mode (`AUTO` / `OPEN` / `SEALED`)**: Every Step with an internal mechanism (memory page, registry/ACL struct, process handle, packet payload, ELF table, encryption header) MUST expose a real physical cutaway shell/panel/hood that responds to `cutawayMode`.
-5. **Four Unobstructed Step-Specific Camera Presets**: `DIRECTOR`, `VIEW_A`, `VIEW_B`, `VIEW_C` calibrated directly to that step's custom prop coordinates (zero foreground pillar occlusion, zero HUD overlap).
-6. **Independent Mute Test & Clean `dispose()`**: Hiding all labels in Step `K` alone must still communicate Step `K`'s exact technical cause-and-effect silently; `dispose()` must free every geometry, material, and canvas texture created by that step.
+1. **Dedicated Stage Identity**: Give the step its own visual setting, lighting, and spatial framing—distinct from simply reusing the Overview backdrop.
+2. **Step-Specific Articulated Action**: Build bespoke articulated objects/mechanisms that directly demonstrate that step's exact technical cause and effect.
+3. **Deterministic Readable Timeline Progression**: Back the animation with pure deterministic state math in `choreography.ts` aligned to the section's `descriptor.phases[]` intervals (**Overview `>= 40s`**, **standalone Step/Memory `>= 20–24s`** with rich multi-element physical motion and crisp anti-washout lighting per `MOD-09`—no rushed `15s` loops or trivial `Math.sin` placeholders).
+4. **Cutaway Where Meaningful**: When the step involves an exterior cover and internal state (memory page, struct, container, sealed unit), honor `cutawayMode` (`AUTO` / `OPEN` / `SEALED`).
+5. **Unobstructed Camera Views & Zero Washout**: Calibrate camera presets to that step's actual geometry with zero foreground occlusion, zero HUD overlap, and restrained anti-washout lighting/bloom (`MOD-09 §1.3`).
+6. **Independent Mute Test & Clean `dispose()`**: The step's animation should read clearly even with labels hidden, and `dispose()` must free every geometry, material, and canvas texture created by that step.
 
 ---
 
-## 4. Mandatory Director's Blueprint Extension (Phase 0 Gate)
+## 4. Planning Per-Section 3D Ideas in Phase 0 (Free-Form)
 
-Starting immediately under `MOD-18`, every **Director's Blueprint** stored at `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` (required before coding per `MOD-17 §3 Principle 3`) MUST include a **Per-Section Standalone 3D Micro-Screenplay Plan** for **every** section (`briefing`, `step-1..N`, and optional `memory-forensics`) before user approval is requested:
-
-```markdown
-## 4B. Per-Section Standalone 3D Micro-Screenplays (MOD-18 Mandatory)
-
-### Step #1 — <Step Title> (`<sceneKind>`)
-- **Dedicated Room / Set**: <Distinct physical location & lighting mood — NOT the Overview backdrop>
-- **Exclusive Step-Only Props (>= 2)**: <Articulated props built only for Step #1>
-- **3-Phase Micro-Timeline (15s)**:
-  - **Phase 1 (0–5s · Setup)**: <Physical setup action>
-  - **Phase 2 (5–10s · Core Mechanism)**: <Exact articulated technical mutation>
-  - **Phase 3 (10–15s · Consequence / Forensic Witness)**: <Observable forensic artifact or handoff>
-- **Cutaway Reveal**: <What physical shell/panel opens under OPEN/AUTO>
-- **Step-Level Mute Test Proof**: <1–2 sentences proving Step #1 reads silently on its own>
-- **4 Camera Presets**: `DIRECTOR` (establishing) · `VIEW_A` (prop 1) · `VIEW_B` (mechanism close-up) · `VIEW_C` (forensic witness)
-
-*(Repeat identically for Step #2 .. Step #N and Memory Forensics)*
-```
-
-**Hard Gate**: A Director's Blueprint that only specifies an Overview 5-Act screenplay and omits per-step standalone sets/props/timelines is **incomplete** and MUST NOT be approved for coding.
+When drafting a scenario's pre-code creative plan (`/docs/screenplays/bespoke/<NNN>-<scenario-id>.md`), include a brief free-form note for each section (`briefing`, `step-1..N`, and optional `memory-forensics`) explaining what makes that section's 3D animation visually and mechanically distinct from Overview—without forcing every section into a rigid `15s` / `0–5s / 5–10s / 10–15s` or fixed camera template.
 
 ---
 
@@ -135,7 +116,7 @@ The following 10 live scenarios were built prior to `MOD-18` and currently slice
 | 5 | `dfir-lsass-minidump-comsvcs-sysmon-eid10` | `T1003.001` | 100% Overview-sliced (all 4 steps) | Full standalone sets & 3-phase engines for **Steps 1–4** (+ enrich Memory Lab) |
 | 6 | `ad-kerberoasting` | `T1558.003` | 100% Overview-sliced + trivial loops | Full standalone sets & 3-phase engines for **Steps 1–4** + Memory Lab |
 | 7 | `zerologon-netlogon-cve-2020-1472` | `CVE-2020-1472` | 100% Overview-sliced + trivial loops | Full standalone sets & 3-phase engines for **Steps 1–4** + Memory Lab |
-| 8 | `dfir-dcsync-drsuapi-replication-eid4662` | `T1003.006` | 100% Overview-sliced + trivial loops | Full standalone sets & 3-phase engines for **Steps 1–4** + Memory Lab |
+| 8 | `dfir-dcsync-drsuapi-replication-eid4662` | `T1003.006` | **COMPLETED (Photorealistic PBR Standalone)** | Full photorealistic PBR Overview (45s) + standalone PBR Steps 1–4 & Memory Comparison Plaza (24s each) |
 | 9 | `log4shell-dfir` | `CVE-2021-44228` | 100% Overview-sliced + trivial loops | Full standalone sets & 3-phase engines for **Steps 1–4** + Memory Lab |
 | 10 | `dns-tunneling-exfil` | `T1071.004` | 100% Overview-sliced + trivial loops | Full standalone sets & 3-phase engines for **Steps 1–4** + Memory Lab |
 
@@ -147,10 +128,10 @@ The following 10 live scenarios were built prior to `MOD-18` and currently slice
 
 Before any new or retrofitted scenario passes Director's Review (`MOD-17 Principle 5`), verify **every** checkbox below across **every** Step and Memory section:
 
-- [ ] **Zero Overview Station Slicing**: Does every Step (`step-1..N`) build its own dedicated physical stage/room instead of copying and scaling a station from Overview onto the Overview backdrop?
-- [ ] **Exclusive Articulated Mechanisms (`>= 2` per Step)**: Does every Step introduce at least two step-exclusive articulated 3D props that literally embody that step's exact API, protocol, syscall, or forensic control?
-- [ ] **Dedicated 3-Phase Choreography Engine**: Does every Step call its own pure deterministic `evaluate*StepKChoreography(t, cutawayMode)` function in `choreography.ts` synchronized to all 3 `descriptor.phases[]` beats (zero single-loop `Math.sin` placeholders)?
-- [ ] **Working Cutaway & 4 Camera Presets**: Does `Cutaway` (`AUTO`/`OPEN`/`SEALED`) visibly reveal internal state, and are all 4 camera presets (`DIRECTOR`, `VIEW_A`, `VIEW_B`, `VIEW_C`) tailored to that step's geometry with zero occlusion?
-- [ ] **Independent Step Mute Test & Swap Test**: Can each Step be understood silently with zero text, and is each Step's physical mechanism specific to that technical stage?
-- [ ] **Standalone Memory Forensics Lab (when grounded)**: Does `memory-forensics` stage a genuine forensic inspection bench contrasting clean/hardened vs. live compromised state rather than cloning two Overview props?
-- [ ] **Unit Tests & Browser Director's Review**: Does `choreography.test.ts` cover Overview AND every Step, and did real-browser visual inspection (`1440×900`) verify every Step across Phases 1–3 with zero clipping, zero HUD overlap, and clean `dispose()`?
+- [ ] **Zero Overview Station Slicing**: Does every Step (`step-1..N`) build its own dedicated 3D setting instead of copying and scaling a station from Overview onto the Overview backdrop?
+- [ ] **Step-Specific Articulated Mechanisms**: Does every Step introduce bespoke animated mechanisms that literally demonstrate that step's technical cause and effect—designed freely without a fixed visual or structural template?
+- [ ] **Deterministic Timeline Engine**: Does every Step call its own pure deterministic function in `choreography.ts` synchronized to its `descriptor.phases[]` beats (zero single-loop `Math.sin` placeholders)?
+- [ ] **Unobstructed Cameras & Cutaway (when applicable)**: Are camera presets tailored to that step's geometry with zero occlusion, and does `Cutaway` reveal internal state wherever relevant?
+- [ ] **Independent Step Mute Test & Swap Test**: Can each Step be understood silently with zero text, and is each Step's animation specific to that technical stage?
+- [ ] **Standalone Memory Forensics Comparison (when grounded)**: Does `memory-forensics` stage a genuine forensic contrast between clean/hardened vs. live compromised state rather than cloning two Overview props?
+- [ ] **Unit Tests & Browser Director's Review**: Does `choreography.test.ts` cover Overview AND every Step, and did real-browser visual inspection (`1440×900`) verify every Step across its timeline with zero clipping, zero HUD overlap, and clean `dispose()`?

@@ -217,7 +217,7 @@ export function AnimeSection3DStage({
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     const isDarkNow = document.documentElement.classList.contains('dark');
     simRef.current.isDark = isDarkNow;
-    renderer.toneMappingExposure = isDarkNow ? 0.96 : 1.02;
+    renderer.toneMappingExposure = isDarkNow ? 0.94 : 0.84;
     renderer.setPixelRatio(
       isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 2)
     );
@@ -237,18 +237,19 @@ export function AnimeSection3DStage({
     mountEl.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const fogColorLight = new THREE.Color(0xdfeffc);
+    const fogColorLight = new THREE.Color(0xcbdced);
     const fogColorDark = new THREE.Color(0x0b1024);
 
     scene.background = (isDarkNow ? fogColorDark : fogColorLight).clone();
     scene.fog = new THREE.FogExp2(
       isDarkNow ? fogColorDark.getHex() : fogColorLight.getHex(),
-      isDarkNow ? 0.0085 : 0.0105
+      isDarkNow ? 0.0055 : 0.0038
     );
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const envTarget = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
     scene.environment = envTarget.texture;
+    scene.environmentIntensity = isDarkNow ? 0.45 : 0.28;
     pmremGenerator.dispose();
 
     const materials = createAnimeMaterialLibrary(renderer);
@@ -257,15 +258,15 @@ export function AnimeSection3DStage({
     scene.add(sky.mesh);
 
     const hemiLight = new THREE.HemisphereLight(
-      isDarkNow ? 0x3b82f6 : 0xdbeafe,
-      isDarkNow ? 0x0f172a : 0x64748b,
-      isDarkNow ? 0.52 : 0.94
+      isDarkNow ? 0x3b82f6 : 0xcce2f8,
+      isDarkNow ? 0x0f172a : 0x475569,
+      isDarkNow ? 0.42 : 0.48
     );
     scene.add(hemiLight);
 
     const keyLight = new THREE.DirectionalLight(
-      isDarkNow ? 0xa5b4fc : 0xfff7ed,
-      isDarkNow ? 1.15 : 1.72
+      isDarkNow ? 0xa5b4fc : 0xfff3e0,
+      isDarkNow ? 1.1 : 1.16
     );
     keyLight.position.set(16, 26, 18);
     keyLight.castShadow = !isSoftwareGl;
@@ -274,7 +275,7 @@ export function AnimeSection3DStage({
 
     const rimLight = new THREE.DirectionalLight(
       new THREE.Color(descriptor.accentHex),
-      isDarkNow ? 1.05 : 0.78
+      isDarkNow ? 0.72 : 0.34
     );
     rimLight.position.set(-20, 14, -18);
     scene.add(rimLight);
@@ -323,9 +324,9 @@ export function AnimeSection3DStage({
       : initialH;
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(bloomResX, bloomResY),
-      isDarkNow ? 0.42 : 0.26,
-      isDarkNow ? 0.42 : 0.32,
-      isDarkNow ? 0.98 : 1.12
+      isDarkNow ? 0.28 : 0.12,
+      isDarkNow ? 0.32 : 0.2,
+      isDarkNow ? 1.08 : 1.42
     );
     composer.addPass(bloomPass);
     const outputPass = new OutputPass();
@@ -342,7 +343,8 @@ export function AnimeSection3DStage({
     const syncTheme = () => {
       const dark = document.documentElement.classList.contains('dark');
       simRef.current.isDark = dark;
-      renderer.toneMappingExposure = dark ? 0.96 : 1.02;
+      renderer.toneMappingExposure = dark ? 0.94 : 0.84;
+      scene.environmentIntensity = dark ? 0.45 : 0.28;
       sky.uniforms.uDarkMode.value = dark ? 1 : 0;
       const targetFog = dark ? fogColorDark : fogColorLight;
       if (scene.background instanceof THREE.Color) {
@@ -350,14 +352,14 @@ export function AnimeSection3DStage({
       }
       if (scene.fog instanceof THREE.FogExp2) {
         scene.fog.color.copy(targetFog);
-        scene.fog.density = dark ? 0.0085 : 0.0105;
+        scene.fog.density = dark ? 0.0055 : 0.0038;
       }
-      hemiLight.color.setHex(dark ? 0x3b82f6 : 0xdbeafe);
-      hemiLight.groundColor.setHex(dark ? 0x0f172a : 0x64748b);
-      hemiLight.intensity = dark ? 0.52 : 0.94;
-      keyLight.color.setHex(dark ? 0xa5b4fc : 0xfff7ed);
-      keyLight.intensity = dark ? 1.15 : 1.72;
-      rimLight.intensity = dark ? 1.05 : 0.78;
+      hemiLight.color.setHex(dark ? 0x3b82f6 : 0xcce2f8);
+      hemiLight.groundColor.setHex(dark ? 0x0f172a : 0x475569);
+      hemiLight.intensity = dark ? 0.42 : 0.48;
+      keyLight.color.setHex(dark ? 0xa5b4fc : 0xfff3e0);
+      keyLight.intensity = dark ? 1.1 : 1.16;
+      rimLight.intensity = dark ? 0.72 : 0.34;
     };
 
     const themeObserver = new MutationObserver(() => {
@@ -394,11 +396,11 @@ export function AnimeSection3DStage({
 
       bespoke.update(timeSec, phaseIdx, sim.isDark, sim.cutawayMode);
 
-      bloomPass.strength = sim.isDark ? 0.42 : 0.26;
-      bloomPass.threshold = sim.isDark ? 0.98 : 1.12;
-      bloomPass.radius = sim.isDark ? 0.42 : 0.32;
+      bloomPass.strength = sim.isDark ? 0.28 : 0.12;
+      bloomPass.threshold = sim.isDark ? 1.08 : 1.42;
+      bloomPass.radius = sim.isDark ? 0.32 : 0.2;
 
-      // Smooth camera preset interpolation (with Process-Hollowing-style multi-act Director choreography)
+      // Smooth camera preset interpolation (with multi-act Director choreography that never clips hero framing)
       if (!sim.manualOrbit) {
         const preset =
           descriptor.cameraPresets.find((p) => p.id === sim.cameraPreset) ||
@@ -411,30 +413,38 @@ export function AnimeSection3DStage({
           const viewB = descriptor.cameraPresets[2];
           const viewC = descriptor.cameraPresets[3];
           const phaseFocal =
-            totalPhases >= 3
-              ? phaseIdx === 0
-                ? viewA
-                : phaseIdx === 1
+            totalPhases >= 5
+              ? phaseIdx === 1
+                ? viewB
+                : phaseIdx === 2
                   ? viewB
-                  : phaseIdx === 2
+                  : phaseIdx === 3
                     ? viewC
                     : preset
-              : phaseIdx === 0
-                ? preset
-                : viewB ?? preset;
+              : totalPhases >= 3
+                ? phaseIdx === 0
+                  ? viewA
+                  : phaseIdx === 1
+                    ? viewB
+                    : phaseIdx === 2
+                      ? viewC
+                      : preset
+                : phaseIdx === 0
+                  ? preset
+                  : viewB ?? preset;
           if (phaseFocal && phaseFocal.id !== 'DIRECTOR') {
-            // Blend 42% toward the active act's hero viewpoint so the whole stage stays legible while the camera tells the story
+            const blendWeight = totalPhases >= 5 ? 0.24 : 0.32;
             _scratchCamPos.lerp(
               new THREE.Vector3(...phaseFocal.position),
-              0.42
+              blendWeight
             );
             _scratchCamTarget.lerp(
               new THREE.Vector3(...phaseFocal.target),
-              0.42
+              blendWeight
             );
           }
-          _scratchCamPos.x += Math.sin(sim.elapsed * 0.28) * 0.65;
-          _scratchCamPos.y += Math.cos(sim.elapsed * 0.22) * 0.22;
+          _scratchCamPos.x += Math.sin(sim.elapsed * 0.24) * 0.45;
+          _scratchCamPos.y += Math.cos(sim.elapsed * 0.19) * 0.16;
         }
         if (sim.snapCamera) {
           camera.position.copy(_scratchCamPos);

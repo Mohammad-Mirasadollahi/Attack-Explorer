@@ -71,7 +71,7 @@ Never use empty hype adjectives or unquantified claims in technical descriptions
 
 ## 4. Verification Checklist (`MOD-02`)
 
-- [ ] Are all strings 100% English (`en-US`) with zero Persian/Arabic/Japanese characters?
+- [ ] Are all strings 100% standard English (`en-US`)?
 - [ ] Does every scenario and step include all three layers (`storyAnalogy`, `plainSummary`/`simpleExplanation`, and `howItWorksInPractice` + `detectionAndEvidence`)?
 - [ ] Is Layer 1 (`storyAnalogy`) 100% jargon-free (paired with explicit `storyMappings` per `MOD-08` and field formulas per `MOD-11`)?
 - [ ] Does the opening technical paragraph follow the **Answer-First** structure (Advisory/Actor + Mechanism + Forensic Pivot)?

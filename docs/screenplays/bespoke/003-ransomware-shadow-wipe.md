@@ -36,7 +36,7 @@
 
 ## 2. Cinematic Inspiration & Visual Language
 
-- **Film / Tone Reference**: *Mission: Impossible* high-stakes archive vault sabotage meets *Chernobyl* control-room emergency escalation — rendered in crisp cel-shaded Japanese anime studio style (`MOD-09`).
+- **Tone & Visual Direction**: High-stakes archive vault sabotage meets control-room emergency escalation (`MOD-09`).
 - **Bespoke Real-World Universe (100% Independent Engine)**: **The Municipal Records Vault & Archival Backup Reel Room** — a wide two-zone industrial records archive hall:
   - **Left Zone (Safety Backup Archive)**: A brushed-steel **Microfilm Backup Rack** holding **4 spinning Silver Archival Time-Snapshot Reels** (`Volume Shadow Copies`) mounted above a brass recovery lever (`WinRE / bcdedit`), directly adjacent to an **Industrial High-Torque Ribbon Shredder** with rotating steel blades and a metal catch bin.
   - **Center-Right Zone (Active Records Filing Wall)**: **4 Parallel Glass-Fronted Steel Filing Vaults** (`D:\Finance`, `D:\HR`, `D:\CAD`, `D:\ERP`) stacked with crisp ivory paper ledgers, served overhead by a **4-Arm Synchronized Pneumatic Stamping Gantry** (`Windows I/O Completion Ports` parallel worker threads). Crucially, each stamping arm visibly scorches and locks **ONLY the top crimson header strip** (`First 4 KB–64 KB`) of each ledger stack—leaving the lower white paper bulk untouched yet unreadable—and slams a **Heavy Crimson Cast-Iron Padlock** (`.lockbit`) onto the vault door!

@@ -19,10 +19,10 @@ Every cyber attack scenario in **Attack Explorer** must teach through a **bespok
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
 │                 MANDATORY BESPOKE 3-WAY ALIGNMENT PIPELINE (MOD-16 + MOD-17)             │
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
-│  PHASE 0 · DIRECTOR'S BLUEPRINT & PRE-CODE FILTERS (DOCS-ONLY · USER APPROVAL REQUIRED)  │
+│  PHASE 0 · CREATIVE PLAN & PRE-CODE FILTERS (DOCS-ONLY · USER APPROVAL REQUIRED)         │
 │    • Study preserved primary sources (PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md)             │
 │    • Pass MUTE TEST (understandable with zero text) & SWAP TEST (zero interchangeability)│
-│    • Author shot-by-shot Director's Blueprint in /docs/screenplays/bespoke/<NNN>-<id>.md │
+│    • Author free-form creative plan in /docs/screenplays/bespoke/<NNN>-<id>.md           │
 │    • STOP -> Obtain explicit user approval before writing a single line of code          │
 │                                           │                                              │
 │                                           ▼                                              │
@@ -33,10 +33,10 @@ Every cyber attack scenario in **Attack Explorer** must teach through a **bespok
 │                  ┌────────────────────────┴────────────────────────┐                     │
 │                  ▼                                                 ▼                     │
 │  PHASE 2A · BESPOKE 3D THREE.JS ENGINE            PHASE 2B · BESPOKE 2D CLIP & BOARD     │
-│    • /modules/scenarios/<id>/choreography.ts        • Bespoke SVG+GSAP silent lecture    │
-│    • /modules/scenarios/<id>/three/*                  per step (unique spatial sentence) │
+│    • /modules/scenarios/<id>/choreography.ts        • Free-form bespoke SVG+GSAP 2D      │
+│    • /modules/scenarios/<id>/three/*                  animation per step (no template)   │
 │    • Articulated props executing real state         • Bespoke /modules/scenarios/<id>/   │
-│      changes + 5-shot camera choreography             excalidraw/ chalk whiteboards      │
+│      changes in any visual style suited to it         excalidraw/ chalk whiteboards      │
 │    • Frame-by-frame browser Director's Review       • Readable 1x pace (clipPace.ts)     │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -52,33 +52,34 @@ Every cyber attack scenario in **Attack Explorer** must teach through a **bespok
 
 Before creating a single line of TypeScript or Three.js for any scenario, authors MUST complete the screenplay-first phase:
 
-1. **Draft the Bespoke Director's Blueprint First (`MOD-17 §3 Principle 3`)**:
-   - Store the blueprint under `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` (following exact Sidebar sequence number `#NNN`).
-   - Specify: Cinematic inspiration & tone, Mute Test proof, Swap Test proof, exact 1-to-1 Technical ↔ Physical Articulation Table, 5–6 Act choreography timeline (`0%..100%`), mandatory 5-shot Camera Shot List (Establishing Wide, Inciting Push-In, Cutaway/X-Ray, Climax Tracking, Witness/Contrast Finale), 2D silent lecture spatial sentences, and Excalidraw board topologies.
+1. **Draft a Free-Form Creative Plan First (`MOD-17 §3 Principle 3`)**:
+   - Store the plan under `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` (following exact Sidebar sequence number `#NNN`).
+   - Describe the concept freely—Mute Test & Swap Test reasoning, 1-to-1 Technical ↔ Physical mapping, visual direction, and planned 3D/2D/Whiteboard structure—without forcing every scenario into one fixed visual aesthetic, act count, or shot-list template.
 2. **Mandatory User Sign-Off Before Coding**:
-   - Present the Director's Blueprint to the user and wait for explicit approval or revisions before creating any scenario code.
+   - Present the creative plan to the user and wait for explicit approval or revisions before creating any scenario code.
 3. **Strict Docs-Only UI Exclusion Law**:
-   - Screenplays and Director's Blueprints exist strictly as planning documents under `/docs/screenplays/`.
+   - Screenplays and creative plans exist strictly as planning documents under `/docs/screenplays/`.
    - **Never** import, fetch, render, link, or reference `docs/screenplays` anywhere inside `/app/**` or `/components/**`.
 
 ---
 
 ## 3. Mandatory 3-Way Alignment Contract (Story ↔ 3D ↔ 2D)
 
-Every scenario's **prose**, **bespoke 3D Three.js engine**, **bespoke 2D SVG+GSAP silent lecture**, and **bespoke Excalidraw whiteboard** MUST depict the **exact same vulnerability mechanism** with zero contradictions and zero truncated labels:
+Every scenario's **prose**, **bespoke 3D Three.js engine**, **bespoke 2D SVG+GSAP animation**, and **bespoke Excalidraw whiteboard** MUST depict the **exact same vulnerability mechanism** with zero contradictions and zero truncated labels—**and all 3D and 2D animations MUST be built in the most natural, physically grounded, and realistic visual form possible** (while keeping zero fixed structural or layout templates):
 
 | Layer | Role & Perspective | Mandatory Requirements | Primary Source Files |
 | :--- | :--- | :--- | :--- |
 | **1. Technical & Real-World Story Copy** | Authentic forensic kill-chain paired with a 100% jargon-free physical story (`MOD-02`, `MOD-03`, `MOD-08`, `MOD-11`). | Story Analogy, `storyMappings`, `callouts`, and `phases` must describe the exact articulated props built in 3D (`findTechnicalJargonInStory() === []`). Never use auto-sliced strings that cut off mid-sentence. | `/modules/scenarios/<id>/index.ts` |
-| **2. Bespoke 3D Three.js World & Choreography** | Dedicated cel-shaded Japanese anime diorama animating the literal physical state transitions of the attack (`MOD-09`, `MOD-10`, `MOD-17`). | Dedicated `choreography.ts` + articulated hero props under `/modules/scenarios/<id>/three/`, rear-mounted scenery (`z <= -2.2`), 4 unobstructed camera presets, working `Cutaway` (`AUTO`/`OPEN`/`SEALED`), lazy loading via `three-registry.ts`, deterministic `dispose()`. | `/modules/scenarios/<id>/choreography.ts`, `/modules/scenarios/<id>/three/**`, `/modules/scenarios/three-registry.ts` |
-| **3. Bespoke 2D SVG + GSAP Silent Lecture & Whiteboard** | Claim-driven kinetic silent lecture (`MOD-14`, never on `briefing`) + static chalk blueprint (`MOD-13`). | Unique spatial sentence per step, GSAP-safe nested `<g>` transforms, `clipPace.ts` 1x timing floors, unique `svgPrefix`, bare arrows (`ARROW_GAP >= 150`) and chalk hover tooltips on every teaching box. | `/components/technical-clip/clips/**`, `/modules/scenarios/<id>/excalidraw/**` |
+| **2. Bespoke 3D Three.js World & Choreography** | Dedicated photorealistic PBR 3D scene animating the literal physical state transitions of the attack (`MOD-09`, `MOD-10`, `MOD-17`). | Dedicated `choreography.ts` + realistic multi-part PBR props & procedural textures under `/modules/scenarios/<id>/three/`, natural lighting & believable surroundings, physically weighted motion, unobstructed sightlines, tailored camera presets, working `Cutaway` (`AUTO`/`OPEN`/`SEALED`) where applicable, lazy loading via `three-registry.ts`, deterministic `dispose()`. Zero fixed template; zero cartoon/toon shortcuts. | `/modules/scenarios/<id>/choreography.ts`, `/modules/scenarios/<id>/three/**`, `/modules/scenarios/three-registry.ts` |
+| **3. Bespoke 2D SVG + GSAP Technical Animation & Whiteboard** | Natural, realistic kinetic 2D technical animation (`MOD-14`, never on `briefing`) + static chalk blueprint (`MOD-13`). | Realistic depth, refined shading/proportions, smooth physics-eased motion, zero fixed 2D layout template, GSAP-safe nested `<g>` transforms, `clipPace.ts` readable 1x pacing, unique `svgPrefix`, bare arrows (`ARROW_GAP >= 150`) and chalk hover tooltips on every teaching box. | `/components/technical-clip/clips/**`, `/modules/scenarios/<id>/excalidraw/**` |
 
 ### Strict 3D Spatial & Framing Guardrails
 
-1. **Articulated Mechanisms Over Static Scenery**: Props must open, crack, swap, reroute, shred, inject, or silence visibly—never rely on a generic character walking past a static box with a glowing laser line.
-2. **Disjoint Ground Elevations (Zero Z-Fighting)**: Painted road lines, carpets, markings, and curbs sit at distinct vertical offsets (`>= 0.03` units above base terrain).
-3. **Unobstructed Framing & Zero Truncation**: Keep overhead 3D signboards clear of the top-left HUD (`x = 0, y ≈ 5.15, z ≈ -4.15`), keep all labels within safe viewport margins, and never truncate titles mid-word.
-4. **Zero Japanese Characters & Zero Clutter Particles**: Maintain 100% English signage/labels and zero sparkle/glitter particle clouds (`MOD-09`).
+1. **Articulated Mechanisms & Rich Continuous Physical Motion**: Props must move, drive, brake, open, close, swap, scan, lock down, shred, or recast visibly across an unhurried timeline (**`>= 40s` for Overview**, **`>= 20–24s` for Step/Memory**)—never rely on static objects or brief hurried transitions that prevent reading.
+2. **Strict Anti-Washout Lighting & Exposure**: Keep `RoomEnvironment` IBL, directional/hemisphere lights, fog density, and `UnrealBloomPass` cleanly restrained (`MOD-09 §1.3`) so light-mode scenes never blow out into milky white glare and every architectural material, vehicle, and plaque stays razor-sharp.
+3. **Disjoint Ground Elevations (Zero Z-Fighting)**: Painted road lines, carpets, markings, and curbs sit at distinct vertical offsets (`>= 0.03` units above base terrain).
+4. **Unobstructed Framing & Zero Truncation**: Keep overhead 3D signboards clear of the top-left HUD, keep all labels within safe viewport margins, and never truncate titles mid-word.
+5. **Clean English Copy & Zero Clutter Particles**: Maintain 100% standard English signage/labels and zero distracting ambient sparkle/glitter particle clouds (`MOD-09`).
 
 ---
 
@@ -134,11 +135,11 @@ Every scenario's **prose**, **bespoke 3D Three.js engine**, **bespoke 2D SVG+GSA
 
 ## 6. Authoring & Review Acceptance Checklist (`MOD-16`)
 
-- [ ] **Director's Blueprint Approved**: Is the scenario's bespoke shot-by-shot blueprint stored under `/docs/screenplays/bespoke/<NNN>-<id>.md` (docs-only, zero UI references) and approved by the user before coding?
+- [ ] **Creative Plan Approved**: Is the scenario's bespoke creative plan stored under `/docs/screenplays/bespoke/<NNN>-<id>.md` (docs-only, zero UI references) and approved by the user before coding?
 - [ ] **Mute Test & Swap Test Passed**: Do articulated 3D props explain the exact mechanism silently without text, and does the physical world fail if transplanted onto another attack?
-- [ ] **100% 3-Way Alignment**: Do Story text, 3D articulated props/signboards/cameras, 2D silent lecture clips, and Excalidraw whiteboards match verbatim with zero contradictions or mid-sentence cutoffs?
-- [ ] **Zero Overview Station Slicing (`MOD-18`)**: Does every Step (`step-1..N`) and `memory-forensics` 3D scene own a standalone set, `>= 2` exclusive articulated props, and a dedicated 3-phase engine rather than cropping Overview stations?
+- [ ] **100% 3-Way Alignment**: Do Story text, 3D articulated props/signboards/cameras, 2D animations, and Excalidraw whiteboards match verbatim with zero contradictions or mid-sentence cutoffs?
+- [ ] **Zero Overview Station Slicing (`MOD-18`)**: Does every Step (`step-1..N`) and `memory-forensics` 3D scene own a standalone bespoke 3D animation tailored to that step rather than cropping Overview stations?
 - [ ] **Zero Legacy Factory Code**: Does the rebuilt scenario avoid `scenario-world-composer.ts` and the retired 28-place template pool?
-- [ ] **Zero Story Jargon & Zero Japanese Characters**: Do all Story fields pass `findTechnicalJargonInStory() === []` and contain zero Japanese characters?
+- [ ] **Zero Story Jargon & Clean English**: Do all Story fields pass `findTechnicalJargonInStory() === []` and use clean standard English?
 - [ ] **Benchmark Preserved**: Is `process-hollowing` completely untouched?
-- [ ] **Director's Review Green**: Did real-browser frame-by-frame inspection at `1440×900` pass with zero clipping, zero overlap, weighted motion, and zero console errors?
+- [ ] **Director's Review Green**: Did real-browser frame-by-frame inspection at `1440×900` pass with zero clipping, zero overlap, readable motion, and zero console errors?

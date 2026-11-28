@@ -6,26 +6,32 @@
 
 ---
 
-## 1. Core Principle — Scenario-Adaptive Storytelling (Never Copy-Paste One Structure)
+## 1. Core Principle — Natural, Realistic, Scenario-Adaptive Storytelling (Zero Fixed Template)
 
-While the **UI container shell** (Story Card → Story-to-Technical Key → Full-Width 3D Stage → Numbered Technical Clauses) is standardized by `MOD-08` and the **cel-shaded visual craft** is standardized by `MOD-09`, **the 3D world, props, layout, and animation choreography MUST be uniquely designed for each scenario's technical nature and story**.
+While the **UI container shell** (Story Card → Story-to-Technical Key → Full-Width 3D Stage → Numbered Technical Clauses) is standardized by `MOD-08` and **realism & WebGL lifecycle guardrails** are documented in `MOD-09`, **there is NO fixed layout template or choreography mold for 3D or 2D animations—and EVERY future 3D and 2D animation MUST be crafted in the most natural, lifelike, and realistic form possible**.
 
-1. **No Uniform 3D Template Across Scenarios**:
-   - Do **not** force every scenario into a vehicle-on-a-road diorama or reuse the Armored Bank Truck outside Process Hollowing.
-   - Each attack class has fundamentally different mechanics (memory replacement vs. JNDI callback vs. offline ticket cracking vs. DNS query smuggling vs. backup shredding vs. supply-chain build tampering vs. multi-agent AI swarms). Its 3D world must physically embody **that exact mechanism**.
-2. **No Generic Abstract Placeholders**:
-   - Do **not** substitute generic floating wireframe boxes, unlabeled cylinders, or abstract glowing octahedrons when a real physical story prop belongs in the scene.
-   - Every concrete object named in the scenario's `storyAnalogy` must appear as a recognizable cel-shaded 3D prop executing the exact physical action narrated in that step.
-3. **Flexible Section Count & Scene Composition**:
+1. **Mandatory Natural & Realistic Visual Execution Across Future Animations**:
+   - Every 3D scene must use physically based materials (`MeshStandardMaterial` / `MeshPhysicalMaterial`), realistic procedural textures, natural architectural/environmental depth, authentic real-world proportions, and physically believable motion (`MOD-09`).
+   - Every 2D technical animation must likewise present natural depth, authentic surface shading, lifelike proportions, and smooth physics-eased transitions—never crude flat boxes, cartoon/toon shortcuts, or stiff mechanical jumps (`MOD-14`).
+2. **No Uniform Template or Cloned Layout Across Scenarios**:
+   - Do **not** force every scenario into a single stage layout, act-percentage split, or vehicle-on-a-road diorama.
+   - Each attack class has fundamentally different mechanics (memory replacement vs. JNDI callback vs. offline ticket cracking vs. DNS query smuggling vs. backup shredding vs. supply-chain build tampering vs. multi-agent AI swarms). Its 3D world and 2D motion should organically embody **that exact mechanism** as naturally and realistically as possible.
+3. **No Generic Abstract Placeholders**:
+   - Do **not** substitute generic floating wireframe boxes, unlabeled cylinders, or abstract glowing octahedrons when real-world objects belong in the scene.
+   - Every concrete object named in the scenario's `storyAnalogy` must appear as a realistic, multi-part 3D prop executing the exact physical action narrated in that step.
+4. **Readable Duration, Rich Physical Motion & Anti-Washout Lighting (`MOD-09`)**:
+   - **Overview 3D animations MUST run `>= 40` seconds** (recommended `40–50s`, roughly `8–10s` per act) and **standalone Step/Memory scenes `>= 20–24s`**, populated with continuous, lifelike multi-element interactions (moving vehicles, opening/closing doors & hatches, shuttle back-and-forth transit, scanning, lockdown, recasting) so learners have ample time to read every caption and grasp every interaction clearly.
+   - Maintain crisp, balanced PBR lighting, restrained IBL/fog, and selective high-threshold bloom so scenes **never** wash out into white haze or glare (`MOD-09 §1.3`).
+5. **Flexible Section Count & Scene Composition**:
    - A scenario with 3 stages registers 3 bespoke step scenes (`step-1`..`step-3`), not padded dummy steps; a scenario with 5 or 6 stages registers all of its real stages.
-   - Register a `memory-forensics` 3D comparison scene **only** for scenarios that contain real documented `memoryBlocks` (per `MOD-04`). Never fabricate a virtual memory scene for a pure network, DNS, IAM, or SaaS scenario; instead, let those scenarios shine with network corridor, identity vault, or cloud pipeline dioramas.
-   - Vary stage spatial staging naturally: side-by-side X-ray comparisons, multi-room cross-sections, conveyor assembly lines, checkpoint corridors, multi-floor buildings, or multi-hop relay bridges depending on what makes the mechanism unmistakable at a glance.
+   - Register a `memory-forensics` 3D comparison scene **only** for scenarios that contain real documented `memoryBlocks` (per `MOD-04`). Never fabricate a virtual memory scene for a pure network, DNS, IAM, or SaaS scenario; instead, let those scenarios use whatever spatial setting makes their mechanism clearest.
+   - Vary stage geometry and camera angles freely around the real-world subject matter: multi-tower urban vistas, architectural cross-sections, factory assembly floors, checkpoint corridors, server vaults, or relay bridges depending on what makes the mechanism unmistakable and lifelike at a glance.
 
 ---
 
-## 2. Domain-Adaptive 3D Metaphor & Choreography Matrix
+## 2. Optional Domain-Adaptive Metaphor Inspiration (Non-Binding Examples)
 
-Use the matrix below as a creative blueprint when designing bespoke 3D worlds for other attack categories. Each family chooses a physical setting and hero prop set native to its actual attack mechanics:
+The examples below are **strictly optional creative inspiration—NOT a fixed template or required mapping**. Authors are free to invent any original setting, visual style, or physical/technical representation that best explains the vulnerability:
 
 | Attack Domain / Scenario Archetype | Native Physical Story World | Bespoke 3D Hero Props & Literal Physical Choreography | Spatial Layout Archetype |
 | :--- | :--- | :--- | :--- |
@@ -53,14 +59,14 @@ To keep bundle size light and builds fast while scaling to 188 fully bespoke 3D 
 ├── choreography.test.ts                  # Fast unit tests verifying act/prop transitions
 └── three/                                # 100% bespoke hero props, environment & step dioramas
     ├── index.ts                          # Lazy entry loaded ONLY by three-registry.ts
-    ├── scene-builders.ts                 # Articulated cel-shaded hero prop builders
+    ├── scene-builders.ts                 # Bespoke articulated 3D prop & set builders (free visual style)
     └── step-scene-builders.ts            # Per-stage scenes + deterministic dispose()
 
 /modules/scenarios/three-registry.ts      # Dynamic import() loader (only active scenario loads)
 
-/components/three/                        # SHARED CINEMA SHELL ONLY (zero creative logic)
-├── anime-toon-materials.ts               # Shared cel-shading ramp & ink outline helpers
-├── AnimeSection3DStage.tsx               # Shared HUD + Bloom + Cutaway + Timeline controls
+/components/three/                        # SHARED PLAYBACK SHELL ONLY (zero creative logic)
+├── anime-toon-materials.ts               # Optional material/outline helpers (never mandatory)
+├── AnimeSection3DStage.tsx               # Shared HUD + Cutaway + Timeline controls
 └── ScenarioSection3DEmbed.tsx            # Shared standby preview + IntersectionObserver lazy mount
 ```
 
@@ -79,23 +85,23 @@ Execute these **7 phases in strict order for ONE scenario at a time** (following
 1. **Phase 1 — Research Preserved Sources & Design Technical Architecture**:
    - Load the scenario's preserved authoritative source URLs from `/docs/redesign-backlog/PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md`.
    - Design authentic kill-chain stages (`Stage 1..N`), real SIEM/Sysmon/CloudTrail/Auditd telemetry, CLI breakdowns, and confirm whether genuine documented `memoryBlocks` exist.
-2. **Phase 2 — Pass Mute Test & Swap Test + Author Director's Blueprint (`USER APPROVAL GATE`)**:
-   - Invent a 1-to-1 physical mechanism world that passes the **Mute Test** (clear with zero text) and **Swap Test** (fails if transplanted to another attack).
-   - Write `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` with Cinematic Inspiration, 1-to-1 Technical↔Physical Articulation Table, 5–6 Act timeline (`0%..100%`), and mandatory 5-Shot Camera Shot List (`MOD-17 §3 Principle 3`).
+2. **Phase 2 — Pass Mute Test & Swap Test + Author Free-Form Creative Brief (`USER APPROVAL GATE`)**:
+   - Invent a 1-to-1 physical mechanism world and visual direction that passes the **Mute Test** (clear with zero text) and **Swap Test** (fails if transplanted to another attack).
+   - Write `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` outlining the visual concept, 1-to-1 Technical↔Physical mapping, and planned animation flow—using whatever act count, pacing, visual style, and camera plan fits the scenario (no fixed template; see `MOD-17 §3 Principle 3`).
    - **STOP and wait for explicit user approval or revisions before writing any code.**
 3. **Phase 3 — Author Story & Technical Prose Together (`MOD-02`, `MOD-03`, `MOD-08`, `MOD-11`)**:
    - Write 100% jargon-free `briefing.storyAnalogy` and `steps[i].storyAnalogy` (`findTechnicalJargonInStory() === []`) matching the approved 3D cast verbatim.
    - Author 4 or 6 explicit `storyMappings` per section and per-token inline plain-English parentheticals in Step/Memory deep-dives while keeping Overview strictly roadmap-only (`Formula A2`).
-4. **Phase 4 — Build Bespoke `choreography.ts` & Cel-Shaded 3D World (`MOD-09`, `MOD-10`)**:
-   - Implement the pure timeline state machine + `choreography.test.ts` and articulated cel-shaded 3D props inside `/modules/scenarios/<id>/three/` (toon shading, ink outlines, rear-mounted scenery `z <= -2.2`, zero clutter particles, zero Japanese characters, 4 unobstructed camera presets, full `dispose()`).
+4. **Phase 4 — Build Bespoke `choreography.ts` & 3D World (`MOD-09`, `MOD-10`)**:
+   - Implement the pure timeline state machine + `choreography.test.ts` and bespoke articulated 3D props inside `/modules/scenarios/<id>/three/` in whatever visual style and material language fits the scenario best (unobstructed sightlines, zero clutter particles, clean English labels, unobstructed camera views, full `dispose()`).
    - Register lazily via dynamic `import()` in `/modules/scenarios/three-registry.ts`.
-5. **Phase 5 — Build Bespoke 2D Silent Lectures & Excalidraw Chalk Boards (`MOD-13`, `MOD-14`, `MOD-15`)**:
-   - Author claim-driven SVG+GSAP silent lecture clips (`step-1..N`, optional `memory-forensics`, never `briefing`) and modular Excalidraw chalk boards (`briefing`, `step-1..N`, optional `memory-forensics`).
+5. **Phase 5 — Build Bespoke 2D Animations & Excalidraw Chalk Boards (`MOD-13`, `MOD-14`, `MOD-15`)**:
+   - Author free-form bespoke SVG+GSAP 2D technical animations (`step-1..N`, optional `memory-forensics`, never `briefing`) with no fixed visual or layout template, plus modular Excalidraw chalk boards (`briefing`, `step-1..N`, optional `memory-forensics`).
 6. **Phase 6 — Automated Unit, Build & Lint Verification (`MOD-07`)**:
    - Run `npx --yes tsx --test modules/scenarios/<id>/choreography.test.ts lib/*.test.ts`, regenerate static scenario JSON + `llms-full.txt`, and verify `npm run build` and `npm run lint`.
 7. **Phase 7 — Frame-by-Frame Browser Director's Review (`1440×900`, `MOD-17 §3 Principle 5`)**:
-   - Capture every Act (`0%..100%`), all 4 cameras, Cutaway modes, 2D clips, and Excalidraw whiteboards in headless Chromium.
-   - Verify zero geometry clipping, centered hero framing, zero HUD/signboard overlap, zero mid-sentence truncation, weighted cinematic motion, visual Mute/Swap verification, and zero console/WebGL errors. Only then mark `COMPLETED` in the Master Backlog.
+   - Capture key moments across the full timeline (`0%..100%`), camera views, Cutaway modes, 2D animations, and Excalidraw whiteboards in headless Chromium.
+   - Verify zero geometry clipping, clear hero framing, zero HUD/signboard overlap, zero mid-sentence truncation, readable motion, visual Mute/Swap verification, and zero console/WebGL errors. Only then mark `COMPLETED` in the Master Backlog.
 
 ---
 

@@ -144,73 +144,31 @@ Before a single line of TypeScript or Three.js is written, the scenario's physic
 
 ---
 
-### Principle 3 — Phase 0: Director's Blueprint & Shot-by-Shot Screenplay (User Approval Gate)
+### Principle 3 — Phase 0: Creative Plan & Permanent Realism Mandate (User Approval Gate — Zero Fixed Template)
 
-Before writing code for any scenario, author a dedicated **Director's Blueprint** (stored under `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` — strictly docs-only, never imported by UI code) and present it to the user for explicit approval or revision.
+Before writing code for any scenario, draft a concise, **free-form creative plan** (stored under `/docs/screenplays/bespoke/<NNN>-<scenario-id>.md` — strictly docs-only, never imported by UI code) and present it to the user for explicit approval or revision.
 
-#### Mandatory Director's Blueprint Template
+**Permanent Realism Mandate + Zero Fixed Template for All Future 3D & 2D Animations**:
+- **Most Natural & Realistic Presentation Possible**: Every future **3D animation** (`MOD-09`) and **2D animation** (`MOD-14`) MUST be built in the most natural, lifelike, and physically realistic form possible—using real PBR materials, procedural textures, believable architectural/environmental depth, authentic proportions, refined shading, and physically weighty motion rather than cartoonish, cel-shaded, flat, or boxy shortcuts.
+- **Zero Fixed Layout or Structural Template**: Do **not** force every scenario into a fixed 5-Act percentage split (`0%–20% / 20%–40% / ...`), a fixed 3-phase step split (`0%→33% / ...`), a fixed 5-shot camera list, or a fixed 2D drawing mold.
+- Cover only what is needed to agree on the technical and creative direction:
+  1. **Technical Forensic Plan**: Real kill-chain stages (`1..N`), MITRE IDs, authentic telemetry (Sysmon/WinSec/Auditd/CloudTrail/Suricata/Zeek), and whether documented `memoryBlocks` exist (`YES` or `NO`).
+  2. **Realistic Visual Concept & Mute/Swap Reasoning**: How the real-world environment, authentic materials, lighting, and 1-to-1 physical mechanism faithfully embody this specific attack, plus why it passes the Mute Test and Swap Test.
+  3. **Overview & Per-Section 3D Animation Plan**: How the Overview and each individual Step (`step-1..N` and optional `memory-forensics`) will animate independently in realistic 3D—using whatever structure, pacing, phase count, and camera angles fit each scene best (`MOD-18`).
+  4. **2D Animation & Excalidraw Whiteboard Plan**: Natural, realistic 2D animation approach per step (`step-1..N` + optional `memory-forensics`; omitted on `briefing`) and static chalk whiteboard topology (`MOD-13`, `MOD-14`).
 
-```markdown
-# Director's Blueprint — #<NNN> <Scenario Name> (`<scenario-id>`)
-
-> **Sidebar Position**: #<NNN> / 188 · **Category**: <Category> · **Priority Tier**: Tier <1|2|3>  
-> **Status**: DRAFT_FOR_USER_APPROVAL | APPROVED | IN_PRODUCTION | COMPLETED  
-> **Primary Sources Verified**: <3+ authoritative URLs from PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md>
-
-## 1. Technical Forensic Architecture Plan
-- **Kill-Chain Stages (1..N)**: Exact stage list, MITRE IDs, exact APIs/protocols/CLI commands.
-- **Authentic Telemetry Plan**: Real Event IDs (Sysmon/WinSec/Auditd/CloudTrail/Suricata/Zeek) & exact forensic fields.
-- **Memory Forensics Grounding**: `YES` (list exact documented memoryBlocks) OR `NO` (omit `memory-forensics` across 3D/2D/Whiteboard).
-
-## 2. Cinematic Inspiration & Visual Language
-- **Film / Tone Reference**: (e.g., *Ocean's Eleven* heist precision, *Ghost in the Shell* X-Ray dissection, crisis thriller).
-- **Lighting Mood & Palette**: Sky/environment key light, shadow tone, alert accent color, cel-shaded material contrast.
-- **Mute Test Proof**: 2–3 sentences proving a muted viewer understands the exact mechanism without reading a single word.
-- **Swap Test Proof**: 1–2 sentences proving why this physical world breaks immediately if applied to any other attack.
-
-## 3. Exact 1-to-1 Technical <-> Physical Articulation Map
-| Technical Artifact (API / Protocol / Log / Struct) | Articulated 3D Prop | Physical State Transformation |
-| :--- | :--- | :--- |
-| `<exact technical primitive>` | `<bespoke 3D hero prop>` | `<opens / breaks / swaps / reroutes / silences>` |
-
-## 4. Act-by-Act Choreography Timeline (0% -> 100%)
-- **Act 1 (0%–20%) — Baseline Normal Operation**: Exact prop coordinates/states & movement.
-- **Act 2 (20%–40%) — Entry / Vulnerability Trigger**: Exact prop interaction.
-- **Act 3 (40%–65%) — Internal Mechanism Mutation (Cutaway/X-Ray)**: Physical shell peels open; internal state visibly transforms.
-- **Act 4 (65%–85%) — Weaponized Execution / Objective**: Mutated object travels or unlocks target.
-- **Act 5 (85%–100%) — Contrast Finale & Forensic Witness**: Security guard/system perception vs. hidden reality + sensor alarm beat.
-
-## 4B. Per-Section Standalone 3D Micro-Screenplays (`MOD-18` — Mandatory Zero Overview Slicing)
-For **each** `step-1..N` and optional `memory-forensics` section, define an independent 3D diorama (NEVER a cropped Overview station):
-- **Dedicated Set / Room & Palette** (architecturally distinct from Overview and sibling steps)
-- **Exclusive Articulated Hero Props (`>= 2`)** unique to this step's micro-mechanism
-- **Independent 3-Phase Engine (`0%→33%` Setup / `33%→68%` Core Mutation / `68%→100%` Forensic Witness)** aligned to `phases[]`
-- **Dedicated Cutaway Mechanism** (`AUTO`/`OPEN`/`SEALED`) & **4 Custom Camera Presets**
-
-## 5. Mandatory 5-Shot Camera Shot List
-1. **Establishing Wide Shot** (Preset 1 — `Director` / `Overview`): Introduces normal safe environment and cast geometry.
-2. **Inciting Action / Push-In Close-Up** (Preset 2): Moves tight onto the exact vulnerability entry point.
-3. **Cutaway / X-Ray Close-Up** (Preset 3): Reveals interior mechanics with zero foreground pillar occlusion.
-4. **Climax Tracking Shot** (Dynamic camera motion): Tracks the forged/mutated object or attacker toward the target.
-5. **Witness / Telemetry Beat & Contrast Finale** (Preset 4): Dual framing contrasting what the unsuspecting guard/monitor sees against the forensic trace.
-
-## 6. 2D Silent Lecture Spatial Sentences & Excalidraw Whiteboard Plan
-- **Per-Step 2D Spatial Sentences** (`step-1..N` + optional `memory-forensics`; NEVER on `briefing`): One unique spatial sentence per step (`MOD-14 §4.4`).
-- **Excalidraw Chalk Boards** (`briefing`, `step-1..N`, optional `memory-forensics`): Exact topology & teaching boxes (`MOD-13`).
-```
-
-**Hard Rule**: Zero application code is written until the user approves or revises the Director's Blueprint.
+**Hard Rule**: Zero application code is written until the user approves or revises the creative plan.
 
 ---
 
-### Principle 4 — Clean Engineering Separation (Shared Cinema Player Shell vs. 100% Bespoke Scenario Engine)
+### Principle 4 — Clean Engineering Separation (Shared Player Shell vs. 100% Bespoke Scenario Engine)
 
-Scaling to 188 hand-crafted interactive episodes without bloating bundle size or runtime memory requires a strict architectural boundary between **creative scenario engines** and **shared playback infrastructure**:
+Scaling hand-crafted interactive episodes without bloating bundle size or runtime memory requires a strict architectural boundary between **creative scenario engines** and **shared playback infrastructure**:
 
 | Boundary Category | Ownership Rule | Exact Modules & Responsibilities |
 | :--- | :--- | :--- |
-| **100% BESPOKE PER SCENARIO & PER SECTION (`MOD-18`)** *(NEVER shared across scenarios; NEVER sliced from Overview)* | Lives exclusively inside `/modules/scenarios/<scenario-id>/` (and bespoke 2D clips per scenario). | • `index.ts`: Scenario technical data, stages, telemetry, process tree, optional memory blocks, step guide.<br>• `choreography.ts`: Pure deterministic timeline state machines for Overview (`0%..100%`) **AND** each standalone section (`computeStep1State..computeStepNState`, `computeMemoryDiffState`) with unit tests (`choreography.test.ts`).<br>• `three/`: Modular standalone scenes (`overview-scene.ts`, `step-1-scene.ts..step-N-scene.ts`, optional `memory-diff-scene.ts`, optional `shared-cast.ts` for recurring character/artifact silhouette continuity only), per-section exclusive props, custom camera presets, working Cutaway, deterministic `dispose()`.<br>• `clips/` (or bespoke per-scenario clip components): Custom SVG + GSAP silent lecture per step (`MOD-14`).<br>• `excalidraw/`: Modular chalk boards (`briefing.ts`, `step-1..N.ts`, optional `memory.ts`) (`MOD-13`). |
-| **SHARED INFRASTRUCTURE ONLY** *(Zero creative or narrative logic)* | Lives in `/components/three/`, `/components/technical-clip/`, `/components/excalidraw/`, and `/modules/scenarios/three-registry.ts`. | • Playback HUD shell (`Play/Pause`, `Replay`, Act jump pills, `0.5x/1x/1.5x` speed, `Cutaway AUTO/OPEN/SEALED`, 4 camera buttons, `Labels`, `Bloom`, `Full Page`, timeline scrubber).<br>• Visual shader utilities (`anime-toon-materials.ts` stepped toon ramp, ink outlines, bloom pass, zero clutter particles).<br>• WebGL lifecycle coordinator, software-WebGL resilience, `IntersectionObserver` auto-pause/standby, and GPU resource disposal.<br>• **Lazy Dynamic Loading (`import()`)**: Only the single active scenario's bespoke 3D/2D/Whiteboard modules ever load into memory. |
+| **100% BESPOKE PER SCENARIO & PER SECTION (`MOD-18`)** *(NEVER shared across scenarios; NEVER sliced from Overview; NO fixed visual or structural template)* | Lives exclusively inside `/modules/scenarios/<scenario-id>/` (and bespoke 2D clips per scenario). | • `index.ts`: Scenario technical data, stages, telemetry, process tree, optional memory blocks, step guide.<br>• `choreography.ts`: Pure deterministic timeline state machines tailored freely to Overview and each standalone section, with unit tests (`choreography.test.ts`).<br>• `three/`: Modular standalone scenes (`overview-scene.ts`, `step-1-scene.ts..step-N-scene.ts`, optional `memory-diff-scene.ts`), using any visual style, materials, lighting, camera setup, cutaway behavior, and deterministic `dispose()`.<br>• `clips/` (or bespoke per-scenario clip components): Custom free-form 2D SVG + GSAP animation per step (`MOD-14`).<br>• `excalidraw/`: Modular chalk boards (`briefing.ts`, `step-1..N.ts`, optional `memory.ts`) (`MOD-13`). |
+| **SHARED INFRASTRUCTURE ONLY** *(Zero creative, stylistic, or narrative logic)* | Lives in `/components/three/`, `/components/technical-clip/`, `/components/excalidraw/`, and `/modules/scenarios/three-registry.ts`. | • Playback HUD shell (`Play/Pause`, `Replay`, Act/Phase jump pills, speed control, `Cutaway`, camera buttons, `Labels`, `Bloom`, `Full Page`, timeline scrubber).<br>• Optional visual/material utilities (never mandatory—each scenario chooses its own look freely).<br>• WebGL lifecycle coordinator, software-WebGL resilience, `IntersectionObserver` auto-pause/standby, and GPU resource disposal.<br>• **Lazy Dynamic Loading (`import()`)**: Only the single active scenario's bespoke 3D/2D/Whiteboard modules ever load into memory. |
 
 ---
 
@@ -272,12 +230,12 @@ Before marking any rebuilt scenario `COMPLETED` in `/docs/redesign-backlog/MASTE
 
 - [ ] **Sidebar Order & Single-Episode Discipline**: Was this scenario rebuilt individually (not batched) following exact Sidebar order (or explicit user selection)?
 - [ ] **Primary Sources Grounded**: Are `>= 3` authoritative primary sources from `PRESERVED-SOURCES-BY-SIDEBAR-ORDER.md` verified and wired into attribution, Forensic Fact Sheet, and Schema.org `citation`?
-- [ ] **Director's Blueprint Approved**: Was the shot-by-shot Director's Blueprint written under `/docs/screenplays/bespoke/` and explicitly approved by the user before coding began (with zero UI references to `/docs/screenplays/`)?
-- [ ] **Mute Test Passed**: With all labels/captions hidden, do the articulated 3D prop movements and 2D silent lecture clips clearly communicate the exact technical mechanism?
+- [ ] **Creative Plan Approved**: Was the free-form creative plan written under `/docs/screenplays/bespoke/` and explicitly approved by the user before coding began (with zero UI references to `/docs/screenplays/`)?
+- [ ] **Mute Test Passed**: With all labels/captions hidden, do the articulated 3D prop movements and 2D animations clearly communicate the exact technical mechanism?
 - [ ] **Swap Test Passed**: Is the physical environment and mechanical choreography uniquely tied to this vulnerability so it cannot be transplanted onto another attack?
-- [ ] **100% Bespoke Visual Stack**: Are 3D scene/choreography, 2D silent lecture clips (`step-1..N` + optional `memory-forensics`, never `briefing`), and Excalidraw whiteboards (`briefing`, `step-1..N`, optional `memory-forensics`) all hand-crafted specifically for this scenario with zero factory template composers?
-- [ ] **Per-Section Standalone 3D Compliance (`MOD-18`)**: Does **every** `step-1..N` and `memory-forensics` 3D stage mount its own standalone scene (`step-K-scene.ts` / `memory-diff-scene.ts`) with a dedicated room/set, `>= 2` exclusive articulated props, independent 3-phase `choreography.ts` engine, working Cutaway, and 4 custom camera presets—with zero Overview station slicing?
-- [ ] **Story & Technical Clarity (`MOD-02`, `MOD-03`, `MOD-08`, `MOD-11`)**: Zero technical jargon in Story fields, zero Japanese characters, zero mid-sentence truncated titles/signboards, explicit `storyMappings` (4 or 6 pairs), Overview strictly roadmap-only, and per-token inline parentheticals in Step/Memory deep-dives?
+- [ ] **100% Bespoke Free-Form Visual Stack**: Are 3D scene/choreography, 2D animations (`step-1..N` + optional `memory-forensics`, never `briefing`), and Excalidraw whiteboards (`briefing`, `step-1..N`, optional `memory-forensics`) all hand-crafted specifically for this scenario with zero factory template composers and no forced visual mold?
+- [ ] **Per-Section Standalone 3D Compliance (`MOD-18`)**: Does **every** `step-1..N` and `memory-forensics` 3D stage mount its own standalone scene tailored to that step rather than slicing Overview stations?
+- [ ] **Story & Technical Clarity (`MOD-02`, `MOD-03`, `MOD-08`, `MOD-11`)**: Zero technical jargon in Story fields, clean standard English copy, zero mid-sentence truncated titles/signboards, explicit `storyMappings` (4 or 6 pairs), Overview strictly roadmap-only, and per-token inline parentheticals in Step/Memory deep-dives?
 - [ ] **Clean Lazy Loading & Cleanup**: Does the scenario load lazily via dynamic `import()` without bloating `/`, and does `dispose()` free all Three.js geometries, materials, and textures?
-- [ ] **Director's Review Passed**: Were real-browser frames at `1440×900` visually inspected across every Act (`0%..100%`) with zero geometry clipping, zero HUD/signboard overlap, natural weighted motion, and zero console/WebGL errors?
+- [ ] **Director's Review Passed**: Were real-browser frames at `1440×900` visually inspected across the full timeline (`0%..100%`) with zero geometry clipping, zero HUD/signboard overlap, readable motion, and zero console/WebGL errors?
 - [ ] **SEO, Tests & Backlog Synced**: Do unit tests (`npx --yes tsx --test`), `npm run build`, and `npm run lint` pass, are static JSON / `sitemap` / `llms-full.txt` updated, and is the Master Backlog status updated to `COMPLETED`?

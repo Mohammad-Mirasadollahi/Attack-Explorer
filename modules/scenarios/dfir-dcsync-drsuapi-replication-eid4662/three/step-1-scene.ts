@@ -1,240 +1,387 @@
 import * as THREE from 'three';
-import {
-  addAnimeInkEdges,
-  type AnimeMaterialLibrary,
-} from '@/components/three/anime-toon-materials';
+import type { AnimeMaterialLibrary } from '@/components/three/anime-toon-materials';
 import type { StandardCutawayMode } from '@/lib/section-3d-registry';
 import type { BespokeSection3DScene } from '@/modules/scenarios/process-hollowing/three/step-scene-builders';
-import {
-  buildStepRoomShell,
-  createContactDisc,
-  createPlaqueTexture,
-  disposeStepScene,
-} from '@/components/three/step-stage-primitives';
+import { disposeStepScene } from '@/components/three/step-stage-primitives';
 import {
   DCSYNC_STEP_DURATION_SEC,
   evaluateDcsyncStep1State,
 } from '../choreography';
+import {
+  addCitySkylineBackdrop,
+  buildCrownSealAssembly,
+  buildStreetLamp,
+  createBrassPlaqueTexture,
+  createLedBoardTexture,
+  createMintPbrPalette,
+} from './pbr-mint-assets';
 
 /**
- * MOD-18 Standalone Scene — DCSync Step 1 (`dcsync-step1-acl`)
- * Exclusive Room: Sovereign Mint Domain Root ACL Ledger Hall
- * Exclusive Props:
- *   1. Left Enterprise-DC-Only Tier-0 Baseline Stone Tablet (`x=-4.2`)
- *   2. Central Sovereign Mint Gatehouse & Brass `DC=corp,DC=local` ACL Ledger Vault (`x=0`) with rotating golden `CN=krbtgt` Crown Core, hinged cutaway brass grill & flaring crimson `1131f6aa / 1131f6ad -> svc_dir_sync` Ribbon
- *   3. Right Continuous `Security Event ID 5136` DACL Audit Sentinel (`x=4.2`)
+ * Photorealistic PBR Standalone Scene — DCSync Step 1 (`dcsync-step1-acl`)
+ * Story: Close-up Sovereign Mint Gatehouse Forecourt & Vault Access Registry.
+ *   - Center: Neoclassical limestone Mint Gatehouse Tower with bolted bronze vault doors,
+ *     upper panoramic Crown Gallery housing the spinning golden Sovereign Crown Seal (`CN=krbtgt`),
+ *     and front glass-fronted Gatehouse Registry Case (hinged cutaway glass) displaying the
+ *     forgotten woven crimson-gold Service Ribbon (`1131f6aa / 1131f6ad -> svc_dir_sync`).
+ *   - Left: Carved Granite Tier-0 Policy Obelisk (`ENTERPRISE DCs ONLY`).
+ *   - Right: Brushed-Steel `Security Event ID 5136` Automated Gatehouse Audit Pedestal with
+ *     articulated laser inspection arm that sweeps the pinned ribbon and flips its LED display.
  */
 export function buildDcsyncStep1Scene(
-  materials: AnimeMaterialLibrary
+  materials: AnimeMaterialLibrary,
+  isSoftwareGl = false
 ): BespokeSection3DScene {
   const root = new THREE.Group();
   const textures: THREE.Texture[] = [];
+  const palette = createMintPbrPalette(textures);
 
-  const shell = buildStepRoomShell(materials, {
-    floorColor: 0x1c1917,
-    floorTrimHex: 0xf59e0b,
-    wallColor: 0x292524,
-    pillarColor: 0x44403c,
-    gridColor: 0x57534e,
-    signTitle: 'STEP 1 · OVER-PRIVILEGED GATEHOUSE ACL RIBBON',
-    signSubtitle: 'DC=CORP,DC=LOCAL GRANTS 1131F6AA & 1131F6AD TO NON-DC SVC_DIR_SYNC · EID 5136',
-    signBgHex: '#1E160A',
-    signBorderHex: '#F59E0B',
-    signTitleHex: '#FEF3C7',
-    signSubHex: '#FCD34D',
-    width: 15.0,
-    depth: 10.4,
-    wallZ: -3.5,
+  // Ground granite forecourt plaza & asphalt curb
+  const plaza = new THREE.Mesh(new THREE.PlaneGeometry(76, 66), palette.sidewalk);
+  plaza.rotation.x = -Math.PI / 2;
+  plaza.position.set(0, 0, -6);
+  plaza.receiveShadow = true;
+  root.add(plaza);
+
+  const curbRoad = new THREE.Mesh(new THREE.BoxGeometry(60, 0.04, 4.2), palette.asphalt);
+  curbRoad.position.set(0, -0.01, 5.2);
+  root.add(curbRoad);
+
+  addCitySkylineBackdrop(root, palette, -4);
+
+  const lampBulbMat = new THREE.MeshStandardMaterial({
+    color: 0xfff3c4,
+    emissive: 0xf59e0b,
+    emissiveIntensity: 0.75,
+    roughness: 0.25,
   });
-  textures.push(...shell.textures);
-  root.add(shell.group);
-
-  // --- PROP 1: Left Tier-0 Baseline Tablet (x = -4.2) ---
-  const policyGroup = new THREE.Group();
-  policyGroup.position.set(-4.2, 0, 0.25);
-  root.add(policyGroup);
-  policyGroup.add(createContactDisc(materials, 1.2, 0.018));
-
-  const tablet = new THREE.Mesh(
-    new THREE.BoxGeometry(2.0, 2.5, 0.72),
-    materials.createToonMaterial(0x1e293b)
-  );
-  tablet.position.y = 1.25;
-  addAnimeInkEdges(tablet, materials.inkLineMaterial, 24);
-  policyGroup.add(tablet);
-
-  const policyTex = createPlaqueTexture(
-    'TIER-0 BASELINE',
-    'ENTERPRISE DCs ONLY',
-    '#052E16',
-    '#10B981',
-    '#D1FAE5'
-  );
-  textures.push(policyTex);
-
-  const policyFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.72, 1.0),
-    new THREE.MeshBasicMaterial({ map: policyTex })
-  );
-  policyFace.position.set(0, 1.62, 0.37);
-  policyGroup.add(policyFace);
-
-  // --- PROP 2: Central Sovereign Mint Gatehouse & Brass DACL Ledger Vault (x = 0) ---
-  const mintGroup = new THREE.Group();
-  mintGroup.position.set(0, 0, 0.25);
-  root.add(mintGroup);
-  mintGroup.add(createContactDisc(materials, 2.35, 0.018));
-
-  const mintBase = new THREE.Mesh(
-    new THREE.BoxGeometry(3.85, 1.15, 1.85),
-    materials.createToonMaterial(0x44403c)
-  );
-  mintBase.position.y = 0.575;
-  addAnimeInkEdges(mintBase, materials.inkLineMaterial, 24);
-  mintGroup.add(mintBase);
-
-  const mintTower = new THREE.Mesh(
-    new THREE.BoxGeometry(3.45, 2.35, 1.55),
-    materials.createToonMaterial(0x292524)
-  );
-  mintTower.position.y = 2.32;
-  addAnimeInkEdges(mintTower, materials.inkLineMaterial, 24);
-  mintGroup.add(mintTower);
-
-  // Spinning Golden CN=krbtgt Sovereign Crown Core atop pedestal
-  const crownGroup = new THREE.Group();
-  crownGroup.position.set(0, 2.55, 0.65);
-  mintGroup.add(crownGroup);
-
-  const crownRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.55, 0.14, 10, 24),
-    materials.createToonMaterial(0xfacc15, {
-      emissive: 0xf59e0b,
-      emissiveIntensity: 0.75,
-    })
-  );
-  crownRing.rotation.x = Math.PI / 2;
-  addAnimeInkEdges(crownRing, materials.inkLineMaterial, 24);
-  crownGroup.add(crownRing);
-
-  for (let i = 0; i < 6; i++) {
-    const a = (i * Math.PI * 2) / 6;
-    const spire = new THREE.Mesh(
-      new THREE.ConeGeometry(0.14, 0.42, 6),
-      materials.createToonMaterial(0xfacc15, {
-        emissive: 0xf59e0b,
-        emissiveIntensity: 0.75,
-      })
-    );
-    spire.position.set(Math.cos(a) * 0.52, 0.25, Math.sin(a) * 0.52);
-    crownGroup.add(spire);
+  for (const lx of [-6.4, 6.4]) {
+    const lamp = buildStreetLamp(palette.iron, lampBulbMat);
+    lamp.position.set(lx, 0, 2.8);
+    lamp.rotation.y = lx < 0 ? 0.3 : Math.PI - 0.3;
+    root.add(lamp);
   }
 
-  // Hinged Brass Cutaway Grill covering Crown Core & ACL Ledger
-  const grillPivot = new THREE.Group();
-  grillPivot.position.set(0, 3.35, 0.92);
-  mintGroup.add(grillPivot);
+  // --- LEFT: Carved Granite Tier-0 Policy Obelisk (x = -4.8) ---
+  const policyGroup = new THREE.Group();
+  policyGroup.position.set(-4.8, 0, 0.4);
+  policyGroup.rotation.y = 0.24;
+  root.add(policyGroup);
 
-  const grillFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(2.95, 1.65, 0.08),
+  const obeliskShadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.1, 2.4),
     new THREE.MeshBasicMaterial({
-      color: 0xfacc15,
+      map: palette.contactShadowTex,
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.7,
       depthWrite: false,
     })
   );
-  grillFrame.position.set(0, -0.82, 0.04);
-  grillPivot.add(grillFrame);
+  obeliskShadow.rotation.x = -Math.PI / 2;
+  obeliskShadow.position.y = 0.02;
+  policyGroup.add(obeliskShadow);
 
-  // Exposed Crimson Gatehouse ACL Ribbon (1131f6aa & 1131f6ad -> svc_dir_sync)
-  const ribbonTex = createPlaqueTexture(
-    'EXPOSED ACE · 1131F6AD',
-    'CORP\\svc_dir_sync',
-    '#3B0A18',
-    '#E11D48',
-    '#FFE4E6'
-  );
-  textures.push(ribbonTex);
+  const obeliskBase = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.42, 1.3), palette.granitePlinth);
+  obeliskBase.position.y = 0.21;
+  policyGroup.add(obeliskBase);
 
-  const ribbonMat = materials.createToonMaterial(0xe11d48, {
-    emissive: 0xf43f5e,
-    emissiveIntensity: 0.4,
-  });
-  const aclRibbon = new THREE.Mesh(
-    new THREE.BoxGeometry(2.75, 0.85, 0.18),
+  const obeliskShaft = new THREE.Mesh(new THREE.BoxGeometry(2.05, 2.55, 0.85), palette.limestone);
+  obeliskShaft.position.y = 1.68;
+  obeliskShaft.castShadow = !isSoftwareGl;
+  policyGroup.add(obeliskShaft);
+
+  const obeliskCap = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.18, 1.05), palette.darkBronze);
+  obeliskCap.position.y = 3.04;
+  policyGroup.add(obeliskCap);
+
+  const policyLedTex = createLedBoardTexture(
+    'TIER-0 GATEHOUSE RULE',
     [
-      ribbonMat,
-      ribbonMat,
-      ribbonMat,
-      ribbonMat,
-      new THREE.MeshBasicMaterial({ map: ribbonTex }),
-      ribbonMat,
-    ]
+      { text: '[POLICY] PEER MINT TOWERS ONLY', color: '#34d399' },
+      { text: 'ALLOWED: ENTERPRISE DCs ($)', color: '#a7f3d0' },
+      { text: 'DENY: NON-DC SERVICE ACCOUNTS', color: '#fde047' },
+    ],
+    'EMERALD',
+    textures
   );
-  aclRibbon.position.set(0, 1.15, 0.98);
-  addAnimeInkEdges(aclRibbon, materials.inkLineMaterial, 24);
-  mintGroup.add(aclRibbon);
-
-  // --- PROP 3: Right Security EID 5136 DACL Audit Sentinel (x = +4.2) ---
-  const auditGroup = new THREE.Group();
-  auditGroup.position.set(4.2, 0, 0.25);
-  root.add(auditGroup);
-  auditGroup.add(createContactDisc(materials, 1.25, 0.018));
-
-  const auditBody = new THREE.Mesh(
-    new THREE.BoxGeometry(2.05, 2.55, 0.95),
-    materials.createToonMaterial(0x1e293b)
+  const policyScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.78, 0.94),
+    new THREE.MeshStandardMaterial({
+      map: policyLedTex,
+      emissiveMap: policyLedTex,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.42,
+      roughness: 0.3,
+    })
   );
-  auditBody.position.y = 1.275;
-  addAnimeInkEdges(auditBody, materials.inkLineMaterial, 24);
-  auditGroup.add(auditBody);
+  policyScreen.position.set(0, 1.95, 0.44);
+  policyGroup.add(policyScreen);
 
-  const eid5136Tex = createPlaqueTexture(
-    'SECURITY EID 5136',
-    'nTSecurityDescriptor',
-    '#0B192C',
-    '#38BDF8',
-    '#BAE6FD'
+  // --- CENTER: Sovereign Mint Gatehouse Tower + Upper Crown Chamber + Registry Case (x = 0) ---
+  const mintGroup = new THREE.Group();
+  mintGroup.position.set(0, 0, -0.2);
+  root.add(mintGroup);
+
+  const mintShadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.4, 5.4),
+    new THREE.MeshBasicMaterial({
+      map: palette.contactShadowTex,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+    })
   );
-  textures.push(eid5136Tex);
+  mintShadow.rotation.x = -Math.PI / 2;
+  mintShadow.position.y = 0.02;
+  mintGroup.add(mintShadow);
 
-  const auditScreen = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.78, 0.96),
-    new THREE.MeshBasicMaterial({ map: eid5136Tex })
+  // Stepped granite foundation & limestone portico
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.52, 3.6), palette.granitePlinth);
+  plinth.position.y = 0.26;
+  mintGroup.add(plinth);
+
+  const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.25, 3.0), palette.limestone);
+  lowerBody.position.y = 2.14;
+  lowerBody.castShadow = !isSoftwareGl;
+  mintGroup.add(lowerBody);
+
+  // 4 fluted limestone portico columns framing the Gatehouse Registry
+  for (const cx of [-1.72, -1.18, 1.18, 1.72]) {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 2.75, 14), palette.limestone);
+    col.position.set(cx, 1.88, 1.72);
+    mintGroup.add(col);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.14, 0.36), palette.limestone);
+    cap.position.set(cx, 3.3, 1.72);
+    mintGroup.add(cap);
+  }
+
+  const cornice = new THREE.Mesh(new THREE.BoxGeometry(4.65, 0.26, 3.75), palette.darkBronze);
+  cornice.position.y = 3.68;
+  mintGroup.add(cornice);
+
+  const gatePlaqueTex = createBrassPlaqueTexture(
+    'GATEHOUSE ACCESS REGISTRY',
+    'DC=CORP,DC=LOCAL · nTSecurityDescriptor',
+    textures
   );
-  auditScreen.position.set(0, 1.72, 0.49);
-  auditGroup.add(auditScreen);
+  const gatePlaque = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 0.62),
+    new THREE.MeshStandardMaterial({ map: gatePlaqueTex, roughness: 0.36, metalness: 0.45 })
+  );
+  gatePlaque.position.set(0, 3.35, 1.88);
+  mintGroup.add(gatePlaque);
 
-  const scanBeamMat = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
+  // Recessed Bronze Registry Bulletin Cabinet on the front facade (y = 0.75 .. 2.85, z = 1.54)
+  const cabinetBack = new THREE.Mesh(new THREE.BoxGeometry(2.05, 1.95, 0.22), palette.darkBronze);
+  cabinetBack.position.set(0, 1.76, 1.52);
+  mintGroup.add(cabinetBack);
+
+  const aclLedTex = createLedBoardTexture(
+    'EXPOSED EXTENDED RIGHTS',
+    [
+      { text: 'PRINCIPAL: CORP\\svc_dir_sync', color: '#fda4af' },
+      { text: 'GUID 1: 1131f6aa (Get-Changes)', color: '#fde047' },
+      { text: 'GUID 2: 1131f6ad (Get-All)', color: '#fb7185' },
+    ],
+    'ROSE',
+    textures
+  );
+  const aclBoard = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.42, 0.74),
+    new THREE.MeshStandardMaterial({
+      map: aclLedTex,
+      emissiveMap: aclLedTex,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.42,
+      roughness: 0.3,
+    })
+  );
+  aclBoard.position.set(-0.24, 2.15, 1.65);
+  mintGroup.add(aclBoard);
+
+  // Forgotten Crimson-Gold Woven Service Ribbon pinned inside the Gatehouse Registry
+  const ribbonHookGroup = new THREE.Group();
+  ribbonHookGroup.position.set(0.68, 2.38, 1.68);
+  mintGroup.add(ribbonHookGroup);
+
+  const brassPin = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.018, 8, 14), palette.brass);
+  ribbonHookGroup.add(brassPin);
+
+  const ribbonMat = new THREE.MeshStandardMaterial({
+    map: palette.ribbonTex,
+    emissive: 0xe11d48,
+    emissiveIntensity: 0.18,
+    roughness: 0.56,
+    metalness: 0.14,
+    side: THREE.DoubleSide,
+  });
+  const ribbonMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 1.24, 1, 6), ribbonMat);
+  ribbonMesh.position.set(0, -0.64, 0.04);
+  ribbonHookGroup.add(ribbonMesh);
+
+  // Hinged Glass Cutaway Door covering the Gatehouse Registry Cabinet
+  const cutawayPivot = new THREE.Group();
+  cutawayPivot.position.set(0, 2.72, 1.76);
+  mintGroup.add(cutawayPivot);
+
+  const glassDoor = new THREE.Mesh(new THREE.PlaneGeometry(2.02, 1.88), palette.galleryGlass);
+  glassDoor.position.set(0, -0.94, 0);
+  cutawayPivot.add(glassDoor);
+
+  const doorTrim = new THREE.Mesh(new THREE.BoxGeometry(2.08, 0.08, 0.08), palette.brass);
+  doorTrim.position.set(0, -1.88, 0.02);
+  cutawayPivot.add(doorTrim);
+
+  // Optical Clearance Conduit connecting the exposed ribbon up to the Master Crown Chamber (flares in Phase 2!)
+  const leakConduitMat = new THREE.MeshBasicMaterial({
+    color: 0xf43f5e,
     transparent: true,
-    opacity: 0.18,
+    opacity: 0,
+    side: THREE.DoubleSide,
     depthWrite: false,
   });
-  const scanBeam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.06, 0.35, 3.2, 12),
-    scanBeamMat
+  const leakConduit = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.14, 2.2, 14, 1, true),
+    leakConduitMat
   );
-  scanBeam.rotation.z = Math.PI / 2;
-  scanBeam.position.set(2.35, 1.45, 0.6);
-  root.add(scanBeam);
+  leakConduit.position.set(0.68, 3.6, 1.56);
+  mintGroup.add(leakConduit);
+
+  // Upper Panoramic Master Crown Chamber (y = 3.82 .. 5.85)
+  for (const sx of [-1.78, 1.78]) {
+    for (const sz of [-1.22, 1.22]) {
+      const pier = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.95, 0.42), palette.limestone);
+      pier.position.set(sx, 4.78, sz);
+      mintGroup.add(pier);
+    }
+  }
+  const chamberGlass = new THREE.Mesh(new THREE.PlaneGeometry(3.15, 1.84), palette.galleryGlass);
+  chamberGlass.position.set(0, 4.78, 1.24);
+  mintGroup.add(chamberGlass);
+
+  const crownPedestal = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.74, 0.86, 0.34, 24),
+    palette.darkBronze
+  );
+  crownPedestal.position.y = 3.98;
+  mintGroup.add(crownPedestal);
+
+  const crownMat = new THREE.MeshStandardMaterial({
+    color: 0xeab308,
+    emissive: 0xb45309,
+    emissiveIntensity: 0.3,
+    metalness: 0.9,
+    roughness: 0.2,
+  });
+  const crownAccentMat = new THREE.MeshStandardMaterial({
+    color: 0xfde047,
+    emissive: 0xd97706,
+    emissiveIntensity: 0.32,
+    metalness: 0.88,
+    roughness: 0.2,
+  });
+  const crownSpinner = buildCrownSealAssembly(crownMat, palette.darkBronze, crownAccentMat);
+  crownSpinner.scale.setScalar(1.12);
+  crownSpinner.position.y = 4.16;
+  mintGroup.add(crownSpinner);
+
+  const roofCap = new THREE.Mesh(new THREE.BoxGeometry(4.55, 0.24, 3.25), palette.darkBronze);
+  roofCap.position.y = 5.86;
+  mintGroup.add(roofCap);
+
+  const mansard = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.45, 2.25, 1.05, 4),
+    palette.copperRoof
+  );
+  mansard.rotation.y = Math.PI / 4;
+  mansard.position.y = 6.5;
+  mintGroup.add(mansard);
+
+  // --- RIGHT: Automated Security EID 5136 Gatehouse Audit Pedestal (x = +4.6) ---
+  const auditGroup = new THREE.Group();
+  auditGroup.position.set(4.6, 0, 0.65);
+  auditGroup.rotation.y = -0.32;
+  root.add(auditGroup);
+
+  const auditBase = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 1.08, 0.34, 12), palette.granitePlinth);
+  auditBase.position.y = 0.17;
+  auditGroup.add(auditBase);
+
+  const auditColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.58, 1.6, 12), palette.steel);
+  auditColumn.position.y = 1.12;
+  auditGroup.add(auditColumn);
+
+  const auditHousing = new THREE.Mesh(new THREE.BoxGeometry(2.25, 1.38, 0.56), palette.darkBronze);
+  auditHousing.position.y = 2.48;
+  auditGroup.add(auditHousing);
+
+  const auditStandbyTex = createLedBoardTexture(
+    'SECURITY EID 5136 MONITOR',
+    [
+      { text: 'WATCHING: nTSecurityDescriptor', color: '#7dd3fc' },
+      { text: 'TARGET: DC=corp,DC=local', color: '#cbd5e1' },
+      { text: 'STATUS: PERIODIC TIER-0 AUDIT', color: '#34d399' },
+    ],
+    'SKY',
+    textures
+  );
+  const auditAlertTex = createLedBoardTexture(
+    '!! EID 5136 · ROGUE ACE !!',
+    [
+      { text: 'FOUND: CORP\\svc_dir_sync', color: '#fda4af' },
+      { text: 'RIGHTS: 1131f6aa & 1131f6ad', color: '#fde047' },
+      { text: 'ACTION: REVOKE BEFORE DCSYNC', color: '#6ee7b7' },
+    ],
+    'EMERALD',
+    textures
+  );
+  const auditScreenMat = new THREE.MeshStandardMaterial({
+    map: auditStandbyTex,
+    emissiveMap: auditStandbyTex,
+    emissive: 0xffffff,
+    emissiveIntensity: 0.48,
+    roughness: 0.28,
+  });
+  const auditScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.08, 1.18), auditScreenMat);
+  auditScreen.position.set(0, 2.48, 0.3);
+  auditGroup.add(auditScreen);
+
+  // Articulated Scanner Head + World-Space Laser Scan Cone sweeping onto the pinned Ribbon
+  const scanHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), palette.brass);
+  scanHead.position.set(-1.18, 2.25, 0.12);
+  auditGroup.add(scanHead);
+
+  const scanConeMat = new THREE.MeshBasicMaterial({
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const scanCone = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.0, 18, 1, true), scanConeMat);
+  scanCone.visible = false;
+  root.add(scanCone);
+
+  const scanStart = new THREE.Vector3();
+  const scanEnd = new THREE.Vector3();
+  const scanDir = new THREE.Vector3();
+  const downAxis = new THREE.Vector3(0, -1, 0);
+  let showingAlert = false;
 
   const primaryAnchor = new THREE.Object3D();
-  primaryAnchor.position.set(-1.3, 3.75, 0.35);
+  primaryAnchor.position.set(0, 6.2, 0.4);
   root.add(primaryAnchor);
 
   const secondaryAnchor = new THREE.Object3D();
-  secondaryAnchor.position.set(1.5, 2.15, 0.65);
+  secondaryAnchor.position.set(1.25, 2.55, 1.75);
   root.add(secondaryAnchor);
 
   return {
     root,
-    defaultCameraPos: new THREE.Vector3(0.0, 4.4, 12.8),
-    defaultCameraTarget: new THREE.Vector3(0.0, 2.45, 0.0),
+    defaultCameraPos: new THREE.Vector3(0.0, 4.6, 15.2),
+    defaultCameraTarget: new THREE.Vector3(0.0, 2.8, 0.0),
     primaryAnchor,
     secondaryAnchor,
-    particleCenter: new THREE.Vector3(0, 2.2, 0.3),
+    particleCenter: new THREE.Vector3(0, 2.6, 0.8),
     update: (timeSec, _phaseIndex, _isDark, cutawayMode: StandardCutawayMode = 'AUTO') => {
       const tNorm =
         (((timeSec % DCSYNC_STEP_DURATION_SEC) + DCSYNC_STEP_DURATION_SEC) %
@@ -242,24 +389,49 @@ export function buildDcsyncStep1Scene(
         DCSYNC_STEP_DURATION_SEC;
       const frame = evaluateDcsyncStep1State(tNorm, cutawayMode);
 
-      crownGroup.rotation.y = timeSec * (1.2 + frame.crownSpinBoost * 1.4);
-      crownGroup.position.y = 2.55 + Math.sin(timeSec * 2.4) * 0.09;
+      // Master Crown spins smoothly inside upper glass chamber
+      crownSpinner.rotation.y = timeSec * (0.95 + frame.crownSpinBoost * 1.1);
+      crownSpinner.position.y = 4.16 + Math.sin(timeSec * 2.1) * 0.05;
 
-      // Cutaway grill lifts upward
-      grillPivot.rotation.x = -frame.cutawayOpen * 1.28;
+      // Cutaway glass door lifts open smoothly
+      cutawayPivot.rotation.x = -frame.cutawayOpen * 1.25;
 
-      // Exposed crimson ribbon flares and pushes forward slightly
-      ribbonMat.emissiveIntensity = 0.35 + frame.badRibbonFlare * 1.25;
-      aclRibbon.position.z = 0.98 + frame.badRibbonFlare * 0.16;
+      // Crimson-gold service ribbon sways & pulses when exposed in Phase 2
+      ribbonHookGroup.rotation.z = Math.sin(timeSec * 2.4) * 0.07;
+      ribbonMat.emissiveIntensity = 0.16 + frame.badRibbonFlare * 0.72;
+      leakConduitMat.opacity = frame.badRibbonFlare * (0.22 + 0.08 * Math.sin(timeSec * 6));
 
-      // Right-side EID 5136 scanner beam sweeps toward the exposed ACE ribbon
-      scanBeamMat.opacity = 0.08 + frame.eid5136AuditScan * 0.35;
+      // Phase 3: EID 5136 Audit Pedestal sweeps laser onto the pinned ribbon & flips screen
+      const auditActive = frame.eid5136AuditScan > 0.06;
+      scanCone.visible = auditActive;
+      if (auditActive) {
+        auditGroup.updateMatrixWorld(true);
+        scanHead.getWorldPosition(scanStart);
+        root.worldToLocal(scanStart);
+        const sweepY = 1.65 + Math.sin(timeSec * 3.8) * 0.45;
+        scanEnd.set(0.68, sweepY, 1.5);
+        scanDir.subVectors(scanEnd, scanStart);
+        scanCone.position.copy(scanStart).addScaledVector(scanDir, 0.5);
+        scanCone.scale.set(1, Math.max(0.2, scanDir.length()), 1);
+        scanCone.quaternion.setFromUnitVectors(downAxis, scanDir.normalize());
+        scanConeMat.opacity = 0.22 * frame.eid5136AuditScan;
+        scanConeMat.color.setHex(frame.eid5136AuditScan > 0.55 ? 0x10b981 : 0x38bdf8);
+      }
+
+      const shouldShowAlert = frame.eid5136AuditScan > 0.45;
+      if (showingAlert !== shouldShowAlert) {
+        showingAlert = shouldShowAlert;
+        const nextTex = shouldShowAlert ? auditAlertTex : auditStandbyTex;
+        auditScreenMat.map = nextTex;
+        auditScreenMat.emissiveMap = nextTex;
+        auditScreenMat.needsUpdate = true;
+      }
 
       return {
-        glitchIntensity: frame.badRibbonFlare * 0.42,
-        magicDustIntensity: 0.25 + frame.crownSpinBoost * 0.35,
-        stasisIntensity: frame.eid5136AuditScan * 0.32,
-        brakeReleaseBoost: frame.badRibbonFlare * 0.25,
+        glitchIntensity: frame.badRibbonFlare * 0.3,
+        magicDustIntensity: 0,
+        stasisIntensity: frame.eid5136AuditScan * 0.25,
+        brakeReleaseBoost: frame.badRibbonFlare * 0.2,
       };
     },
     dispose: () => disposeStepScene(root, textures, materials),

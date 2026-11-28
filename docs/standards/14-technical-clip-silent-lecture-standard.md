@@ -1,8 +1,8 @@
-# SVG + GSAP Technical Clip — Silent Lecture Standard (`MOD-14`)
+# SVG + GSAP 2D Technical Animation Standard (`MOD-14`)
 
 > **Module ID**: `MOD-14` · **Parent Index**: [`/docs/standards/README.md`](./README.md) · **Supreme Production Workflow**: [`MOD-17`](./17-bespoke-studio-redesign-pipeline-and-clean-slate-standard.md) · **Unified Handbook**: [`MOD-15`](./15-unified-3d-2d-whiteboard-scenario-authoring-handbook.md)  
-> **Scope**: Bespoke SVG + GSAP silent-lecture technical clips under `/components/technical-clip/clips/**` (or per-scenario clip modules), shared player chrome in `AnimeClipStage.tsx` / `clipPace.ts`, and section registration in `/lib/section-technical-clip-registry.ts`. *(Deprecated legacy generic engines under `MalwareTechnicalClipRenderer.tsx`, `DomainKineticVisualizers.tsx`, `/lib/scenario-2d-blueprints/**`, and `/lib/malware-2d-blueprints/**` are scheduled for Phase 1 Clean-Slate removal per `MOD-17 §2.2`.)*  
-> **Status**: Mandatory Permanent Standard for every bespoke episode rebuilt under `MOD-17` · **Reference of the method** (not a stencil): `#001 process-hollowing` clips · **Enforced By**: `/lib/technical-clips.test.ts` & `MOD-17 §4.5` Director's Review. Do not copy a reference film's cast into another section.
+> **Scope**: Bespoke 2D SVG + GSAP technical animations under `/components/technical-clip/clips/**` (or per-scenario clip modules), shared player chrome in `AnimeClipStage.tsx` / `clipPace.ts`, and section registration in `/lib/section-technical-clip-registry.ts`. *(Deprecated legacy generic engines under `MalwareTechnicalClipRenderer.tsx`, `DomainKineticVisualizers.tsx`, `/lib/scenario-2d-blueprints/**`, and `/lib/malware-2d-blueprints/**` are scheduled for Phase 1 Clean-Slate removal per `MOD-17 §2.2`.)*  
+> **Status**: Mandatory Permanent Standard for every bespoke episode rebuilt under `MOD-17` · **Enforced By**: `/lib/technical-clips.test.ts` & `MOD-17 §4.5` Director's Review.
 
 ---
 
@@ -12,11 +12,11 @@ Three teaching surfaces stay separate. None of them is a restyle of another.
 
 | Surface | Job | Motion |
 | :--- | :--- | :--- |
-| **Three.js film** (`MOD-09`, `MOD-10`) | The scenario’s story world | Story metaphor only |
-| **Technical clip** (`MOD-14`) | One section’s mechanism, taught with moving marks | Silent lecture |
+| **Three.js 3D animation** (`MOD-09`, `MOD-10`) | The scenario’s physical story world | Natural, lifelike, realistic 3D storytelling (zero fixed template) |
+| **2D technical animation** (`MOD-14`) | One section’s technical mechanism, animated clearly | Natural, realistic, physically grounded 2D explanation (zero fixed template) |
 | **Excalidraw board** (`MOD-13`) | The same facts as a static chalk map | None |
 
-The clip is a teacher who cannot speak. They decide what to draw from the section’s claims, then animate those drawings so a mute viewer can say what changed. The standard governs that decision. It does not publish a prop kit, a stage layout, or a timing table to reuse.
+A 2D technical animation explains what changed technically so a viewer can follow the mechanism visually. **All future 2D animations MUST strive for the most natural, refined, and realistic visual presentation and motion possible**—using believable depth, natural lighting/gradients, authentic hardware/protocol/interface proportions, crisp realistic iconography, and smooth physically eased motion rather than flat cartoonish shapes, crude toy blocks, or robotic linear jumps. At the same time, **this standard deliberately refuses to impose a fixed layout template, rigid column grid, or uniform beat mold**: every 2D animation organizes its spatial composition organically around the mechanism being taught.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -31,19 +31,21 @@ Order is the live order in `StandardStoryTechnicalSection`: Story (unless `omitS
 
 ---
 
-## 2. What This Module Refuses to Freeze
+## 2. Realism Standard & Zero Fixed 2D Layout Template
 
-A later section or a later scenario must be able to look unlike every clip that already exists. The following are **not** part of the standard, even when a reference film uses them:
+Every 2D animation must combine **high visual realism and natural motion** with **complete structural freedom**:
 
-- A particular object (dial, crate, pipe, truck, key, radar, stamp, slit, lever).
-- A particular stage geography (left reader, center gate, right vault).
-- A color assignment for a kind of fact.
-- A duration in seconds.
-- The noun list of any one attack.
+- **Mandatory Natural & Realistic 2D Visual Quality (Permanent Rule for All Future Clips)**:
+  - Render visual elements with natural depth, authentic surface shading/specular cues, realistic proportions for physical or technical artifacts (memory segments, packets, hardware interfaces, security gates, registers, logs), and smooth physics-inspired easing (`power2.inOut`, `power3.out`, natural anticipation and settle) so every transition feels lifelike and tactile.
+  - Never fall back to cartoonish clip-art, stylized anime tropes, crude flat rectangles with neon strokes, or abrupt mechanical snaps.
+- **Explicitly NOT Fixed or Standardized (Zero Fixed Template)**:
+  - Background surface or color palette (choose whatever natural lighting, contrast, and environment serves the subject).
+  - A particular object, icon language, or prop kit (dial, crate, pipe, truck, key, radar, stamp, slit, lever).
+  - A particular stage geography or layout (left-to-right columns, cards, top-down flow, radial diagram, timeline, hex memory strip, packet waterfall, etc.).
+  - Beat count, beat grammar, or duration in seconds.
+  - The noun list of any one attack.
 
-If a rule below can be satisfied only by redrawing a previous film with new labels, the rule has been missed.
-
-Shared **chrome** is the exception. The frame, act card, cutaway, full page, and dock match `ANIME_3D_STAGE_STANDARD` so the workbench does not grow a second control language. Chrome is the player. It is not the lesson.
+Shared **player controls** (`AnimeClipStage`) exist purely so the workbench keeps one consistent Play/Pause/Scrubber/Full-Page UI shell. The player shell is chrome—it never dictates the composition or layout template inside the 2D canvas.
 
 ---
 
@@ -62,11 +64,11 @@ Partial coverage inside one scenario is allowed only for Overview, which stays u
 
 ---
 
-## 4. Decision Procedure
+## 4. Optional Design Heuristics (Non-Prescriptive Creative Guide)
 
-Run this procedure per section before drawing. The output is a beat sheet. The SVG is an execution of that sheet, not a template with blanks.
+Use the heuristics below only as **optional creative thinking tools**—never as a fixed template or rigid checklist. Authors have full freedom to invent any 2D visual format, diagram motion, or beat structure that makes the technical mechanism clear.
 
-### 4.1 Extract claims
+### 4.1 Identify what changes (optional starting point)
 
 Read the section’s technical clauses (`MOD-03`, `MOD-08`) and split them into claims. A claim is one of:
 
@@ -181,7 +183,7 @@ The player takes `ANIME_3D_STAGE_STANDARD`: viewport classes, speeds `0.5 / 1 / 
 | **Several films on one page** | Every paint-server id (`gradient`, `filter`, `pattern`, `clipPath`) is prefixed per clip. Unprefixed ids collide because the sections mount together. |
 | **Dynamic import** | `next/dynamic` options are an inline object literal with `ssr: false`. A shared options variable is rejected by the framework. |
 
-Background of the film plane matches the anime stage plane (`#0B0F17`) so the two players sit in one workbench. That color is chrome. Objects inside the film choose contrast from the claim, not from a palette copied off a neighbor.
+Inside the film plane, authors are completely free to choose whatever background surface, visual theme, typography scale, and color contrast best teach that specific mechanism—nothing forces a uniform backdrop or palette copied from a neighboring clip.
 
 ---
 
